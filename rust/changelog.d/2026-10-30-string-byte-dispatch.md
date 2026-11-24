@@ -1,0 +1,1 @@
+Repair JavaScript Rust-frontend string-byte method dispatch so name resolution uses only its bound source paths and string-byte methods run in the corresponding method context. Preserve native dispatch and existing originals; execution remains deferred.

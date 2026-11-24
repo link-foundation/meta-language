@@ -56,7 +56,7 @@ export function generateStringOrderRules({check=false}={}) {
   if(check)assert.equal(readFileSync(javascript,'utf8'),source);else writeFileSync(javascript,source);
   const program=checkProgram(parseJavaScript(source,{referenceSemantics:false}));
   const declarations=['readStringOrderOperation','requireStringOrderUnits','renderStringOrderExpression','readStringOrderRefusal',
-    'ml_renderStringOrderExpression_join4','ml_renderStringOrderExpression_join3','ml_renderStringOrderExpression_join2','ml_renderStringOrderExpression_join1'];
+    ...[4,3,2,1].map(index=>'ml_source1_temporary_renderStringOrderExpression_join'+index)];
   assert.deepEqual([...program.declarations.keys()],declarations,'retain every original and lifted continuation declaration');
   const emitted=emitRust(program,{arrayConsumption:true});assert.equal(emitted.definitions.length,declarations.length);
   assert.equal(emitted.preludes.length,0,'the complete model selectors remain closed scalar decisions');

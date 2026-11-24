@@ -1,0 +1,1 @@
+Draft owned Rust String moves, ordered arguments, returned values and conditional loans using shared vector ownership rules. Copies detach their provenance, views retain their owner, and concatenation consumes its left operand. JavaScript policy generates Rust and paired Links assets; independent source controls remain unexecuted during requirements drafting.

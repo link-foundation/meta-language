@@ -8,13 +8,28 @@ import {readSourceTextRustBlock} from './source-text-byte-library-style.mjs';
 export {readPortableSourceLintStyles} from './portable-source-lint-style.mjs';
 
 /** Borrow immutable primitive parameters; retain actual assigned parameters. */
-export function readPortableSourceParameterStyles(source, {publicNames = [], ownedParameters = {}, normalizeBorrowedArguments = false} = {}) {
-  const declarations = new Map();
-  for (const [, name] of source.matchAll(/^pub fn (\w+)\(/gmu)) {
-    const block = readSourceTextRustBlock(source, 'fn', name);
-    const header = /^pub fn \w+\(([^)]*)\)/u.exec(block);
-    assert.ok(header, 'a generated library function retains its complete signature');
-    const body = tokenize(block.slice(header[0].length), 'Rust').tokens;
+function readPortableSourceParameterDeclarations(source, declarations, ownedParameters) {
+  const {tokens: sourceTokens} = tokenize(source, 'Rust');
+  const tokenPositions = new Map(sourceTokens.map((token, index) => [token.start, index]));
+  const delimiters = new Map(), openings = [];
+  for (const [index, token] of sourceTokens.entries()) {
+    if (token.kind !== 'punct') continue;
+    if (['(', '{', '['].includes(token.value)) openings.push(index);
+    else if ([')', '}', ']'].includes(token.value)) delimiters.set(openings.pop(), index);
+  }
+  for (const match of source.matchAll(/^pub fn (\w+)\(/gmu)) {
+    const [, name] = match;
+    const parameterStart = tokenPositions.get(match.index + match[0].length - 1);
+    const parameterEnd = delimiters.get(parameterStart);
+    assert.notEqual(parameterEnd, undefined, 'a generated library function retains its complete signature: ' + name);
+    let bodyStart = parameterEnd + 1;
+    while (bodyStart < sourceTokens.length && !(sourceTokens[bodyStart].kind === 'punct' && sourceTokens[bodyStart].value === '{')) {
+      bodyStart = (delimiters.get(bodyStart) ?? bodyStart) + 1;
+    }
+    const bodyEnd = delimiters.get(bodyStart);
+    assert.notEqual(bodyEnd, undefined, 'a generated library function retains its complete body: ' + name);
+    const block = source.slice(match.index, sourceTokens[bodyEnd].end);
+    const body = sourceTokens.slice(bodyStart, bodyEnd + 1);
     const assigned = new Set();
     for (let index = 0; index < body.length; index += 1) {
       if (body[index].kind !== 'punct' || !['=', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>='].includes(body[index].value)) continue;
@@ -31,7 +46,25 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
         assert.equal(depth, 0, 'an emitted tuple assignment has its complete left-hand side');
       }
     }
-    const params = header[1].split(',').map(value => /^\s*(?:mut )?(\w+):\s*(.+?)\s*$/u.exec(value)).filter(Boolean)
+    const parameterSources = [];
+    let parameterFrom = sourceTokens[parameterStart].end;
+    let genericDepth = 0;
+    for (let index = parameterStart + 1; index < parameterEnd; index += 1) {
+      if (delimiters.has(index)) {
+        index = delimiters.get(index);
+        continue;
+      }
+      const token = sourceTokens[index];
+      if (token.kind !== 'punct') continue;
+      if (token.value === '<' || token.value === '<<') genericDepth += token.value.length;
+      if (token.value === '>' || token.value === '>>') genericDepth -= token.value.length;
+      if (token.value === ',' && genericDepth === 0) {
+        parameterSources.push(source.slice(parameterFrom, token.start));
+        parameterFrom = token.end;
+      }
+    }
+    parameterSources.push(source.slice(parameterFrom, sourceTokens[parameterEnd].start));
+    const params = parameterSources.map(value => /^\s*(?:mut )?(\w+):\s*([\s\S]+?)\s*$/u.exec(value)).filter(Boolean)
       .map(([, parameter, type]) => ({name: parameter, type}));
     for (const param of params) {
       let element = param.type;
@@ -48,6 +81,16 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
     }
     declarations.set(name, {block, params, assigned, unique: !declarations.has(name)});
   }
+}
+
+export function readPortableSourceParameterStyles(source, {publicNames = [], ownedParameters = {}, normalizeBorrowedArguments = false, completeItems} = {}) {
+  const declarations = new Map();
+  for (const item of completeItems ?? [source]) readPortableSourceParameterDeclarations(item, declarations, ownedParameters);
+  const adaptedItems = completeItems && [...completeItems];
+  // A complete emitter item contains each retained top-level function it owns.
+  // Preserve global call resolution while releasing the lexer for each item.
+  const itemPositions = adaptedItems && new Map(adaptedItems.flatMap((item, position) =>
+    [...item.matchAll(/^pub fn (\w+)\(/gmu)].map(match => [match[1], position])));
   let adapted = source;
   const actions = [];
   for (const [name, declaration] of declarations) {
@@ -195,63 +238,129 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
     if (publicNames.includes(name)) block = '/// Execute the checked shared source algorithm.\n#[must_use]\n' + block;
     if (block !== declaration.block) {
       actions.push({op: 'replace', field: 'source', from: declaration.block, to: block});
-      adapted = adapted.split(declaration.block).join(block);
+      if (adaptedItems && declaration.unique) {
+        const position = itemPositions.get(name);
+        adaptedItems[position] = adaptedItems[position].split(declaration.block).join(block);
+      } else if (adaptedItems) {
+        for (const [position, item] of adaptedItems.entries()) adaptedItems[position] = item.split(declaration.block).join(block);
+      } else adapted = adapted.split(declaration.block).join(block);
     }
   }
-  return {source: adapted, actions};
+  return adaptedItems ? {source: adaptedItems.join('\n\n'), actions, completeItems: adaptedItems} : {source: adapted, actions};
 }
 
 /** Place complete top-level items in bounded child modules with the same API. */
-export function partitionPortableRustLibrary(source, {notice = '', directory, maximumLines = 900} = {}) {
+export function partitionPortableRustLibrary(source, {notice = '', directory, maximumLines = 900, completeItems} = {}) {
   assert.match(directory, /^[a-z][a-z_0-9]*$/u, 'a portable library has one explicit child-module directory');
   assert.ok(Number.isSafeInteger(maximumLines) && maximumLines > 0 && maximumLines < 990);
   const lines = source.trimEnd().split('\n');
   // Attributes belong to their following declaration, including attributes
   // rustfmt expands over multiple lines. Read balanced token spans so quoted
   // brackets and nested attribute arguments cannot create module boundaries.
-  const tokens = tokenize(source, 'Rust').tokens;
   const attributeLines = new Map();
-  const lineAt = offset => source.slice(0, offset).split('\n').length - 1;
-  for (let index = 0; index < tokens.length; index += 1) {
-    if (tokens[index].kind !== 'punct' || tokens[index].value !== '#'
-      || tokens[index + 1]?.value !== '[') continue;
-    let depth = 0, end = index + 1;
-    for (; end < tokens.length; end += 1) {
-      if (tokens[end].kind !== 'punct') continue;
-      if (tokens[end].value === '[') depth += 1;
-      if (tokens[end].value === ']' && --depth === 0) break;
+  const publicDeclarations = new Map();
+  let lineOffset = 0;
+  for (const item of completeItems ?? [source]) {
+    const tokens = tokenize(item, 'Rust').tokens;
+    const lineStarts = [0];
+    for (let newline = item.indexOf('\n'); newline !== -1; newline = item.indexOf('\n', newline + 1)) {
+      lineStarts.push(newline + 1);
     }
-    assert.ok(end < tokens.length, 'a generated attribute has its complete bracket span');
-    attributeLines.set(lineAt(tokens[end].end), lineAt(tokens[index].start));
-    index = end;
+    const lineAt = offset => {
+      let first = 0, last = lineStarts.length;
+      while (first + 1 < last) {
+        const middle = first + Math.floor((last - first) / 2);
+        if (lineStarts[middle] <= offset) first = middle;
+        else last = middle;
+      }
+      return lineOffset + first;
+    };
+    let braceDepth = 0;
+    for (let index = 0; index < tokens.length; index += 1) {
+      const token = tokens[index];
+      if (token.kind === 'punct' && token.value === '{') braceDepth += 1;
+      if (token.kind === 'punct' && token.value === '}') braceDepth -= 1;
+      if (braceDepth !== 0) continue;
+      if (token.kind === 'identifier' && token.value === 'pub') {
+        const declaration = tokens[index + 1]?.value === 'const' ? index + 2 : index + 1;
+        const kind = tokens[declaration]?.value, name = tokens[declaration + 1]?.value;
+        if (['fn', 'enum', 'struct', 'mod'].includes(kind) && tokens[declaration + 1]?.kind === 'identifier') {
+          const line = lineAt(token.start);
+          if (/^pub (?:(?:const )?fn|enum|struct|mod) /u.test(lines[line])) publicDeclarations.set(line, {kind, name});
+        }
+      }
+      if (tokens[index].kind !== 'punct' || tokens[index].value !== '#'
+        || tokens[index + 1]?.value !== '[') continue;
+      let depth = 0, end = index + 1;
+      for (; end < tokens.length; end += 1) {
+        if (tokens[end].kind !== 'punct') continue;
+        if (tokens[end].value === '[') depth += 1;
+        if (tokens[end].value === ']' && --depth === 0) break;
+      }
+      assert.ok(end < tokens.length, 'a generated attribute has its complete bracket span');
+      attributeLines.set(lineAt(tokens[end].end), lineAt(tokens[index].start));
+      index = end;
+    }
+    assert.equal(braceDepth, 0, 'complete Rust source items retain balanced body delimiters');
+    lineOffset += lineStarts.length + 1;
   }
   const starts = [];
-  for (let index = 0; index < lines.length; index += 1) {
-    if (!/^pub (?:(?:const )?fn|enum|struct|mod) /u.test(lines[index])) continue;
+  for (const [index, declaration] of publicDeclarations) {
     let start = index;
-    while (start > (starts.at(-1) ?? 0)) {
+    while (start > (starts.at(-1)?.start ?? 0)) {
       if (attributeLines.has(start - 1)) start = attributeLines.get(start - 1);
       else if (/^(?:\s*|\/\/.*)$/u.test(lines[start - 1])) start -= 1;
       else break;
     }
-    starts.push(start);
+    starts.push({start, declaration});
   }
   assert.ok(starts.length, 'a complete portable library has emitted public declarations');
-  const prefix = lines.slice(0, starts[0]).join('\n');
-  starts.push(lines.length);
-  const parts = [''];
+  const prefix = lines.slice(0, starts[0].start).join('\n');
+  starts.push({start: lines.length});
+  const oversizedDeclarations = [];
+  const parts = [{source: '', names: []}], nestedFiles=[];
   for (let index = 0; index + 1 < starts.length; index += 1) {
-    const item = lines.slice(starts[index], starts[index + 1]).join('\n').trim();
+    const {start, declaration} = starts[index];
+    let item = lines.slice(start, starts[index + 1].start).join('\n').trim();
+    const itemLines = item.split('\n').length;
+    if(itemLines>maximumLines){
+      if (declaration.kind !== 'mod' || !/^[a-z][a-z_0-9]*$/u.test(declaration.name)) {
+        oversizedDeclarations.push(`pub ${declaration.kind} ${declaration.name} (${itemLines} lines)`);
+        continue;
+      }
+      const {name} = declaration;
+      const itemTokens=tokenize(item,'Rust').tokens,first=itemTokens.findIndex(token=>token.kind==='identifier'&&token.value==='pub');
+      assert.ok(first>=0&&itemTokens[first+1]?.value==='mod'&&itemTokens[first+2]?.value===name,'nested placement cannot split an enclosing function/type body');
+      const block=readSourceTextRustBlock(item,'mod',name);
+      const blockTokens=tokenize(block,'Rust').tokens;
+      const opening=blockTokens.find(token=>token.kind==='punct'&&token.value==='{');
+      const closing=blockTokens.filter(token=>token.kind==='punct'&&token.value==='}').at(-1);
+      assert.ok(opening&&closing&&item.split(block).length===2,'nested placement needs one whole actual inline module');
+      const body=block.slice(opening.end,closing.start);
+      const bodyTokens=tokenize(body,'Rust').tokens;
+      assert.ok(!bodyTokens.some((token,index)=>token.kind==='identifier'&&token.value==='super'&&bodyTokens[index+1]?.value==='::'),'nested placement needs an explicit relocation proof before moving parent-relative paths');
+      const formatted=spawnSync('rustfmt',['--edition','2024','--emit','stdout'],{input:body,encoding:'utf8',maxBuffer:8*1024*1024});
+      assert.equal(formatted.status,0,formatted.stderr??formatted.error?.message);
+      const children=partitionPortableRustLibrary(formatted.stdout,{notice,directory:name,maximumLines});
+      for(const child of children)nestedFiles.push({path:directory+'/'+(child.path??name+'.rs'),source:child.source});
+      item=item.replace(block,'#[path = "'+name+'.rs"]\npub mod '+name+';');
+    }
     assert.ok(item.split('\n').length <= maximumLines, 'a generated declaration must fit a bounded source module without splitting its body');
     const previous = parts.at(-1);
-    if (previous && previous.split('\n').length + item.split('\n').length + 2 > maximumLines) parts.push(item);
-    else parts[parts.length - 1] = previous ? previous + '\n\n' + item : item;
+    if (previous.source && previous.source.split('\n').length + item.split('\n').length + 2 > maximumLines) {
+      parts.push({source: item, names: [declaration.name]});
+    } else {
+      previous.source += (previous.source ? '\n\n' : '') + item;
+      previous.names.push(declaration.name);
+    }
   }
+  assert.equal(oversizedDeclarations.length, 0, 'generated functions and types must fit the '
+    + maximumLines + '-line limit without splitting their bodies:\n' + oversizedDeclarations.join('\n'));
   const root = notice + prefix + '\n' + parts.map((_, index) => `#[path = "${directory}/part_${index + 1}.rs"]\nmod part_${index + 1};\npub use part_${index + 1}::*;\n`).join('');
   assert.ok(root.split('\n').length < 1000, 'the portable library root retains its bounded size');
-  const declarations = new Set([...source.matchAll(/^pub (?:(?:const )?fn|enum|struct|mod) ([A-Za-z_][A-Za-z_0-9]*)/gmu)].map(match => match[1]));
-  return [{path: null, source: root}, ...parts.map((part, index) => {
-    const local = new Set([...part.matchAll(/^pub (?:(?:const )?fn|enum|struct|mod) ([A-Za-z_][A-Za-z_0-9]*)/gmu)].map(match => match[1]));
+  const declarations = new Set([...publicDeclarations.values()].map(({name}) => name));
+  return [{path: null, source: root}, ...parts.map(({source: part, names: localNames}, index) => {
+    const local = new Set(localNames);
     const partTokens = tokenize(part, 'Rust').tokens;
     const needed = new Set();
     for (let at = 0; at < partTokens.length; at += 1) {
@@ -276,5 +385,5 @@ export function partitionPortableRustLibrary(source, {notice = '', directory, ma
     const text = notice + imports.stdout + (imports.stdout ? '\n' : '') + part + '\n';
     assert.ok(text.split('\n').length < 1000, 'explicit sibling imports retain a bounded child module');
     return {path: `${directory}/part_${index + 1}.rs`, source: text};
-  })];
+  }),...nestedFiles];
 }

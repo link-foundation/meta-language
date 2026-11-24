@@ -1,0 +1,1 @@
+Draft standard String new/from through checked transparent aliases, reusing existing conversion ownership and source-coordinate handling. Retain alias definition owners across caller-local String and value names.

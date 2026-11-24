@@ -386,7 +386,8 @@ impl<'a> TreeAdapter<'a> {
                     "parallel writes must retain distinct mutable slots and actual evaluation order",
                 ));
             }
-            if self.proof.language == "JavaScript" && !self.snapshots.contains(&write.binding) {
+            if self.proof.language == "JavaScript" && !scalar_loop_snapshot_binding(&write.binding)
+            {
                 return Err(fail("a JavaScript write needs its exact snapshot binding"));
             }
             self.used_snapshots.insert(write.binding.clone());

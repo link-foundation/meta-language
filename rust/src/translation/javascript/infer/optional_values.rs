@@ -193,6 +193,18 @@ impl Inference {
     }
 
     pub(super) fn coalescing_step(&mut self, constraint: &Coalescing, force: bool) -> Result<bool> {
+        let resolved = self.resolve(&constraint.left);
+        let element = match &resolved {
+            Term::Option { element, .. } => kind(element),
+            _ => "",
+        };
+        if crate::translation::absence_only_rules::require_java_script_absence_only_value(
+            "JavaScript",
+            kind(&resolved),
+            element,
+        ) {
+            return Ok(true);
+        }
         let facts = TermFacts::new(&[
             Some(constraint.left.clone()),
             Some(self.resolve(&constraint.left)),
@@ -240,11 +252,20 @@ impl Inference {
     }
 
     pub(super) fn join(&mut self, left: Term, right: Term, place: Option<Span>) -> Term {
+        self.defer_join(left, right, false, place)
+    }
+
+    pub(super) fn join_optional_guard(&mut self, value: Term, place: Option<Span>) -> Term {
+        self.defer_join(value, Term::Known(super::UNIT), true, place)
+    }
+
+    fn defer_join(&mut self, left: Term, right: Term, guarded: bool, place: Option<Span>) -> Term {
         let result = self.fresh(false);
         self.joins.push(Join {
             left,
             right,
             result: result.clone(),
+            guarded,
             place,
         });
         result
@@ -258,6 +279,31 @@ impl Inference {
             Some(self.resolve(&constraint.right)),
             Some(self.resolve(&constraint.result)),
         ]);
+        let before = self.unification_changes;
+        let value = if constraint.guarded {
+            let plan = plans::plan_optional_guarded_result(
+                &facts.texts,
+                &facts.starts,
+                &facts.counts,
+                &facts.labels,
+                &facts.targets,
+                facts.position(0),
+                facts.position(2),
+            );
+            let absence = match facts.term(plan[1]) {
+                Some(Term::Option { absence, .. }) => {
+                    merge_optional_absence(&absence.borrow(), "undefined")
+                }
+                _ => "undefined".to_owned(),
+            };
+            optional(endpoint(&facts, plan[0]), &absence)
+        } else {
+            self.apply_join_plan(&facts, constraint.place)?
+        };
+        self.bind_join_result(constraint, value, before)
+    }
+
+    fn apply_join_plan(&mut self, facts: &TermFacts, place: Option<Span>) -> Result<Term> {
         let plan = plans::plan_optional_join_constraints(
             &facts.texts,
             &facts.starts,
@@ -270,20 +316,23 @@ impl Inference {
             facts.position(3),
             facts.position(4),
         );
-        let before = self.unification_changes;
         if plan[0] == 0.0 {
-            self.unify(
-                &endpoint(&facts, plan[2]),
-                &endpoint(&facts, plan[3]),
-                constraint.place,
-            )?;
+            self.unify(&endpoint(facts, plan[2]), &endpoint(facts, plan[3]), place)?;
         }
-        let selected = endpoint(&facts, plan[1]);
-        let value = if number_index(plan[0]) == Some(2) {
+        let selected = endpoint(facts, plan[1]);
+        Ok(if number_index(plan[0]) == Some(2) {
             optional(selected, "undefined")
         } else {
             self.resolve(&selected)
-        };
+        })
+    }
+
+    fn bind_join_result(
+        &mut self,
+        constraint: &Join,
+        mut value: Term,
+        before: usize,
+    ) -> Result<bool> {
         let Term::Var(variable) = constraint.result else {
             unreachable!("a deferred join owns a result variable");
         };
@@ -299,6 +348,25 @@ impl Inference {
             .expect("a bounded inference variable has a Number representation");
         if values::require_inference_join_alias(kind(&current), alias, original_id) {
             self.unify(&current, &value, constraint.place)?;
+        }
+        if let (
+            Term::Option {
+                element: current_element,
+                absence: current_absence,
+            },
+            Term::Option { element, absence },
+        ) = (&current, &value)
+            && *current_absence.borrow() != *absence.borrow()
+            && self.same_term(current_element, element)
+        {
+            // Recomputing the branch retains absence paths contributed by
+            // other constraints on this same present type.
+            let merged = merge_optional_absence(&current_absence.borrow(), &absence.borrow());
+            value = if *current_absence.borrow() == merged {
+                current.clone()
+            } else {
+                optional(*element.clone(), &merged)
+            };
         }
         let original = matches!(value, Term::Var(id) if id == variable);
         let same = !original && self.same_term(&constraint.result, &value);
@@ -365,6 +433,7 @@ impl Inference {
                 progress = true;
             }
         }
+        progress |= self.solve_computed_callable_arguments()?;
         for call in self.calls.clone() {
             for (index, (argument, parameter)) in
                 call.arguments.iter().zip(&call.parameters).enumerate()
@@ -452,13 +521,22 @@ impl Inference {
     }
 
     pub(super) fn numeric_value(&self, term: &Term) -> Term {
+        self.numeric_value_with_strings(term, true)
+    }
+
+    pub(super) fn numeric_addition_value(&self, term: &Term) -> Term {
+        self.numeric_value_with_strings(term, false)
+    }
+
+    fn numeric_value_with_strings(&self, term: &Term, strings: bool) -> Term {
         let resolved = self.resolve(term);
+        if (strings || kind(&resolved) != "string") && crate::translation::string_number_rules::read_java_script_primitive_numeric_inference_kind(kind(&resolved)) == "float" { return Term::Known(FLOAT); }
         match values::read_optional_numeric_term(kind(&resolved)).as_str() {
             "element" => {
                 let Term::Option { element, .. } = resolved else {
                     unreachable!("the generated numeric plan requires Option");
                 };
-                self.numeric_value(&element)
+                self.numeric_value_with_strings(&element, strings)
             }
             "float" => Term::Known(FLOAT),
             _ => term.clone(),

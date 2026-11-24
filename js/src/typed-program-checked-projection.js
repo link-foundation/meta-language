@@ -4,13 +4,24 @@ import {acceptProgramStringRepresentationFlag} from './translation/program-strin
 // The adapter carries declarations and shared projection instructions; it
 // does not assign meaning to types, operators, patterns or recursion.
 import {checkRustConstFunctionContainers} from './translation/rust-const-functions.js';
-import { checkProgram } from './translation/check.js';
+import {checkRustDataTypeFieldSignatureProgramContainers} from './translation/rust-data-type-field-signatures.js';
+import { checkProjectedProgram } from './translation/check.js';
 import {checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './translation/rust-type-namespace.js';
 import { projectLinkedProgramExpression, projectLinkedProgramDeclarationPath } from './typed-program-expression-projection.js';
 import { readProgramDeclarationTypeProjectionField, readProgramExpressionProjection, readProgramNeutralFieldDefault, readProgramPropositionOperandFields, readProgramPropositionBindingForm } from './typed-program-link-rules.js';
 
-export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
+import {withSourceOwnerContainers} from './translation/owned-program-containers.js';
+import {readTypedProgramOwnerTraversal} from './typed-program-source-owners.js';
+
+export function recheckLinkedTypedProgram(program, {wholeProgram=false, sourceOwners}={}) {
+  if (sourceOwners) return withSourceOwnerContainers(program, sourceOwners.directory, () =>
+    recheckProgram(program, wholeProgram, sourceOwners));
+  return recheckProgram(program, wholeProgram);
+}
+
+function recheckProgram(program, wholeProgram, sourceOwners) {
+  checkRustDataTypeFieldSignatureProgramContainers(program);
   if(checkRustConstFunctionContainers(program))wholeProgram=true;
   if(checkRustRuntimeShell(program))return program;
   const rootedNamespace = checkRustTypeNamespaceRecordShapes(program);
@@ -21,12 +32,14 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
   let hasTuple = false;
   let explicitImmutability = false;
   let unprojected = false;
-  let visits = 0;
-  function inspectProgramRecords(value, depth = 0) {
+  const traversal = readTypedProgramOwnerTraversal(program, sourceOwners,
+    'the linked program exceeds its recheck resource limit');
+  function inspectProgramRecords(value, depth = 0, owner) {
     if (!value || typeof value !== 'object') return;
     if (active.has(value)) throw new TypeError('the linked program contains a structural cycle during recheck');
     if (visited.has(value)) return;
-    if (++visits > 100_000 || depth > 256) throw new TypeError('the linked program exceeds its recheck resource limit');
+    if (depth > 256) throw new TypeError('the linked program exceeds its recheck resource limit');
+    traversal.visit(owner);
     visited.add(value);
     active.add(value);
     if (value.k && value.type && !value.fullName) {
@@ -34,7 +47,9 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
       if (value.k === 'tuple' && (Object.hasOwn(value, 'frozen') || Object.hasOwn(value, 'productModel'))) explicitImmutability = true;
       if (!readProgramExpressionProjection(value.k)) unprojected = true;
     }
-    for (const child of value instanceof Map ? value.values() : Object.values(value)) inspectProgramRecords(child, depth + 1);
+    for (const child of value instanceof Map ? value.values() : Object.values(value)) {
+      inspectProgramRecords(child, depth + 1, traversal.childOwner(value, child, owner));
+    }
     active.delete(value);
   }
   inspectProgramRecords(program);
@@ -42,7 +57,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
   // shared native projection boundary. Explicit product qualifiers always
   // require whole-program rechecking, including after a true-to-false edit.
   if (!wholeProgram && (!hasTuple || (!explicitImmutability && unprojected))) return program;
-  const projectExpression = value => projectLinkedProgramExpression(value, program.declarations, {rootedNamespace, referenceSemantics: program.referenceSemantics === true});
+  const projectExpression = value => projectLinkedProgramExpression(value, program.declarations, {rootedNamespace, referenceSemantics: program.referenceSemantics === true, sourceLanguage: program.sourceLanguage});
   function projectType(value) {
     if (value.kind === 'data') return { kind: 'named', path: projectLinkedProgramDeclarationPath(value.name, program.declarations, rootedNamespace) };
     if (['array', 'option', 'set', 'cell'].includes(value.kind)) return { ...value, element: projectType(value.element) };
@@ -68,9 +83,12 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
     if (entry.k === 'data') return {
       k: 'data', name: entry.name,
       ctors: entry.ctors.map(constructor => ({ name: constructor.name,
-        fields: constructor.fields.map(field => ({ name: field.name, type: projectType(field.type) })),
+        fields: constructor.fields.map(field => ({ name: field.name, type: projectType(field.type), ...(field.optional && { optional: true }) })),
       })), span: entry.span, ...(entry.generated !== undefined ? { generated: entry.generated } : {}),
       ...(entry.sourceUnitCloneDerivation!==undefined?{sourceUnitCloneDerivation:entry.sourceUnitCloneDerivation}:{}),
+      ...(entry.sourceFieldSignatures!==undefined?{sourceFieldSignatures:entry.sourceFieldSignatures}:{}),
+      ...(entry.sourceStandardCollectionCarrier!==undefined?{sourceStandardCollectionCarrier:entry.sourceStandardCollectionCarrier}:{}),
+      ...(entry.sourceStandardCollectionLibraryOwner!==undefined?{sourceStandardCollectionLibraryOwner:entry.sourceStandardCollectionLibraryOwner}:{}),
     };
     if (entry.k !== 'fn') throw new TypeError(`the linked declaration ${entry.k} has no checked surface projection`);
     const annotation = readProgramDeclarationTypeProjectionField(entry.k, 'annotation');
@@ -86,6 +104,13 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
       ...(entry.sourceConstFunction!==undefined?{sourceConstFunction:entry.sourceConstFunction}:{}),
       ...(entry.sourceDiagnosticAttributes!==undefined?{sourceDiagnosticAttributes:entry.sourceDiagnosticAttributes}:{}),
       ...(entry.sourceSignature !== undefined ? { sourceSignature: entry.sourceSignature } : {}),
+      ...(entry.sourceExclusiveSignature!==undefined?{sourceExclusiveSignature:entry.sourceExclusiveSignature}:{}),
+      ...(entry.sourceFnMutSpecialization!==undefined?{sourceFnMutSpecialization:entry.sourceFnMutSpecialization}:{}),
+      ...(entry.sourceStateTransform!==undefined?{sourceStateTransform:entry.sourceStateTransform}:{}),
+      ...(entry.sourceVectorMutation!==undefined?{sourceVectorMutation:entry.sourceVectorMutation}:{}),
+      ...(entry.sourceFallibleIterator!==undefined?{sourceFallibleIterator:entry.sourceFallibleIterator}:{}),
+      ...(entry.sourceFiniteRecordLoopHelper!==undefined?{sourceFiniteRecordLoopHelper:entry.sourceFiniteRecordLoopHelper}:{}),
+      ...(entry.sourceStandardCollectionLibraryOwner!==undefined?{sourceStandardCollectionLibraryOwner:entry.sourceStandardCollectionLibraryOwner}:{}),
       ...(entry.sourceTypeNamespace !== undefined ? { sourceTypeNamespace: entry.sourceTypeNamespace } : {}),
       ...(entry.sourceLoop !== undefined ? { sourceLoop: entry.sourceLoop } : {}),
       ...(entry.sourcePrimitiveOwners!==undefined?{sourcePrimitiveOwners:entry.sourcePrimitiveOwners}:{}),
@@ -111,14 +136,16 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
     ...(program.externals !== undefined ? { externals: program.externals } : {}),
     ...(program.referenceSemantics !== undefined ? { referenceSemantics: program.referenceSemantics } : {}),
     ...(program.sourcePureUnitCalls!==undefined?{sourcePureUnitCalls:program.sourcePureUnitCalls}:{}),
+    ...(program.sourceClassOwners!==undefined?{sourceClassOwners:program.sourceClassOwners}:{}),
   };
-  const checked = checkProgram(surface);
+  const checked = checkProjectedProgram(surface, sourceOwners?.directory);
   if (Object.hasOwn(program, 'utf16Strings')) {
     if (!acceptProgramStringRepresentationFlag(typeof program.utf16Strings, true)) throw new TypeError('a program string representation flag must be an explicit boolean');
     checked.utf16Strings = program.utf16Strings;
   }
   const compared = new WeakMap();
-  let comparisons = 0;
+  const comparisons = readTypedProgramOwnerTraversal(program, sourceOwners,
+    'the linked program exceeds its comparison resource limit');
   function readRecordContext(value) {
     if (Object.hasOwn(value, 'schemaVersion')) return 'program';
     if (Object.hasOwn(value, 'effects')) return 'main';
@@ -136,8 +163,8 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
     if (policy === 'empty-array') return value === undefined || (Array.isArray(value) && !value.length);
     return false;
   }
-  function compareProgramData(left, right) {
-    if (++comparisons > 100_000) throw new TypeError('the linked program exceeds its comparison resource limit');
+  function compareProgramData(left, right, owner) {
+    comparisons.visit(owner);
     if (Object.is(left, right)) return true;
     if (!left || !right || typeof left !== 'object' || typeof right !== 'object') return false;
     const previous = compared.get(left) ?? new WeakSet();
@@ -145,14 +172,21 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
     previous.add(right); compared.set(left, previous);
     if (left instanceof Map || right instanceof Map) {
       if (!(left instanceof Map && right instanceof Map) || left.size !== right.size) return false;
-      return compareProgramData([...left], [...right]);
+      if (!sourceOwners) return compareProgramData([...left], [...right], owner);
+      const candidates = right.entries();
+      for (const [key, value] of left) {
+        const [candidateKey, candidateValue] = candidates.next().value;
+        if (!compareProgramData(key, candidateKey, owner) ||
+            !compareProgramData(value, candidateValue, comparisons.childOwner(left, value, owner))) return false;
+      }
+      return true;
     }
     if (Array.isArray(left) || Array.isArray(right)) return Array.isArray(left) && Array.isArray(right)
-      && left.length === right.length && left.every((value, index) => compareProgramData(value, right[index]));
+      && left.length === right.length && left.every((value, index) => compareProgramData(value, right[index], comparisons.childOwner(left, value, owner)));
     const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
     for (const field of keys) {
       if (acceptNeutralField(left, field, left[field]) && acceptNeutralField(right, field, right[field])) continue;
-      if (!Object.hasOwn(left, field) || !Object.hasOwn(right, field) || !compareProgramData(left[field], right[field])) return false;
+      if (!Object.hasOwn(left, field) || !Object.hasOwn(right, field) || !compareProgramData(left[field], right[field], owner)) return false;
     }
     return true;
   }

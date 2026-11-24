@@ -117,34 +117,87 @@ pub mod ml_array {
     }
 }
 
+pub mod ml_source_exception {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct SourceException {
+        pub class_name: String,
+        pub message_units: Vec<u16>,
+        pub message_present: bool,
+    }
+    impl SourceException {
+        #[must_use]
+        pub fn raise(self) -> ! {
+            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
+        }
+        #[must_use]
+        pub fn from_text(class_name: &str, message: &str) -> Self {
+            Self {
+                class_name: class_name.to_owned(),
+                message_units: message.encode_utf16().collect(),
+                message_present: true,
+            }
+        }
+    }
+    impl std::fmt::Display for SourceException {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.message_units))
+        }
+    }
+    impl std::error::Error for SourceException {}
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_number_fact() -> f64 {
-    panic!("{}", "missing required Number fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Number fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_text_fact() -> String {
-    panic!("{}", "missing required text fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required text fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_boolean_fact() -> bool {
-    panic!("{}", "missing required Boolean fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Boolean fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Number fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required Number fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_number_fact)
     }
@@ -153,13 +206,16 @@ pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required text fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required text fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_text_fact)
     }
@@ -168,13 +224,16 @@ pub fn read_required_text_fact(values: &[String], index: f64) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Boolean fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required Boolean fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_boolean_fact)
     }
@@ -187,7 +246,7 @@ pub fn join_record_items(items: &[String], separator: &str) -> String {
         let text = String::new();
         {
             let index = 0f64;
-            { self::ml_join_record_items_loop1(items, separator, text, index) }
+            { self::source_ml_temporary_join_record_items_loop1(items, separator, text, index) }
         }
     }
 }
@@ -201,8 +260,9 @@ pub fn render_record_value(target: &str, labels: &[String], items: &[String]) ->
             {
                 let index = 0f64;
                 {
-                    let entries_2 =
-                        self::ml_render_record_value_loop2(labels, items, entries, index);
+                    let entries_2 = self::source_ml_temporary_render_record_value_loop2(
+                        labels, items, entries, index,
+                    );
                     format!("({{{}}})", self::join_record_items(&(entries_2), ", "))
                 }
             }
@@ -248,6 +308,39 @@ pub fn render_record_field(target: &str, object: &str, field: &str, index: &str)
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn render_java_script_optional_record_value(
+    labels: &[String],
+    items: &[String],
+    optional: &[bool],
+) -> String {
+    {
+        let entries = Vec::<String>::new();
+        {
+            let index = 0f64;
+            {
+                let entries_2 =
+                    self::source_ml_temporary_render_java_script_optional_record_value_loop3(
+                        labels, items, optional, entries, index,
+                    );
+                format!("({{{}}})", self::join_record_items(&(entries_2), ", "))
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_java_script_optional_record_field(object: &str, field: &str) -> String {
+    format!(
+        "((object) => Object.hasOwn(object, {}) ? [object[{}]] : undefined)({})",
+        field.to_owned(),
+        field.to_owned(),
+        object.to_owned()
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn render_record_product_field(target: &str, object: &str, index: f64, count: f64) -> String {
     if target == "Lean" {
         if count == 1f64 {
@@ -258,8 +351,9 @@ pub fn render_record_product_field(target: &str, object: &str, index: f64, count
                 {
                     let position = 0f64;
                     {
-                        let suffix_2 =
-                            self::ml_render_record_product_field_loop3(index, suffix, position);
+                        let suffix_2 = self::source_ml_temporary_render_record_product_field_loop4(
+                            index, suffix, position,
+                        );
                         format!(
                             "({}){suffix_2}{}",
                             object.to_owned(),
@@ -279,8 +373,9 @@ pub fn render_record_product_field(target: &str, object: &str, index: f64, count
             {
                 let position_2 = count - 1f64;
                 {
-                    let value_2 =
-                        self::ml_render_record_product_field_loop4(index, value, position_2);
+                    let value_2 = self::source_ml_temporary_render_record_product_field_loop5(
+                        index, value, position_2,
+                    );
                     if index == 0f64 {
                         value_2
                     } else {
@@ -316,7 +411,7 @@ pub fn render_record_type(target: &str, fields: &[String]) -> String {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_join_record_items_loop1(
+pub fn source_ml_temporary_join_record_items_loop1(
     items: &[String],
     separator: &str,
     mut text: String,
@@ -348,7 +443,7 @@ pub fn ml_join_record_items_loop1(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_render_record_value_loop2(
+pub fn source_ml_temporary_render_record_value_loop2(
     labels: &[String],
     items: &[String],
     mut entries: Vec<String>,
@@ -383,7 +478,59 @@ pub fn ml_render_record_value_loop2(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_render_record_product_field_loop3(
+pub fn source_ml_temporary_render_java_script_optional_record_value_loop3(
+    labels: &[String],
+    items: &[String],
+    optional: &[bool],
+    mut entries: Vec<String>,
+    mut index: f64,
+) -> Vec<String> {
+    loop {
+        if index < (items.len() as f64) {
+            {
+                let label = self::read_required_text_fact(labels, index);
+                {
+                    let item = self::read_required_text_fact(items, index);
+                    {
+                        let entries_4 = if self::read_required_boolean_fact(optional, index) {
+                            {
+                                {
+                                    let (ml_append_right, ml_append_left) = (
+                                        vec![format!(
+                                            "...((field) => field === undefined ? {{}} : {{[{label}]: field[0]}})({item})"
+                                        )],
+                                        entries,
+                                    );
+                                    self::ml_array::append(ml_append_left, ml_append_right)
+                                }
+                            }
+                        } else {
+                            {
+                                {
+                                    let (ml_append_right, ml_append_left) =
+                                        (vec![format!("[{label}]: {item}")], entries);
+                                    self::ml_array::append(ml_append_left, ml_append_right)
+                                }
+                            }
+                        };
+                        {
+                            let index_2 = index + 1f64;
+                            {
+                                (entries, index) = (entries_4, index_2);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return { entries };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_render_record_product_field_loop4(
     mut index: f64,
     mut suffix: String,
     mut position: f64,
@@ -407,7 +554,7 @@ pub fn ml_render_record_product_field_loop3(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_render_record_product_field_loop4(
+pub fn source_ml_temporary_render_record_product_field_loop5(
     mut index: f64,
     mut value: String,
     mut position: f64,

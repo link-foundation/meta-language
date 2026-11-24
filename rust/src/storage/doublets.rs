@@ -222,7 +222,7 @@ impl DoubletsLinkStore {
             .unwrap_or(0);
         let next = max_id
             .checked_add(1)
-            .ok_or_else(|| StorageError::Corrupt("link id space is exhausted".to_string()))?;
+            .ok_or(StorageError::IdentifierSpaceExhaustion)?;
         Ok(LinkId::from_u64(next))
     }
 

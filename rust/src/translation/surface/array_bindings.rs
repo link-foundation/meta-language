@@ -19,6 +19,16 @@ pub(super) struct SurfaceExpression {
     node: SNode,
     #[serde(default)]
     span: Option<Span>,
+    #[serde(rename="sourcePosition",default,deserialize_with="crate::translation::source_position_transport::read_present_source_position")]
+    source_position: Option<Box<crate::translation::source_signatures::RustSourceExpressionPosition>>,
+    #[serde(rename = "sourceStateTransition", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+    source_state_transition: Option<Box<crate::translation::source_loop_folds::RustSourceStateTransition>>,
+    #[serde(rename = "sourceLoopFold", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+    source_loop_fold: Option<Box<crate::translation::source_loop_folds::RustSourceLoopFold>>,
+    #[serde(rename = "sourceRecordPlace", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+    source_record_place: Option<Box<crate::translation::source_record_places::RustSourceRecordPlace>>,
+    #[serde(rename = "sourcePlaceTransform", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+    source_place_transform: Option<Box<crate::translation::source_place_transforms::RustSourcePlaceTransform>>,
     #[serde(
         default,
         deserialize_with = "raw_metadata::read_present_surface_raw_metadata"
@@ -44,10 +54,25 @@ impl TryFrom<SurfaceExpression> for SExpr {
     type Error = String;
 
     fn try_from(raw: SurfaceExpression) -> Result<Self, Self::Error> {
+        let has_source_facet = raw.source_position.is_some()
+            || raw.source_state_transition.is_some()
+            || raw.source_loop_fold.is_some()
+            || raw.source_record_place.is_some()
+            || raw.source_place_transform.is_some();
+        if let SNode::ReferenceIdentity { extra, .. } = &raw.node
+            && (!extra.is_empty()
+                || raw.parenthesized.is_some()
+                || raw.block.is_some()
+                || has_source_facet
+                || matches!(raw.tag_test, TagTestPresence::Present(_)))
+        {
+            return Err("explicit reference identity needs its closed owned operands".to_owned());
+        }
         if let SNode::ReferencePayload { extra, .. } = &raw.node
             && (!extra.is_empty()
                 || raw.parenthesized.is_some()
                 || raw.block.is_some()
+                || has_source_facet
                 || matches!(raw.tag_test, TagTestPresence::Present(_)))
         {
             return Err("a reference payload needs its closed owned expression".to_owned());
@@ -55,13 +80,18 @@ impl TryFrom<SurfaceExpression> for SExpr {
         if matches!(
             raw.node,
             SNode::ArrayBindingRest { .. } | SNode::ArrayBindingDefault { .. }
-        ) && (raw.block.is_some() || matches!(raw.tag_test, TagTestPresence::Present(_)))
+        ) && (raw.block.is_some() || has_source_facet || matches!(raw.tag_test, TagTestPresence::Present(_)))
         {
             return Err("array binding contains an unrepresented field".to_owned());
         }
         Ok(Self {
             node: raw.node,
             span: raw.span,
+            source_position: raw.source_position,
+            source_state_transition: raw.source_state_transition,
+            source_loop_fold: raw.source_loop_fold,
+            source_record_place: raw.source_record_place,
+            source_place_transform: raw.source_place_transform,
             parenthesized: raw.parenthesized,
             block: raw.block.unwrap_or(false),
             tag_test: match raw.tag_test {

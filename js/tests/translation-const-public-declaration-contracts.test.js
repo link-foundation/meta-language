@@ -74,7 +74,7 @@ test('the exact declared const selector still requires Rust source',async contex
 
 test('the exact unknown explicit const signature selection keeps its independent runtime refusal',async context=>{
  await assert.rejects(runConsumer('reject-unregistered-explicit-const-predicate-signature-model',context),error=>{
-  assert.equal(error.kind,'unsupported');assert.equal(error.reason,'Rust source signature model: select the legacy model or Rust source function signature 1');return true;
+  assert.equal(error.kind,'unsupported');assert.equal(error.reason,'Rust source signature model: select the legacy model, Rust source function signature 1, or the explicit borrowed vector signature 3');return true;
  });
 });
 
@@ -94,7 +94,10 @@ test('the unchanged unknown const model selects exact compiler diagnostics with 
  const duplicate={policy:{...registry.policy,assertions:[...registry.policy.assertions,policy]}};
  assert.throws(()=>selectPublicDeclarationDiagnostics(consumer,'5.9.2',duplicate),/exactly one registered assertion policy/u);
  const independent=consumers.get('reject-unregistered-explicit-const-predicate-signature-model');
+ assert.match(independent.source,/rustSourceSignatureModel:'Rust source function signature 99'/u);
  assert.deepEqual(selectPublicDeclarationDiagnostics(independent,'5.9.2',registry),['TS2322']);
+ assert.deepEqual(selectPublicDeclarationDiagnostics(independent,'7.0.2',registry),['TS2820']);
+ assert.throws(()=>selectPublicDeclarationDiagnostics(independent,'7.0.3',registry),/uncovered active version/u);
 });
 
 test('the public Boolean const model executes its four declared decision outcomes',async context=>{

@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
+import {readProjectData} from '../scripts/project-data.mjs';
 import { tokenize } from '../src/translation/lexer.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
@@ -312,18 +313,19 @@ test('all actual arguments evaluate before ordered callee field reads and each a
   // accessor/proxy records to the Rust represented-data invocation premise.
 });
 
-test('hygiene and actual source scopes retain unrelated names and refuse writes rather than changing parameter mutability', () => {
+test('hygiene and actual source scopes retain mutable bindings and historical refusal inputs', () => {
   const source = 'function selected({left:record_parameter_value0,right:b}){return record_parameter_value0+b;}\nconsole.log(selected({left:2,right:3}));';
   const code = emitJavaScript(checkProgram(parseJavaScript(source))).text;
   assert.equal(observe(code, 'selected({left:2,right:3})', { console: { log() {} } }), '5');
-  for (const source of ['function f({a}){a=2;return a;}',
-    'function f({a}){var a=2;return a;}',
-    'function f({a}){const change=()=>{a=2;return a;};return change();}',
-    'function f({a},other){other=2;return a+other;}']) {
-    // The unchanged parser rejects var before post-body profile admission.
-    // Retain that input and its actual existing diagnostic owner.
-    assert.throws(() => checkProgram(parseJavaScript(source)), /record parameter|mutable|capture|var declaration/u, source);
+  const corrections=readProjectData(new URL('../../parity/fixtures/record-parameter-writes.lino',import.meta.url));
+  for(const row of corrections.correctedAssertions){
+    assert.equal(row.previousAssertion,'checkProgram(parseJavaScript(source)) throws /record parameter|mutable|capture|var declaration/');
+    assert.equal(observe(row.source,row.call),row.value);
+    const program=checkProgram(parseJavaScript(row.source)),packet=encodeTypedProgramLinks(program);
+    assert.equal(observe(emitJavaScript(program).text,row.call),row.value);
+    for(const network of archives(packet.network))assert.equal(observe(emitJavaScript(decodeTypedProgramLinks(network,packet.root)).text,row.call),row.value);
   }
+  assert.throws(()=>checkProgram(parseJavaScript('function f({a}){var a=2;return a;}')),/var declaration/u);
   for (const source of ['function f({a}){const a=2;return a;}', 'function f({a}){let a=2;return a;}']) {
     assert.throws(() => parseJavaScript(source), /record parameter|redeclar|already|duplicate/u, source);
   }
@@ -380,9 +382,17 @@ test('existing typed field laws preserve present null values String or Array len
   // that its receiver has record type, getters or arbitrary JS object coercion.
 });
 
-test('anonymous const arrow namespace async and documentation profiles do not leak into the named-only adapter', () => {
-  for (const source of ['const f=({a})=>a;', 'const f=function({a}){return a;};',
-    'const Namespace={f({a}){return a;}};', 'async function f({a}){return a;}',
+test('ordinary callable parameter contexts retain original syntax and concrete-call coverage separately from the named profile',()=>{
+ const legacy=readProjectData(new URL('../../parity/fixtures/record-callable-parameters.lino',import.meta.url)).legacy;
+ for(const row of legacy){
+  assert.doesNotThrow(()=>parseJavaScript(row.source),row.source);
+  const source=row.source+'console.log('+row.call+');';
+  assert.doesNotThrow(()=>checkProgram(parseJavaScript(source)),row.source);
+  assert.equal(observe(source,row.call,{console:{log(){}}}),JSON.stringify(Number(row.value)));
+ }
+});
+test('async and documentation profiles retain their separate named-adapter refusal boundaries', () => {
+  for (const source of ['async function f({a}){return a;}',
     '/** @param {{a:number}} options */function f({a}){return a;}']) {
     assert.throws(() => parseJavaScript(source), /destructured parameter|record parameter/u, source);
   }
@@ -560,4 +570,12 @@ test('actual complete project helper declarations retain their original owners a
     assert.ok(planJavaScriptRecordParameters(input.kinds, input.values, at + 3, reserved)[0] > 0);
     // These are actual original header/CST controls, not whole-body success.
   }
+});
+
+// Prepared owner controls; no execution during the whole requirements draft.
+test('BigInt and Boolean owners require actual unshadowed standard bindings',()=>{
+ for(const name of ['BigInt','Boolean']){
+  assert.equal(acceptJavaScriptStandardBuiltinOwner(name,false),true);
+  assert.equal(acceptJavaScriptStandardBuiltinOwner(name,true),false);
+ }
 });

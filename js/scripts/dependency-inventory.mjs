@@ -192,7 +192,7 @@ function collectNpm(root, items) {
       declaredIn: declared ? [manifestFile, lockFile] : lockFile,
       pinned: entry.version,
       compare: 'version',
-      source: { type: 'npm', package: name },
+      source: { type: 'npm', package: entry.name ?? name },
       role: declared ? 'direct' : 'transitive',
       kind: entry.dev ? 'development' : entry.optional ? 'optional' : entry.peer ? 'peer' : 'runtime',
       ...(declared ? { requirement: declared.range } : {}),
@@ -238,34 +238,48 @@ function collectCargo(root, items, manifestFile, lockFile = manifestFile.replace
   }
   const packages = parseCargoLock(readText(root, lockFile));
   const rootPackage = packages.find((entry) => entry.name === settings.name && entry.source === null);
-  const directNames = new Set((rootPackage?.dependencies ?? []).map((dependency) => dependency.split(' ')[0]));
+  const directPackages = new Set(rootPackage?.dependencies ?? []);
   const declared = new Map();
   for (const dependency of dependencies) {
-    const entry = declared.get(dependency.name) ?? { requirements: [], kinds: [], optional: dependency.optional };
-    entry.requirements.push(dependency.requirement);
-    entry.kinds.push(dependency.kind);
+    const entry = declared.get(dependency.name) ?? [];
+    entry.push(dependency);
     declared.set(dependency.name, entry);
   }
   for (const entry of packages) {
     if (!entry.source?.startsWith('registry+')) continue;
-    const direct = directNames.has(entry.name) ? declared.get(entry.name) : undefined;
+    const unversioned = directPackages.has(entry.name);
+    const selected = [`${entry.name} ${entry.version}`, `${entry.name} ${entry.version} (${entry.source})`]
+      .some(identity => directPackages.has(identity));
+    const declarations = declared.get(entry.name) ?? [];
+    const direct = unversioned ? declarations : selected
+      ? declarations.filter(({ requirement }) => requirement && satisfies(entry.version, requirement, 'cargo')) : [];
     addItem(items, {
       category: 'crate',
       scope: lockFile,
       name: entry.name,
-      declaredIn: direct ? [manifestFile, lockFile] : lockFile,
+      declaredIn: direct.length ? [manifestFile, lockFile] : lockFile,
       pinned: entry.version,
       compare: 'version',
       source: { type: 'crate', crate: entry.name },
-      role: direct ? 'direct' : 'transitive',
-      ...(direct
-        ? { requirement: unique(direct.requirements).join('; '), kind: unique(direct.kinds).join(', ') + (direct.optional ? ' (optional)' : '') }
+      role: direct.length ? 'direct' : 'transitive',
+      ...(direct.length
+        ? { requirement: unique(direct.map(({ requirement }) => requirement)).join('; '),
+          kind: unique(direct.map(({ kind }) => kind)).join(', ') + (direct[0].optional ? ' (optional)' : '') }
         : {}),
     });
   }
 }
 
 function collectExperiments(root, items) {
+  const attributed = 'experiments/grammar-inference/attributed-holdout.mjs';
+  const json = 'experiments/grammar-inference/json-holdout.mjs';
+  if (existsSync(path.join(root, attributed)) && existsSync(path.join(root, json))) {
+    const pinned = readText(root, attributed).match(/const oracleVersion = '(\d+\.\d+\.\d+)'/u)?.[1];
+    const jsonVersion = readText(root, json).match(/process\.versions\.node !== '(\d+\.\d+\.\d+)'/u)?.[1];
+    if (!pinned || pinned !== jsonVersion) throw new Error('the holdout oracle version guards disagree');
+    addItem(items, { category: 'experiment', name: 'holdout Node oracle contract', pinned,
+      declaredIn: [attributed, json], compare: 'unversioned', source: { type: 'none' } });
+  }
   for (const file of trackedFiles(root, 'experiments', /^Cargo\.toml$/u)) collectCargo(root, items, file);
   for (const file of trackedFiles(root, 'experiments', /^package\.json$/u)) {
     const manifest = readJson(root, file);
@@ -363,6 +377,13 @@ function collectWorkflows(root, items) {
     }
     for (const match of text.matchAll(/npm install -g npm@(\S+)/gu)) {
       addItem(items, { category: 'toolchain', name: 'npm', declaredIn: file, pinned: match[1], compare: 'major', source: { type: 'npm', package: 'npm' } });
+    }
+    const crucioRevision = text.match(/^\s*CRUCIO_REVISION:\s*([0-9a-f]{40})\s*$/mu)?.[1];
+    if (crucioRevision) {
+      const repository = text.match(/remote add origin https:\/\/github\.com\/([\w.-]+\/crucio)\.git(?=\s|$)/u)?.[1];
+      if (!repository) throw new Error('the Crucio checkout has no GitHub repository');
+      addItem(items, { category: 'experiment', name: 'Crucio learner', pinned: crucioRevision,
+        declaredIn: file, compare: 'revision', source: { type: 'github-default-revision', repository } });
     }
     for (const { name, pinned } of pinnedPipPackages(text)) {
       addItem(items, { category: 'toolchain', scope: 'pypi', name, declaredIn: file, pinned, compare: 'version', source: { type: 'pypi', package: name } });
@@ -464,6 +485,20 @@ function collectPreCommit(root, items) {
 
 function collectScripts(root, items) {
   for (const file of trackedFiles(root, 'rust/scripts', /\.sh$/u)) collectFloatingTools(items, file, readText(root, file));
+  const replay = 'experiments/link-cli-archive-reconstruction.mjs';
+  const assertion = 'js/scripts/link-cli-archive-reconstruction-assertions.mjs';
+  if (existsSync(path.join(root, replay))) {
+    const pins = [...readText(root, assertion).matchAll(/^\s*linkCliVersion: '([0-9]+\.[0-9]+\.[0-9]+)',$/gmu)];
+    if (pins.length !== 1) throw new Error('the native Link CLI reconstruction requires one exact release pin');
+    addItem(items, {
+      category: 'toolchain',
+      name: 'link-cli',
+      declaredIn: [assertion, replay],
+      pinned: pins[0][1],
+      compare: 'version',
+      source: { type: 'crate', crate: 'link-cli' },
+    });
+  }
   for (const file of ['Dockerfile', 'rust/Dockerfile', 'js/Dockerfile'].filter((candidate) => existsSync(path.join(root, candidate)))) {
     for (const match of readText(root, file).matchAll(/^FROM\s+([^\s:]+):(\S+)/gmu)) {
       addItem(items, { category: 'image', name: match[1], declaredIn: file, pinned: match[2], compare: 'version', source: { type: 'docker-hub', repository: match[1] } });
@@ -792,12 +827,12 @@ export function checkDeliveredDependencies(inventory, collected, options = {}) {
         }
       }
       for (const name of versions.keys()) {
-        if (!runtimePackages.some((item) => item.source.package === name)) {
+        if (!runtimePackages.some((item) => item.name === name)) {
           problems.push({ kind: 'uninventoried-consumer-dependency', message: `${name}: installed runtime dependency has no audited current release` });
         }
       }
       for (const item of runtimePackages) {
-        const installed = versions.get(item.source.package) ?? [];
+        const installed = versions.get(item.name) ?? [];
         const target = effective.get(item.id).status === 'compatible' ? item.compatible : item.current;
         let stale = installed.length === 0;
         try {
@@ -806,7 +841,7 @@ export function checkDeliveredDependencies(inventory, collected, options = {}) {
           stale = true;
         }
         if (stale) {
-          problems.push({ kind: 'stale-consumer-resolution', message: `${item.source.package}: clean consumer resolves ${installed.join(', ') || 'no installed version'}, audited current release is ${target}` });
+          problems.push({ kind: 'stale-consumer-resolution', message: `${item.name}: clean consumer resolves ${installed.join(', ') || 'no installed version'}, audited current release is ${target}` });
         }
       }
     }
@@ -960,6 +995,12 @@ export function releaseResolvers({ http, github, today }) {
         evidence: `GitHub release, ${repository} (the pin is ${comparison.status} of it)`,
       };
     },
+    'github-default-revision': async ({ repository }, item) => {
+      const { default_branch: branch } = await github(`repos/${repository}`);
+      const { sha: current } = await github(`repos/${repository}/commits/${encodeURIComponent(branch)}`);
+      if (!/^[0-9a-f]{40}$/u.test(current)) throw new Error(`No default branch revision for ${repository}`);
+      return { current, containsCurrent: current === item.pinned, evidence: `GitHub, ${repository} ${branch} head` };
+    },
     'node-lts': async () => {
       const release = (await nodeIndex()).find((entry) => entry.lts);
       return { current: release.version.replace(/^v/u, ''), evidence: `nodejs.org, newest LTS release (${release.lts})` };
@@ -1010,6 +1051,33 @@ export function opamConstraint(opam, name) {
  */
 export function couplingResolvers({ github }) {
   return {
+    'toolchain node': async (item, find) => {
+      const holder = find('experiment', 'holdout Node oracle contract');
+      if (!holder || holder.pinned !== item.pinned) return {};
+      return {
+        compatible: holder.pinned,
+        heldBy: [{ id: holder.id, requirement: `=${holder.pinned}`, evidence: holder.declaredIn.join(', ') }],
+        reason: `The issue #224 holdout oracles require Node.js ${holder.pinned} to reproduce their measured observations.`,
+      };
+    },
+    'toolchain colored': async (item, find, versions) => {
+      const holder = find('experiment', 'Crucio learner');
+      if (!holder || !versions) return {};
+      const repository = holder.source.repository;
+      const requirements = await githubFile(github, repository, 'requirements.txt', holder.pinned);
+      const pin = requirements.match(/^colored\s*~=\s*((\d+)\.(\d+)\.\d+)\s*$/mu);
+      if (!pin) return {};
+      const [, minimum, major, minor] = pin;
+      const requirement = `>=${minimum} <${major}.${Number(minor) + 1}.0`;
+      const compatible = versions.filter(version => comparePypiVersions(version, minimum) >= 0
+        && comparePypiVersions(version, `${major}.${Number(minor) + 1}.0`) < 0)
+        .sort((a, b) => comparePypiVersions(b, a))[0];
+      return {
+        compatible,
+        heldBy: [{ id: holder.id, requirement, evidence: `${repository} ${holder.pinned} requirements.txt: colored~=${minimum}` }],
+        reason: `The pinned Crucio learner requires colored~=${minimum} for the issue #224 reproduction.`,
+      };
+    },
     // The vendored web-tree-sitter runtime is built with the emscripten that
     // its tree-sitter release pins; another emscripten changes the runtime.
     'image emscripten/emsdk': async (item, find) => {
@@ -1147,7 +1215,9 @@ export async function refreshInventory({ root, previous, collected, resolvers, c
   const priorByName = new Map((previous?.items ?? []).map((item) => [nameKey(item), item]));
   // A generator names the tools it runs by id, and an id carries the pin: follow a tool to its new pin.
   const collectedByName = new Map(collected.map((item) => [nameKey(item), item]));
-  const followPin = (id) => relocations.get(id) ?? (prior.has(id) ? (collectedByName.get(nameKey(prior.get(id)))?.id ?? id) : id);
+  const collectedIdentities = new Set(collected.map(({ id }) => id));
+  const followPin = (id) => collectedIdentities.has(id) ? id
+    : relocations.get(id) ?? (prior.has(id) ? (collectedByName.get(nameKey(prior.get(id)))?.id ?? id) : id);
   let done = 0;
   const releases = new Map();
   const items = await mapLimit(collected, 16, async (item) => {
@@ -1181,7 +1251,7 @@ export async function refreshInventory({ root, previous, collected, resolvers, c
     let holders = [];
     let syntax = 'npm';
     if (item.category === 'npm') {
-      holders = (npmHolders.get(item.source.package) ?? []).filter(({ requirement }) => satisfies(item.pinned, requirement, 'npm'));
+      holders = (npmHolders.get(item.name) ?? []).filter(({ requirement }) => satisfies(item.pinned, requirement, 'npm'));
       reason = heldReason(item, holders, { syntax, rootName: manifests['js/package-lock.json'].lock.name });
     } else if (item.category === 'crate') {
       syntax = 'cargo';
@@ -1192,7 +1262,7 @@ export async function refreshInventory({ root, previous, collected, resolvers, c
       const rootName = parseCargoManifest(readText(root, manifest)).settings.name;
       reason = heldReason(item, holders, { syntax, rootName });
     } else if (resolvers.couplings?.[`${item.category} ${item.name}`]) {
-      const coupled = await resolvers.couplings[`${item.category} ${item.name}`](item, find);
+      const coupled = await resolvers.couplings[`${item.category} ${item.name}`](item, find, releases.get(item.id));
       if (coupled.compatible && coupled.heldBy?.length) {
         Object.assign(item, { compatible: coupled.compatible, heldBy: coupled.heldBy });
         reason = coupled.reason;

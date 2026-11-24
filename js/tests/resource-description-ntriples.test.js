@@ -77,6 +77,11 @@ test('malformed syntax and unsupported identifier profiles have precise separate
     assert.throws(() => importResourceDescriptionNTriples(item.source, { sourceIdentifier: 'test' }), error => error instanceof ResourceDescriptionNTriplesError
       && error.kind === item.kind && Number.isSafeInteger(error.offset) && error.offset >= 0 && error.offset <= item.source.length, item.id);
   }
+  const graph = archive(fixture.cases.find(item => item.id === 'bracketed-address'));
+  const profile = graph.network.links().find(link => link.metadata().term === RESOURCE_DESCRIPTION_NTRIPLES_PROFILE.terms.profile);
+  profile.setMetadata(profile.metadata().withDefinition('unknown syntax profile'));
+  assert.throws(() => readResourceDescriptionNTriplesSource(graph.network, graph.syntaxRoot),
+    error => error instanceof ResourceDescriptionNTriplesError && error.kind === 'unsupported' && error.offset === 0);
   for (const source of ['\uD800', '<urn:s> <urn:p> "\uDC00" .', '# \uD800']) {
     assert.throws(() => importResourceDescriptionNTriples(source, { sourceIdentifier: 'test' }), /invalid Unicode scalar/u);
   }

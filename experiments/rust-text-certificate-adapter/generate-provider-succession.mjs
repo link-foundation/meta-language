@@ -7,7 +7,7 @@ import {captureGitArtifactCertificate} from '../../js/scripts/capture-git-artifa
 import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';
 import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {checkProjectData,writeProjectData,serializeProjectData} from '../../js/scripts/project-data.mjs';
-import {OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,readReviewedOverlayProviderSuccessionHistory,
+import {readReviewedOverlayProviderReview,readReviewedOverlayProviderSuccessionHistory,
  verifyReviewedOverlayProviderSuccessionHistory,verifyCurrentReviewedOverlayProviderSources,
  deriveReviewedOverlayProviderPolicy,deriveReviewedOverlayProviderReceipts} from './provider-succession.mjs';
 const root=new URL('../../',import.meta.url);
@@ -123,7 +123,7 @@ export async function updateReviewedOverlayProviderSuccession({check=false,revis
     assert.match(revision,/^[a-f0-9]{40}$/u,'supply one complete actual committed source epoch');
     assert.equal(original.profiles.some(row=>row.sourceCommit===revision),false,'a committed epoch is appended once');
     const last=original.profiles.at(-1);
-    const review=last.sourceCommit===OVERLAY_PROVIDER_APPEND_REVIEW.previous?OVERLAY_PROVIDER_APPEND_REVIEW:OVERLAY_PROVIDER_REFERENCE_REVIEW;
+    const review=readReviewedOverlayProviderReview(last.sourceCommit);
     assert.equal(last.sourceCommit,review.previous,'this review applies to the exact preceding provider profile');
     const capture=file=>{
       const{blob,certificate}=captureGitArtifactCertificate(revision,file);
@@ -164,10 +164,12 @@ export async function updateReviewedOverlayProviderSuccession({check=false,revis
   const currentOutputs=outputs(packet);
   for(const row of currentOutputs){
     const actual=readFileSync(new URL(row.file,root),'utf8');
+    if(actual===row.source)continue;
+    if(check)assert.equal(actual,row.source);
     const known=[packet.historicalOutputs.find(old=>old.file===row.file).source];
-    for(let length=1;length<=packet.profiles.length;length++)known.push(outputs({...packet,profiles:packet.profiles.slice(0,length)}).find(value=>value.file===row.file).source);
+    for(let length=1;length<packet.profiles.length;length++)known.push(outputs({...packet,profiles:packet.profiles.slice(0,length)}).find(value=>value.file===row.file).source);
     assert.ok(known.includes(actual),'unknown complete current policy/receipt bytes refuse normal authoring: '+row.file);
-    if(check)assert.equal(actual,row.source);else writeFileSync(new URL(row.file,root),row.source);
+    writeFileSync(new URL(row.file,root),row.source);
   }
   const{rustTextCertificateOverlayRecords}=await import('./generate.mjs');
   const{rawBindingCertificateOverlayRecords}=await import('../rust-raw-binding-certificate-adapter/generate-overlay.mjs');

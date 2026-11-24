@@ -5,7 +5,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import test from 'node:test';
-import {captureGitArtifactCertificate} from '../scripts/capture-git-artifact-certificate.mjs';
+import {captureGitArtifactCertificate,captureGitArtifactCertificates} from '../scripts/capture-git-artifact-certificate.mjs';
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
 import {readStructuredDataLino,structuredDataToLino} from '../src/structured-data-links.js';
 
@@ -34,6 +34,23 @@ test('real Git certificates preserve complete original objects and verify after 
     rmSync(join(fixture.repository,'.git'),{recursive:true});
     const verified=verifyGitArtifactCertificate(restored,blob,{revision:fixture.revision,path:fixture.path});
     assert.deepEqual(verified,fixture.blob);verified[0]=0;assert.deepEqual(blob,fixture.blob,'returned ownership does not mutate the verified input');
+  }finally{rmSync(fixture.repository,{recursive:true,force:true});}
+});
+
+test('batched Git capture preserves exact certificates and independent returned objects',()=>{
+  const fixture=makeGitCertificateFixture();
+  try{
+    const options={repository:fixture.repository};
+    const paths=[fixture.path,fixture.path,'folder/other.lino','binary.bin'];
+    const capture=captureGitArtifactCertificates(paths.map(path=>({revision:fixture.revision,path})),options);
+    const first=capture.next().value;
+    assert.deepEqual(first,captureGitArtifactCertificate(fixture.revision,fixture.path,options));
+    first.certificate.trees[0].entries.pop();
+    first.blob[0]=0;
+    for(const path of paths.slice(1)){
+      assert.deepEqual(capture.next().value,captureGitArtifactCertificate(fixture.revision,path,options));
+    }
+    assert.equal(capture.next().done,true);
   }finally{rmSync(fixture.repository,{recursive:true,force:true});}
 });
 

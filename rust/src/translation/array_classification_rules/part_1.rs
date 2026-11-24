@@ -33,3 +33,13 @@ pub fn read_java_script_array_classification_plan(kind: &str, element: &str) -> 
         }
     }
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_array_classification_builtin_operation(name: &str) -> String {
+    if name == "Array.isArray" {
+        String::from("testJavaScriptArrayValue")
+    } else {
+        String::new()
+    }
+}

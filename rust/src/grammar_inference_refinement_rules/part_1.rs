@@ -1,0 +1,874 @@
+// Generated from complete js/src/grammar-inference-refinement-rules.js. Do not edit by hand.
+use super::MlTemporaryAppendedRefinementValuesLoop4Result;
+use super::MlTemporaryRefinementFieldLoop1Result;
+use super::MlTemporarySameRefinementValuesLoop2Result;
+use super::source_ml_temporary_appended_refinement_values_loop4;
+use super::source_ml_temporary_refinement_field_loop1;
+use super::source_ml_temporary_same_refinement_values_loop2;
+
+/// Unbounded integers for the portable core's naturals and integers.
+pub mod ml {
+    use std::cmp::Ordering;
+    use std::fmt;
+
+    /// Sign and magnitude; the magnitude is little-endian base 2^32 without
+    /// leading zero limbs, and zero is never negative.
+    #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+    pub struct Big {
+        negative: bool,
+        magnitude: Vec<u32>,
+    }
+
+    fn trim(mut magnitude: Vec<u32>) -> Vec<u32> {
+        while magnitude.last() == Some(&0) {
+            magnitude.pop();
+        }
+        magnitude
+    }
+
+    fn compare_magnitude(a: &[u32], b: &[u32]) -> Ordering {
+        a.len()
+            .cmp(&b.len())
+            .then_with(|| a.iter().rev().cmp(b.iter().rev()))
+    }
+
+    fn add_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
+        let mut out = Vec::with_capacity(a.len().max(b.len()) + 1);
+        let mut carry = 0u64;
+        for index in 0..a.len().max(b.len()) {
+            let sum = u64::from(*a.get(index).unwrap_or(&0))
+                + u64::from(*b.get(index).unwrap_or(&0))
+                + carry;
+            out.push(sum as u32);
+            carry = sum >> 32;
+        }
+        if carry > 0 {
+            out.push(carry as u32);
+        }
+        out
+    }
+
+    /// |a| - |b| where |a| >= |b|.
+    fn sub_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
+        let mut out = Vec::with_capacity(a.len());
+        let mut borrow = 0i64;
+        for (index, limb) in a.iter().enumerate() {
+            let mut difference = i64::from(*limb) - i64::from(*b.get(index).unwrap_or(&0)) - borrow;
+            borrow = 0;
+            if difference < 0 {
+                difference += 1 << 32;
+                borrow = 1;
+            }
+            out.push(difference as u32);
+        }
+        trim(out)
+    }
+
+    fn mul_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
+        let mut out = vec![0u32; a.len() + b.len()];
+        for (i, x) in a.iter().enumerate() {
+            let mut carry = 0u64;
+            for (j, y) in b.iter().enumerate() {
+                let product = u64::from(out[i + j]) + u64::from(*x) * u64::from(*y) + carry;
+                out[i + j] = product as u32;
+                carry = product >> 32;
+            }
+            let mut index = i + b.len();
+            while carry > 0 {
+                let sum = u64::from(out[index]) + carry;
+                out[index] = sum as u32;
+                carry = sum >> 32;
+                index += 1;
+            }
+        }
+        trim(out)
+    }
+
+    /// Quotient and remainder of magnitudes; the divisor is not zero.
+    fn divmod_magnitude(a: &[u32], b: &[u32]) -> (Vec<u32>, Vec<u32>) {
+        let mut quotient = vec![0u32; a.len()];
+        if b.len() == 1 {
+            let divisor = u64::from(b[0]);
+            let mut remainder = 0u64;
+            for index in (0..a.len()).rev() {
+                let current = (remainder << 32) | u64::from(a[index]);
+                quotient[index] = (current / divisor) as u32;
+                remainder = current % divisor;
+            }
+            return (trim(quotient), trim(vec![remainder as u32]));
+        }
+        let mut remainder: Vec<u32> = Vec::new();
+        for bit in (0..a.len() * 32).rev() {
+            let mut carry = (a[bit / 32] >> (bit % 32)) & 1;
+            for limb in &mut remainder {
+                let next = *limb >> 31;
+                *limb = (*limb << 1) | carry;
+                carry = next;
+            }
+            if carry != 0 {
+                remainder.push(carry);
+            }
+            if compare_magnitude(&remainder, b) != Ordering::Less {
+                remainder = sub_magnitude(&remainder, b);
+                quotient[bit / 32] |= 1 << (bit % 32);
+            }
+        }
+        (trim(quotient), remainder)
+    }
+
+    impl Big {
+        fn from_parts(negative: bool, magnitude: Vec<u32>) -> Self {
+            let magnitude = trim(magnitude);
+            Self {
+                negative: negative && !magnitude.is_empty(),
+                magnitude,
+            }
+        }
+
+        #[must_use]
+        pub fn zero() -> Self {
+            Self::from_parts(false, Vec::new())
+        }
+
+        #[must_use]
+        pub fn from_i128(value: i128) -> Self {
+            let mut big = Self::from_u128(value.unsigned_abs());
+            big.negative = value < 0;
+            big
+        }
+
+        #[must_use]
+        pub fn from_u128(mut value: u128) -> Self {
+            let mut magnitude = Vec::new();
+            while value > 0 {
+                magnitude.push(value as u32);
+                value >>= 32;
+            }
+            Self::from_parts(false, magnitude)
+        }
+
+        /// A decimal literal with an optional leading minus sign.
+        #[must_use]
+        pub fn parse(text: &str) -> Self {
+            let (negative, digits) = text
+                .strip_prefix('-')
+                .map_or((false, text), |rest| (true, rest));
+            let ten = Self::from_i128(10);
+            let mut value = Self::zero();
+            for digit in digits.chars() {
+                let digit = digit.to_digit(10).expect("decimal literal");
+                value = value.mul(&ten).add(&Self::from_i128(i128::from(digit)));
+            }
+            if negative { value.neg() } else { value }
+        }
+
+        #[must_use]
+        pub const fn is_zero(&self) -> bool {
+            self.magnitude.is_empty()
+        }
+
+        #[must_use]
+        pub const fn is_negative(&self) -> bool {
+            self.negative
+        }
+
+        /// The array index this names, if it is one.
+        #[must_use]
+        pub fn to_index(&self) -> Option<usize> {
+            if self.negative || self.magnitude.len() > 2 {
+                return None;
+            }
+            let value = self
+                .magnitude
+                .iter()
+                .rev()
+                .fold(0u64, |acc, &digit| (acc << 32) | u64::from(digit));
+            usize::try_from(value).ok()
+        }
+
+        #[must_use]
+        pub fn neg(&self) -> Self {
+            Self::from_parts(!self.negative, self.magnitude.clone())
+        }
+
+        #[must_use]
+        pub fn add(&self, other: &Self) -> Self {
+            if self.negative == other.negative {
+                return Self::from_parts(
+                    self.negative,
+                    add_magnitude(&self.magnitude, &other.magnitude),
+                );
+            }
+            match compare_magnitude(&self.magnitude, &other.magnitude) {
+                Ordering::Less => Self::from_parts(
+                    other.negative,
+                    sub_magnitude(&other.magnitude, &self.magnitude),
+                ),
+                _ => Self::from_parts(
+                    self.negative,
+                    sub_magnitude(&self.magnitude, &other.magnitude),
+                ),
+            }
+        }
+
+        #[must_use]
+        pub fn sub(&self, other: &Self) -> Self {
+            self.add(&other.neg())
+        }
+
+        #[must_use]
+        pub fn mul(&self, other: &Self) -> Self {
+            Self::from_parts(
+                self.negative != other.negative,
+                mul_magnitude(&self.magnitude, &other.magnitude),
+            )
+        }
+
+        /// Division rounding toward zero; the divisor is not zero.
+        #[must_use]
+        pub fn divmod_trunc(&self, other: &Self) -> (Self, Self) {
+            let (quotient, remainder) = divmod_magnitude(&self.magnitude, &other.magnitude);
+            (
+                Self::from_parts(self.negative != other.negative, quotient),
+                Self::from_parts(self.negative, remainder),
+            )
+        }
+    }
+
+    impl Ord for Big {
+        fn cmp(&self, other: &Self) -> Ordering {
+            match (self.negative, other.negative) {
+                (false, true) => Ordering::Greater,
+                (true, false) => Ordering::Less,
+                (false, false) => compare_magnitude(&self.magnitude, &other.magnitude),
+                (true, true) => compare_magnitude(&other.magnitude, &self.magnitude),
+            }
+        }
+    }
+
+    impl PartialOrd for Big {
+        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+
+    impl fmt::Display for Big {
+        fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            if self.is_zero() {
+                return formatter.write_str("0");
+            }
+            let billion = [1_000_000_000u32];
+            let mut chunks = Vec::new();
+            let mut rest = self.magnitude.clone();
+            while !rest.is_empty() {
+                let (quotient, remainder) = divmod_magnitude(&rest, &billion);
+                chunks.push(remainder.first().copied().unwrap_or(0));
+                rest = quotient;
+            }
+            let mut text = String::new();
+            if self.negative {
+                text.push('-');
+            }
+            text.push_str(&chunks.pop().unwrap_or(0).to_string());
+            for chunk in chunks.iter().rev() {
+                std::fmt::Write::write_fmt(&mut text, format_args!("{chunk:09}"))
+                    .expect("writing to a String cannot fail");
+            }
+            formatter.write_str(&text)
+        }
+    }
+
+    /// Natural subtraction: truncated at zero.
+    #[must_use]
+    pub fn nat_sub(a: &Big, b: &Big) -> Big {
+        if a > b { a.sub(b) } else { Big::zero() }
+    }
+
+    #[must_use]
+    pub fn pred(a: &Big) -> Big {
+        a.sub(&Big::from_i128(1))
+    }
+
+    /// Integer division with the source's rounding ("trunc", "floor" or
+    /// "euclid"); by zero it aborts with the source's message or is total
+    /// (x / 0 = 0, x % 0 = x).
+    #[must_use]
+    pub fn divide(a: &Big, b: &Big, rounding: &str, by_zero: Option<&str>, remainder: bool) -> Big {
+        if b.is_zero() {
+            if let Some(message) = by_zero {
+                panic!("{message}");
+            }
+            return if remainder { a.clone() } else { Big::zero() };
+        }
+        let one = Big::from_i128(1);
+        let (mut quotient, rest) = a.divmod_trunc(b);
+        if !rest.is_zero() {
+            if rounding == "floor" && rest.is_negative() != b.is_negative() {
+                quotient = quotient.sub(&one);
+            }
+            if rounding == "euclid" && rest.is_negative() {
+                quotient = if b.is_negative() {
+                    quotient.add(&one)
+                } else {
+                    quotient.sub(&one)
+                };
+            }
+        }
+        if remainder {
+            a.sub(&quotient.mul(b))
+        } else {
+            quotient
+        }
+    }
+
+    #[must_use]
+    pub fn to_nat_checked(value: Big, message: &str) -> Big {
+        assert!(!value.is_negative(), "{message}");
+        value
+    }
+
+    #[must_use]
+    pub fn clamp_nat(value: Big) -> Big {
+        if value.is_negative() {
+            Big::zero()
+        } else {
+            value
+        }
+    }
+
+    /// Bounded domains for executable theorem checks.
+    #[must_use]
+    pub fn range(low: i128, high: i128) -> Vec<Big> {
+        (low..=high).map(Big::from_i128).collect()
+    }
+}
+
+/// JavaScript's Number operations that Rust's f64 does not share.
+pub mod ml_number {
+    /// ECMAScript `Number::toString`: the shortest decimal that reads back as
+    /// the value, the even one on a tie, laid out as JavaScript prints it.
+    #[must_use]
+    pub fn js_number(x: f64) -> String {
+        if x.is_nan() {
+            return String::from("NaN");
+        }
+        if x.is_infinite() {
+            return String::from(if x > 0.0 { "Infinity" } else { "-Infinity" });
+        }
+        if x == 0.0 {
+            return String::from("0");
+        }
+        let (mut digits, n) = decimal(&format!("{:e}", x.abs()));
+        // Rust's shortest digits round a tie away from zero; ECMAScript takes the even neighbour.
+        let (exact, _) = decimal(&format!("{:.800e}", x.abs()));
+        let rest = &exact[digits.len().min(exact.len())..];
+        if digits.len() > 1 && rest.starts_with('5') && rest[1..].bytes().all(|b| b == b'0') {
+            let last = digits.as_bytes()[digits.len() - 1] - b'0';
+            let down = exact[..digits.len()].to_string();
+            let other = if digits == down {
+                increment(&down)
+            } else {
+                Some(down)
+            };
+            if let Some(other) = other {
+                let back = format!("{}.{}e{}", &other[..1], &other[1..], n - 1);
+                if last % 2 == 1 && back.parse::<f64>() == Ok(x.abs()) {
+                    digits = other.trim_end_matches('0').to_string();
+                }
+            }
+        }
+        let k = i32::try_from(digits.len()).expect("binary64 significand length fits i32");
+        let body = if k <= n && n <= 21 {
+            format!("{digits}{}", "0".repeat((n - k) as usize))
+        } else if 0 < n && n <= 21 {
+            format!("{}.{}", &digits[..n as usize], &digits[n as usize..])
+        } else if -6 < n && n <= 0 {
+            format!("0.{}{digits}", "0".repeat((-n) as usize))
+        } else {
+            let sign = if n - 1 < 0 { '-' } else { '+' };
+            let power = (n - 1).abs();
+            if k == 1 {
+                format!("{digits}e{sign}{power}")
+            } else {
+                format!("{}.{}e{sign}{power}", &digits[..1], &digits[1..])
+            }
+        };
+        if x < 0.0 { format!("-{body}") } else { body }
+    }
+
+    /// What console.log prints: -0 as "-0", where String(-0) is "0".
+    #[must_use]
+    pub fn js_console(x: f64) -> String {
+        if x == 0.0 && x.is_sign_negative() {
+            String::from("-0")
+        } else {
+            js_number(x)
+        }
+    }
+
+    /// `SameValue`, as `Object.is` and `assert.strictEqual` compare: NaN equals
+    /// NaN, and 0 differs from -0.
+    #[must_use]
+    pub const fn same_value(a: f64, b: f64) -> bool {
+        if a.is_nan() || b.is_nan() {
+            a.is_nan() && b.is_nan()
+        } else {
+            a.to_bits() == b.to_bits()
+        }
+    }
+
+    /// A decimal digit string plus one, or None when it gains a digit.
+    fn increment(digits: &str) -> Option<String> {
+        let mut bytes = digits.as_bytes().to_vec();
+        for index in (0..bytes.len()).rev() {
+            if bytes[index] == b'9' {
+                bytes[index] = b'0';
+            } else {
+                bytes[index] += 1;
+                return String::from_utf8(bytes).ok();
+            }
+        }
+        None
+    }
+
+    /// The significant digits without trailing zeros, and the exponent n with
+    /// value 0.digits × 10^n, of Rust's {:e} text.
+    fn decimal(text: &str) -> (String, i32) {
+        let (mantissa, exponent) = text.split_once('e').expect("exponent");
+        let digits: String = mantissa.chars().filter(|c| *c != '.').collect();
+        let digits = digits.trim_end_matches('0').to_string();
+        let digits = if digits.is_empty() {
+            String::from("0")
+        } else {
+            digits
+        };
+        (digits, exponent.parse::<i32>().expect("exponent") + 1)
+    }
+}
+
+/// Reads of JavaScript arrays, which the portable core never mutates.
+pub mod ml_array {
+    #[must_use]
+    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {
+        index.and_then(|index| values.get(index)).cloned()
+    }
+    /// The element at an index; a read outside the array, undefined in
+    /// JavaScript, aborts.
+    #[must_use]
+    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
+        index
+            .and_then(|index| values.get(index))
+            .map_or_else(|| panic!("array index out of range"), Clone::clone)
+    }
+
+    /// The index a Number names: a non-negative integer, -0 included.
+    #[must_use]
+    pub fn number_index(index: f64) -> Option<usize> {
+        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {
+            Some(index as usize)
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
+        left.extend(right);
+        left
+    }
+    const fn integer(value: f64) -> f64 {
+        if value.is_nan() { 0.0 } else { value.trunc() }
+    }
+    fn relative(value: f64, length: usize) -> usize {
+        let value = integer(value);
+        if value < 0.0 {
+            (length as f64 + value).max(0.0) as usize
+        } else {
+            value.min(length as f64) as usize
+        }
+    }
+    #[must_use]
+    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {
+        let start = relative(start, values.len());
+        let end = relative(end, values.len());
+        values[start..end.max(start)].to_vec()
+    }
+    #[must_use]
+    pub fn index_of<T, F: Fn(&T, &T) -> bool>(
+        values: &[T],
+        search: &T,
+        from: f64,
+        reverse: bool,
+        equal: F,
+    ) -> f64 {
+        if values.is_empty() {
+            return -1.0;
+        }
+        let from = integer(from);
+        if reverse {
+            if from < -(values.len() as f64) {
+                return -1.0;
+            }
+            let start = if from < 0.0 {
+                (values.len() as f64 + from) as usize
+            } else {
+                from.min((values.len() - 1) as f64) as usize
+            };
+            (0..=start)
+                .rev()
+                .find(|&index| equal(&values[index], search))
+                .map_or(-1.0, |index| index as f64)
+        } else {
+            let start = if from < 0.0 {
+                (values.len() as f64 + from).max(0.0) as usize
+            } else {
+                from.min(values.len() as f64) as usize
+            };
+            (start..values.len())
+                .find(|&index| equal(&values[index], search))
+                .map_or(-1.0, |index| index as f64)
+        }
+    }
+    #[must_use]
+    pub fn includes<T, F: Fn(&T, &T) -> bool>(
+        values: &[T],
+        search: &T,
+        from: f64,
+        reverse: bool,
+        equal: F,
+    ) -> bool {
+        index_of(values, search, from, reverse, equal) >= 0.0
+    }
+    #[must_use]
+    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {
+        let mut out = Vec::new();
+        for value in values {
+            if !out.iter().any(|previous| equal(previous, &value)) {
+                out.push(value);
+            }
+        }
+        out
+    }
+    #[must_use]
+    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {
+        let mut out: Vec<(K, V)> = Vec::new();
+        for (key, value) in values {
+            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {
+                out[index].1 = value;
+            } else {
+                out.push((key, value));
+            }
+        }
+        out
+    }
+}
+
+pub mod ml_source_exception {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct SourceException {
+        pub class_name: String,
+        pub message_units: Vec<u16>,
+        pub message_present: bool,
+    }
+    impl SourceException {
+        #[must_use]
+        pub fn raise(self) -> ! {
+            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
+        }
+        #[must_use]
+        pub fn from_text(class_name: &str, message: &str) -> Self {
+            Self {
+                class_name: class_name.to_owned(),
+                message_units: message.encode_utf16().collect(),
+                message_present: true,
+            }
+        }
+    }
+    impl std::fmt::Display for SourceException {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.message_units))
+        }
+    }
+    impl std::error::Error for SourceException {}
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn refuse_required_number_fact() -> f64 {
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Number fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn refuse_required_text_fact() -> String {
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required text fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn refuse_required_boolean_fact() -> bool {
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Boolean fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required Number fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
+        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
+            .unwrap_or_else(self::refuse_required_number_fact)
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_required_text_fact(values: &[String], index: f64) -> String {
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required text fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
+        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
+            .unwrap_or_else(self::refuse_required_text_fact)
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required Boolean fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
+        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
+            .unwrap_or_else(self::refuse_required_boolean_fact)
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_regular_grammar_refinement_count(count: f64) -> bool {
+    ((0f64..=8f64).contains(&count)) && ((count % 1f64) == 0f64)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_regular_grammar_refinement_journal(version: f64, model: &str) -> bool {
+    (version == 1f64) && (model == "labelled regular grammar refinement 1")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_regular_grammar_refinement_entry_name(ordinal: f64, role: &str) -> String {
+    format!(
+        "regular-discovery-history-{}-{}",
+        {
+            let source_ml_source1_string_argument1 = ordinal;
+            self::ml_number::js_number(source_ml_source1_string_argument1)
+        },
+        role.to_owned()
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_regular_grammar_refinement_identifier(previous: &str, ordinal: f64) -> String {
+    format!("{}@refinement-{}", previous.to_owned(), {
+        let source_ml_source1_string_argument2 = ordinal;
+        self::ml_number::js_number(source_ml_source1_string_argument2)
+    })
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_regular_grammar_refinement_resource_limit(role: &str) -> f64 {
+    if role == "nodes" {
+        1_000_000f64
+    } else if role == "references" {
+        4_000_000f64
+    } else if role == "bytes" {
+        134_217_728f64
+    } else {
+        0f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn refinement_field(
+    labels: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    targets: &[f64],
+    node: f64,
+    name: &str,
+) -> f64 {
+    if ((node < 0f64) || (node >= (starts.len() as f64))) || (node >= (counts.len() as f64)) {
+        -1f64
+    } else {
+        {
+            let start = self::read_required_number_fact(starts, node);
+            {
+                let count = self::read_required_number_fact(counts, node);
+                {
+                    let at = start;
+                    {
+                        let source_ml_source1_s3 = self::source_ml_temporary_refinement_field_loop1(
+                            labels, targets, name, start, count, at,
+                        );
+                        match source_ml_source1_s3 {
+                            self::MlTemporaryRefinementFieldLoop1Result::MlTemporaryRefinementFieldLoop1Done => {
+                                -1f64
+                            }
+                            self::MlTemporaryRefinementFieldLoop1Result::MlTemporaryRefinementFieldLoop1Return(source_ml_temporary_result1) => {
+                                source_ml_temporary_result1
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn same_refinement_values(
+    forms: &[String],
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    first: f64,
+    second: f64,
+) -> bool {
+    {
+        let left = vec![first];
+        {
+            let right = vec![second];
+            {
+                let index = 0f64;
+                {
+                    let source_ml_source1_s4 =
+                        self::source_ml_temporary_same_refinement_values_loop2(
+                            forms, texts, starts, counts, labels, targets, left, right, index,
+                        );
+                    match source_ml_source1_s4 {
+                        self::MlTemporarySameRefinementValuesLoop2Result::MlTemporarySameRefinementValuesLoop2Done => {
+                            true
+                        }
+                        self::MlTemporarySameRefinementValuesLoop2Result::MlTemporarySameRefinementValuesLoop2Return(source_ml_temporary_result2) => {
+                            source_ml_temporary_result2
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn appended_refinement_values(
+    forms: &[String],
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    before: f64,
+    added: f64,
+    after: f64,
+) -> bool {
+    if (((before < 0f64) || (added < 0f64)) || (after < 0f64))
+        || ((((self::read_required_text_fact(forms, before)) != "array")
+            || ((self::read_required_text_fact(forms, added)) != "array"))
+            || ((self::read_required_text_fact(forms, after)) != "array"))
+    {
+        false
+    } else {
+        {
+            let previous = self::read_required_number_fact(counts, before);
+            {
+                let extra = self::read_required_number_fact(counts, added);
+                {
+                    let ml_library_inequality_1 =
+                        (previous + extra) != (self::read_required_number_fact(counts, after));
+                    if ml_library_inequality_1 {
+                        false
+                    } else {
+                        {
+                            let index = 0f64;
+                            {
+                                let source_ml_source1_s5 =
+                                    self::source_ml_temporary_appended_refinement_values_loop4(
+                                        forms, texts, starts, counts, labels, targets, before,
+                                        added, after, previous, extra, index,
+                                    );
+                                match source_ml_source1_s5 {
+                                    self::MlTemporaryAppendedRefinementValuesLoop4Result::MlTemporaryAppendedRefinementValuesLoop4Done => {
+                                        true
+                                    }
+                                    self::MlTemporaryAppendedRefinementValuesLoop4Result::MlTemporaryAppendedRefinementValuesLoop4Return(source_ml_temporary_result4) => {
+                                        source_ml_temporary_result4
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

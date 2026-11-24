@@ -110,23 +110,30 @@ if (!process.argv.includes('--javascript-only')) {
   const raw = definitions.filter((_, index) => !imported.has(checked.items[index].fullName)).join('\n\n');
   assert.ok(raw.includes('pub enum RustRawString {'), 'the actual translated raw-string result is present');
   const provider = readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8');
-  let adapted = raw.replaceAll('crate::read_rust_source_line_break_end', 'crate::translation::frontend_rules::read_rust_source_line_break_end')
+  const { restoreProductContinuationNames } = await import('./product-continuation-style.mjs');
+  const continuations = [
+    ...[5, 6, 8].map(n => ['source_ml_temporary_decode_rust_raw_string_loop'+n, 'ml_decode_rust_raw_string_loop'+n]),
+    ...['Loop6Done','Loop6Result','Loop6Return','Join7','Join7Next','Join7Return','Loop8Done','Loop8Result']
+      .map(name => ['MlTemporaryDecodeRustRawString'+name, 'MlDecodeRustRawString'+name]),
+    ['source_ml_source1_s39','ml_s7'],
+  ];
+  let adapted = restoreProductContinuationNames(raw, continuations)
+    .replaceAll('crate::read_rust_source_line_break_end', 'crate::translation::frontend_rules::read_rust_source_line_break_end')
     .replaceAll('crate::read_source_text_scalar', 'crate::translation::source_text_byte_rules::read_source_text_scalar');
   for (const match of [...adapted.matchAll(/crate::(?:RustRawString|MlDecodeRustRawString\w+|ml_decode_rust_raw_string_\w+)\b/gu)]) {
     adapted = adapted.replaceAll(match[0], match[0].replace('crate::', 'crate::translation::lexer::raw_strings::'));
   }
   // These six optional comparisons have positive nonzero finite constants;
   // bit equality has exactly the original Number equality for each constant.
-  const compared = [...adapted.matchAll(/match \(crate::ml_array::optional_at\([^\n]+?, (\d+)f64\) \{ \(Some\(ml_left\), ml_right\) => ml_left == ml_right/gu)]
-    .map(match => Number(match[1]));
-  assert.deepEqual(compared, [policy.prefixUnit, policy.quoteUnit, policy.delimiterUnit, policy.delimiterUnit, policy.quoteUnit, policy.carriageReturnUnit],
-    'the actual translated comparison constants retain their shared policy roles');
-  let comparisons = 0;
-  adapted = adapted.replace(/\(Some\(ml_left\), ml_right\) => ml_left == ml_right/gu, () => {
-    comparisons += 1;
-    return '(Some(ml_left), ml_right) => ml_left.to_bits() == ml_right.to_bits()';
-  });
-  assert.equal(comparisons, 6, 'every actual optional raw delimiter comparison is represented');
+  const comparison = /\{\s*let (source_ml_source1_comparison_operand\d+) = (crate::ml_array::optional_at\(&units, crate::ml_array::number_index\((\w+)\)\));\s*\{\s*let (source_ml_source1_comparison_operand\d+) = (\d+)f64;\s*(!?)(?:\()?match \(\1\.clone\(\), \4\) \{ \(Some\(ml_left\), ml_right\) => ml_left == ml_right, _ => false \}(?:\))?\s*\}\s*\}/gu;
+  const compared = [...adapted.matchAll(comparison)].map(match => [match[3], Number(match[5]), match[6]]);
+  assert.deepEqual(compared, [
+    ['start', policy.prefixUnit, '!'], ['opening_2', policy.quoteUnit, '!'],
+    ['opening', policy.delimiterUnit, ''], ['closing', policy.delimiterUnit, ''],
+    ['cursor', policy.quoteUnit, ''], ['cursor', policy.carriageReturnUnit, ''],
+  ], 'the six actual comparisons preserve order, literal roles, and negation');
+  adapted = adapted.replace(comparison, (_, _left, operand, _index, _right, value, negate) =>
+    `${negate}(match (${operand}, ${value}f64) { (Some(ml_left), ml_right) => ml_left.to_bits() == ml_right.to_bits(), _ => false })`);
   for (const value of [policy.prefixUnit, policy.delimiterUnit, policy.quoteUnit, policy.carriageReturnUnit]) {
     assert.ok(value > 0 && Number.isFinite(value), 'delimiter bit comparisons use positive finite nonzero constants');
   }

@@ -1,0 +1,1 @@
+Draft Rust let-else fallback returns through the existing ordinary completion tree and conditional packets. Capture initializers once, preserve annotations and pattern checks, and keep fallback scope outside newly bound pattern names. Abort-only bindings retain their existing route. Native decisions are generated from shared JavaScript; verification is deferred.

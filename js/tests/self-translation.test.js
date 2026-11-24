@@ -360,6 +360,14 @@ test('a relative import of items of the crate translates as a use declaration', 
   assert.match(emittedRust(nested), /^use crate::agentic::host::realm;\nuse crate::agentic::crate_::sub::part_two::\{a, b\};$/mu);
 });
 
+test('an uncertified module exports no signatures but still reports standalone translations', () => {
+  const source = 'export function sample() { return true; }\nconst marker = new Uint8Array(1);\n';
+  const report = selfTranslate(source, 'JavaScript', 'Rust');
+  assert.equal(statusOf(report, source, 'function sample'), 'translated');
+  assert.equal(statusOf(report, source, 'const marker'), 'carried');
+  assert.deepEqual(selfTranslationSignatures(source, 'JavaScript'), []);
+});
+
 test('imports outside the crate are refused with their own diagnostics', () => {
   const refused = (source) => {
     const translation = selfTranslate(source, 'JavaScript', 'Rust');

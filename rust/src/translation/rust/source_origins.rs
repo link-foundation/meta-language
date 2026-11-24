@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use super::array_rules::{
     accept_rust_fresh_array_result_tail, accept_rust_source_array_coercion,
-    accept_rust_source_array_owner,
+    accept_rust_source_array_element, accept_rust_source_array_owner,
 };
 use super::indirection_rules::{
     accept_rust_immutable_indirection_layer, accept_rust_source_box_availability,
@@ -17,12 +17,51 @@ use super::indirection_rules::{
 };
 use super::product_rules::{accept_rust_immutable_product_type, accept_rust_product_origin};
 use super::{Result, SExpr, SNode, Span, Type, unsupported};
+use crate::translation::rust_array_index_rules::accept_rust_scalar_array_index_element;
+use crate::translation::rust_byte_string_expression_rules::ml_string::Text as ByteStringText;
+use crate::translation::rust_fresh_vector_argument_rules::{
+    accept_rust_fresh_owned_vector_argument, read_rust_fresh_vector_argument_form,
+};
+use crate::translation::rust_fresh_vector_result_rules::accept_rust_known_fresh_vector_call;
+use crate::translation::rust_pointer_integer_owner_rules::{
+    accept_rust_pointer_integer_owner_child, read_rust_pointer_integer_owner_error,
+    read_rust_pointer_integer_owner_join_error, select_rust_pointer_integer_result_owner,
+};
 
+mod callable_owners;
+mod mutable_record_loans;
+mod nominal_copies;
+mod owned_bindings;
 mod patterns;
+mod primitive_expressions;
 mod type_owners;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct SourceOrigin {
+    pub(super) array_element_position:
+        Option<Box<crate::translation::source_signatures::SourceTypeSignature>>,
+    pub(super) source_function_pointer_header: bool,
+    pub(super) source_fn_mut_parameter: bool,
+    /// Actual concrete standard sum source children, retained independently of
+    /// the generated datatype spelling and re-resolved against the catalog.
+    pub(super) standard_sum_source: Option<Box<super::standard_sum_source::StandardSumSource>>,
+    pub(super) source_binding_identity: Option<String>,
+    pub(super) source_lexical_binding_identity: Option<String>,
+    pub(super) source_record_state_collecting_site: Option<Span>,
+    pub(super) source_value_borrow_bindings: Vec<String>,
+    pub(super) source_value_field_borrow_bindings: Option<Vec<Vec<String>>>,
+    pub(super) source_box_layers: Vec<super::owned_containers::SourceBoxLayer>,
+    pub(super) source_place_binding_identity: Option<String>,
+    pub(super) source_loan_binding_identities: Vec<String>,
+    pub(super) source_place_loan_binding_identities: Vec<String>,
+    pub(super) source_owned_result_proof: bool,
+    pub(super) source_standard_sum_pattern_move: bool,
+    pub(super) source_standard_sum_borrowed_field: bool,
+    pub(super) source_nominal_pattern_move: bool,
+    pub(super) source_nominal_borrowed_field: bool,
+    pub(super) source_byte_iterator: bool,
+    pub(super) source_borrowed_place: bool,
+    pub(super) source_extending_temporary_bindings: Vec<String>,
     pub(super) ty: Option<Type>,
     /// Explicit primitive f64 annotation or literal evidence, never fallback inference.
     pub(super) float_source_model: Option<&'static str>,
@@ -36,18 +75,81 @@ pub(super) struct SourceOrigin {
     pub(super) fields: Option<Vec<Self>>,
     pub(super) text_source_model: Option<&'static str>,
     pub(super) array_source_model: Option<&'static str>,
+    /// Element Copy facts are independent of vector ownership or freshness.
+    pub(super) array_element_copy_evidence: bool,
     /// Constructor or actual call source evidence; cleared on local binding.
     pub(super) fresh_array_value: Option<Span>,
+    /// Closed source result postcondition; all declaration bodies must discharge it.
+    pub(super) fresh_vector_result_contract: bool,
+    pub(super) copy_closure_identity: Option<Span>,
+    pub(super) copy_closure_capture_count: Option<usize>,
+    pub(super) callable_parameters: Option<Vec<Self>>,
+    pub(super) callable_result: Option<Box<Self>>,
+    pub(super) callable_source_owner_error: Option<String>,
     /// Spelled source lifetimes, in reference-layer order; None is elision.
     pub(super) source_lifetimes: Vec<Option<String>>,
     pub(super) source_owner: Option<super::super::source_signatures::SourceOwner>,
+    /// Checked transparent alias owner, before retaining the source spelling.
+    pub(super) expanded_source_owner: Option<super::super::source_signatures::SourceOwner>,
+    pub(super) integer_source_owner_conflict: bool,
+    pub(super) integer_source_owner_constraint: Option<String>,
     pub(super) primitive_owner_position: Option<serde_json::Value>,
     pub(super) namespace_spelling: Vec<String>,
 }
 
 impl SourceOrigin {
+    /// Actual immutable scalar-reference parameter facts; source wrappers survive.
+    pub(super) fn copy_closure_parameter(&self) -> bool {
+        let owner = self
+            .expanded_source_owner
+            .as_ref()
+            .or(self.source_owner.as_ref());
+        let primitive = if let (Some(owner), Some(ty)) = (owner, self.ty.as_ref()) {
+            let (bits, signed) = match ty {
+                Type::Fixed { bits, signed } => (bits.to_string(), *signed),
+                _ => (String::new(), false),
+            };
+            owner.arguments.is_empty() && (owner.kind == "unit" && owner.path.is_empty() && ty.kind() == "unit" || owner.kind == "primitive" && crate::translation::source_signature_rules::accept_rust_source_signature_primitive(ty.kind(), &owner.path.join("::"), &bits, signed))
+        } else {
+            false
+        };
+        let mut base = self.clone();
+        base.wrappers.clear();
+        crate::translation::rust_copy_closure_parameter_rules::accept_rust_copy_closure_parameter_source(self.proven,base.direct_copy_value(),self.wrappers.len() as f64,self.wrappers.iter().all(|value| value == "reference"),primitive)
+    }
+
+    /// Standard readonly view from actual static u8 array facts; no owner mutation.
+    pub(super) fn static_byte_array_read_view(&self) -> Option<Self> {
+        let element = match &self.ty {
+            Some(Type::Array { element, .. }) => Some(element.as_ref()),
+            _ => None,
+        };
+        let (bits, signed) = match element {
+            Some(Type::Fixed { bits, signed }) => (*bits, *signed),
+            _ => (0, false),
+        };
+        let owner = self.source_owner.as_ref();
+        let child = owner.and_then(|owner| owner.arguments.first());
+        if !crate::translation::rust_byte_string_expression_rules::accept_rust_static_byte_array_read_view(&ByteStringText::from_text(self.array_source_model.unwrap_or("")),&ByteStringText::from_text(self.ty.as_ref().map_or("",Type::kind)),&ByteStringText::from_text(element.map_or("",Type::kind)),f64::from(bits),signed,self.proven,self.wrappers.len() as f64,self.wrappers.iter().all(|layer|layer=="reference"),&ByteStringText::from_text(owner.map_or("",|owner|owner.kind.as_str())),owner.map_or(0,|owner|owner.arguments.len()) as f64,&ByteStringText::from_text(child.map_or("",|child|child.kind.as_str())),&ByteStringText::from_text(&child.map(|child|child.path.join("::")).unwrap_or_default())){return None;}
+        let mut view = self.clone();
+        view.wrappers = vec!["reference".to_owned()];
+        view.source_lifetimes = vec![Some("static".to_owned())];
+        view.array_source_model = Some("immutable slice");
+        view.source_owner = Some(super::super::source_signatures::SourceOwner {
+            kind: "slice".to_owned(),
+            path: Vec::new(),
+            arguments: vec![child?.clone()],
+        });
+        view.expanded_source_owner = None;
+        Some(view)
+    }
+
     pub(super) const fn unknown() -> Self {
         Self {
+            array_element_position: None,
+            source_function_pointer_header: false,
+            source_fn_mut_parameter: false,
+            standard_sum_source: None,
             ty: None,
             float_source_model: None,
             path: Vec::new(),
@@ -59,11 +161,38 @@ impl SourceOrigin {
             fields: None,
             text_source_model: None,
             array_source_model: None,
+            array_element_copy_evidence: false,
             source_lifetimes: Vec::new(),
+            source_binding_identity: None,
+            source_lexical_binding_identity: None,
+            source_record_state_collecting_site: None,
+            source_value_borrow_bindings: Vec::new(),
+            source_value_field_borrow_bindings: None,
+            source_box_layers: Vec::new(),
+            source_place_binding_identity: None,
+            source_loan_binding_identities: Vec::new(),
+            source_place_loan_binding_identities: Vec::new(),
+            source_owned_result_proof: false,
+            source_standard_sum_pattern_move: false,
+            source_standard_sum_borrowed_field: false,
+            source_nominal_pattern_move: false,
+            source_nominal_borrowed_field: false,
+            source_byte_iterator: false,
+            source_borrowed_place: false,
+            source_extending_temporary_bindings: Vec::new(),
             source_owner: None,
+            expanded_source_owner: None,
+            integer_source_owner_conflict: false,
+            integer_source_owner_constraint: None,
             primitive_owner_position: None,
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
+            fresh_vector_result_contract: false,
+            copy_closure_identity: None,
+            copy_closure_capture_count: None,
+            callable_parameters: None,
+            callable_result: None,
+            callable_source_owner_error: None,
         }
     }
 
@@ -83,7 +212,11 @@ impl SourceOrigin {
         let copy_evidence = accept_rust_immutable_product_type(ty.kind(), children_accepted, false);
         let text_source_model = (ty == super::STRING).then_some("owned string");
         let array_source_model = matches!(ty, Type::Array { .. }).then_some("owned vector");
+        let array_element_copy_evidence = matches!(&ty, Type::Array { element, .. } if accept_rust_scalar_array_index_element(element.kind()));
         Self {
+            source_function_pointer_header: false,
+            source_fn_mut_parameter: false,
+            standard_sum_source: None,
             float_source_model: (ty == super::FLOAT).then_some("binary64 scalar"),
             ty: Some(ty),
             path: path.to_vec(),
@@ -95,11 +228,38 @@ impl SourceOrigin {
             fields,
             text_source_model,
             array_source_model,
+            array_element_copy_evidence,
             source_lifetimes: Vec::new(),
+            source_binding_identity: None,
+            source_lexical_binding_identity: None,
+            source_record_state_collecting_site: None,
+            source_value_borrow_bindings: Vec::new(),
+            source_value_field_borrow_bindings: None,
+            source_box_layers: Vec::new(),
+            source_place_binding_identity: None,
+            source_loan_binding_identities: Vec::new(),
+            source_place_loan_binding_identities: Vec::new(),
+            source_owned_result_proof: false,
+            source_standard_sum_pattern_move: false,
+            source_standard_sum_borrowed_field: false,
+            source_nominal_pattern_move: false,
+            source_nominal_borrowed_field: false,
+            source_byte_iterator: false,
+            source_borrowed_place: false,
+            source_extending_temporary_bindings: Vec::new(),
             source_owner: None,
+            expanded_source_owner: None,
+            integer_source_owner_conflict: false,
+            integer_source_owner_constraint: None,
             primitive_owner_position: None,
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
+            fresh_vector_result_contract: false,
+            copy_closure_identity: None,
+            copy_closure_capture_count: None,
+            callable_parameters: None,
+            callable_result: None,
+            callable_source_owner_error: None,
         }
     }
 
@@ -107,6 +267,41 @@ impl SourceOrigin {
         Self {
             proven: true,
             ..Self::unknown()
+        }
+    }
+    pub(super) fn pointer_integer_owner(&self) -> String {
+        let mut owner = self.source_owner.as_ref();
+        for _ in 0..128 {
+            let Some(current) = owner else {
+                return self
+                    .integer_source_owner_constraint
+                    .clone()
+                    .unwrap_or_default();
+            };
+            if current.kind == "primitive" {
+                return current.path.join("::");
+            }
+            if !accept_rust_pointer_integer_owner_child(
+                &current.kind,
+                &current.path.join("::"),
+                serde_json::Number::from(current.arguments.len())
+                    .as_f64()
+                    .expect("actual source owner argument count"),
+            ) && !crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_box_pointer_owner_child(
+                &current.kind,
+                &current.path.join("::"),
+                current.arguments.len() as f64,
+            ) {
+                return String::new();
+            }
+            owner = current.arguments.first();
+        }
+        String::new()
+    }
+    fn integer_conflict() -> Self {
+        Self {
+            integer_source_owner_conflict: true,
+            ..Self::uncertain()
         }
     }
 
@@ -140,7 +335,7 @@ impl SourceOrigin {
         self.text_source_model == Some("owned string") && self.wrappers.is_empty()
     }
 
-    fn borrowed_string_slice(&self) -> bool {
+    pub(super) fn borrowed_string_slice(&self) -> bool {
         self.text_source_model == Some("string slice")
             && self.wrappers.len() == 1
             && self.wrappers[0] == "reference"
@@ -168,6 +363,10 @@ pub(super) enum SourceDeclaration {
         parameters: Vec<SourceOrigin>,
         result: SourceOrigin,
     },
+    FnMutTemplate(Box<super::fn_mut_source_declarations::FnMutSourceDeclaration>),
+    Constant {
+        result: SourceOrigin,
+    },
 }
 
 pub(super) struct SourceLookup {
@@ -176,11 +375,37 @@ pub(super) struct SourceLookup {
 }
 
 pub(super) struct SourceOrigins {
+    pub(super) type_catalog: HashMap<String, SourceDeclaration>,
+    pub(super) value_catalog: HashMap<String, SourceDeclaration>,
+    pub(super) standard_sum_metadata_budget: super::standard_sum_metadata::MetadataBudget,
+    pub(super) standard_sum_source_origins: HashMap<String, SourceOrigin>,
+    pub(super) standard_sum_source_needs_final_admission: bool,
+    pub(super) shared_array_handles: bool,
     pub(super) array_result_model: String,
     pub(super) owned_local_values: bool,
     fresh_calls: HashSet<Span>,
+    fresh_vector_constructors: HashSet<Span>,
+    pub(super) owned_binding_excluded: bool,
+    pub(super) owned_container_source_enabled: bool,
+    pub(super) borrowed_vector_source_enabled: bool,
+    pub(super) borrowed_vector_needs_final_admission: bool,
+    pub(super) source_position_materialized_nodes: usize,
+    pub(super) source_position_materialized_units: usize,
+    pub(super) owned_container_metadata_budget: super::standard_sum_metadata::MetadataBudget,
+    source_binding_states: HashMap<String, String>,
+    next_source_binding_identity: usize,
+    owned_argument_transfers: HashSet<Span>,
+    source_temporary_bindings: HashSet<String>,
+    mutable_record_loans: super::mutable_record_loans::MutableRecordLoans,
     pub(super) collecting: bool,
     pub(super) catalog: HashMap<String, SourceDeclaration>,
+    pub(super) nominal_copy_derivations: HashMap<String, nominal_copies::NominalCopyDerivation>,
+    pub(super) nominal_copy_owners: HashSet<String>,
+    pub(super) nominal_ownership_declarations:
+        HashMap<String, super::nominal_ownership::NominalOwnershipDeclaration>,
+    pub(super) standard_collection_owners:
+        HashMap<String, crate::translation::source_signatures::SourceOwner>,
+    pub(super) nominal_ownership_scope_complete: bool,
     pub(super) unit_clone_facts: HashMap<String, (Option<serde_json::Value>, bool)>,
     pub(super) scope: HashMap<String, SourceOrigin>,
     pub(super) current_type: SourceOrigin,
@@ -188,23 +413,98 @@ pub(super) struct SourceOrigins {
     // Erased wrapper expressions deliberately retain their operand's range, so
     // successive wraps and dereferences update the same source evidence.
     expressions: HashMap<Span, SourceOrigin>,
+    pub(super) expression_type_cache: super::source_expression_types::ExpressionTypeCache,
     pattern_references: HashMap<Span, usize>,
+    literal_pattern_aliases: HashMap<Span, Vec<SExpr>>,
     wildcard_references: VecDeque<usize>,
 }
 
 impl SourceOrigins {
     pub(super) fn new(catalog: Option<HashMap<String, SourceDeclaration>>, model: &str) -> Self {
+        let mut standard_sum_source_origins = HashMap::new();
+        let mut standard_sum_metadata_budget =
+            super::standard_sum_metadata::MetadataBudget::default();
+        if let Some(entries) = catalog.as_ref() {
+            let mut unique = std::collections::BTreeMap::new();
+            for entry in entries.values() {
+                if let SourceDeclaration::Constructor { owner, result, .. } = entry {
+                    if result.standard_sum_source.is_some() {
+                        unique.entry(owner).or_insert(result);
+                    }
+                }
+            }
+            for (owner, result) in unique {
+                let reserved = super::standard_sum_metadata::measure_origins(&[result])
+                    .and_then(|cost| standard_sum_metadata_budget.reserve(cost));
+                if let Err(error) = reserved {
+                    standard_sum_metadata_budget.error = Some(error);
+                    break;
+                }
+                standard_sum_source_origins.insert(owner.clone(), result.clone());
+            }
+        }
         Self {
+            type_catalog: catalog
+                .as_ref()
+                .filter(|_| standard_sum_metadata_budget.error.is_none())
+                .map(|entries| {
+                    entries
+                        .iter()
+                        .filter(|(_, entry)| {
+                            super::source_origins::type_owners::namespace_role(entry) == "type"
+                        })
+                        .map(|(name, entry)| (name.clone(), entry.clone()))
+                        .collect()
+                })
+                .unwrap_or_default(),
+            value_catalog: catalog
+                .as_ref()
+                .filter(|_| standard_sum_metadata_budget.error.is_none())
+                .map(|entries| {
+                    entries
+                        .iter()
+                        .filter(|(_, entry)| {
+                            super::source_origins::type_owners::namespace_role(entry) == "value"
+                        })
+                        .map(|(name, entry)| (name.clone(), entry.clone()))
+                        .collect()
+                })
+                .unwrap_or_default(),
+            standard_sum_metadata_budget,
+            standard_sum_source_origins,
+            standard_sum_source_needs_final_admission: false,
+            shared_array_handles: false,
             array_result_model: model.to_owned(),
             owned_local_values: false,
             fresh_calls: HashSet::new(),
+            fresh_vector_constructors: HashSet::new(),
             collecting: catalog.is_none(),
+            owned_binding_excluded: false,
+            owned_container_source_enabled: false,
+            borrowed_vector_source_enabled: false,
+            borrowed_vector_needs_final_admission: false,
+            source_position_materialized_nodes: 0,
+            source_position_materialized_units: 0,
+            owned_container_metadata_budget: super::standard_sum_metadata::MetadataBudget::default(
+            ),
+            source_binding_states: HashMap::new(),
+            next_source_binding_identity: 0,
+            owned_argument_transfers: HashSet::new(),
+            source_temporary_bindings: HashSet::new(),
+            mutable_record_loans: super::mutable_record_loans::MutableRecordLoans::default(),
             catalog: catalog.unwrap_or_default(),
             unit_clone_facts: HashMap::new(),
+            nominal_copy_derivations: HashMap::new(),
+            nominal_copy_owners: HashSet::new(),
+            nominal_ownership_declarations: HashMap::new(),
+            standard_collection_owners: HashMap::new(),
+            nominal_ownership_scope_complete: false,
             scope: HashMap::new(),
             current_type: SourceOrigin::unknown(),
             expressions: HashMap::new(),
+            expression_type_cache: super::source_expression_types::ExpressionTypeCache::default(),
             pattern_references: HashMap::new(),
+            literal_pattern_aliases: HashMap::new(),
             wildcard_references: VecDeque::new(),
         }
     }
@@ -214,11 +514,43 @@ impl SourceOrigins {
         scope: Option<HashMap<String, SourceOrigin>>,
     ) -> HashMap<String, SourceOrigin> {
         let next = scope.unwrap_or_else(|| self.scope.clone());
+        let next = next
+            .into_iter()
+            .map(|(name, origin)| {
+                let origin = if origin.source_binding_identity.is_none() {
+                    self.register_owned_binding(origin)
+                } else {
+                    origin
+                };
+                let origin = if origin.source_lexical_binding_identity.is_none() {
+                    self.assign_copy_closure_lexical_binding(origin)
+                } else {
+                    origin
+                };
+                (name, origin)
+            })
+            .collect();
         std::mem::replace(&mut self.scope, next)
     }
 
     pub(super) fn typed(&mut self, ty: Type, path: &[String], wrappers: Vec<String>) -> Type {
-        self.current_type = SourceOrigin::with_type(ty.clone(), path, wrappers);
+        let stored = match &ty {
+            Type::Named { path: names, .. } => self
+                .lookup_type_owner(names, path)
+                .filter(|owner| matches!(owner.declaration, SourceDeclaration::Data))
+                .and_then(|owner| self.standard_sum_source_origins.get(&owner.full_name))
+                .cloned(),
+            _ => None,
+        };
+        if let Some(mut origin) = stored {
+            origin.path = path.to_vec();
+            origin.wrappers = wrappers;
+            self.current_type = origin;
+            return ty;
+        }
+        let mut origin = SourceOrigin::with_type(ty.clone(), path, wrappers);
+        self.retain_nominal_copy_origin(&mut origin);
+        self.current_type = origin;
         ty
     }
 
@@ -312,7 +644,10 @@ impl SourceOrigins {
             .and_then(|fields| fields.get(*index))
             .cloned()
             .unwrap_or_else(SourceOrigin::unknown);
-        self.mark(node, field);
+        self.mark(
+            node,
+            super::copy_closure_lifetimes::project_value_field(&origin, field, *index),
+        );
         Ok(())
     }
 
@@ -320,16 +655,34 @@ impl SourceOrigins {
         &mut self,
         name: &str,
         path: &[String],
-        entry: SourceDeclaration,
+        mut entry: SourceDeclaration,
     ) -> Result<()> {
         if self.collecting {
+            self.retain_nominal_copy_declaration(&mut entry);
             let mut full_path = path.to_vec();
             full_path.push(name.to_owned());
             let key = full_path.join(".");
-            if let Some(existing) = self.catalog.get(&key) {
-                let existing_crate = matches!(existing, SourceDeclaration::ExternalCrate);
-                let new_crate = matches!(entry, SourceDeclaration::ExternalCrate);
-                if existing_crate != new_crate {
+            if let Some(existing) = self.namespace_entry(&key, "value") {
+                let compatible = match (existing, &entry) {
+                    (
+                        SourceDeclaration::FnMutTemplate(left),
+                        SourceDeclaration::FnMutTemplate(right),
+                    ) => left.declaration == right.declaration,
+                    (SourceDeclaration::FnMutTemplate(_), _)
+                    | (_, SourceDeclaration::FnMutTemplate(_)) => {
+                        type_owners::namespace_role(&entry) != "value"
+                    }
+                    _ => true,
+                };
+                if !compatible {
+                    return Err(super::type_error(
+                        format!("duplicate source declaration {key}"),
+                        None,
+                    ));
+                }
+            }
+            if let Some(existing) = self.namespace_entry(&key, "type") {
+                if !crate::translation::rust_source_namespace_rules::accept_rust_source_namespace_declaration_pair(type_owners::namespace_kind(existing),type_owners::namespace_kind(&entry)) {
                     return Err(unsupported(
                         "extern crate alloc",
                         "a source crate declaration cannot share its module name with another item",
@@ -337,7 +690,7 @@ impl SourceOrigins {
                     ));
                 }
             }
-            self.catalog.insert(key, entry);
+            self.register_catalog_entry(key, entry);
         }
         Ok(())
     }
@@ -347,23 +700,50 @@ impl SourceOrigins {
     where
         F: FnMut(&[String], &[String]) -> Vec<String>,
     {
-        let mut resolve_origin = |origin: &mut SourceOrigin| {
+        fn resolve_origin<F>(origin: &mut SourceOrigin, resolve: &mut F)
+        where
+            F: FnMut(&[String], &[String]) -> Vec<String>,
+        {
             if let Some(Type::Named { path, .. }) = &mut origin.ty {
                 *path = resolve(path, &origin.path);
             }
-        };
-        for declaration in self.catalog.values_mut() {
+            if let Some(fields) = &mut origin.fields {
+                for field in fields {
+                    resolve_origin(field, resolve);
+                }
+            }
+            if let Some(fields) = &mut origin.callable_parameters {
+                for field in fields {
+                    resolve_origin(field, resolve);
+                }
+            }
+            if let Some(result) = &mut origin.callable_result {
+                resolve_origin(result, resolve);
+            }
+        }
+        for declaration in self
+            .catalog
+            .values_mut()
+            .chain(self.type_catalog.values_mut())
+            .chain(self.value_catalog.values_mut())
+        {
             match declaration {
                 SourceDeclaration::Function { parameters, result } => {
-                    parameters.iter_mut().for_each(&mut resolve_origin);
-                    resolve_origin(result);
+                    parameters
+                        .iter_mut()
+                        .for_each(|parameter| resolve_origin(parameter, &mut resolve));
+                    resolve_origin(result, &mut resolve);
                 }
+                SourceDeclaration::Constant { result } => resolve_origin(result, &mut resolve),
                 SourceDeclaration::Constructor { fields, result, .. } => {
-                    fields.iter_mut().for_each(&mut resolve_origin);
-                    resolve_origin(result);
+                    fields
+                        .iter_mut()
+                        .for_each(|field| resolve_origin(field, &mut resolve));
+                    resolve_origin(result, &mut resolve);
                 }
                 SourceDeclaration::ExternalCrate
                 | SourceDeclaration::Module
+                | SourceDeclaration::FnMutTemplate(_)
                 | SourceDeclaration::Data => {}
             }
         }
@@ -384,7 +764,7 @@ impl SourceOrigins {
             .into_iter()
             .flatten()
             .any(|name| {
-                self.lookup(std::slice::from_ref(name), path)
+                self.lookup_type_owner(std::slice::from_ref(name), path)
                     .is_some_and(|entry| {
                         !matches!(entry.declaration, SourceDeclaration::ExternalCrate)
                     })
@@ -398,7 +778,7 @@ impl SourceOrigins {
         }
         let declared = resolved
             .first()
-            .and_then(|name| self.lookup(std::slice::from_ref(name), path))
+            .and_then(|name| self.lookup_type_owner(std::slice::from_ref(name), path))
             .is_some_and(|entry| matches!(entry.declaration, SourceDeclaration::ExternalCrate));
         if !accept_rust_source_box_availability(&owner, declared) {
             return Err(unsupported(
@@ -423,7 +803,10 @@ impl SourceOrigins {
         let shadowed = [segments.first(), resolved.first()]
             .into_iter()
             .flatten()
-            .any(|name| self.lookup(std::slice::from_ref(name), path).is_some());
+            .any(|name| {
+                self.lookup_type_owner(std::slice::from_ref(name), path)
+                    .is_some()
+            });
         if !accept_rust_source_array_owner(&resolved.join("::"), shadowed) {
             return Err(unsupported(
                 "Vec owner",
@@ -436,11 +819,27 @@ impl SourceOrigins {
 
     /// Compare retained source types by their existing declaration identities.
     pub(super) fn same_origin(&self, left: &SourceOrigin, right: &SourceOrigin) -> bool {
+        if !crate::translation::rust_copy_closure_rules::read_rust_copy_closure_join_error(
+            left.copy_closure_identity.is_some(),
+            right.copy_closure_identity.is_some(),
+            left.copy_closure_identity == right.copy_closure_identity,
+        )
+        .is_empty()
+        {
+            return false;
+        }
+        if !crate::translation::rust_callable_owner_rules::accept_rust_callable_owner_descriptors_equal(&callable_owners::descriptor(left),&callable_owners::descriptor(right)){return false;}
+        self.compare_origin_structure(left, right)
+    }
+    fn compare_origin_structure(&self, left: &SourceOrigin, right: &SourceOrigin) -> bool {
+        if !crate::translation::rust_byte_string_expression_rules::accept_rust_static_byte_array_owner_equality(&ByteStringText::from_text(left.array_source_model.unwrap_or("")),&ByteStringText::from_text(left.source_owner.as_ref().map_or("",|owner|owner.kind.as_str())),&ByteStringText::from_text(&left.source_owner.as_ref().map(|owner|owner.path.join("::")).unwrap_or_default()),&ByteStringText::from_text(right.source_owner.as_ref().map_or("",|owner|owner.kind.as_str())),&ByteStringText::from_text(&right.source_owner.as_ref().map(|owner|owner.path.join("::")).unwrap_or_default())){return false;}
+
         if left.proven != right.proven
             || left.diverging != right.diverging
             || left.uncertain != right.uncertain
             || left.wrappers != right.wrappers
             || left.copy_evidence != right.copy_evidence
+            || left.copy_closure_identity != right.copy_closure_identity
             || left.float_source_model != right.float_source_model
             || left.text_source_model != right.text_source_model
             || left.array_source_model != right.array_source_model
@@ -453,8 +852,31 @@ impl SourceOrigins {
                     || !left
                         .iter()
                         .zip(right)
-                        .all(|(left, right)| self.same_origin(left, right))
+                        .all(|(left, right)| self.compare_origin_structure(left, right))
                 {
+                    return false;
+                }
+            }
+            (None, None) => {}
+            _ => return false,
+        }
+        match (&left.callable_parameters, &right.callable_parameters) {
+            (Some(left), Some(right)) => {
+                if left.len() != right.len()
+                    || !left
+                        .iter()
+                        .zip(right)
+                        .all(|(left, right)| self.compare_origin_structure(left, right))
+                {
+                    return false;
+                }
+            }
+            (None, None) => {}
+            _ => return false,
+        }
+        match (&left.callable_result, &right.callable_result) {
+            (Some(left), Some(right)) => {
+                if !self.compare_origin_structure(left, right) {
                     return false;
                 }
             }
@@ -471,8 +893,8 @@ impl SourceOrigins {
                 }),
             ) => {
                 match (
-                    self.lookup(left_path, &left.path),
-                    self.lookup(right_path, &right.path),
+                    self.lookup_type_owner(left_path, &left.path),
+                    self.lookup_type_owner(right_path, &right.path),
                 ) {
                     (Some(left), Some(right)) => left.full_name == right.full_name,
                     _ => left_path == right_path && left.path == right.path,
@@ -481,480 +903,8 @@ impl SourceOrigins {
             _ => left.ty == right.ty,
         }
     }
-
-    pub(super) fn origin(&self, node: &SExpr, path: &[String]) -> SourceOrigin {
-        if let Some(origin) = node.span.and_then(|span| self.expressions.get(&span)) {
-            return origin.clone();
-        }
-        if let SNode::Name { path: names } = &node.node
-            && names.len() == 1
-            && let Some(origin) = self.scope.get(&names[0])
-        {
-            return origin.clone();
-        }
-        let names = match &node.node {
-            SNode::Name { path } => Some(path),
-            SNode::App { func, .. } => match &func.node {
-                SNode::Name { path } => Some(path),
-                _ => None,
-            },
-            _ => None,
-        };
-        if let Some(entry) = names.and_then(|names| self.lookup(names, path)) {
-            match entry.declaration {
-                SourceDeclaration::Function { mut result, .. } => {
-                    result.fresh_array_value = node.span.filter(|span| {
-                        result.fresh_array_value.is_some() && self.fresh_calls.contains(span)
-                    });
-                    return result;
-                }
-                SourceDeclaration::Constructor { result, .. } => return result,
-                SourceDeclaration::ExternalCrate
-                | SourceDeclaration::Module
-                | SourceDeclaration::Data => {}
-            }
-        }
-        if let SNode::Name { path: names } = &node.node
-            && names.len() == 2
-            && self.lookup(&names[..1], path).is_none()
-            && super::rust_fixed_type(&names[0]).is_some()
-            && ["MIN", "MAX"].contains(&names[1].as_str())
-        {
-            return SourceOrigin::scalar_copy_value(super::rust_fixed_type(&names[0]));
-        }
-        if let SNode::If {
-            then, otherwise, ..
-        } = &node.node
-        {
-            return self.join(&[self.origin(then, path), self.origin(otherwise, path)]);
-        }
-        let operation = match &node.node {
-            SNode::Binary { op, .. } => op.name(),
-            _ => "",
-        };
-        let form = read_rust_source_expression_origin(node.node.kind(), operation);
-        match form.as_str() {
-            "value" => match &node.node {
-                SNode::Num { ty, .. } => SourceOrigin::scalar_copy_value(ty.clone()),
-                SNode::Bool { .. } => SourceOrigin::scalar_copy_value(Some(super::BOOL)),
-                SNode::Unit => SourceOrigin::scalar_copy_value(Some(super::UNIT)),
-                _ => SourceOrigin::value(),
-            },
-            "diverging" => SourceOrigin {
-                diverging: true,
-                ..SourceOrigin::value()
-            },
-            "derived-value"
-            | "numeric-cast"
-            | "primitive-operation"
-            | "comparison"
-            | "boolean-operation" => {
-                let nodes: Vec<&SExpr> = match &node.node {
-                    SNode::Unary { arg, .. }
-                    | SNode::Cast { arg, .. }
-                    | SNode::ToString { arg }
-                    | SNode::Show { arg, .. } => vec![arg],
-                    SNode::Binary { left, right, .. } => vec![left, right],
-                    SNode::StringMap { object, .. } => vec![object],
-                    SNode::StringTest { object, search, .. } => vec![object, search],
-                    _ => Vec::new(),
-                };
-                let operands: Vec<_> = nodes
-                    .iter()
-                    .map(|operand| self.origin(operand, path))
-                    .collect();
-                if operands.iter().any(|operand| !operand.proven) {
-                    let uncertain = operands.iter().any(|operand| {
-                        operand.uncertain
-                            || (form != "derived-value" && !operand.wrappers.is_empty())
-                    });
-                    return if uncertain {
-                        SourceOrigin::uncertain()
-                    } else {
-                        SourceOrigin::unknown()
-                    };
-                }
-                if !self.collecting
-                    && ((form == "comparison"
-                        && operands[0].wrappers != operands[1].wrappers
-                        && !accept_rust_source_text_equality(
-                            operation,
-                            (
-                                operands[0].direct_string_value(),
-                                operands[1].direct_string_value(),
-                                operands[0].borrowed_string_slice(),
-                                operands[1].borrowed_string_slice(),
-                            ),
-                        ))
-                        || (form == "primitive-operation"
-                            && operands.iter().any(|operand| {
-                                operand.wrappers.iter().any(|layer| layer == "box")
-                            }))
-                        || (["numeric-cast", "boolean-operation"].contains(&form.as_str())
-                            && operands.iter().any(|operand| !operand.wrappers.is_empty())))
-                {
-                    return SourceOrigin::uncertain();
-                }
-                if form == "derived-value" {
-                    if matches!(node.node, SNode::StringTest { .. }) {
-                        return SourceOrigin::scalar_copy_value(Some(super::BOOL));
-                    }
-                    return SourceOrigin::text_value();
-                }
-                let ty = match &node.node {
-                    SNode::Cast { to, .. } => Some(to.clone()),
-                    _ if form == "comparison" || form == "boolean-operation" => Some(super::BOOL),
-                    _ if operation == "concat" => Some(super::STRING),
-                    _ => None,
-                };
-                let copy_evidence = form != "primitive-operation"
-                    || (operation != "concat"
-                        && operands
-                            .iter()
-                            .all(|operand| operand.copy_evidence.is_some()));
-                SourceOrigin {
-                    ty,
-                    copy_evidence: copy_evidence.then_some(()),
-                    text_source_model: (operation == "concat").then_some("owned string"),
-                    ..SourceOrigin::value()
-                }
-            }
-            _ => SourceOrigin::unknown(),
-        }
-    }
-
-    pub(super) fn join(&self, origins: &[SourceOrigin]) -> SourceOrigin {
-        let returning: Vec<_> = origins.iter().filter(|origin| !origin.diverging).collect();
-        let Some(first) = returning.first() else {
-            return SourceOrigin {
-                diverging: true,
-                ..SourceOrigin::value()
-            };
-        };
-        if returning
-            .iter()
-            .all(|origin| self.same_origin(origin, first))
-        {
-            return SourceOrigin {
-                fresh_array_value: if returning
-                    .iter()
-                    .all(|origin| origin.fresh_array_value.is_some())
-                {
-                    first.fresh_array_value
-                } else {
-                    None
-                },
-                ..(*first).clone()
-            };
-        }
-        if returning
-            .iter()
-            .any(|origin| origin.array_source_model.is_some())
-        {
-            return SourceOrigin {
-                array_source_model: Some("unproved array"),
-                ..SourceOrigin::uncertain()
-            };
-        }
-        if returning
-            .iter()
-            .all(|origin| origin.proven && origin.wrappers == first.wrappers)
-        {
-            let fields = first.fields.as_ref().and_then(|fields| {
-                returning
-                    .iter()
-                    .all(|origin| {
-                        origin
-                            .fields
-                            .as_ref()
-                            .is_some_and(|candidate| candidate.len() == fields.len())
-                    })
-                    .then(|| {
-                        (0..fields.len())
-                            .map(|index| {
-                                let values: Vec<_> = returning
-                                    .iter()
-                                    .map(|origin| {
-                                        origin.fields.as_ref().expect("matched field count")[index]
-                                            .clone()
-                                    })
-                                    .collect();
-                                self.join(&values)
-                            })
-                            .collect()
-                    })
-            });
-            let text_source_model = returning
-                .iter()
-                .all(|origin| origin.text_source_model == first.text_source_model)
-                .then_some(first.text_source_model)
-                .flatten();
-            return SourceOrigin {
-                wrappers: first.wrappers.clone(),
-                copy_evidence: returning
-                    .iter()
-                    .all(|origin| origin.copy_evidence.is_some())
-                    .then_some(()),
-                fields,
-                ty: text_source_model.map(|_| super::STRING),
-                text_source_model,
-                ..SourceOrigin::value()
-            };
-        }
-        if returning
-            .iter()
-            .any(|origin| origin.uncertain || !origin.wrappers.is_empty())
-        {
-            SourceOrigin::uncertain()
-        } else {
-            SourceOrigin::unknown()
-        }
-    }
-
-    pub(super) fn mark(&mut self, node: &SExpr, mut origin: SourceOrigin) {
-        if !self.array_result_model.is_empty()
-            && let SNode::Array { items, .. } = &node.node
-        {
-            origin.fresh_array_value = node.span.filter(|_| {
-                origin.array_source_model == Some("owned vector")
-                    && origin.wrappers.is_empty()
-                    && items.iter().all(|item| {
-                        !item.spread && self.origin(&item.value, &origin.path).direct_copy_value()
-                    })
-            });
-        }
-        if let Some(span) = node.span {
-            self.expressions.insert(span, origin);
-        }
-    }
-
-    /// Each constructor's scalar evidence was retained in its live source scope.
-    pub(super) fn fresh_array_result(&self, node: &SExpr, path: &[String]) -> bool {
-        let children = match &node.node {
-            SNode::Let { body, .. } => self.fresh_array_result(body, path),
-            SNode::If {
-                then, otherwise, ..
-            } => self.fresh_array_result(then, path) && self.fresh_array_result(otherwise, path),
-            _ => false,
-        };
-        accept_rust_fresh_array_result_tail(
-            node.node.kind(),
-            self.origin(node, path).fresh_array_value.is_some(),
-            children,
-        )
-    }
-
-    pub(super) fn certify_array_result(&mut self, name: &str, path: &[String], span: Option<Span>) {
-        if self.collecting {
-            let full_name = path
-                .iter()
-                .map(String::as_str)
-                .chain([name])
-                .collect::<Vec<_>>()
-                .join(".");
-            if let Some(SourceDeclaration::Function { result, .. }) =
-                self.catalog.get_mut(&full_name)
-            {
-                result.fresh_array_value = span;
-            }
-        }
-    }
-
-    pub(super) fn wrap(&mut self, node: &SExpr, path: &[String], layer: &str) {
-        let mut origin = self.origin(node, path);
-        origin.wrappers.insert(0, layer.to_owned());
-        self.mark(node, origin);
-    }
-
-    pub(super) fn dereference(
-        &mut self,
-        node: &SExpr,
-        path: &[String],
-        span: Option<Span>,
-    ) -> Result<()> {
-        let mut origin = self.origin(node, path);
-        if !self.collecting && origin.array_source_model.is_some() && origin.wrappers.len() == 1 {
-            return Err(unsupported(
-                "array dereference",
-                "moving an owned vector or an unsized slice needs a separate source ownership proof",
-                span,
-            ));
-        }
-        let layer = origin.wrappers.first().map_or("", String::as_str);
-        if !self.collecting && (!origin.proven || !accept_rust_immutable_indirection_layer(layer)) {
-            return Err(unsupported(
-                "dereference",
-                "the operand must have a proven immutable reference or standard Box source type",
-                span,
-            ));
-        }
-        if !origin.wrappers.is_empty() {
-            origin.wrappers.remove(0);
-        }
-        self.mark(node, origin);
-        Ok(())
-    }
-
-    pub(super) fn bind(
-        &mut self,
-        name: &str,
-        node: &SExpr,
-        path: &[String],
-        declared: Option<&SourceOrigin>,
-    ) -> Result<()> {
-        let actual = self.origin(node, path);
-        if !self.collecting && actual.array_source_model.is_some() && actual.uncertain {
-            return Err(unsupported(
-                "source array join",
-                "every array alternative needs the same proven source type and ownership",
-                node.span,
-            ));
-        }
-        if !self.collecting
-            && actual.array_source_model == Some("owned vector")
-            && actual.wrappers.is_empty()
-            && !matches!(node.node, SNode::Array { .. })
-            && actual.fresh_array_value.is_none()
-        {
-            return Err(unsupported(
-                "owned vector binding",
-                "moving a local vector needs an explicit consumption proof",
-                node.span,
-            ));
-        }
-        if let Some(declared) = declared {
-            self.argument(&actual, declared, node.span)?;
-        }
-        let mut binding = declared.cloned().unwrap_or(actual);
-        binding.fresh_array_value = None;
-        self.scope.insert(name.to_owned(), binding);
-        Ok(())
-    }
-
-    pub(super) fn argument(
-        &self,
-        actual: &SourceOrigin,
-        expected: &SourceOrigin,
-        span: Option<Span>,
-    ) -> Result<()> {
-        if self.collecting {
-            return Ok(());
-        }
-        if actual.diverging {
-            return Ok(());
-        }
-        if !actual.proven
-            && !actual.uncertain
-            && actual.wrappers.is_empty()
-            && expected.wrappers.is_empty()
-        {
-            return Ok(());
-        }
-        if !actual.proven || !expected.proven {
-            return Err(unsupported(
-                "source indirection",
-                "the source ownership of this value cannot be proved",
-                span,
-            ));
-        }
-        let actual_model = actual.array_source_model;
-        let expected_model = expected.array_source_model;
-        let actual = &actual.wrappers;
-        let want = &expected.wrappers;
-        let indirected = !actual.is_empty() || !want.is_empty();
-        let exact = actual == want;
-        let borrowed = actual.first().is_some_and(|layer| layer == "reference")
-            && want.first().is_some_and(|layer| layer == "reference");
-        if let (Some(actual_model), Some(expected_model)) = (actual_model, expected_model)
-            && !accept_rust_source_array_coercion(actual_model, expected_model, borrowed)
-        {
-            return Err(unsupported(
-                "source array coercion",
-                "an immutable slice cannot become a reference to an owned vector",
-                span,
-            ));
-        }
-        let coerced = actual.len().checked_sub(want.len()).is_some_and(|removed| {
-            removed > 0
-                && actual
-                    .iter()
-                    .skip(1)
-                    .take(removed)
-                    .all(|layer| accept_rust_source_box_coercion_layer(layer, true))
-                && actual
-                    .iter()
-                    .take(1)
-                    .chain(actual.iter().skip(removed + 1))
-                    .eq(want.iter())
-        });
-        if !accept_rust_source_indirection_argument((indirected, exact, borrowed, coerced)) {
-            return Err(unsupported(
-                "source indirection",
-                "source ownership requires an explicit dereference or matching immutable reference or Box type",
-                span,
-            ));
-        }
-        Ok(())
-    }
-
-    pub(super) fn direct(&self, node: &SExpr, path: &[String], span: Option<Span>) -> Result<()> {
-        self.argument(&self.origin(node, path), &SourceOrigin::value(), span)
-    }
-
-    pub(super) fn conversion(&mut self, node: &SExpr, path: &[String]) {
-        let SNode::ToString { arg } = &node.node else {
-            return;
-        };
-        let operand = self.origin(arg, path);
-        let form = read_rust_source_expression_origin(node.node.kind(), "from");
-        let result = if !self.collecting
-            && form == "unboxed-conversion"
-            && operand.wrappers.iter().any(|layer| layer == "box")
-        {
-            SourceOrigin::uncertain()
-        } else if operand.proven {
-            SourceOrigin::text_value()
-        } else if operand.uncertain {
-            SourceOrigin::uncertain()
-        } else {
-            SourceOrigin::unknown()
-        };
-        self.mark(node, result);
-    }
-
-    pub(super) fn call(
-        &mut self,
-        segments: &[String],
-        args: &[SExpr],
-        path: &[String],
-        span: Option<Span>,
-    ) -> Result<()> {
-        if let Some(span) = span {
-            self.fresh_calls.insert(span);
-        }
-        if self.collecting {
-            return Ok(());
-        }
-        let expected = match self.lookup(segments, path).map(|entry| entry.declaration) {
-            Some(SourceDeclaration::Function { parameters, .. }) => parameters,
-            Some(SourceDeclaration::Constructor { fields, .. }) => fields,
-            _ => return Ok(()),
-        };
-        if args.len() != expected.len() {
-            return Ok(());
-        }
-        // References can coerce through Box; owned Box cannot become its owned
-        // inner value until the source explicitly dereferences it.
-        for (argument, expected) in args.iter().zip(&expected) {
-            if expected.array_source_model == Some("owned vector") && expected.wrappers.is_empty() {
-                return Err(unsupported(
-                    "owned vector argument",
-                    "passing a vector by value needs an explicit consumption proof",
-                    span,
-                ));
-            }
-            self.argument(&self.origin(argument, path), expected, span)?;
-        }
-        Ok(())
-    }
 }
+
+include!("source_origin_expressions.rs");
+
+include!("source_origin_transfers.rs");

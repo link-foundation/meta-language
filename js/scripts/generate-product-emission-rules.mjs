@@ -6,6 +6,7 @@ import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { formatProductRuleSource, readProductRuleStyleCorrections } from './product-rule-style-corrections.mjs';
+import { restoreProductContinuationNames } from './product-continuation-style.mjs';
 
 const input = new URL('../src/translation/product-emission-rules.js', import.meta.url);
 const output = new URL('../../rust/src/translation/product_emission_rules.rs', import.meta.url);
@@ -14,7 +15,16 @@ let decorators = DecoratorSet.fromLino(readFileSync(style, 'utf8'));
 const reviewedId = 'reviewed-product-native-lints-285c8b13';
 const translated = emitRust(checkProgram(parseJavaScript(readFileSync(input, 'utf8'))));
 const base = new DecoratorSet(decorators.decorators.filter(definition => definition.id !== reviewedId));
-const adapted = decorateEmitted('Rust', { source: translated.text }, base).source;
+const source = restoreProductContinuationNames(translated.text, [
+  ['source_ml_temporary_join_product_items_loop1', 'ml_join_product_items_loop1'],
+  ['source_ml_temporary_accept_tuple_copy_type_loop2', 'ml_accept_tuple_copy_type_loop2'],
+  ['MlTemporaryAcceptTupleCopyTypeLoop2Result', 'MlAcceptTupleCopyTypeLoop2Result'],
+  ['MlTemporaryAcceptTupleCopyTypeLoop2Done', 'MlAcceptTupleCopyTypeLoop2Done'],
+  ['MlTemporaryAcceptTupleCopyTypeLoop2Return', 'MlAcceptTupleCopyTypeLoop2Return'],
+  ['source_ml_source1_s1', 'ml_s1'],
+  ['source_ml_temporary_result2', 'ml_result2'],
+]);
+const adapted = decorateEmitted('Rust', { source }, base).source;
 const formatted = formatProductRuleSource(adapted);
 const actions = readProductRuleStyleCorrections(formatted, 'emission', readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8'));
 if (process.argv.includes('--update-styles')) {

@@ -37,7 +37,12 @@ impl Inference {
         }
     }
 
-    pub(super) fn infer_match_expression(&mut self, expr: &SExpr, env: &Env) -> Result<Term> {
+    pub(super) fn infer_match_expression(
+        &mut self,
+        expr: &SExpr,
+        env: &Env,
+        expected: Option<&Term>,
+    ) -> Result<Term> {
         match &expr.node {
             SNode::Match { scrutinees, rows } => {
                 let scrutinees = scrutinees
@@ -51,7 +56,7 @@ impl Inference {
                     for (pattern, scrutinee) in row.patterns.iter().zip(&scrutinees) {
                         self.pattern(pattern, scrutinee, &mut scope, place)?;
                     }
-                    let body = self.expr(&row.body, &scope)?;
+                    let body = self.expr_expected(&row.body, &scope, expected)?;
                     match &result {
                         Some(previous) => result = Some(self.join(body, previous.clone(), place)),
                         None => result = Some(body),

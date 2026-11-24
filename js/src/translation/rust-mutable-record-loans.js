@@ -1,0 +1,33 @@
+// Runtime source loans are independent of TYPE positions and spelling scopes.
+import {unsupported} from './diagnostics.js';
+import {readRustNominalOwnershipFacts} from './rust-nominal-ownership.js';
+import {readRustCopyClosureValueBorrows} from './rust-copy-closure-lifetimes.js';
+import {mergeRustOwnedLoanBindings,readRustOwnedLoanReadError} from './rust-owned-binding-rules.js';
+import {testRustOwnedRecordStateLoanOverlap} from './rust-owned-record-state-rules.js';
+import {readRustOwnedRecordUltimateRoot} from './rust-owned-record-update-rules.js';
+import {acceptRustMutableRecordValueLoans,selectRustMutableRecordLoanRoot,readRustMutableRecordLoanIdentity,readRustMutableRecordLoanBudgetError,acceptRustMutableRecordLoanEscape,readRustMutableRecordLoanMoveError} from './rust-mutable-record-loan-rules.js';
+const registries=new WeakMap();
+function state(table){let value=registries.get(table);if(!value){value={roots:new Map(),lexicals:new Map(),loans:new Map(),active:new Map(),nodes:0,text:0};registries.set(table,value);}return value;}
+function charge(current,nodes,text,span){const error=readRustMutableRecordLoanBudgetError(current.nodes,current.text,nodes,text);if(error)throw unsupported('Rust mutable record loan',error,span);current.nodes+=nodes;current.text+=text;}
+export function registerRustMutableRecordLoanRoot(table,origin,span){if(table.collecting)return;const root=origin.sourceBindingIdentity,lexical=origin.sourceLexicalBindingIdentity;if(!root||!lexical||!origin.proven||origin.wrappers.length||readRustNominalOwnershipFacts(table,origin).profile!=='owned'||table.sourceBindingStates.get(root)!=='available')throw unsupported('Rust mutable record loan','a loan root needs its actual available mutable nominal binding',span);const current=state(table);if(!current.roots.has(root))charge(current,4,2*(root.length+lexical.length),span);current.roots.set(root,lexical);current.lexicals.set(lexical,root);}
+export function captureRustMutableRecordValueLoans(table,origin,span=null){
+ if(table.collecting)return origin;const current=state(table),contained=readRustCopyClosureValueBorrows(origin),reference=origin.wrappers.includes('reference'),place=origin.sourceBorrowedPlace===true,copy=table.immutableProduct(origin);
+ if(!acceptRustMutableRecordValueLoans(reference,place,copy,contained.length))return origin;
+ let values=reference||place&&!copy?mergeRustOwnedLoanBindings(contained,mergeRustOwnedLoanBindings(origin.sourceLoanBindingIdentities??[],mergeRustOwnedLoanBindings(origin.sourcePlaceLoanBindingIdentities??[],[origin.sourceBindingIdentity,origin.sourcePlaceBindingIdentity].filter(Boolean)))):contained;
+ for(const id of values)if(current.loans.has(id)&&table.sourceBindingStates.get(id)!=='available')throw unsupported('Rust mutable record loan','a value cannot renew an unavailable source loan',span);
+ const dependencies=values.filter(id=>!current.loans.has(id)),candidates=new Set();for(const id of values){const root=current.roots.has(id)?id:current.lexicals.get(id)??current.loans.get(id)?.root??readRustOwnedRecordUltimateRoot(id);if(current.roots.has(root))candidates.add(root);}
+ for(const root of [...candidates].sort()){const lexical=current.roots.get(root);if(!selectRustMutableRecordLoanRoot(root,lexical,dependencies)&&!values.some(id=>current.loans.get(id)?.root===root))continue;if(values.some(id=>{const loan=current.loans.get(id);return loan?.root===root&&dependencies.every(id=>loan.loans.includes(id));}))continue;
+  const error=readRustOwnedLoanReadError(dependencies.map(id=>table.sourceBindingStates.get(id)??''));if(error)throw unsupported('Rust mutable record loan',error,span);
+  const id=readRustMutableRecordLoanIdentity(table.nextSourceBindingIdentity);if(!id)throw unsupported('Rust mutable record loan','the actual loan identity exceeds its source domain',span);charge(current,dependencies.length+values.length+2,id.length+root.length+dependencies.reduce((size,id)=>size+id.length,0)+values.reduce((size,id)=>size+id.length,0),span);table.nextSourceBindingIdentity+=1;
+  current.loans.set(id,{root,loans:[...dependencies],lexical:dependencies.includes(lexical)});let active=current.active.get(root);if(!active){active=new Set();current.active.set(root,active);}active.add(id);table.sourceBindingStates.set(id,'available');table.sourceTemporaryBindings.add(id);values=mergeRustOwnedLoanBindings(values,[id]);
+ }
+ return {...origin,sourceValueBorrowBindings:values};
+}
+// Binding promotes existing actual value leases; it cannot allocate or renew one.
+export function promoteRustMutableRecordValueLoans(table,origin){if(table.collecting)return origin;const current=registries.get(table);if(current)for(const id of readRustCopyClosureValueBorrows(origin))if(current.loans.has(id))table.sourceTemporaryBindings.delete(id);return origin;}
+export function testRustMutableRecordLiveLoan(table,root,target){const current=registries.get(table);if(!current)return false;for(const id of current.active.get(root)??[]){const loan=current.loans.get(id);if(table.sourceBindingStates.get(id)==='available'&&testRustOwnedRecordStateLoanOverlap(root,target,loan.loans,loan.lexical))return true;}return false;}
+export function checkRustMutableRecordLoanMove(table,origin,owned,span){const current=registries.get(table),target=origin?.sourceBindingIdentity??'',root=current?.roots.has(target)?target:readRustOwnedRecordUltimateRoot(target),error=readRustMutableRecordLoanMoveError(owned,Boolean(root)&&testRustMutableRecordLiveLoan(table,root,target));if(error)throw unsupported('Rust mutable record loan',error,span);}
+export function readRustMutableRecordCarriedLoans(table,result){const current=registries.get(table);return new Set(current?readRustCopyClosureValueBorrows(result).filter(id=>current.loans.has(id)):[]);}
+export function rustMutableRecordLoanSurvives(table,id,before,result,carried=readRustMutableRecordCarriedLoans(table,result)){const loan=registries.get(table)?.loans.get(id);if(!loan)return false;return acceptRustMutableRecordLoanEscape(carried.has(id),before.has(loan.root)&&table.sourceBindingStates.get(loan.root)==='available',loan.loans.every(id=>table.sourceBindingStates.get(id)==='available'));}
+export function retireRustMutableRecordLoan(table,id){const current=registries.get(table),loan=current?.loans.get(id);if(loan)current.active.get(loan.root)?.delete(id);}
+export function restoreRustMutableRecordLoanIndex(table){const current=registries.get(table);if(!current)return;current.active.clear();for(const[id,value]of table.sourceBindingStates){const loan=current.loans.get(id);if(value==='available'&&loan){let active=current.active.get(loan.root);if(!active){active=new Set();current.active.set(loan.root,active);}active.add(id);}}}

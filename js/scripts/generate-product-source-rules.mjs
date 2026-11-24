@@ -5,6 +5,7 @@ import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { formatProductRuleSource, readProductRuleStyleCorrections, readProductSourceConditionStyleCorrections } from './product-rule-style-corrections.mjs';
+import { readProductComparisonStyles, restoreProductContinuationNames } from './product-continuation-style.mjs';
 import { readPortableSourceParameterStyles } from './portable-source-library-style.mjs';
 
 const input = new URL('../src/translation/product-source-rules.js', import.meta.url);
@@ -14,7 +15,13 @@ const output = new URL('../../rust/src/translation/javascript/product_source_rul
 const translated = emitRust(checkProgram(parseJavaScript(readFileSync(input, 'utf8'), { referenceSemantics: false })));
 const generatedAllowances = translated.text.split('\n').find(line => line.startsWith('#![allow('));
 if (!generatedAllowances) throw new Error('checked translator omitted its generated module header');
-const raw = [generatedAllowances, ...translated.preludes, ...translated.definitions].join('\n\n');
+const raw = restoreProductContinuationNames([generatedAllowances, ...translated.preludes, ...translated.definitions].join('\n\n'), [
+  ['source_ml_temporary_closure1_loop2', 'ml_closure1_loop2'],
+  ['source_ml_temporary_solve_product_source_facts_loop3', 'ml_solve_product_source_facts_loop3'],
+  ['MlTemporaryClosure1Loop2Result', 'MlClosure1Loop2Result'],
+  ['MlTemporaryClosure1Loop2Done', 'MlClosure1Loop2Done'],
+  ['source_ml_source1_s5', 'ml_s1'],
+]);
 const declarations = new Set([...raw.matchAll(/^pub (?:fn|enum|struct|mod) ([A-Za-z_][A-Za-z_0-9]*)\b/gmu)].map(match => match[1]));
 // These allowances are the existing frontend numeric model: Number equality
 // and guarded numeric array-index casts, rather than blanket lint suppression.
@@ -43,7 +50,8 @@ let decorators = DecoratorSet.fromLino(readFileSync(style, 'utf8'));
 const reviewedId = 'reviewed-product-native-lints-285c8b13';
 const conditionId = 'reviewed-product-source-condition-lints-26667280';
 const parameterId = 'shared-product-source-parameter-loans';
-const base = new DecoratorSet(decorators.decorators.filter(definition => ![reviewedId, conditionId, parameterId].includes(definition.id)));
+const comparisonId = 'product-source-optional-comparison-operands';
+const base = new DecoratorSet(decorators.decorators.filter(definition => ![reviewedId, conditionId, parameterId, comparisonId].includes(definition.id)));
 for (const action of base.decorators.flatMap(definition => definition.actions)) {
   const numericHeader = action.from === generatedAllowances && action.to === numericAllowances;
   const continuation = continuationStyles.some(style => action.from === style.from && action.to === style.to);
@@ -84,9 +92,19 @@ if (process.argv.includes('--update-styles')) {
 const parameterRecorded = decorators.decorators.find(definition => definition.id === parameterId);
 if (JSON.stringify(parameterRecorded?.actions) !== JSON.stringify(parameters.actions)) throw new Error('product source parameter styles are stale; regenerate with --update-styles');
 const parameterSource = new DecoratorSet([parameterRecorded]).decorate('emitter', { format: 'Rust', scope: 'formatted-product-source-parameters', source: conditions }).source;
+const comparisonSource = formatProductRuleSource(parameterSource);
+const comparisonActions = readProductComparisonStyles(comparisonSource);
+if (process.argv.includes('--update-styles')) {
+  decorators = decorators.add({ id: comparisonId, level: 'emitter', order: 4000,
+    when: [['format', 'Rust'], ['scope', 'formatted-product-source-comparisons']], actions: comparisonActions });
+  writeFileSync(style, decorators.toLino());
+}
+const comparisonRecorded = decorators.decorators.find(definition => definition.id === comparisonId);
+if (JSON.stringify(comparisonRecorded?.actions) !== JSON.stringify(comparisonActions)) throw new Error('product source comparison styles are stale; regenerate with --update-styles');
+const comparisons = new DecoratorSet([comparisonRecorded]).decorate('emitter', { format: 'Rust', scope: 'formatted-product-source-comparisons', source: comparisonSource }).source;
 const generated = '// Generated from js/src/translation/product-source-rules.js by the checked translator.\n'
   + '// Styles: parity/self-translation/product-source-rules-decorators.lino.\n'
-  + '// Do not edit by hand.\n' + formatProductRuleSource(parameterSource);
+  + '// Do not edit by hand.\n' + formatProductRuleSource(comparisons);
 if (process.argv.includes('--check')) {
   if (readFileSync(output, 'utf8') !== generated) throw new Error('native product source solver is stale');
 } else writeFileSync(output, generated);

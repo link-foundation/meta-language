@@ -56,7 +56,15 @@ function readHistoricalCompleteDeclarationDescriptorSuccessor(artifact,identity,
  }
  assert.deepEqual(changes,expected,'only the two owned descriptor byte counts and hashes may change');
  if(identity!==edge.identity||actual!==edge.current.sha256){
-  assert.ok([base.previous.sha256,base.current.sha256].includes(actual),'unknown artifacts cannot enter the descriptor chain');
+  assert.ok([base.previous.sha256,base.current.sha256].includes(actual),
+   'unknown artifacts cannot enter the descriptor chain; actual sha256='+actual+'; bytes='+bytes.length
+   +'; diagnostic='+(()=>{
+    try{
+     const text=JSON.stringify({archive:artifact.archive,replays:artifact.replays,
+      source:{bytes:artifact.sourceBytes,sha256:artifact.sourceSha256},decisionSources:artifact.decisionSources});
+     return text.length<=8192?text:text.slice(0,8192)+' [truncated]';
+    }catch{return'unavailable';}
+   })());
   return {artifact:structuredClone(artifact),bytes};
  }
  assert.equal(bytes.length,edge.current.bytes,'the entire descriptor successor byte count is exact');

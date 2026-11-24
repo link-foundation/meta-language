@@ -78,16 +78,26 @@ fn source_arrays_retain_checked_surface_and_reparse_actual_emitted_definitions()
 fn unsupported_array_ownership_and_borrowing_match_shared_diagnostics() {
     for case in fixture()["invalid"].as_array().unwrap() {
         let id = case["id"].as_str().unwrap();
-        let error = parse_rust(case["source"].as_str().unwrap())
-            .and_then(|surface| check_program(&surface))
-            .expect_err("unproved source array semantics remain explicit");
-        assert_eq!(error.kind.as_str(), case["kind"].as_str().unwrap(), "{id}");
-        assert_eq!(error.reason, case["reason"].as_str().unwrap(), "{id}");
-        assert_eq!(
-            serde_json::to_value(error.span).unwrap(),
-            case["span"],
-            "{id}"
-        );
+        if matches!(
+            id,
+            "array-return"
+                | "unconverted-source-length"
+                | "other-length-conversion"
+                | "source-indexing"
+        ) {
+            super::translation_rust_fresh_vector_results::assert_original_array_result_case(case);
+        } else {
+            let error = parse_rust(case["source"].as_str().unwrap())
+                .and_then(|surface| check_program(&surface))
+                .expect_err("unproved source array semantics remain explicit");
+            assert_eq!(error.kind.as_str(), case["kind"].as_str().unwrap(), "{id}");
+            assert_eq!(error.reason, case["reason"].as_str().unwrap(), "{id}");
+            assert_eq!(
+                serde_json::to_value(error.span).unwrap(),
+                case["span"],
+                "{id}"
+            );
+        }
     }
 }
 

@@ -66,7 +66,18 @@ test('an argument failure remains observable before any static predicate result'
   }
 });
 
-test('unrepresented unions proxies arities and shadowed owners retain independent source oracles and explicit refusals',()=>{
+test('missing and extra arguments retain their results and effects through both codecs',()=>{
+  for(const row of policy.arityCases){
+    assert.equal(printed(row.source),row.expected,row.name+' independent Node');
+    const checked=checkProgram(parseJavaScript(row.source)),packet=encodeTypedProgramLinks(checked),rust=emitRust(checked).text;
+    for(const program of[checked,...archives(packet).map(network=>recheckLinkedTypedProgram(decodeTypedProgramLinks(network,packet.root),{wholeProgram:true}))]){
+      assert.equal(printed(emitJavaScript(program).text),row.expected,row.name);
+      assert.equal(emitRust(program).text,rust,row.name);
+    }
+  }
+});
+
+test('unrepresented unions proxies spread arguments and shadowed owners retain independent source oracles and explicit refusals',()=>{
   for(const row of policy.refusals){
     if(row.errorName)assert.equal(observedError(row.source).name,row.errorName,row.name);
     else assert.equal(printed(row.source),row.expected,row.name+' independent Node');
@@ -140,13 +151,10 @@ test('ordinary binding identifiers keep actual module local parameter and nested
       const before=emitRust(program).text,emitted=emitJavaScript(program,options).text;
       assert.equal(printed(emitted),row.expected);assert.equal(emitRust(program).text,before);assert.equal(before,rust,'target naming does not change the actual checked program');
       if(row.fixedNumberPrelude){
-        // >=1.0.0 <1.0.1 has a separate fixed Number formatter using Object.is.
-        // Preserve this complete original program and all its oracles; the
-        // naming profile does not admit that unrepresented prelude operation.
-        assert.equal(readProjectData(new URL('../package.json',import.meta.url)).version,'1.0.0','uncovered package version; >=1.0.0 <1.0.1 required for this exact fixed-prelude refusal');
         assert.match(emitted,/function ml_showNumber\(value\)/u);
-        assert.throws(()=>parseJavaScript(emitted),error=>error.reason==='Object.is: the JavaScript standard library is outside the portable core'&&error.span.start===195&&error.span.end===216);
-      }else reverseOracle(emitted,row.expected);
+        assert.match(emitted,/Object\.is\(value, -0\)/u);
+      }
+      reverseOracle(emitted,row.expected);
     }
   }
   const variants=[

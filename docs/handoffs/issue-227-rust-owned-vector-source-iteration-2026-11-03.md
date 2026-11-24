@@ -1,0 +1,13 @@
+# Owned Vec source iteration draft
+
+The existing source loop reader now admits actual owned `std::vec::Vec` / `alloc::vec::Vec` in the exact exclusive-source profile, independently of the standard collection library. The head uses the existing owned-result transfer and consumption operations once before item binding. Its post-head ownership snapshot retains the original moved root on normal, empty, break and function-completion paths. Shared BTree heads retain their genuine source leases and previous restrictions.
+
+`rust-owned-vector-source-iteration.js` supplies a private, WeakMap-authenticated physical array view over the actual consumed value. It synthesizes item origins only from the actual complete standard element owner and closed destructor-free ownership graph. String, direct record, scalar and nested Vec items retain source ownership. Box element indirection and borrowed element positions remain explicit frontiers. Collection kernel generation is unnecessary for this direct source operation.
+
+The active loop-head callback `ownedVectorSourceIteratorReader(receiver,method,path,span)` admits only exact zero-argument `into_iter()`. The parser companion owns its narrow postfix hook before iterator reduction. The reader rejects intermediate, stored, observed or origin-overwritten private iterators and restores the callback after the complete head. Physical array representation supplies no public Vec authority. Final source private-marker refusal remains in the shared loop boundary.
+
+Fresh pattern binders may be owned or Copy, and `for mut value` receives its own scoped state slot. The common completion/state fold publishes changed outer roots through normal iteration, continue, nearest break, return and `?`; owned item slots expire after the loop. A separate outer owner cannot be consumed on a repeating body path. Reinitialization of a mutable consumed vector uses the existing ordinary whole-place assignment protocol.
+
+Independent fixture exports are `rustOwnedVectorLoopOriginals` (24), `rustOwnedVectorLoopRefusals` (16) and `rustOwnedVectorLoopVersions`, in `js/tests/fixtures/rust-owned-vector-source-loops.mjs`. Deferred controls check actual parse/check/emitted JavaScript stdout for every positive at Rust 1.90 and 1.99, without a collection library. Node is bounded to 22.15–22.x or 24.x. Existing borrowed BTree inputs and refusals are retained, including the separate owned BTree IntoIterator frontier.
+
+This batch was reviewed as source only. No tests, behavior imports, validation, generation, native compilation or evidence recording were run. Source-author/catalog/native-original registration belongs to the root batch. No runtime observation or parity completion is claimed.

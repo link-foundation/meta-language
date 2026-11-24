@@ -7,7 +7,8 @@ import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSy
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readProjectData, writeProjectData } from './project-data.mjs';
-import { partitionGroupFiles, partitionTests, testFiles } from './test-groups.mjs';
+import { partitionTests, testFiles } from './test-groups.mjs';
+import {partitionCiTestGroupFiles} from './ci-test-partitions.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const PARTS = 3;
@@ -27,7 +28,7 @@ function partitionFiles(root, shard, partitions = PARTS) {
       : 'feedback shard must use the explicitly selected positive partition count');
   }
   const groups = partitionTests(testFiles(path.join(root, 'js'))).groups;
-  return partitionGroupFiles(groups.translation, shard).map(file => `js/tests/${file}`);
+  return partitionCiTestGroupFiles('translation',groups.translation,shard).map(file => `js/tests/${file}`);
 }
 
 function filesWithin(directory, prefix = '') {

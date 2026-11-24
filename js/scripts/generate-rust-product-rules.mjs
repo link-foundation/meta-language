@@ -6,11 +6,13 @@ import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { applyRecordedFamilyLibraryStyles } from './recorded-family-library-style.mjs';
+import { readSourceTextRustBlock } from './source-text-byte-library-style.mjs';
 
 if (process.argv.includes('--check') && process.argv.some(argument => argument.startsWith('--update-'))) throw new Error('freshness checks cannot update recorded styles');
 
 const input = new URL('../src/translation/rust-product-rules.js', import.meta.url);
 const style = new URL('../../parity/self-translation/rust-product-rules-decorators.lino', import.meta.url);
+const utf16Style = new URL('../../parity/self-translation/rust-product-tuple-index-utf16-decorators.lino', import.meta.url);
 const output = new URL('../../rust/src/translation/rust/product_rules.rs', import.meta.url);
 const definitions = emitRust(checkProgram(parseJavaScript(readFileSync(input, 'utf8'))), { arrayConsumption: true }).definitions;
 const raw = definitions.join('\n\n');
@@ -46,8 +48,25 @@ if (process.argv.includes('--update-styles')) {
   writeFileSync(style, new DecoratorSet([{ id: 'rust-product-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).toLino());
 }
 const document = readFileSync(style, 'utf8');
-const decorated = DecoratorSet.fromLino(document).decorate('emitter', { format: 'Rust', source: raw }).source;
-if (decorated.includes('crate::ml_string')) throw new Error('product decision style left an unbound string runtime');
+const historical = DecoratorSet.fromLino(document);
+const adapted = historical.decorate('emitter', { format: 'Rust', source: raw }).source;
+if (process.argv.includes('--update-utf16-style')) {
+  const name = 'accept_rust_tuple_index_spelling';
+  const from = readSourceTextRustBlock(adapted, 'fn', name);
+  const reviewed = historical.decorators.find(({ id }) => id === 'reviewed-b50-rust-product-919ea693d4ba95f8');
+  const to = readSourceTextRustBlock(reviewed.actions[0].from, 'fn', name);
+  const calls = [...from.matchAll(/crate::ml_utf16_text::replace_utf16_text\(/gu)];
+  const digits = [...from.matchAll(/let source_ml_string_unit_operand\d+ = "([0-9])";/gu)];
+  if (calls.length !== 10 || digits.map(match => match[1]).join('') !== '0123456789') {
+    throw new Error('product index style requires every ASCII digit replacement, in order');
+  }
+  const addition = new DecoratorSet([{ id: 'rust-product-tuple-index-utf16-style', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: [{ op: 'replace', field: 'source', from, to }] }]);
+  writeFileSync(utf16Style, addition.toLino());
+}
+const decorated = DecoratorSet.fromLino(readFileSync(utf16Style, 'utf8'))
+  .decorate('emitter', { format: 'Rust', source: adapted }).source;
+if (/crate::ml_(?:string|utf16_text)\b/u.test(decorated)) throw new Error('product decision style left an unbound string runtime');
 const format = input => {
   const result = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input, encoding: 'utf8' });
   if (result.error || result.status !== 0) throw result.error ?? new Error(result.stderr);

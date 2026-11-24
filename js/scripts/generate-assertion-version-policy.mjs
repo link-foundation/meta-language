@@ -1,5 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
+import {rustSourceStateAssertionPolicies} from './rust-source-state-assertion-policies.mjs';
+import { linkCliArchiveReconstructionFixture, linkCliReconstruction } from './link-cli-archive-reconstruction-assertions.mjs';
 
 export function assertionVersionPolicy() {
   return {
@@ -55,6 +57,21 @@ export function assertionVersionPolicy() {
         evidence: 'js/package.json and js/package-lock.json pin TypeScript 7.0.2. This singleton specifies the required CI diagnostic for the same unchanged closed pure Rust const predicates 99 consumer; it is not a local TypeScript 7 execution observation.',
       }],
     }, {
+      id: 'typescript-const-signature-rejection-diagnostic',
+      subject: 'TypeScript public declaration compiler',
+      comparison: { kind: 'release', precision: 3 },
+      expectations: [{
+        id: 'typescript-5-9-2-const-signature-rejection',
+        minimum: '5.9.2', maximum: '5.9.2', includeMinimum: true, includeMaximum: true,
+        expected: ['TS2322'],
+        evidence: 'Retains the exact TypeScript 5.9.2 assertion for the unchanged reject-unregistered-explicit-const-predicate-signature-model consumer.',
+      }, {
+        id: 'typescript-7-0-2-const-signature-rejection',
+        minimum: '7.0.2', maximum: '7.0.2', includeMinimum: true, includeMaximum: true,
+        expected: ['TS2820'],
+        evidence: 'CI run 42129692629 job 127602873736 reported TS2820 for the unchanged Rust source function signature 99 literal and suggested Rust source function signature 1. The committed lock pins TypeScript 7.0.2.',
+      }],
+    }, {
       id: 'agda-corrected-layout-oracle',
       subject: 'Agda complete scanner layout source oracle',
       comparison: { kind: 'release', precision: 3 },
@@ -86,6 +103,20 @@ export function assertionVersionPolicy() {
         },
         evidence: 'The existing authenticated grammar lock pins this exact released Agda1.3.3 WebAssembly artifact. Existing JavaScript focused match/rejection/divergence assertions remain in this historical sandboxed profile; this does not select the unsafe original native C scanner or apply historical recovery expectations to corrected scanner sources.',
       }],
+    },...rustSourceStateAssertionPolicies(), {
+      id: linkCliReconstruction.policyId,
+      subject: 'Link CLI native store replay',
+      comparison: { kind: 'release', precision: 3 },
+      expectations: [{
+        id: 'link-cli-3-1-1-links-notation-0-31-8',
+        minimum: linkCliReconstruction.linkCliVersion, maximum: linkCliReconstruction.linkCliVersion,
+        includeMinimum: true, includeMaximum: true,
+        expected: { linkCli: linkCliReconstruction.linkCliVersion, linksNotation: linkCliReconstruction.notationVersion },
+        sourceReferences: {
+          store: 'https://github.com/link-foundation/link-cli/blob/fbc90908772dd8117c4d1be05bc16defd1cb9540/docs/protocol/binary-links-notation.md#10-store-archive',
+        },
+        evidence: 'The replay checks the installed clink version, both Links Notation provider pins, and the active npm module before exercising the published native archive format.',
+      }],
     }],
     observationBindings: [{
       testId: 'i195-assertion-explicit-version-ranges-tooling-antlr-command-order',
@@ -111,7 +142,13 @@ export function assertionVersionPolicy() {
       fixtureId: 'assertion-version-peggy-character-set-shape-source',
       fixtureFile: 'js/tests/grammar-interchange-tools.test.js',
       assertionPolicy: 'peggy-optimized-character-set-shape',
-    }],
+    }, ...['javascript', 'rust'].flatMap(runtime => linkCliReconstruction.assertions.map(assertionId => ({
+      testId: `${linkCliReconstruction.requirementId}-${runtime}-${linkCliReconstruction.suffix}`.toLowerCase(),
+      assertionId,
+      fixtureId: linkCliArchiveReconstructionFixture(runtime),
+      fixtureFile: linkCliReconstruction.fixtureFile,
+      assertionPolicy: linkCliReconstruction.policyId,
+    })))],
   };
 }
 

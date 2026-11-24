@@ -30,23 +30,31 @@ use super::types::Type;
 use super::{Language, Span};
 
 mod array_moves;
+mod array_state_methods;
 mod arrays;
 mod callables;
 mod declarations;
 mod expressions;
 mod externals;
 mod math;
+mod nominal_array_loans;
+mod number_conversions;
 mod number_prelude;
 mod optional_values;
+mod prelude;
 mod primitive_methods;
+mod record_writes;
 mod records;
+mod reference_array_projections;
+mod reference_callbacks;
+mod reference_methods;
 
-use self::arrays::read_array_prelude;
 use self::externals::external_name;
-use self::math::MATH_PRELUDE;
-use self::number_prelude::NUMBER_PRELUDE;
+use self::prelude::Prelude;
 
 const KEYWORDS: &[&str] = &[
+    "ml_unicode_case",
+    "ml_utf16_text",
     "as",
     "break",
     "const",
@@ -142,293 +150,8 @@ const KEYWORDS: &[&str] = &[
     "ml_main",
     "ml_check_theorems",
     "ml_number",
+    "ml_record_property_order",
 ];
-
-const PRELUDE: &str = r#"/// Unbounded integers for the portable core's naturals and integers.
-pub mod ml {
-    use std::cmp::Ordering;
-    use std::fmt;
-
-    /// Sign and magnitude; the magnitude is little-endian base 2^32 without
-    /// leading zero limbs, and zero is never negative.
-    #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-    pub struct Big {
-        negative: bool,
-        magnitude: Vec<u32>,
-    }
-
-    fn trim(mut magnitude: Vec<u32>) -> Vec<u32> {
-        while magnitude.last() == Some(&0) {
-            magnitude.pop();
-        }
-        magnitude
-    }
-
-    fn compare_magnitude(a: &[u32], b: &[u32]) -> Ordering {
-        a.len().cmp(&b.len()).then_with(|| a.iter().rev().cmp(b.iter().rev()))
-    }
-
-    fn add_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
-        let mut out = Vec::with_capacity(a.len().max(b.len()) + 1);
-        let mut carry = 0u64;
-        for index in 0..a.len().max(b.len()) {
-            let sum = u64::from(*a.get(index).unwrap_or(&0)) + u64::from(*b.get(index).unwrap_or(&0)) + carry;
-            out.push(sum as u32);
-            carry = sum >> 32;
-        }
-        if carry > 0 {
-            out.push(carry as u32);
-        }
-        out
-    }
-
-    /// |a| - |b| where |a| >= |b|.
-    fn sub_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
-        let mut out = Vec::with_capacity(a.len());
-        let mut borrow = 0i64;
-        for (index, limb) in a.iter().enumerate() {
-            let mut difference = i64::from(*limb) - i64::from(*b.get(index).unwrap_or(&0)) - borrow;
-            borrow = 0;
-            if difference < 0 {
-                difference += 1 << 32;
-                borrow = 1;
-            }
-            out.push(difference as u32);
-        }
-        trim(out)
-    }
-
-    fn mul_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
-        let mut out = vec![0u32; a.len() + b.len()];
-        for (i, x) in a.iter().enumerate() {
-            let mut carry = 0u64;
-            for (j, y) in b.iter().enumerate() {
-                let product = u64::from(out[i + j]) + u64::from(*x) * u64::from(*y) + carry;
-                out[i + j] = product as u32;
-                carry = product >> 32;
-            }
-            let mut index = i + b.len();
-            while carry > 0 {
-                let sum = u64::from(out[index]) + carry;
-                out[index] = sum as u32;
-                carry = sum >> 32;
-                index += 1;
-            }
-        }
-        trim(out)
-    }
-
-    /// Quotient and remainder of magnitudes; the divisor is not zero.
-    fn divmod_magnitude(a: &[u32], b: &[u32]) -> (Vec<u32>, Vec<u32>) {
-        let mut quotient = vec![0u32; a.len()];
-        if b.len() == 1 {
-            let divisor = u64::from(b[0]);
-            let mut remainder = 0u64;
-            for index in (0..a.len()).rev() {
-                let current = (remainder << 32) | u64::from(a[index]);
-                quotient[index] = (current / divisor) as u32;
-                remainder = current % divisor;
-            }
-            return (trim(quotient), trim(vec![remainder as u32]));
-        }
-        let mut remainder: Vec<u32> = Vec::new();
-        for bit in (0..a.len() * 32).rev() {
-            let mut carry = (a[bit / 32] >> (bit % 32)) & 1;
-            for limb in remainder.iter_mut() {
-                let next = *limb >> 31;
-                *limb = (*limb << 1) | carry;
-                carry = next;
-            }
-            if carry != 0 {
-                remainder.push(carry);
-            }
-            if compare_magnitude(&remainder, b) != Ordering::Less {
-                remainder = sub_magnitude(&remainder, b);
-                quotient[bit / 32] |= 1 << (bit % 32);
-            }
-        }
-        (trim(quotient), remainder)
-    }
-
-    impl Big {
-        fn from_parts(negative: bool, magnitude: Vec<u32>) -> Self {
-            let magnitude = trim(magnitude);
-            Self { negative: negative && !magnitude.is_empty(), magnitude }
-        }
-
-        pub fn zero() -> Self {
-            Self::from_parts(false, Vec::new())
-        }
-
-        pub fn from_i128(value: i128) -> Self {
-            let mut big = Self::from_u128(value.unsigned_abs());
-            big.negative = value < 0;
-            big
-        }
-
-        pub fn from_u128(mut value: u128) -> Self {
-            let mut magnitude = Vec::new();
-            while value > 0 {
-                magnitude.push(value as u32);
-                value >>= 32;
-            }
-            Self::from_parts(false, magnitude)
-        }
-
-        /// A decimal literal with an optional leading minus sign.
-        pub fn parse(text: &str) -> Self {
-            let (negative, digits) = match text.strip_prefix('-') {
-                Some(rest) => (true, rest),
-                None => (false, text),
-            };
-            let ten = Self::from_i128(10);
-            let mut value = Self::zero();
-            for digit in digits.chars() {
-                let digit = digit.to_digit(10).expect("decimal literal");
-                value = value.mul(&ten).add(&Self::from_i128(i128::from(digit)));
-            }
-            if negative { value.neg() } else { value }
-        }
-
-        pub fn is_zero(&self) -> bool {
-            self.magnitude.is_empty()
-        }
-
-        pub fn is_negative(&self) -> bool {
-            self.negative
-        }
-
-        /// The array index this names, if it is one.
-        pub fn to_index(&self) -> Option<usize> {
-            if self.negative || self.magnitude.len() > 2 {
-                return None;
-            }
-            let value = self.magnitude.iter().rev().fold(0u64, |acc, &digit| (acc << 32) | u64::from(digit));
-            usize::try_from(value).ok()
-        }
-
-        pub fn neg(&self) -> Self {
-            Self::from_parts(!self.negative, self.magnitude.clone())
-        }
-
-        pub fn add(&self, other: &Self) -> Self {
-            if self.negative == other.negative {
-                return Self::from_parts(self.negative, add_magnitude(&self.magnitude, &other.magnitude));
-            }
-            match compare_magnitude(&self.magnitude, &other.magnitude) {
-                Ordering::Less => Self::from_parts(other.negative, sub_magnitude(&other.magnitude, &self.magnitude)),
-                _ => Self::from_parts(self.negative, sub_magnitude(&self.magnitude, &other.magnitude)),
-            }
-        }
-
-        pub fn sub(&self, other: &Self) -> Self {
-            self.add(&other.neg())
-        }
-
-        pub fn mul(&self, other: &Self) -> Self {
-            Self::from_parts(self.negative != other.negative, mul_magnitude(&self.magnitude, &other.magnitude))
-        }
-
-        /// Division rounding toward zero; the divisor is not zero.
-        pub fn divmod_trunc(&self, other: &Self) -> (Self, Self) {
-            let (quotient, remainder) = divmod_magnitude(&self.magnitude, &other.magnitude);
-            (
-                Self::from_parts(self.negative != other.negative, quotient),
-                Self::from_parts(self.negative, remainder),
-            )
-        }
-    }
-
-    impl Ord for Big {
-        fn cmp(&self, other: &Self) -> Ordering {
-            match (self.negative, other.negative) {
-                (false, true) => Ordering::Greater,
-                (true, false) => Ordering::Less,
-                (false, false) => compare_magnitude(&self.magnitude, &other.magnitude),
-                (true, true) => compare_magnitude(&other.magnitude, &self.magnitude),
-            }
-        }
-    }
-
-    impl PartialOrd for Big {
-        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-            Some(self.cmp(other))
-        }
-    }
-
-    impl fmt::Display for Big {
-        fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-            if self.is_zero() {
-                return formatter.write_str("0");
-            }
-            let billion = [1_000_000_000u32];
-            let mut chunks = Vec::new();
-            let mut rest = self.magnitude.clone();
-            while !rest.is_empty() {
-                let (quotient, remainder) = divmod_magnitude(&rest, &billion);
-                chunks.push(remainder.first().copied().unwrap_or(0));
-                rest = quotient;
-            }
-            let mut text = String::new();
-            if self.negative {
-                text.push('-');
-            }
-            text.push_str(&chunks.pop().unwrap_or(0).to_string());
-            for chunk in chunks.iter().rev() {
-                text.push_str(&format!("{chunk:09}"));
-            }
-            formatter.write_str(&text)
-        }
-    }
-
-    /// Natural subtraction: truncated at zero.
-    pub fn nat_sub(a: &Big, b: &Big) -> Big {
-        if a > b { a.sub(b) } else { Big::zero() }
-    }
-
-    pub fn pred(a: &Big) -> Big {
-        a.sub(&Big::from_i128(1))
-    }
-
-    /// Integer division with the source's rounding ("trunc", "floor" or
-    /// "euclid"); by zero it aborts with the source's message or is total
-    /// (x / 0 = 0, x % 0 = x).
-    pub fn divide(a: &Big, b: &Big, rounding: &str, by_zero: Option<&str>, remainder: bool) -> Big {
-        if b.is_zero() {
-            if let Some(message) = by_zero {
-                panic!("{message}");
-            }
-            return if remainder { a.clone() } else { Big::zero() };
-        }
-        let one = Big::from_i128(1);
-        let (mut quotient, rest) = a.divmod_trunc(b);
-        if !rest.is_zero() {
-            if rounding == "floor" && rest.is_negative() != b.is_negative() {
-                quotient = quotient.sub(&one);
-            }
-            if rounding == "euclid" && rest.is_negative() {
-                quotient = if b.is_negative() { quotient.add(&one) } else { quotient.sub(&one) };
-            }
-        }
-        if remainder { a.sub(&quotient.mul(b)) } else { quotient }
-    }
-
-    pub fn to_nat_checked(value: Big, message: &str) -> Big {
-        if value.is_negative() {
-            panic!("{message}");
-        }
-        value
-    }
-
-    pub fn clamp_nat(value: Big) -> Big {
-        if value.is_negative() { Big::zero() } else { value }
-    }
-
-    /// Bounded domains for executable theorem checks.
-    pub fn range(low: i128, high: i128) -> Vec<Big> {
-        (low..=high).map(Big::from_i128).collect()
-    }
-}"#;
 
 /// A legal Rust identifier for a source name.
 fn ident(name: &str) -> String {
@@ -606,6 +329,9 @@ fn emit_rust_context_owned(
     array_consumption: bool,
     record_ownership: bool,
 ) -> Result<(Emitted, Option<DefinitionOwnership>)> {
+    let prepared = super::ordered_record_preparation::prepare(program)?;
+    let program = prepared.as_ref();
+    super::class_owners::validate_program(program)?;
     super::source_type_namespaces::validate_source_type_namespaces(program)?;
     super::source_const_functions::validate_const_functions(program)?;
     super::owned_local_state::validate_owned_local_state(program)?;
@@ -637,7 +363,61 @@ fn emit_rust_context_owned(
         emitter.state.encode("utf16-strings", "strings are sequences of UTF-16 code units, retaining isolated surrogates and JavaScript offsets; output replaces isolated surrogates as Node writes UTF-8");
     }
     if let Some(model) = options.source_header_model {
-        if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(model) {
+        if super::rust_scalar_source_interface_rules::accept_rust_scalar_source_interface_model(
+            model,
+        ) || super::rust_scalar_mathematical_interface_rules::accept_rust_scalar_mathematical_interface_model(model)
+            || super::rust_textual_source_interface_rules::accept_rust_textual_source_interface_model(model)
+            || super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model)
+            || super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model)
+            || super::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model) {
+            let headers =
+                super::scalar_source_interface::read_rust_scalar_source_interface(program, model)?;
+            emitter.source_headers = headers.clone();
+            emitter.borrowed_call_targets = Some(headers);
+            emitter.scalar_source_interface = true;
+            emitter.state.encode(
+                &super::rust_scalar_source_interface_rules::read_rust_scalar_source_encoding(),
+                &super::rust_scalar_source_interface_rules::read_rust_scalar_source_statement(),
+            );
+            if super::rust_scalar_mathematical_interface_rules::accept_rust_scalar_mathematical_interface_model(model) {
+                emitter.state.encode(
+                    &super::rust_scalar_mathematical_interface_rules::read_rust_scalar_mathematical_encoding(),
+                    &super::rust_scalar_mathematical_interface_rules::read_rust_scalar_mathematical_statement(),
+                );
+            }
+            if super::rust_textual_source_interface_rules::accept_rust_textual_source_interface_model(model)
+                || super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model)
+                || super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model)
+                || super::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model) {
+                emitter.state.encode(
+                    &super::rust_textual_source_interface_rules::read_rust_textual_source_encoding(),
+                    &super::rust_textual_source_interface_rules::read_rust_textual_source_statement(),
+                );
+            }
+            if super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model)
+                || super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model)
+                || super::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model) {
+                emitter.state.encode(
+                    &super::rust_string_predicate_interface_rules::read_rust_string_predicate_encoding(),
+                    &super::rust_string_predicate_interface_rules::read_rust_string_predicate_statement(),
+                );
+            }
+            if super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model)
+                || super::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model) {
+                emitter.state.encode(
+                    &super::rust_constructed_string_interface_rules::read_rust_constructed_string_encoding(),
+                    &super::rust_constructed_string_interface_rules::read_rust_constructed_string_statement(),
+                );
+            }
+            if super::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model) {
+                emitter.state.encode(
+                    &super::rust_displayed_string_interface_rules::read_rust_displayed_string_encoding(),
+                    &super::rust_displayed_string_interface_rules::read_rust_displayed_string_statement(),
+                );
+            }
+        } else if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(
+            model,
+        ) {
             let interface =
                 super::borrowed_call_interface::read_rust_borrowed_call_interface(program, model)?;
             emitter.source_headers = interface.headers;
@@ -675,6 +455,22 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
     }
     RustEmitter {
         program,
+        named_constructor_fields: program.source_language == super::Language::Rust
+            && program.declarations.iter().any(|entry| {
+                let Decl::Data(data) = entry else {
+                    return false;
+                };
+                data.ctors.iter().any(|ctor| {
+                    super::rust_source_render_interfaces::accept_rust_named_constructor_fields(
+                        program.source_language.as_str(),
+                        &ctor
+                            .fields
+                            .iter()
+                            .map(|field| field.name.clone())
+                            .collect::<Vec<_>>(),
+                    )
+                })
+            }),
         state,
         temporaries: 0,
         theorem_checks: Vec::new(),
@@ -683,6 +479,7 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
         source_headers: BTreeMap::new(),
         borrowed_call_targets: None,
         borrowed_call_scope: None,
+        scalar_source_interface: false,
         utf16_strings: false,
         standard_array: false,
         array_final_uses: BTreeSet::new(),
@@ -697,6 +494,9 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
 /// # Errors
 /// On a constant value the target cannot express faithfully.
 pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
+    super::class_owners::validate_program(program)?;
+    let prepared = super::ordered_record_preparation::prepare(program)?;
+    let program = prepared.as_ref();
     let Some(main) = &program.main else {
         return Ok(None);
     };
@@ -725,6 +525,8 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
         return Ok(None);
     }
     let mut emitter = rust_emitter(program);
+    emitter.utf16_strings = program.utf16_strings.unwrap_or(false)
+        || primitive_methods::program_requires_method_units(program);
     let form = constant_binding_form(
         if matches!(value.node, Node::Lit { .. }) {
             "lit"
@@ -745,14 +547,7 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
     let preludes: Vec<String> = emitter
         .preludes
         .iter()
-        .map(|prelude| match prelude {
-            Prelude::Big => PRELUDE.to_owned(),
-            Prelude::Number => NUMBER_PRELUDE.to_owned(),
-            Prelude::Math => MATH_PRELUDE.to_owned(),
-            Prelude::Array => read_array_prelude(emitter.standard_array).to_owned(),
-            Prelude::String => crate::self_translation::representation::string_prelude(),
-            Prelude::Optional => super::structured_type_rules::read_rust_optional_prelude(),
-        })
+        .map(|prelude| prelude.source(emitter.standard_array))
         .collect();
     let mut output = emitter.state.finish(
         preludes
@@ -783,44 +578,34 @@ struct TheoremCheck {
     source: String,
 }
 
-/// A generated module, in the order the file lists the ones it uses.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum Prelude {
-    Big,
-    Number,
-    Math,
-    Array,
-    String,
-    Optional,
-}
-
-/// Optional internal records captured during normal complete block emission.
-/// Not part of Emitted or its serialized/public contract.
+/// Inspectable records captured during normal complete block emission.
+/// Transient validation metadata, separate from the serialized Emitted contract.
 #[derive(Clone, Debug, Default)]
-pub(crate) struct DefinitionOwnership {
-    pub(crate) blocks: Vec<OwnedDefinitionBlock>,
-    pub(crate) external_targets: Vec<OwnedExternalTarget>,
+pub struct DefinitionOwnership {
+    pub blocks: Vec<OwnedDefinitionBlock>,
+    pub external_targets: Vec<OwnedExternalTarget>,
 }
 #[derive(Clone, Debug)]
-pub(crate) struct OwnedDefinitionBlock {
-    pub(crate) source: String,
-    pub(crate) kind: &'static str,
-    pub(crate) source_span: Option<Span>,
-    pub(crate) definition_index: usize,
-    pub(crate) definition: String,
-    pub(crate) mapping_start: usize,
-    pub(crate) mapping_end: usize,
-    pub(crate) targets: Vec<String>,
+pub struct OwnedDefinitionBlock {
+    pub source: String,
+    pub kind: &'static str,
+    pub source_span: Option<Span>,
+    pub definition_index: usize,
+    pub definition: String,
+    pub mapping_start: usize,
+    pub mapping_end: usize,
+    pub targets: Vec<String>,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct OwnedExternalTarget {
-    pub(crate) source: String,
-    pub(crate) kind: &'static str,
-    pub(crate) target: String,
+pub struct OwnedExternalTarget {
+    pub source: String,
+    pub kind: &'static str,
+    pub target: String,
 }
 
 struct RustEmitter<'p> {
     program: &'p Program,
+    named_constructor_fields: bool,
     state: EmitState<'p>,
     definition_ownership: Option<DefinitionOwnership>,
     temporaries: usize,
@@ -836,6 +621,8 @@ struct RustEmitter<'p> {
     borrowed_call_targets: Option<BTreeMap<String, super::source_signatures::SourceSignature>>,
     /// Per-function hygienic names, reserved against every argument and binder.
     borrowed_call_scope: Option<Scope<'p>>,
+    /// Explicit retained scalar header and whole call-graph interpretation.
+    scalar_source_interface: bool,
     /// Internal self-translation representation; actual Text values are guarded.
     utf16_strings: bool,
     /// The JavaScript source selected optional reads or standard array methods.

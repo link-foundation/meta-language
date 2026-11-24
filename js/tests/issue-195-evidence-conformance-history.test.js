@@ -37,14 +37,39 @@ test('historical conformance views refuse missing duplicate mixed and unsupporte
 
 test('conformance adapters retain both complete original guard modules and every preceding assertion',()=>{
   const revision='9ac3038132953e6a220bba6f06a3e6147d39836f';
-  for(const [file,addition,marker,call]of [
-    ['js/tests/support/platform-test-deadline-history.js',"\nimport {restoreConformancePartitionHistory} from './conformance-partition-history.js';\n","  assert.equal(typeof source,'string');",'  source=restoreConformancePartitionHistory(source);'],
-    ['js/tests/issue-195-evidence-translation-feedback.test.js',"\nimport {restoreConformancePartitionHistory} from './support/conformance-partition-history.js';\n",'function assertInitialTranslationShards(text) {','  text=restoreConformancePartitionHistory(text);'],
-  ]){
-    const current=restoreCiRepairSourceHistory(file,readFileSync(new URL(file,root),'utf8'));assert.ok(current.endsWith(addition));
-    const changed=marker+'\n'+call;assert.equal(current.split(changed).length,2);
-    const previous=current.slice(0,-addition.length).replace(changed,marker);
-    assert.ok(Buffer.from(previous).equals(execFileSync('git',['show',revision+':'+file],{cwd:root,maxBuffer:128*1024})));
+  const edits = new Map([
+    ['js/tests/support/platform-test-deadline-history.js', {
+      suffix: "\nimport {restoreConformancePartitionHistory} from './conformance-partition-history.js';\n"
+        + "\nimport {restoreEvidenceTranslationSourceHistory} from '../../scripts/evidence-translation-source-history.mjs';\n"
+        + "\nimport {restoreCurrentCiRepairSource} from '../../scripts/current-ci-repair-source-history.mjs';\n"
+        + "import {restoreDependencyRefreshPublication} from '../../scripts/tooling-frozen-source-history.mjs';\n",
+      lines: [
+        ["  if(source.startsWith('name: Dependency Refresh\\n'))source=restoreDependencyRefreshPublication(source,'.github/workflows/dependency-refresh.yml');\n", ''],
+        ["  source=restoreCurrentCiRepairSource(source,'.github/workflows/rust.yml');\n", ''],
+        ["  source=restoreEvidenceTranslationSourceHistory('.github/workflows/ci.yml',source);\n", ''],
+        ['  source=restoreConformancePartitionHistory(source);\n', ''],
+      ],
+    }],
+    ['js/tests/issue-195-evidence-translation-feedback.test.js', {
+      suffix: "\nimport {restoreConformancePartitionHistory} from './support/conformance-partition-history.js';\n"
+        + "import {restoreTranslationWorkflowHistory} from './support/translation-workflow-history.js';\n"
+        + "\nimport {restoreEvidenceTranslationSourceHistory} from '../scripts/evidence-translation-source-history.mjs';\n",
+      lines: [
+        ['  text=restoreConformancePartitionHistory(text);\n', ''],
+        ["restoreEvidenceTranslationSourceHistory('.github/workflows/ci.yml',readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8'))", "readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8')"],
+        ["restoreTranslationWorkflowHistory(readFileSync(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8'))", "readFileSync(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8')"],
+      ],
+    }],
+  ]);
+  for (const [file, { suffix, lines }] of edits) {
+    const current = restoreCiRepairSourceHistory(file, readFileSync(new URL(file,root), 'utf8'));
+    assert.ok(current.endsWith(suffix));
+    let previous = current.slice(0, -suffix.length);
+    for (const [successor, predecessor] of lines) {
+      assert.equal(previous.split(successor).length, 2);
+      previous = previous.replace(successor, predecessor);
+    }
+    assert.ok(Buffer.from(previous).equals(execFileSync('git', ['show', revision+':'+file], { cwd: root, maxBuffer: 128*1024 })));
   }
 });
 

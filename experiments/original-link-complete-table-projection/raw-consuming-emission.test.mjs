@@ -1,15 +1,18 @@
 // Complete source-compiler proofs only. No corpus, grammar parse or native process.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {readProjectData} from '../../js/scripts/project-data.mjs';
 import {restoreCompleteDeclarationReceipt} from '../../js/scripts/complete-declaration-receipts.mjs';
+import {readRawArchiveReceiptHistory} from '../../js/scripts/raw-archive-receipt-history.mjs';
+import {ORIGINAL_LINK_RAW_COMPILER_REVISION} from './generate-raw-current-emission.mjs';
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE,ORIGINAL_LINK_RAW_CURRENT_ARTIFACT,ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT} from './raw-emission-profiles.mjs';
 import {ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,ORIGINAL_LINK_RAW_CONSUMING_HISTORICAL_ARTIFACT,
   ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR,generateOriginalLinkRawConsumingEmission,
-  readOriginalLinkRawConsumingOwnerSites,readOriginalLinkRawConsumingProfile,
+  projectOriginalLinkRawConsumingSnapshot,readOriginalLinkRawConsumingOwnerSites,readOriginalLinkRawConsumingProfile,
   verifyOriginalLinkRawConsumingConservation} from './raw-consuming-emission.mjs';
 
 const sha256=value=>createHash('sha256').update(value).digest('hex');
@@ -29,16 +32,30 @@ test('raw consuming token inventories ignore text and retain actual complete own
 test('raw consuming emission keeps all106owners and both complete typed archives without changing either predecessor',async()=>{
   const historical=readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT), current=readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT);
   const {artifact,profile,currentArtifact,currentDecisionSources}=await generation();
-  assert.deepEqual(currentArtifact.decisionSources,currentDecisionSources,'the real current producer retains its physical source metadata');
+  assert.deepEqual(currentArtifact.decisionSources,artifact.decisionSources.map(row=>{
+    const bytes=execFileSync('git',['show',ORIGINAL_LINK_RAW_COMPILER_REVISION+':'+row.file],
+      {cwd:new URL('../../',import.meta.url),maxBuffer:512*1024});
+    return{file:row.file,bytes:bytes.length,sha256:sha256(bytes)};
+  }),'the replay retains the historical compiler source metadata');
   assert.deepEqual(currentDecisionSources,artifact.decisionSources.map(row=>{
     const bytes=readFileSync(new URL('../../'+row.file,import.meta.url));
     return{file:row.file,bytes:bytes.length,sha256:sha256(bytes)};
   }));
   assert.notDeepEqual(currentDecisionSources,artifact.decisionSources,'the original snapshot is not relabeled as current source');
-  const {decisionSources:actualSources,...actualSemanticFields}=currentArtifact;
+  const actualSources=currentArtifact.decisionSources;
+  const archiveHistory=readRawArchiveReceiptHistory(),row=archiveHistory.rows[0];
+  // CI39830836214 identifies exactly three archive metadata differences. Keep
+  // every actual field and independently recover the whole certified snapshot.
+  const forged=structuredClone(currentArtifact);
+  forged.owners[0].consuming.sha256='0'.repeat(64);
+  assert.throws(()=>projectOriginalLinkRawConsumingSnapshot(forged),/entire historical consuming archive receipt/u);
+  const historicalView=projectOriginalLinkRawConsumingSnapshot(currentArtifact);
+  for(const change of row.changes){assert.deepEqual(currentArtifact[change.path[0]][change.path[1]],change.after);assert.deepEqual(artifact[change.path[0]][change.path[1]],change.before);}
+  const {decisionSources:historicalSources,...actualSemanticFields}=historicalView;
   const {decisionSources:snapshotSources,...snapshotSemanticFields}=artifact;
+  assert.deepEqual(historicalSources,snapshotSources);
   assert.deepEqual(actualSemanticFields,snapshotSemanticFields,'every actual complete emission archive owner mapping and original field stays exact');
-  assert.deepEqual(actualSources,currentDecisionSources);
+  assert.notDeepEqual(actualSources,currentDecisionSources);
   assert.equal(snapshotSources,artifact.decisionSources);
   assert.deepEqual(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT),historical);
   assert.deepEqual(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT),current);

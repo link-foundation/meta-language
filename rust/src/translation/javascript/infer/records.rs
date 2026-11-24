@@ -4,16 +4,29 @@ use super::{Env, Inference, Rc, RecordTerm, RefCell, Result, SExpr, Span, Term, 
 use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::record_value_rules as rules;
 use crate::translation::surface::SRecordEntry;
+use std::collections::BTreeSet;
 
 pub(super) struct RecordSpreadEntry {
     name: Option<String>,
     spread: bool,
+    optional: bool,
     term: Term,
 }
 
 pub(super) struct RecordSpread {
     owner: Rc<RefCell<RecordTerm>>,
     entries: Vec<RecordSpreadEntry>,
+    pub(super) place: Option<Span>,
+}
+pub(super) struct PendingNominalSpread {
+    node: SExpr,
+    pointer: *const SExpr,
+    entries: Vec<SRecordEntry>,
+    env: Env,
+    expected: Option<Term>,
+    leading: Term,
+    terms: Vec<Term>,
+    result: Term,
     pub(super) place: Option<Span>,
 }
 
@@ -87,6 +100,38 @@ impl Inference {
         right: &Rc<RefCell<RecordTerm>>,
         place: Option<Span>,
     ) -> Result<()> {
+        let (left_owner, left_open) = {
+            let value = left.borrow();
+            (value.source_class_owner.clone(), value.open)
+        };
+        let (right_owner, right_open) = {
+            let value = right.borrow();
+            (value.source_class_owner.clone(), value.open)
+        };
+        match crate::translation::class_owners::infer_class_owner(
+            left_owner.as_deref().unwrap_or(""),
+            right_owner.as_deref().unwrap_or(""),
+            left_open,
+            right_open,
+        )?
+        .as_str()
+        {
+            "left" => {
+                left.borrow_mut().source_class_owner = right_owner;
+                self.unification_changes += 1;
+            }
+            "right" => {
+                right.borrow_mut().source_class_owner = left_owner;
+                self.unification_changes += 1;
+            }
+            "error" => {
+                return Err(type_error(
+                    "an actual class constructor owner cannot be erased or replaced by a plain record",
+                    place,
+                ));
+            }
+            _ => {}
+        }
         let mut phase = 0.0;
         let mut index = 0.0;
         loop {
@@ -117,17 +162,21 @@ impl Inference {
                     &right_fields[position(*right_index, right_fields.len())].1,
                     place,
                 )?,
-                1 => self.add_record_field(
-                    right,
-                    &left_fields[position(*left_index, left_fields.len())],
-                    place,
-                )?,
-                2 => self.add_record_field(
-                    left,
-                    &right_fields[position(*right_index, right_fields.len())],
-                    place,
-                )?,
-                3 => {
+                1 => {
+                    let field = &left_fields[position(*left_index, left_fields.len())];
+                    self.add_record_field(right, field, place)?;
+                    if left.borrow().optional_fields.contains(&field.0) {
+                        right.borrow_mut().optional_fields.insert(field.0.clone());
+                    }
+                }
+                2 => {
+                    let field = &right_fields[position(*right_index, right_fields.len())];
+                    self.add_record_field(left, field, place)?;
+                    if right.borrow().optional_fields.contains(&field.0) {
+                        left.borrow_mut().optional_fields.insert(field.0.clone());
+                    }
+                }
+                3 if !left.borrow().optional_fields.contains(&left_fields[position(*left_index, left_fields.len())].0) => {
                     return Err(type_error(
                         rules::read_record_type_constraint_error(
                             *action,
@@ -136,7 +185,7 @@ impl Inference {
                         place,
                     ));
                 }
-                4 => {
+                4 if !right.borrow().optional_fields.contains(&right_fields[position(*right_index, right_fields.len())].0) => {
                     return Err(type_error(
                         rules::read_record_type_constraint_error(
                             *action,
@@ -145,7 +194,7 @@ impl Inference {
                         place,
                     ));
                 }
-                5 => {}
+                3..=5 => {}
                 6 => return Ok(()),
                 _ => unreachable!("the shared record constraint action is declared"),
             }
@@ -165,6 +214,18 @@ impl Inference {
             let owner = owner.borrow();
             (owner.fields.clone(), owner.open)
         };
+        let form=crate::translation::javascript_record_parameter_rules::read_java_script_record_formal_default_field_form(
+            &crate::translation::javascript_record_parameter_rules::ml_string::Text::from_text("record"),open,fields.iter().any(|item|item.0==field),
+            &crate::translation::javascript_record_parameter_rules::ml_string::Text::from_text(field)).to_string();
+        if form == "absent" {
+            let element = self.fresh(false);
+            self.unify(
+                result,
+                &super::optional_values::optional(element, "undefined"),
+                place,
+            )?;
+            return Ok(true);
+        }
         let name = field.encode_utf16().map(f64::from).collect::<Vec<_>>();
         let plan = rules::read_record_field_inference_step(&names(&fields), &name, open);
         let [action, selected] = plan.as_slice() else {
@@ -189,20 +250,227 @@ impl Inference {
         env: &Env,
         expected: Option<&Term>,
     ) -> Result<Term> {
+        self.record_expr_leading(node, entries, env, expected, None, None)
+    }
+    fn record_expr_leading(
+        &mut self,
+        node: &SExpr,
+        entries: &[SRecordEntry],
+        env: &Env,
+        expected: Option<&Term>,
+        leading_term: Option<Term>,
+        entry_terms: Option<&[Term]>,
+    ) -> Result<Term> {
         let wanted = expected.map(|term| self.resolve(term));
-        let wanted = match wanted {
-            Some(Term::Record(record)) => record.borrow().fields.clone(),
-            _ => Vec::new(),
+        let leading = if let Some(term) = leading_term {
+            Some(term)
+        } else if let Some(entry) = entries.first().filter(|entry| entry.spread) {
+            Some(self.expr(&entry.value, env)?)
+        } else {
+            None
+        };
+        let source = leading.as_ref().map(|term| match self.resolve(term) {
+            Term::Option { element, .. } => self.resolve(&element),
+            other => other,
+        });
+        let owner = match &wanted {
+            Some(Term::Known(crate::translation::types::Type::Data { name })) => Some(name.clone()),
+            _ => match &source {
+                Some(Term::Known(crate::translation::types::Type::Data { name })) => {
+                    Some(name.clone())
+                }
+                _ => None,
+            },
+        };
+        if let Some(leading) = leading
+            .as_ref()
+            .filter(|_| matches!(source, Some(Term::Var(_))) && owner.is_none())
+        {
+            let mut terms = Vec::new();
+            for (index, entry) in entries.iter().enumerate() {
+                terms.push(if index == 0 {
+                    leading.clone()
+                } else {
+                    self.expr(&entry.value, env)?
+                });
+            }
+            let result = self.fresh(false);
+            self.nominal_spreads.push(PendingNominalSpread {
+                node: node.clone(),
+                pointer: std::ptr::from_ref(node),
+                entries: entries.to_vec(),
+                env: env.clone(),
+                expected: expected.cloned(),
+                leading: leading.clone(),
+                terms,
+                result: result.clone(),
+                place: node.span,
+            });
+            return Ok(result);
+        }
+        if let Some(owner) = owner.filter(|_| entries.first().is_some_and(|entry| entry.spread)) {
+            let ctors = self
+                .data
+                .iter()
+                .find(|(name, _)| name == &owner)
+                .map(|(_, ctors)| ctors.clone())
+                .unwrap_or_default();
+            let ctor = ctors.first();
+            let nominal = Term::Known(crate::translation::types::Type::Data {
+                name: owner.clone(),
+            });
+            let kinds = entries
+                .iter()
+                .map(|entry| if entry.spread { "spread" } else { "field" }.to_owned())
+                .collect::<Vec<_>>();
+            let count = serde_json::Number::from(ctors.len())
+                .as_f64()
+                .expect("actual constructor count is a Number");
+            if ctors.len() > 1 {
+                let common = entries.iter().skip(1).all(|entry| {
+                    let Some((index, field)) = ctors[0]
+                        .fields
+                        .iter()
+                        .enumerate()
+                        .find(|(_, field)| field.name == entry.name)
+                    else {
+                        return false;
+                    };
+                    let expected = self.field(&owner, &ctors[0].name, index);
+                    ctors[1..].iter().all(|variant| {
+                        variant.fields.iter().enumerate().any(|(index, candidate)| {
+                            candidate.name == field.name
+                                && candidate.optional == field.optional
+                                && {
+                                    let actual = self.field(&owner, &variant.name, index);
+                                    self.same_term(&actual, &expected)
+                                }
+                        })
+                    })
+                });
+                let error = crate::translation::javascript_nominal_spread_rules::read_java_script_nominal_sum_spread_error(count, &kinds, common);
+                if !error.is_empty() {
+                    return Err(type_error(error, node.span));
+                }
+            }
+            let mut owners = Vec::new();
+            for (index, entry) in entries.iter().enumerate() {
+                if entry.spread {
+                    let term = if let Some(term) = entry_terms.and_then(|terms| terms.get(index)) {
+                        term.clone()
+                    } else if index == 0 {
+                        leading.clone().expect("actual leading spread")
+                    } else {
+                        self.expr(&entry.value, env)?
+                    };
+                    let present = match self.resolve(&term) {
+                        Term::Option { element, .. } => *element,
+                        _ => term,
+                    };
+                    self.unify(&present, &nominal, entry.value.span.or(node.span))?;
+                    owners.push(
+                        if let Term::Known(crate::translation::types::Type::Data { name }) =
+                            self.resolve(&present)
+                        {
+                            name
+                        } else {
+                            String::new()
+                        },
+                    );
+                } else {
+                    let field = ctor.and_then(|ctor| {
+                        ctor.fields
+                            .iter()
+                            .enumerate()
+                            .find(|(_, field)| field.name.as_deref() == entry.name.as_deref())
+                    });
+                    let declared = field.map(|(index, field)| {
+                        if field.optional {
+                            let value = crate::translation::javascript_constructor_presence::field_value_type(&field.ty)
+                                .expect("parsed optional field presence").clone();
+                            return self.declared(Some(&value));
+                        }
+                        self.field(
+                            &owner,
+                            &ctor.expect("actual declared constructor").name,
+                            index,
+                        )
+                    });
+                    let value = if let Some(term) = entry_terms.and_then(|terms| terms.get(index)) {
+                        term.clone()
+                    } else {
+                        self.expr_expected(&entry.value, env, declared.as_ref())?
+                    };
+                    if let Some(declared) = declared {
+                        self.unify(&value, &declared, entry.value.span.or(node.span))?;
+                    }
+                    owners.push(String::new());
+                }
+            }
+            let fields = ctor
+                .map(|ctor| {
+                    ctor.fields
+                        .iter()
+                        .map(|field| field.name.clone().unwrap_or_default())
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_default();
+            let names = entries
+                .iter()
+                .map(|entry| {
+                    if entry.spread {
+                        String::new()
+                    } else {
+                        entry.name.clone().unwrap_or_default()
+                    }
+                })
+                .collect::<Vec<_>>();
+            let prototype = matches!(
+                &node.node,
+                crate::translation::surface::SNode::Record {
+                    prototype_definition: Some(_),
+                    ..
+                }
+            );
+            let error = crate::translation::javascript_nominal_spread_rules::read_java_script_nominal_spread_error(
+                "JavaScript", count.min(1.0), &fields, &kinds, &names, &owners, &owner, prototype,
+            );
+            if !error.is_empty() {
+                return Err(type_error(error, node.span));
+            }
+            self.records
+                .insert(std::ptr::from_ref(node), nominal.clone());
+            return Ok(nominal);
+        }
+        let (wanted, wanted_optional) = match wanted {
+            Some(Term::Record(record)) => {
+                let record = record.borrow();
+                (record.fields.clone(), record.optional_fields.clone())
+            }
+            _ => (Vec::new(), BTreeSet::new()),
         };
         let mut fields = Vec::new();
+        let mut optional_fields = BTreeSet::new();
         let mut retained = Vec::new();
         let mut open = false;
-        for entry in entries {
+        for (entry_index, entry) in entries.iter().enumerate() {
             if entry.spread {
-                let term = self.expr(&entry.value, env)?;
+                let term = if let Some(term) = entry_terms.and_then(|terms| terms.get(entry_index))
+                {
+                    term.clone()
+                } else if entry_index == 0 {
+                    if let Some(term) = leading.clone() {
+                        term
+                    } else {
+                        self.expr(&entry.value, env)?
+                    }
+                } else {
+                    self.expr(&entry.value, env)?
+                };
                 retained.push(RecordSpreadEntry {
                     name: None,
                     spread: true,
+                    optional: false,
                     term: term.clone(),
                 });
                 let source = self.resolve(&term);
@@ -212,7 +480,15 @@ impl Inference {
                         let Term::Record(record) = source else {
                             unreachable!("the shared spread role selects an actual record")
                         };
-                        fields.extend(record.borrow().fields.iter().cloned());
+                        let record = record.borrow();
+                        for field in &record.fields {
+                            if record.optional_fields.contains(&field.0) {
+                                optional_fields.insert(field.0.clone());
+                            } else {
+                                optional_fields.remove(&field.0);
+                            }
+                            fields.push(field.clone());
+                        }
                     }
                     _ => {
                         return Err(type_error(
@@ -233,21 +509,49 @@ impl Inference {
                 let declared = number_index(position)
                     .and_then(|index| wanted.get(index))
                     .map(|(_, term)| term);
-                let value = self.expr_expected(&entry.value, env, declared)?;
+                let value = if let Some(term) = entry_terms.and_then(|terms| terms.get(entry_index))
+                {
+                    term.clone()
+                } else {
+                    self.expr_expected(&entry.value, env, declared)?
+                };
                 if let Some(declared) = declared {
                     self.unify(&value, declared, entry.value.span.or(node.span))?;
                 }
                 let term = declared.cloned().unwrap_or(value);
+                let optional = wanted_optional.contains(name);
+                if optional {
+                    optional_fields.insert(name.to_owned());
+                } else {
+                    optional_fields.remove(name);
+                }
                 fields.push((name.to_owned(), term.clone()));
                 retained.push(RecordSpreadEntry {
                     name: Some(name.to_owned()),
                     spread: false,
+                    optional,
                     term,
                 });
             }
         }
+        for field in &wanted {
+            if wanted_optional.contains(&field.0) {
+                optional_fields.insert(field.0.clone());
+                if !fields.iter().any(|actual| actual.0 == field.0) {
+                    fields.push(field.clone());
+                }
+            }
+        }
         let owner = Rc::new(RefCell::new(RecordTerm {
+            source_class_owner: crate::translation::class_owners::source_record_owner(
+                self.source_class_owners.as_ref(),
+                &fields
+                    .iter()
+                    .map(|(name, _)| name.clone())
+                    .collect::<Vec<_>>(),
+            )?,
             fields: insertion_fields(&fields),
+            optional_fields,
             open,
         }));
         let term = Term::Record(owner.clone());
@@ -260,6 +564,40 @@ impl Inference {
         }
         self.records.insert(std::ptr::from_ref(node), term.clone());
         Ok(term)
+    }
+    pub(super) fn solve_nominal_spreads(&mut self) -> Result<bool> {
+        let mut progress = false;
+        let mut waiting = Vec::new();
+        for constraint in std::mem::take(&mut self.nominal_spreads) {
+            let source = match self.resolve(&constraint.leading) {
+                Term::Option { element, .. } => self.resolve(&element),
+                other => other,
+            };
+            let expected_data = constraint.expected.as_ref().is_some_and(|term| {
+                matches!(
+                    self.resolve(term),
+                    Term::Known(crate::translation::types::Type::Data { .. })
+                )
+            });
+            if matches!(source, Term::Var(_)) && !expected_data {
+                waiting.push(constraint);
+                continue;
+            }
+            let result = self.record_expr_leading(
+                &constraint.node,
+                &constraint.entries,
+                &constraint.env,
+                constraint.expected.as_ref(),
+                Some(constraint.leading),
+                Some(&constraint.terms),
+            )?;
+            self.records.remove(&std::ptr::from_ref(&constraint.node));
+            self.records.insert(constraint.pointer, result.clone());
+            self.unify(&constraint.result, &result, constraint.place)?;
+            progress = true;
+        }
+        self.nominal_spreads.extend(waiting);
+        Ok(progress)
     }
 
     pub(super) fn solve_record_spreads(&mut self) -> Result<bool> {
@@ -275,6 +613,7 @@ impl Inference {
                 continue;
             }
             let mut fields = Vec::new();
+            let mut optional_fields = BTreeSet::new();
             for entry in &constraint.entries {
                 if entry.spread {
                     let source = self.resolve(&entry.term);
@@ -287,21 +626,41 @@ impl Inference {
                     let Term::Record(record) = source else {
                         unreachable!("the shared spread role selects an actual record")
                     };
-                    fields.extend(record.borrow().fields.iter().cloned());
+                    let record = record.borrow();
+                    for field in &record.fields {
+                        if record.optional_fields.contains(&field.0) {
+                            optional_fields.insert(field.0.clone());
+                        } else {
+                            optional_fields.remove(&field.0);
+                        }
+                        fields.push(field.clone());
+                    }
                 } else {
-                    fields.push((
-                        entry
-                            .name
-                            .clone()
-                            .expect("a retained ordinary field has its name"),
-                        entry.term.clone(),
-                    ));
+                    let name = entry.name.clone().expect("a retained ordinary field has its name");
+                    if entry.optional {
+                        optional_fields.insert(name.clone());
+                    } else {
+                        optional_fields.remove(&name);
+                    }
+                    fields.push((name, entry.term.clone()));
+                }
+            }
+            let owner = constraint.owner.borrow();
+            for field in &owner.fields {
+                if owner.optional_fields.contains(&field.0)
+                    && !fields.iter().any(|actual| actual.0 == field.0)
+                {
+                    optional_fields.insert(field.0.clone());
+                    fields.push(field.clone());
                 }
             }
             let shape = Rc::new(RefCell::new(RecordTerm {
+                source_class_owner: owner.source_class_owner.clone(),
                 fields: insertion_fields(&fields),
+                optional_fields,
                 open: false,
             }));
+            drop(owner);
             self.unify(
                 &Term::Record(constraint.owner.clone()),
                 &Term::Record(shape),

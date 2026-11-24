@@ -124,3 +124,13 @@ pub fn other(a: bool, b: bool, c: bool, d: bool) -> bool { a && b && c && d }`;
   assert.equal(((Number.MAX_VALUE + Number.MAX_VALUE) / 2), Infinity,
     'the source operation intentionally retains overflow instead of silently selecting a nonoverflowing midpoint');
 });
+
+test('identical proved functions keep distinct module owners in exact program replay',()=>{
+ const comparison='pub fn same(left: f64, right: f64) -> bool { left == right }';
+ const untouched='pub fn integer(left: i32, right: i32) -> bool { left == right }';
+ const source='mod first { '+comparison+' }\nmod second { '+comparison+' }\n'+untouched;
+ const result=readPortableNumberSourceStyles(source);
+ assert.equal(result.actions.length,1);assert.equal(result.actions[0].from,source);
+ assert.equal(result.source.split('partial_cmp').length,3);assert.ok(result.source.includes(untouched));
+ replay(source,result);
+});

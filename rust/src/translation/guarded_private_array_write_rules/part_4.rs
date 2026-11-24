@@ -1,21 +1,21 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::MlPlanConstructedGuardedArrayWritesLoop21Result;
-use super::MlPlanConstructedGuardedArrayWritesLoop22Result;
+use super::MlTemporaryPlanConstructedGuardedArrayWritesLoop21Result;
+use super::MlTemporaryPlanConstructedGuardedArrayWritesLoop22Result;
 use super::accept_constructed_guarded_array_uses;
-use super::ml_plan_constructed_guarded_array_writes_loop21;
-use super::ml_plan_constructed_guarded_array_writes_loop22;
-use super::ml_plan_constructed_guarded_array_writes_loop23;
-use super::ml_plan_constructed_guarded_array_writes_loop24;
 use super::read_guarded_write_count;
 use super::read_guarded_write_element;
 use super::read_guarded_write_field;
 use super::read_guarded_write_kind;
 use super::read_guarded_write_text_field;
+use super::source_ml_temporary_plan_constructed_guarded_array_writes_loop21;
+use super::source_ml_temporary_plan_constructed_guarded_array_writes_loop22;
+use super::source_ml_temporary_plan_constructed_guarded_array_writes_loop23;
+use super::source_ml_temporary_plan_constructed_guarded_array_writes_loop24;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_plan_constructed_guarded_array_writes_loop20(
+pub fn source_ml_temporary_plan_constructed_guarded_array_writes_loop20(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -91,9 +91,9 @@ pub fn ml_plan_constructed_guarded_array_writes_loop20(
                                                         {
                                                             let later = index + 1f64;
                                                             {
-                                                                let ml_s18 = self::ml_plan_constructed_guarded_array_writes_loop21(columns, rows, size, statements, count, &(owner), writes, conditionals, later);
-                                                                match ml_s18 {
-                                                                    self::MlPlanConstructedGuardedArrayWritesLoop21Result::MlPlanConstructedGuardedArrayWritesLoop21Done(writes_2, conditionals_2) => {
+                                                                let source_ml_source1_s18 = self::source_ml_temporary_plan_constructed_guarded_array_writes_loop21(columns, rows, size, statements, count, &(owner), writes, conditionals, later);
+                                                                match source_ml_source1_s18 {
+                                                                    self::MlTemporaryPlanConstructedGuardedArrayWritesLoop21Result::MlTemporaryPlanConstructedGuardedArrayWritesLoop21Done(writes_2, conditionals_2) => {
                                                                         if (writes_2.len() as f64) == 0f64 {
                                                                             {
                                                                                 let index_5 = index + 1f64;
@@ -107,9 +107,9 @@ pub fn ml_plan_constructed_guarded_array_writes_loop20(
                                                                             {
                                                                                 let candidate = allocation + 1f64;
                                                                                 {
-                                                                                    let ml_s19 = self::ml_plan_constructed_guarded_array_writes_loop22(columns, rows, size, &(owner), appends, append_statements, candidate);
-                                                                                    match ml_s19 {
-                                                                                        self::MlPlanConstructedGuardedArrayWritesLoop22Result::MlPlanConstructedGuardedArrayWritesLoop22Done(appends_2, append_statements_2) => {
+                                                                                    let source_ml_source1_s19 = self::source_ml_temporary_plan_constructed_guarded_array_writes_loop22(columns, rows, size, &(owner), appends, append_statements, candidate);
+                                                                                    match source_ml_source1_s19 {
+                                                                                        self::MlTemporaryPlanConstructedGuardedArrayWritesLoop22Result::MlTemporaryPlanConstructedGuardedArrayWritesLoop22Done(appends_2, append_statements_2) => {
                                                                                             if ((appends_2.len() as f64) == 0f64) || !(self::accept_constructed_guarded_array_uses(columns, rows, size, &(owner), allocation, &(writes_2), &(appends_2))) {
                                                                                                 {
                                                                                                     let index_6 = index + 1f64;
@@ -123,11 +123,11 @@ pub fn ml_plan_constructed_guarded_array_writes_loop20(
                                                                                                 {
                                                                                                     let at = 0f64;
                                                                                                     {
-                                                                                                        let result_2 = self::ml_plan_constructed_guarded_array_writes_loop23(result, allocation, &(writes_2), &(conditionals_2), at);
+                                                                                                        let result_2 = self::source_ml_temporary_plan_constructed_guarded_array_writes_loop23(result, allocation, &(writes_2), &(conditionals_2), at);
                                                                                                         {
                                                                                                             let at_2 = 0f64;
                                                                                                             {
-                                                                                                                let result_3 = self::ml_plan_constructed_guarded_array_writes_loop24(result_2, allocation, &(appends_2), &(append_statements_2), at_2);
+                                                                                                                let result_3 = self::source_ml_temporary_plan_constructed_guarded_array_writes_loop24(result_2, allocation, &(appends_2), &(append_statements_2), at_2);
                                                                                                                 {
                                                                                                                     let index_7 = index + 1f64;
                                                                                                                     {

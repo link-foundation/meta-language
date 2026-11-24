@@ -200,15 +200,21 @@ pub mod ml_array {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_grammar_attribute_integer_key(units: &[f64]) -> f64 {
-    if (!(1usize..=10usize).contains(&units.len()))
-        || (((units.len() as f64) > 1f64)
-            && match (
-                self::ml_array::optional_at(units, self::ml_array::number_index(0f64)),
-                48f64,
-            ) {
-                (Some(ml_left), ml_right) => ml_left == ml_right,
-                _ => false,
-            })
+    if (((units.len() as f64) < 1f64) || ((units.len() as f64) > 10f64))
+        || (((units.len() as f64) > 1f64) && {
+            let source_ml_source1_comparison_operand1 =
+                self::ml_array::optional_at(units, self::ml_array::number_index(0f64));
+            {
+                let source_ml_source1_comparison_operand2 = 48f64;
+                match (
+                    source_ml_source1_comparison_operand1,
+                    source_ml_source1_comparison_operand2,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        })
     {
         -1f64
     } else {
@@ -217,18 +223,20 @@ pub fn read_grammar_attribute_integer_key(units: &[f64]) -> f64 {
             {
                 let index = 0f64;
                 {
-                    let ml_s1 =
-                        self::ml_read_grammar_attribute_integer_key_loop1(units, value, index);
-                    match ml_s1 {
-                        self::MlReadGrammarAttributeIntegerKeyLoop1Result::MlReadGrammarAttributeIntegerKeyLoop1Done(value_2) => {
+                    let source_ml_source1_s3 =
+                        self::source_ml_temporary_read_grammar_attribute_integer_key_loop1(
+                            units, value, index,
+                        );
+                    match source_ml_source1_s3 {
+                        self::MlTemporaryReadGrammarAttributeIntegerKeyLoop1Result::MlTemporaryReadGrammarAttributeIntegerKeyLoop1Done(value_2) => {
                             if value_2 <= 4_294_967_294f64 {
                                 value_2
                             } else {
                                 -1f64
                             }
                         }
-                        self::MlReadGrammarAttributeIntegerKeyLoop1Result::MlReadGrammarAttributeIntegerKeyLoop1Return(ml_result1) => {
-                            ml_result1
+                        self::MlTemporaryReadGrammarAttributeIntegerKeyLoop1Result::MlTemporaryReadGrammarAttributeIntegerKeyLoop1Return(source_ml_temporary_result1) => {
+                            source_ml_temporary_result1
                         }
                     }
                 }
@@ -252,27 +260,58 @@ pub const fn compare_grammar_attribute_integer_keys(left: f64, right: f64) -> f6
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadGrammarAttributeIntegerKeyLoop1Result {
-    MlReadGrammarAttributeIntegerKeyLoop1Done(f64),
-    MlReadGrammarAttributeIntegerKeyLoop1Return(f64),
+pub enum MlTemporaryReadGrammarAttributeIntegerKeyLoop1Result {
+    MlTemporaryReadGrammarAttributeIntegerKeyLoop1Done(f64),
+    MlTemporaryReadGrammarAttributeIntegerKeyLoop1Return(f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_grammar_attribute_integer_key_loop1(
+pub fn source_ml_temporary_read_grammar_attribute_integer_key_loop1(
     units: &[f64],
     mut value: f64,
     mut index: f64,
-) -> self::MlReadGrammarAttributeIntegerKeyLoop1Result {
+) -> self::MlTemporaryReadGrammarAttributeIntegerKeyLoop1Result {
     loop {
         return if index < (units.len() as f64) {
             {
                 let unit = self::ml_array::optional_at(units, self::ml_array::number_index(index));
-                if (!((unit).is_some_and(self::ml_math::is_integer))
-                    || (((unit).unwrap_or(f64::NAN)) < 48f64))
-                    || (((unit).unwrap_or(f64::NAN)) > 57f64)
-                {
-                    self::MlReadGrammarAttributeIntegerKeyLoop1Result::MlReadGrammarAttributeIntegerKeyLoop1Return(-1f64)
+                if (!((unit).is_some_and(self::ml_math::is_integer)) || {
+                    let source_ml_source1_comparison_operand4 = unit;
+                    {
+                        let source_ml_source1_comparison_operand5 = 48f64;
+                        if match (source_ml_source1_comparison_operand4.clone(), None::<f64>) {
+                            (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
+                            (None, None) => true,
+                            _ => false,
+                        } {
+                            (f64::NAN) < source_ml_source1_comparison_operand5
+                        } else {
+                            (source_ml_source1_comparison_operand4
+                                .clone()
+                                .expect("a proven present value"))
+                                < source_ml_source1_comparison_operand5
+                        }
+                    }
+                }) || {
+                    let source_ml_source1_comparison_operand6 = unit;
+                    {
+                        let source_ml_source1_comparison_operand7 = 57f64;
+                        if match (source_ml_source1_comparison_operand6.clone(), None::<f64>) {
+                            (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
+                            (None, None) => true,
+                            _ => false,
+                        } {
+                            (f64::NAN) > source_ml_source1_comparison_operand7
+                        } else {
+                            (source_ml_source1_comparison_operand6
+                                .clone()
+                                .expect("a proven present value"))
+                                > source_ml_source1_comparison_operand7
+                        }
+                    }
+                } {
+                    self::MlTemporaryReadGrammarAttributeIntegerKeyLoop1Result::MlTemporaryReadGrammarAttributeIntegerKeyLoop1Return(-1f64)
                 } else {
                     {
                         let value_2 = ((value * 10f64) + (unit).unwrap_or(f64::NAN)) - 48f64;
@@ -287,7 +326,7 @@ pub fn ml_read_grammar_attribute_integer_key_loop1(
                 }
             }
         } else {
-            self::MlReadGrammarAttributeIntegerKeyLoop1Result::MlReadGrammarAttributeIntegerKeyLoop1Done(value)
+            self::MlTemporaryReadGrammarAttributeIntegerKeyLoop1Result::MlTemporaryReadGrammarAttributeIntegerKeyLoop1Done(value)
         };
     }
 }

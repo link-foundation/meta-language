@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {generateNodeDependencyTestPlacement,readNodeDependencyPlacementLiteral} from '../scripts/generate-node-dependency-test-placement.mjs';
 import {NAME_INVENTORIES} from '../scripts/issue-195-naming.mjs';
+import {restoreTypedSourceDescriptorHostSource} from '../scripts/typed-source-descriptor-host-history.mjs';
 
 test('the Node test source placement preserves original namespaces and every preceding inventory placement',()=>{
   const policy=generateNodeDependencyTestPlacement({check:true});
@@ -14,10 +15,12 @@ test('the Node test source placement preserves original namespaces and every pre
   const destination=readFileSync(new URL('../../'+policy.placement.destination,import.meta.url),'utf8');
   const oldNames=previous.extract(destination,policy.placement.destination);assert.equal(oldNames.length,3);
   const current=NAME_INVENTORIES.find(row=>row.inventory==='B70 physical field source view names for '+policy.placement.destination);assert.ok(current);
-  assert.equal(current.extract(destination).length,4);
+  const historicalDestination=restoreTypedSourceDescriptorHostSource(destination,policy.placement.destination);
+  assert.equal(current.extract(historicalDestination).length,4,'all four source-qualified preceding meanings remain available in their complete certified source');
+  assert.equal(current.extract(destination).length,0,'changed current definitions cannot acquire the preceding source identities');
   const historical=readNodeDependencyGeneratorRegistrationHistory().legacyNames;
   assert.equal(historical.length,2);
-  assert.equal(new Set([...historical,...current.extract(destination).slice(0,3).map(name=>current.recordOf(name))]).size,5,'the two original and three preceding current qualified meanings remain distinct');
+  assert.equal(new Set([...historical,...current.extract(historicalDestination).slice(0,3).map(name=>current.recordOf(name))]).size,5,'the two original and three preceding current qualified meanings remain distinct');
   for(const change of [destination+' ',destination.replace('const node=','const other=')])assert.throws(()=>previous.extract(change,policy.placement.destination));
   assert.throws(()=>previous.extract(destination,policy.placement.source));
 });

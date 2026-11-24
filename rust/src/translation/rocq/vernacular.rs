@@ -12,6 +12,8 @@ impl RocqParser {
         let mut main = None;
         let items = self.items(&mut main, &[])?;
         Ok(SProgram {
+            source_class_owners: None,
+        source_class_methods:Vec::new(),
             reference_semantics: None,
             language: Language::Rocq,
             items,
@@ -228,6 +230,7 @@ impl RocqParser {
             let mut fields = Vec::new();
             while self.is("(") {
                 fields.extend(self.binder_group()?.into_iter().map(|binder| SField {
+                    optional: false,
                     name: Some(binder.name),
                     ty: binder.ty.unwrap_or(UNIT),
                     rocq_type: binder.rocq_type,
@@ -247,6 +250,7 @@ impl RocqParser {
                     ));
                 }
                 fields.extend(types.into_iter().map(|ty| SField {
+                    optional: false,
                     name: None,
                     ty,
                     rocq_type: None,
@@ -274,7 +278,10 @@ impl RocqParser {
             ctors,
             span: Some(span(&start, self.peek())),
             generated: false,
+            source_standard_collection_library_owner: None,
+            source_standard_collection_carrier: None,
             source_unit_clone_derivation: None,
+            source_field_signatures: None,
         })
     }
 
@@ -437,6 +444,11 @@ impl RocqParser {
             self.skip_obligations(&start, annotation)?;
         }
         Ok(Definition::Fn(Box::new(SFn {
+            source_state_transform: None,
+            source_vector_mutation: None,
+            source_fn_mut_specialization: None,
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             semantic_ret: None,
             name,
             params: params
@@ -463,6 +475,7 @@ impl RocqParser {
             body,
             span: Some(span(&start, self.peek())),
             generated: false,
+            source_standard_collection_library_owner: None,
             source_pure_unit: None,
         })))
     }

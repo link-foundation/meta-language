@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreCiTestPartitionSource} from './ci-test-partition-history.mjs';
 const archives=[
   {file:'parity/self-translation/ci-39394008799-check-sources-history.lino',sha256:'c6b3484e763df43b965ea52e9af2a1515687a2622124f116f471969c93767f04'},
   {file:'parity/self-translation/ci-39394008799-guard-sources-history.lino',sha256:'36943a5f143f40b69f797cd3ffa095b7fb6d1d13547bc4b97fb7950ad6300f85'},
@@ -14,6 +15,7 @@ let rows;
 /** Unknown edits never inherit authenticated historical source membership. */
 export function restoreCiRepairSourceHistory(file,source) {
   assert.equal(typeof file,'string');assert.equal(typeof source,'string');
+  source=restoreCiTestPartitionSource(source,file);
   source=restoreCurrentCiRepairSource(source,file);
   source=restoreEvidenceTranslationSourceHistory(file,source);
   if(!rows){

@@ -69,7 +69,7 @@
 (69: (meta: (t: semantic) (n: 1) (term: string%20value) (def: JavaScript%20Number%20and%20Boolean%20scalar%20loop%20values%201) (lang: meta-language%20structured%20data)))
 (70: 68 69 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (71: (meta: (t: semantic) (n: 1) (term: string%20value) (def: snapshotBindingPattern) (lang: meta-language%20structured%20data)))
-(72: (meta: (t: semantic) (n: 1) (term: string%20value) (def: %5Eml_scalar_write%280%7C%5B1-9%5D%5B0-9%5D%2A%29%24) (lang: meta-language%20structured%20data)))
+(72: (meta: (t: semantic) (n: 1) (term: string%20value) (def: %5E%28%3F%3Aml_scalar_write%280%7C%5B1-9%5D%5B0-9%5D%2A%29%7Csource_ml_scalar_write%280%7C%5B1-9%5D%5B0-9%5D%2A%29%28%3F%3A_%28%3F%3A%5B2-9%5D%7C%5B1-9%5D%5B0-9%5D%2B%29%29%3F%29%24) (lang: meta-language%20structured%20data)))
 (73: 71 72 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (74: (meta: (t: semantic) (n: 1) (term: string%20value) (def: declarationModel) (lang: meta-language%20structured%20data)))
 (75: (meta: (t: semantic) (n: 1) (term: string%20value) (def: closed%20declaration%20scalar%20loop%201) (lang: meta-language%20structured%20data)))

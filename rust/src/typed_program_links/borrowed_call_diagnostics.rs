@@ -80,7 +80,7 @@ pub(super) fn decode(
     model: &str,
 ) -> std::result::Result<Program, (TypedProgramLinksError, bool)> {
     // Structural decoding, ownership and malformed-field refusal run first.
-    let program = codec::decode(network, root, TypedProgramLinksLimits::default())
+    let program = codec::decode(network, root, Some(TypedProgramLinksLimits::default()))
         .map_err(|failure| (failure, false))?;
     if let Err(failure) = checked::validate(&program) {
         return Err(refine_failure(&program, model)

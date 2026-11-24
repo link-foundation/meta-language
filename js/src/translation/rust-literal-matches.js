@@ -1,3 +1,4 @@
+import {readRustPatternMatch} from './rust-pattern-matches.js';
 // Actual token/source-owner transport into the complete shared pattern plan.
 import { unsupported } from './diagnostics.js';
 import { BOOL } from './types.js';
@@ -12,6 +13,7 @@ export function readRustLiteralMatch(parser, token, path) {
   c.expect(',', 'matches!');
   const plan = planRustLiteralMatchPattern(c.tokens.map(item => item.kind),
     c.tokens.map(item => item.value), c.index, close);
+  if(!plan.length&&parser.ordinaryCompletionContext())return readRustPatternMatch(parser,token,path,receiver,close);
   if (!plan.length) throw unsupported('Rust literal matches!',
     'only a nonempty string-literal alternative list without guards or bindings is represented',
     { start: token.start, end: c.peek().end });
@@ -25,6 +27,7 @@ export function readRustLiteralMatch(parser, token, path) {
     .some(owner => acceptRustLiteralMatchCatalogOwner(owner?.k ?? '')) || resolved.join('::') !== 'str' || macroAliased;
   if ((origin.proven || !parser.origins.collecting) && !acceptRustLiteralMatchReceiver(origin.type?.kind ?? '',
     origin.textSourceModel ?? '', origin.proven, origin.wrappers.join('|'), shadowed)) {
+    if(parser.ordinaryCompletionContext())return readRustPatternMatch(parser,token,path,receiver,close);
     throw unsupported('Rust literal matches! receiver',
       'the scrutinee needs its actual proven unshadowed borrowed str source owner', range);
   }

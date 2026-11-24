@@ -49,13 +49,21 @@ impl Inference {
                     .collect(),
                 ret: Box::new(self.declared(Some(ret))),
             },
-            Some(Type::Record { fields, open, .. }) => {
+            Some(Type::Record { fields, open, source_class_owner,.. }) => {
                 Term::Record(Rc::new(RefCell::new(RecordTerm {
                     fields: fields
                         .iter()
-                        .map(|field| (field.name.clone(), self.declared(Some(&field.ty))))
+                        .map(|field| {
+                            let ty = if field.optional {
+                                crate::translation::javascript_constructor_presence::field_value_type(&field.ty)
+                                    .unwrap_or(&field.ty)
+                            } else { &field.ty };
+                            (field.name.clone(), self.declared(Some(ty)))
+                        })
                         .collect(),
+                    optional_fields: fields.iter().filter(|field| field.optional).map(|field| field.name.clone()).collect(),
                     open: *open,
+                    source_class_owner: source_class_owner.clone(),
                 })))
             }
             Some(Type::Cell { element }) => Term::Cell(Box::new(self.declared(Some(element)))),
@@ -121,16 +129,22 @@ impl Inference {
             Term::Record(record) => {
                 let record = record.borrow();
                 Type::Record {
+                    source_class_owner: record.source_class_owner.clone(),
                     fields: record
                         .fields
                         .iter()
-                        .map(|(name, term)| crate::translation::types::TypeField {
-                            name: name.clone(),
-                            ty: self.surface(term, place),
+                        .map(|(name, term)| {
+                            let ty = self.surface(term, place);
+                            let optional = record.optional_fields.contains(name);
+                            let storage = if optional {
+                                crate::translation::javascript_constructor_presence::field_type(ty)
+                            } else { ty };
+                            crate::translation::types::TypeField { optional, name: name.clone(), ty: storage }
                         })
                         .collect(),
                     open: record.open,
                     reference: false,
+                    ordered: false,
                 }
             }
             Term::Cell(element) => Type::Cell {

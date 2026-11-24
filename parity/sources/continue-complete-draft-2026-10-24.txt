@@ -1,0 +1,5 @@
+Capture provenance: direct user message in the meta-language issue/PR task,
+captured 2026-10-24. Message revision time is unavailable.
+The following instruction is preserved verbatim.
+
+`The complete requirements draft remains unfinished` - continue to keep drafting until all fully drafted. Don't stop until all finished.

@@ -2,6 +2,8 @@
 
 use super::syntax::{split_type, split_type_unit};
 use super::{HashMap, HashSet, Result, Span, Type, js_trim, read_jsdoc_type, unsupported};
+use crate::translation::Language;
+use crate::translation::lexer::{TokenKind, tokenize};
 use crate::translation::record_type_syntax_rules::{
     accept_record_type_boundary, accept_record_type_optional_name, read_record_type_field_colon,
 };
@@ -37,26 +39,42 @@ pub(super) fn read_record_type(
         let field = js_trim(&field);
         let last = field.encode_utf16().last().map_or(f64::NAN, f64::from);
         let optional = accept_record_type_optional_name(last);
+        let field = if optional {
+            js_trim(&field[..field.len() - 1])
+        } else {
+            field
+        };
+        let name = if field.starts_with(['\'', '"']) {
+            let tokens = tokenize(field, Language::JavaScript)?;
+            let token = &tokens.tokens[0];
+            if token.kind != TokenKind::String || token.raw != field || token.string_units.is_some()
+            {
+                return Err(unsupported(
+                    "quoted record property name",
+                    "a field name needs one scalar JavaScript String literal",
+                    Some(range),
+                ));
+            }
+            token.value.clone()
+        } else {
+            field.to_owned()
+        };
         let ty = read_jsdoc_type(&source_type, range, aliases, expanding)?;
         fields.push(TypeField {
-            name: if optional {
-                field[..field.len() - 1].to_owned()
-            } else {
-                field.to_owned()
-            },
+            optional,
+            name,
             ty: if optional {
-                Type::Option {
-                    element: Box::new(ty),
-                    absence: "undefined".to_owned(),
-                }
+                crate::translation::javascript_constructor_presence::field_type(ty)
             } else {
                 ty
             },
         });
     }
     Ok(Some(Type::Record {
+        source_class_owner: None,
         fields,
         open: false,
         reference: false,
+        ordered: false,
     }))
 }

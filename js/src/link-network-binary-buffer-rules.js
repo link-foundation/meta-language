@@ -3,6 +3,20 @@
 import { linkNetworkBinaryUnit, acceptLinkNetworkBinaryInteger, readLinkNetworkBinaryInteger,
   linkNetworkBinaryIntegerByte, renderLinkNetworkBinaryField } from './link-network-binary-rules.js';
 
+/** @param {number[]} identities @param {number} target @returns {boolean} */
+function hasOrderedLinkNetworkIdentity(identities, target) {
+  let lower = 0;
+  let upper = identities.length;
+  while (lower < upper) {
+    const middle = lower + Math.floor((upper - lower) / 2);
+    const identity = linkNetworkBinaryUnit(identities, middle);
+    if (identity === target) return true;
+    if (identity < target) lower = middle + 1;
+    else upper = middle;
+  }
+  return false;
+}
+
 /** Validate and transcode one byte sequence or flat host-field sequence.
  * A negative comma-delimited result is an error code and its input offset.
  * Output framing is transient ASCII: encoded bytes are hex; decoded fields
@@ -45,11 +59,16 @@ export function transcodeLinkNetworkBinary(input, binary, recordLimit, byteLimit
   else for (let index = 0; index < 8; index += 1) { const encoded = renderLinkNetworkBinaryField(linkNetworkBinaryIntegerByte(count, index), binary); output.push(encoded); outputLength += encoded.length; }
   const identities = [];
   let greatestIdentity = 0;
+  let orderedIdentities = true;
   for (let record = 0; record < count; record += 1) {
     const identity = readLinkNetworkBinaryInteger(input, cursor, 8, binary);
     if (identity < 1 || identity >= 9007199254740991 || version === 2 && identity >= nextIdentity) return '-7,' + cursor + ',';
     if (identity > greatestIdentity) greatestIdentity = identity;
-    else if (identities.includes(identity)) return '-8,' + cursor + ',';
+    else {
+      const duplicate = orderedIdentities ? hasOrderedLinkNetworkIdentity(identities, identity) : identities.includes(identity);
+      if (duplicate) return '-8,' + cursor + ',';
+      orderedIdentities = false;
+    }
     identities.push(identity);
     cursor += binary ? 8 : 1;
     if (binary) { const encoded = renderLinkNetworkBinaryField(identity, binary); output.push(encoded); outputLength += encoded.length; }
@@ -153,7 +172,8 @@ export function transcodeLinkNetworkBinary(input, binary, recordLimit, byteLimit
       if (section === 0) {
         const identity = readLinkNetworkBinaryInteger(input, cursor, 8, binary);
         if (identity < 1) return '-21,' + cursor + ',';
-        const found = identity <= greatestIdentity && identities.includes(identity);
+        const found = identity <= greatestIdentity && (orderedIdentities
+          ? hasOrderedLinkNetworkIdentity(identities, identity) : identities.includes(identity));
         if (!found) return '-21,' + cursor + ',';
         cursor += binary ? 8 : 1;
         if (binary) { const encoded = renderLinkNetworkBinaryField(identity, binary); output.push(encoded); outputLength += encoded.length; }

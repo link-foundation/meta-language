@@ -17,7 +17,16 @@ pub(super) fn program_requires_method_units(program: &crate::translation::ir::Pr
                     .and_then(|ty| ty.get("kind"))
                     .and_then(serde_json::Value::as_str)
                     .unwrap_or("");
-                rules::require_primitive_method_utf16(expression, receiver)
+                (crate::translation::string_construction_rules::accept_linked_java_script_string_construction(expression,fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))&&crate::translation::string_construction_rules::read_java_script_string_construction_form(fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))=="characters")
+                    || crate::translation::javascript_string_unit_rules::accept_linked_java_script_string_unit_construction(expression,fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))
+                    || rules::require_primitive_method_utf16(expression, receiver)
+                    || crate::translation::string_array_sort_rules::require_string_array_copy_sort_units(expression,fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))
+                    || (crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result(expression,fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))&&matches!(crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(fields.get("op").and_then(serde_json::Value::as_str).unwrap_or("")).as_str(),"string"|"string-compare"))
+                    || crate::translation::string_number_rules::require_java_script_number_conversion_units(
+                        expression,
+                        fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""),
+                        fields.get("args").and_then(serde_json::Value::as_array).and_then(|args| args.first()).and_then(|argument| argument.get("type")).and_then(|ty| ty.get("kind")).and_then(serde_json::Value::as_str).unwrap_or(""),
+                    )
                     || crate::translation::string_order_rules::require_string_order_units(
                         expression,
                         fields
@@ -82,6 +91,49 @@ impl RustEmitter<'_> {
         let Node::Method { object, op, args } = &expression.node else {
             unreachable!("primitive method dispatch")
         };
+        if op == "toSorted" {
+            let receiver = self.expr(object)?;
+            return Ok(
+                crate::translation::string_array_sort_rules::render_string_array_copy_sort(
+                    "Rust",
+                    &receiver,
+                    self.utf16_strings,
+                ),
+            );
+        }
+        if op == "readJavaScriptRecordPropertyOrder" {
+            let rendered = self.expr(object)?;
+            return crate::translation::ordered_record_values::order_read(
+                "Rust", expression, &rendered,
+            );
+        }
+        if let Node::ReferenceRead { reference } = &object.node
+            && reference.ty.is_reference()
+            && !crate::translation::array_callback_rules::read_array_callback_result_form(op)
+                .is_empty()
+        {
+            let safe = args
+                .first()
+                .and_then(Option::as_ref)
+                .is_some_and(|callback| {
+                    let Type::Function { params, .. } = &callback.ty else {
+                        return false;
+                    };
+                    crate::translation::reference_method_rules::accept_snapshot_callback_parameters(
+                        op,
+                        serde_json::Number::from(params.len())
+                            .as_f64()
+                            .expect("an actual callback parameter count is a Number"),
+                    ) && self.read_only_reference_callback(callback)
+                });
+            if !safe {
+                return Err(unsupported(
+                    "shared array callback",
+                    "this callback needs live array slots, effects and the original receiver identity rather than a snapshot",
+                    expression.span,
+                ));
+            }
+        }
         let receiver = object.ty.kind();
         if receiver == "array" && op == "map" {
             self.preludes.insert(Prelude::Array);
@@ -237,6 +289,19 @@ impl RustEmitter<'_> {
                     argument.is_none(),
                     &text,
                 ));
+            }
+            if crate::translation::utf16_method_emission_rules::accept_utf16_text_method(
+                "method", receiver, op,
+            ) {
+                self.preludes.insert(Prelude::Utf16Text);
+                return Ok(
+                    crate::translation::utf16_method_emission_rules::render_utf16_text_method(
+                        "Rust",
+                        op,
+                        &object_text,
+                        &values.join(", "),
+                    ),
+                );
             }
             return Ok(rules::render_primitive_method_expression(
                 "Rust",

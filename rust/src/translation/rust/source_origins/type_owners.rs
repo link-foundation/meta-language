@@ -1,7 +1,42 @@
 //! Lexical catalog lookup with shared type-namespace owner admission.
 use super::{SourceDeclaration, SourceLookup, SourceOrigins};
+use crate::translation::rust_source_namespace_rules as namespace;
+
+pub(super) fn namespace_kind(entry:&SourceDeclaration)->&'static str{
+    match entry{SourceDeclaration::ExternalCrate=>"externalCrate",SourceDeclaration::Module=>"module",SourceDeclaration::Data=>"data",SourceDeclaration::Constructor {..}=>"ctor",SourceDeclaration::Function {..}|SourceDeclaration::FnMutTemplate(_)=>"fn",SourceDeclaration::Constant {..}=>"const"}
+}
+
+include!("../../../../tests/internal/translation/rust/source_origins/type_owners.rs");
+
+pub(super) fn namespace_role(entry:&SourceDeclaration)->String{namespace::read_rust_source_namespace_role(namespace_kind(entry))}
 
 impl SourceOrigins {
+    pub(in super::super) fn register_catalog_entry(&mut self,name:String,entry:SourceDeclaration){
+        let role=namespace_role(&entry);
+        if role=="type"{self.type_catalog.insert(name.clone(),entry.clone());}
+        if role=="value"{self.value_catalog.insert(name.clone(),entry.clone());}
+        self.catalog.insert(name,entry);
+    }
+    pub(in super::super) fn remove_catalog_entry(&mut self,name:&str){
+        let Some(entry)=self.catalog.remove(name)else{return;};let role=namespace_role(&entry);
+        if role=="type"{self.type_catalog.remove(name);}
+        if role=="value"{self.value_catalog.remove(name);}
+        let peer=if role=="type"{self.value_catalog.get(name)}else{self.type_catalog.get(name)};
+        if let Some(peer)=peer{self.catalog.insert(name.to_owned(),peer.clone());}
+    }
+    pub(in super::super) fn lookup_namespace(&self,segments:&[String],path:&[String],role:&str)->Option<SourceLookup>{
+        self.lookup_namespace_filtered(segments,path,role,None)
+    }
+    pub(in super::super) fn lookup_value_owner(&self,segments:&[String],path:&[String])->Option<SourceLookup>{self.lookup_namespace(segments,path,"value")}
+    pub(in super::super) fn namespace_entry(&self,name:&str,role:&str)->Option<&SourceDeclaration>{
+        let primary=self.catalog.get(name);
+        let indexed=match role{"type"=>self.type_catalog.get(name),"value"=>self.value_catalog.get(name),_=>primary};
+        primary.filter(|entry|role=="any"||namespace_role(entry)==role).or(indexed)
+    }
+    pub(in super::super) fn namespace_prefix_allows_outer(&self,segment_count:usize,prefix:&str)->bool{
+        let kind=self.namespace_entry(prefix,"type").map_or("",namespace_kind);
+        namespace::accept_rust_source_namespace_outer_candidate(segment_count as f64,kind)
+    }
     pub(in super::super) fn lookup(
         &self,
         segments: &[String],
@@ -23,7 +58,7 @@ impl SourceOrigins {
         segments: &[String],
         path: &[String],
     ) -> Option<SourceLookup> {
-        self.lookup_filtered(segments, path, false, Some(crate::translation::rust_literal_match_rules::accept_rust_literal_match_catalog_owner))
+        self.lookup_namespace_filtered(segments, path, "type", Some(crate::translation::rust_literal_match_rules::accept_rust_literal_match_catalog_owner))
     }
 
     fn lookup_filtered(
@@ -33,6 +68,12 @@ impl SourceOrigins {
         type_owner: bool,
         catalog_owner: Option<fn(&str) -> bool>,
     ) -> Option<SourceLookup> {
+        self.lookup_namespace_filtered(segments,path,if type_owner{"type"}else{"any"},catalog_owner)
+    }
+
+    fn lookup_namespace_filtered(&self,segments:&[String],path:&[String],role:&str,catalog_owner:Option<fn(&str)->bool>)->Option<SourceLookup>{let(full_name,declaration)=self.lookup_namespace_borrowed(segments,path,role,catalog_owner)?;Some(SourceLookup{full_name,declaration:declaration.clone()})}
+    pub(in super::super) fn lookup_value_owner_ref(&self,segments:&[String],path:&[String])->Option<(String,&SourceDeclaration)>{self.lookup_namespace_borrowed(segments,path,"value",None)}
+    fn lookup_namespace_borrowed(&self,segments:&[String],path:&[String],role:&str,catalog_owner:Option<fn(&str)->bool>)->Option<(String,&SourceDeclaration)>{
         let mut names = segments.to_vec();
         let mut start = path.to_vec();
         let mut absolute = false;
@@ -62,18 +103,18 @@ impl SourceOrigins {
                 .cloned()
                 .collect::<Vec<_>>()
                 .join(".");
-            if let Some(declaration) = self.catalog.get(&full_name) {
-                let kind = match declaration {
-                    SourceDeclaration::ExternalCrate => "externalCrate",
-                    SourceDeclaration::Module => "module",
-                    SourceDeclaration::Data => "data",
-                    SourceDeclaration::Constructor { .. } => "ctor",
-                    SourceDeclaration::Function { .. } => "fn",
-                };
-                if (!type_owner || crate::translation::source_signature_rules::accept_rust_source_signature_catalog_owner(kind)) && catalog_owner.is_none_or(|accept| accept(kind)) {
-                    return Some(SourceLookup { declaration: declaration.clone(), full_name });
+            let found=self.namespace_entry(&full_name,role);
+            if let Some(declaration)=found{
+                let kind=namespace_kind(declaration);
+                let action=namespace::read_rust_source_namespace_candidate(kind,role,&[]);
+                if action=="select"{
+                    if catalog_owner.is_none_or(|accept|accept(kind)){return Some((full_name,declaration));}
+                    return None;
                 }
+                if action=="stop"{return None;}
             }
+            let prefix=start[..depth].iter().chain(names.first()).map(String::as_str).collect::<Vec<_>>().join(".");
+            if !self.namespace_prefix_allows_outer(names.len(),&prefix){return None;}
             if absolute {
                 break;
             }

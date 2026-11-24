@@ -21,11 +21,17 @@ use super::javascript_line_terminator_rules::accept_java_script_line_terminator;
 use super::js_number::js_number_literal;
 use super::{Language, Span};
 
+mod byte_strings;
 mod cooked_strings;
+use byte_strings::read as rust_byte_string_token;
+mod identifiers;
 mod number_rules;
 mod raw_strings;
 mod source_whitespace;
 mod unicode_escapes;
+pub(crate) use identifiers::accept_rust_source_identifier_name;
+pub(crate) use identifiers::require_java_script_identifier_role;
+pub use identifiers::{SOURCE_IDENTIFIER_UNICODE_VERSION, normalize_unicode_text};
 
 /// Source text addressed by UTF-16 code units, as JavaScript strings are.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -122,6 +128,7 @@ pub enum TokenKind {
     String,
     Character,
     ByteCharacter,
+    ByteString,
     Interpolation,
     Template,
     Eof,
@@ -137,6 +144,7 @@ pub struct TemplateExpression {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TemplatePart {
     pub text: String,
+    pub string_units: Option<Vec<u16>>,
     pub expression: Option<TemplateExpression>,
 }
 
@@ -144,6 +152,8 @@ pub struct TemplatePart {
 pub struct Token {
     pub kind: TokenKind,
     pub value: String,
+    /// Complete cooked UTF-16 value when scalar text cannot represent it.
+    pub string_units: Option<Vec<u16>>,
     /// The letters after a number's digits (`n`, `u32`, `x1fn`).
     pub suffix: String,
     /// A decimal or explicitly suffixed binary floating-point literal.
@@ -163,6 +173,7 @@ impl Token {
         Self {
             kind,
             value,
+            string_units: None,
             suffix: String::new(),
             floating: false,
             raw,
@@ -295,7 +306,11 @@ fn unicode_test(unit: Option<u16>, regex: &Regex) -> bool {
         .is_some_and(|ch| !LEAN_SYMBOLS.contains(ch) && regex.is_match(ch.encode_utf8(&mut [0; 4])))
 }
 
-fn is_identifier_start(unit: Option<u16>, language: Language) -> bool {
+fn is_identifier_start_at(source: &Source, index: usize, language: Language) -> bool {
+    if matches!(language, Language::JavaScript | Language::Rust) {
+        return identifiers::accepts(source, index, language, true);
+    }
+    let unit = source.at(index);
     let Some(value) = unit else { return false };
     if u8::try_from(value).is_ok_and(|byte| byte.is_ascii_alphabetic() || byte == b'_') {
         return true;
@@ -306,7 +321,11 @@ fn is_identifier_start(unit: Option<u16>, language: Language) -> bool {
     matches!(language, Language::Lean | Language::Rocq) && unicode_test(unit, letter_regex())
 }
 
-fn is_identifier_part(unit: Option<u16>, language: Language) -> bool {
+fn is_identifier_part_at(source: &Source, index: usize, language: Language) -> bool {
+    if matches!(language, Language::JavaScript | Language::Rust) {
+        return identifiers::accepts(source, index, language, false);
+    }
+    let unit = source.at(index);
     let Some(value) = unit else { return false };
     if u8::try_from(value).is_ok_and(|byte| byte.is_ascii_alphanumeric() || byte == b'_') {
         return true;
@@ -435,8 +454,8 @@ fn tokenize_region(
             } else {
                 kind
             };
-            let value = previous.map_or("", |token| token.value.as_str());
-            if closed || start_regular_expression(kind, value) {
+            let value = identifiers::javascript_goal_value(previous);
+            if closed || start_regular_expression(kind, &value) {
                 let units = units.get_or_insert_with(|| {
                     source.units().iter().map(|unit| f64::from(*unit)).collect()
                 });
@@ -471,6 +490,47 @@ fn tokenize_region(
             continue;
         }
         if language == Language::Rust
+            && ch == Some('b')
+            && (source.is_char(index + 1, '"') || source.is_char(index + 1, 'r'))
+            && let Some(token) = rust_byte_string_token(source, index, units)?
+        {
+            index = token.end;
+            tokens.push(token);
+            continue;
+        }
+        if language == Language::Rust
+            && source.starts_with("r#", index)
+            && is_identifier_start_at(source, index + 2, language)
+        {
+            let mut end = index + 2 + identifiers::width(source, index + 2);
+            while end < source.len() && is_identifier_part_at(source, end, language) {
+                end += identifiers::width(source, end);
+            }
+            let name = identifiers::normalize_rust(source.slice(index + 2, end), span(start, end))?;
+            let message =
+                super::unicode_scalar_rules::read_rust_source_raw_identifier_error(&name, true);
+            if !message.is_empty() {
+                return Err(TranslationError::syntax(message, Some(span(start, end))));
+            }
+            let macro_token = source.is_char(end, '!') && !source.is_char(end + 1, '=');
+            if macro_token {
+                end += 1;
+            }
+            tokens.push(Token::new(
+                if macro_token {
+                    TokenKind::Macro
+                } else {
+                    TokenKind::Identifier
+                },
+                name,
+                source.slice(index, end),
+                start,
+                end,
+            ));
+            index = end;
+            continue;
+        }
+        if language == Language::Rust
             && ch == Some('r')
             && let Some(token) = raw_string_token(source, index, units)?
         {
@@ -480,6 +540,7 @@ fn tokenize_region(
         }
         if language == Language::Rust
             && (ch == Some('\'') || (ch == Some('b') && source.is_char(index + 1, '\'')))
+            && !identifiers::lifetime_prefix(source, index)
             && let Some(token) = rust_character_token(source, index, units)?
         {
             index = token.end;
@@ -555,17 +616,25 @@ fn tokenize_region(
             index = stop;
             continue;
         }
-        if is_identifier_start(Some(unit), language) {
-            let mut stop = index + 1;
+        if language == Language::JavaScript
+            && (ch == Some('\\') || is_identifier_start_at(source, index, language))
+        {
+            let token = identifiers::javascript_token(source, index, units)?;
+            index = token.end;
+            tokens.push(token);
+            continue;
+        }
+        if is_identifier_start_at(source, index, language) {
+            let mut stop = index + identifiers::width(source, index);
             loop {
-                while stop < source.len() && is_identifier_part(source.at(stop), language) {
-                    stop += 1;
+                while stop < source.len() && is_identifier_part_at(source, stop, language) {
+                    stop += identifiers::width(source, stop);
                 }
                 // Lean and Rocq qualified names (`Tree.node`, `Nat.add`) are single tokens.
                 let qualified = matches!(language, Language::Lean | Language::Rocq)
                     && source.is_char(stop, '.')
                     && stop + 1 < source.len()
-                    && is_identifier_start(source.at(stop + 1), language);
+                    && is_identifier_start_at(source, stop + 1, language);
                 if !qualified {
                     break;
                 }
@@ -577,7 +646,7 @@ fn tokenize_region(
             {
                 tokens.push(Token::new(
                     TokenKind::Macro,
-                    source.slice(index, stop),
+                    identifiers::normalize_rust(source.slice(index, stop), span(start, stop))?,
                     source.slice(index, stop + 1),
                     start,
                     stop + 1,
@@ -586,9 +655,14 @@ fn tokenize_region(
                 continue;
             }
             let value = source.slice(index, stop);
+            let normalized = if language == Language::Rust {
+                identifiers::normalize_rust(value.clone(), span(start, stop))?
+            } else {
+                value.clone()
+            };
             tokens.push(Token::new(
                 TokenKind::Identifier,
-                value.clone(),
+                normalized,
                 value,
                 start,
                 stop,
@@ -617,22 +691,26 @@ fn tokenize_region(
                     .rev()
                     .nth(1)
                     .is_some_and(|token| token.value == "." || token.value == "?.");
-                let declaration = tokens
-                    .iter()
-                    .rev()
-                    .nth(1)
-                    .is_some_and(|token| token.value == "function")
-                    && (tokens.len() == 2
-                        || tokens.iter().rev().nth(2).is_some_and(|token| {
-                            matches!(token.value.as_str(), ";" | "{" | "}" | "export" | "async")
-                        }));
+                let declaration = tokens.iter().rev().nth(1).is_some_and(|token| {
+                    identifiers::javascript_goal_value(Some(token)) == "function"
+                }) && (tokens.len() == 2
+                    || tokens.iter().rev().nth(2).is_some_and(|token| {
+                        matches!(
+                            identifiers::javascript_goal_value(Some(token)).as_str(),
+                            ";" | "{" | "}" | "export" | "async"
+                        )
+                    }));
                 let control = tokens.last().is_some_and(|token| {
                     let kind = if token.kind == TokenKind::Identifier {
                         "identifier"
                     } else {
                         "other"
                     };
-                    accept_control_parenthesis(kind, &token.value, qualified)
+                    accept_control_parenthesis(
+                        kind,
+                        &identifiers::javascript_goal_value(Some(token)),
+                        qualified,
+                    )
                 });
                 scopes.push((control, declaration));
             }
@@ -650,10 +728,10 @@ fn tokenize_region(
                             _ => "other",
                         },
                     );
-                let value = tokens.last().map_or("", |token| token.value.as_str());
+                let value = identifiers::javascript_goal_value(tokens.last());
                 statement_blocks.push(accept_statement_brace(
                     kind,
-                    value,
+                    &value,
                     control_closed,
                     declaration_body,
                 ));

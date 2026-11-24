@@ -1,6 +1,7 @@
 use meta_language::grammar::inference::active::{
-    ActiveLearningConfig, Dfa, GrammarAcceptorOracle, Oracle, ParserMembershipOracle,
-    SamplingEquivalenceOracle, Symbol, learn_dfa, learn_grammar,
+    ActiveLearningConfig, Dfa, EquivalenceMethod, GrammarAcceptorOracle, Oracle,
+    ParserMembershipOracle, SamplingEquivalenceOracle, Symbol, learn_active_grammar, learn_dfa,
+    learn_grammar, sample_active_grammar_words,
 };
 use meta_language::{
     FromLinks, Grammar, GrammarFormat, GrammarParser, LinksDecoder, LinksEncoder, ParserRegistry,
@@ -43,6 +44,43 @@ fn sampled_equivalence_oracle_is_seeded_and_deterministic() {
         learn_dfa(&first, &config(6, 64)).expect("first learned DFA"),
         learn_dfa(&second, &config(6, 64)).expect("second learned DFA")
     );
+}
+
+#[test]
+fn active_discovery_retains_ordered_unicode_observations() {
+    let alphabet = vec!['λ', '🙂'];
+    let membership = |word: &[Symbol]| {
+        word.chunks_exact(2).remainder().is_empty()
+            && word.chunks_exact(2).all(|pair| pair == ['λ', '🙂'])
+    };
+    let config = ActiveLearningConfig {
+        max_word_len: 6,
+        equivalence_samples: 64,
+        seed: 31,
+        ..ActiveLearningConfig::default()
+    };
+    let sampled = sample_active_grammar_words(&alphabet, &config).unwrap();
+    assert_eq!(
+        &sampled[..5],
+        &[
+            vec![],
+            vec!['λ'],
+            vec!['🙂'],
+            vec!['λ', 'λ'],
+            vec!['🙂', '🙂']
+        ]
+    );
+    let oracle = SamplingEquivalenceOracle::new(alphabet, membership);
+    let (grammar, learned) = learn_active_grammar(&oracle, &config).unwrap();
+    assert_eq!(learned.equivalence, EquivalenceMethod::BoundedSampling);
+    assert_eq!(learned.hypothesis.states, 3);
+    assert!(learned.equivalence_queries > 1);
+    assert!(learned.membership_queries > 0);
+    let parser = GrammarParser::new(grammar);
+    for word in sampled {
+        let text: String = word.iter().collect();
+        assert_eq!(parser.accepts(&text), membership(&word), "{text:?}");
+    }
 }
 
 #[test]

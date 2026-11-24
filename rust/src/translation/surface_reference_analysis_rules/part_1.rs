@@ -1,32 +1,78 @@
 // Generated from the complete checked JavaScript surface reference analysis. Do not edit.
+pub mod ml_source_exception {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct SourceException {
+        pub class_name: String,
+        pub message_units: Vec<u16>,
+        pub message_present: bool,
+    }
+    impl SourceException {
+        #[must_use]
+        pub fn raise(self) -> ! {
+            std::panic::panic_any(self.class_name, self.message_units, self.message_present)
+        }
+        #[must_use]
+        pub fn from_text(class_name: &str, message: &str) -> Self {
+            Self {
+                class_name: class_name.to_owned(),
+                message_units: message.encode_utf16().collect(),
+                message_present: true,
+            }
+        }
+    }
+    impl std::fmt::Display for SourceException {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.message_units))
+        }
+    }
+    impl std::error::Error for SourceException {}
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_number_fact() -> f64 {
-    panic!("{}", "missing required Number fact column value")
+    (crate::translation::surface_reference_analysis_rules::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Number fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_text_fact() -> String {
-    panic!("{}", "missing required text fact column value")
+    (crate::translation::surface_reference_analysis_rules::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required text fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_boolean_fact() -> bool {
-    panic!("{}", "missing required Boolean fact column value")
+    (crate::translation::surface_reference_analysis_rules::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Boolean fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Number fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (crate::translation::surface_reference_analysis_rules::ml_source_exception::SourceException { class_name: String::from("RangeError"), message_units: (String::from("invalid required Number fact column position")).encode_utf16().collect(), message_present: true }).raise()
+    } else {
         (crate::translation::frontend_rules::ml_array::optional_at(
             values,
             crate::translation::frontend_rules::ml_array::number_index(index),
@@ -40,13 +86,9 @@ pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required text fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (crate::translation::surface_reference_analysis_rules::ml_source_exception::SourceException { class_name: String::from("RangeError"), message_units: (String::from("invalid required text fact column position")).encode_utf16().collect(), message_present: true }).raise()
+    } else {
         (crate::translation::frontend_rules::ml_array::optional_at(
             values,
             crate::translation::frontend_rules::ml_array::number_index(index),
@@ -60,13 +102,9 @@ pub fn read_required_text_fact(values: &[String], index: f64) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Boolean fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (crate::translation::surface_reference_analysis_rules::ml_source_exception::SourceException { class_name: String::from("RangeError"), message_units: (String::from("invalid required Boolean fact column position")).encode_utf16().collect(), message_present: true }).raise()
+    } else {
         (crate::translation::frontend_rules::ml_array::optional_at(
             values,
             crate::translation::frontend_rules::ml_array::number_index(index),
@@ -90,13 +128,13 @@ pub fn accept_surface_reference_mutating_method(method: &str, methods: &[String]
     {
         let index = 0f64;
         {
-            let ml_s1 = crate::translation::surface_reference_analysis_rules::ml_accept_surface_reference_mutating_method_loop1(method, methods, index);
-            match ml_s1 {
-                crate::translation::surface_reference_analysis_rules::MlAcceptSurfaceReferenceMutatingMethodLoop1Result::MlAcceptSurfaceReferenceMutatingMethodLoop1Done => {
+            let source_ml_source1_s1 = crate::translation::surface_reference_analysis_rules::source_ml_temporary_accept_surface_reference_mutating_method_loop1(method, methods, index);
+            match source_ml_source1_s1 {
+                crate::translation::surface_reference_analysis_rules::MlTemporaryAcceptSurfaceReferenceMutatingMethodLoop1Result::MlTemporaryAcceptSurfaceReferenceMutatingMethodLoop1Done => {
                     false
                 }
-                crate::translation::surface_reference_analysis_rules::MlAcceptSurfaceReferenceMutatingMethodLoop1Result::MlAcceptSurfaceReferenceMutatingMethodLoop1Return(ml_result1) => {
-                    ml_result1
+                crate::translation::surface_reference_analysis_rules::MlTemporaryAcceptSurfaceReferenceMutatingMethodLoop1Result::MlTemporaryAcceptSurfaceReferenceMutatingMethodLoop1Return(source_ml_temporary_result1) => {
+                    source_ml_temporary_result1
                 }
             }
         }
@@ -218,13 +256,13 @@ pub fn read_surface_reference_field(
             {
                 let end = offset + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + node));
                 {
-                    let ml_s2 = crate::translation::surface_reference_analysis_rules::ml_read_surface_reference_field_loop2(columns, rows, size, field, offset, end);
-                    match ml_s2 {
-                        crate::translation::surface_reference_analysis_rules::MlReadSurfaceReferenceFieldLoop2Result::MlReadSurfaceReferenceFieldLoop2Done => {
+                    let source_ml_source1_s2 = crate::translation::surface_reference_analysis_rules::source_ml_temporary_read_surface_reference_field_loop2(columns, rows, size, field, offset, end);
+                    match source_ml_source1_s2 {
+                        crate::translation::surface_reference_analysis_rules::MlTemporaryReadSurfaceReferenceFieldLoop2Result::MlTemporaryReadSurfaceReferenceFieldLoop2Done => {
                             -1f64
                         }
-                        crate::translation::surface_reference_analysis_rules::MlReadSurfaceReferenceFieldLoop2Result::MlReadSurfaceReferenceFieldLoop2Return(ml_result2) => {
-                            ml_result2
+                        crate::translation::surface_reference_analysis_rules::MlTemporaryReadSurfaceReferenceFieldLoop2Result::MlTemporaryReadSurfaceReferenceFieldLoop2Return(source_ml_temporary_result2) => {
+                            source_ml_temporary_result2
                         }
                     }
                 }
@@ -352,7 +390,7 @@ pub fn read_surface_reference_path(
                 {
                     let end = offset + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + path));
                     {
-                        crate::translation::surface_reference_analysis_rules::ml_read_surface_reference_path_loop3(columns, rows, size, path, result, offset, end)
+                        crate::translation::surface_reference_analysis_rules::source_ml_temporary_read_surface_reference_path_loop3(columns, rows, size, path, result, offset, end)
                     }
                 }
             }
@@ -362,68 +400,27 @@ pub fn read_surface_reference_path(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn find_surface_reference_item_signature(
-    columns: &[String],
-    rows: &[f64],
-    size: f64,
-    items: f64,
-    prefix: &str,
-    path: &str,
-) -> f64 {
-    if items < 0f64 {
-        -1f64
-    } else {
-        {
-            let found = -1f64;
-            {
-                let offset =
-                    crate::translation::surface_reference_analysis_rules::read_required_number_fact(
-                        rows, items,
-                    );
-                {
-                    let end = offset + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + items));
-                    {
-                        crate::translation::surface_reference_analysis_rules::ml_find_surface_reference_item_signature_loop4(columns, rows, size, prefix, path, found, offset, end)
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn find_surface_reference_signature(
-    columns: &[String],
-    rows: &[f64],
-    size: f64,
-    program: f64,
-    path: &str,
-) -> f64 {
+pub fn find_surface_reference_item_signature(paths: &[String], path: &str) -> f64 {
     {
-        let found = crate::translation::surface_reference_analysis_rules::find_surface_reference_item_signature(columns, rows, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, program, "items"), "crate", path);
+        let position = (paths.len() as f64) - 1f64;
         {
-            let externals =
-                crate::translation::surface_reference_analysis_rules::read_surface_reference_field(
-                    columns,
-                    rows,
-                    size,
-                    program,
-                    "externals",
-                );
-            if externals < 0f64 {
-                found
-            } else {
-                {
-                    let offset = crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, externals);
-                    {
-                        let end = offset + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + externals));
-                        {
-                            crate::translation::surface_reference_analysis_rules::ml_find_surface_reference_signature_loop5(columns, rows, size, path, found, offset, end)
-                        }
-                    }
-                }
-            }
+            crate::translation::surface_reference_analysis_rules::source_ml_temporary_find_surface_reference_item_signature_loop4(paths, path, position)
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn find_surface_reference_signature(signatures: (Vec<f64>, Vec<String>), path: &str) -> f64 {
+    {
+        let position = crate::translation::surface_reference_analysis_rules::find_surface_reference_item_signature(&((signatures.clone()).1), path);
+        if position >= 0f64 {
+            crate::translation::surface_reference_analysis_rules::read_required_number_fact(
+                &((signatures.clone()).0),
+                position,
+            )
+        } else {
+            -1f64
         }
     }
 }
@@ -434,13 +431,13 @@ pub fn read_surface_reference_scope(names: &[String], types: &[f64], name: &str)
     {
         let index = names.len() as f64;
         {
-            let ml_s3 = crate::translation::surface_reference_analysis_rules::ml_read_surface_reference_scope_loop6(names, types, name, index);
-            match ml_s3 {
-                crate::translation::surface_reference_analysis_rules::MlReadSurfaceReferenceScopeLoop6Result::MlReadSurfaceReferenceScopeLoop6Done => {
+            let source_ml_source1_s3 = crate::translation::surface_reference_analysis_rules::source_ml_temporary_read_surface_reference_scope_loop5(names, types, name, index);
+            match source_ml_source1_s3 {
+                crate::translation::surface_reference_analysis_rules::MlTemporaryReadSurfaceReferenceScopeLoop5Result::MlTemporaryReadSurfaceReferenceScopeLoop5Done => {
                     -1f64
                 }
-                crate::translation::surface_reference_analysis_rules::MlReadSurfaceReferenceScopeLoop6Result::MlReadSurfaceReferenceScopeLoop6Return(ml_result6) => {
-                    ml_result6
+                crate::translation::surface_reference_analysis_rules::MlTemporaryReadSurfaceReferenceScopeLoop5Result::MlTemporaryReadSurfaceReferenceScopeLoop5Return(source_ml_temporary_result5) => {
+                    source_ml_temporary_result5
                 }
             }
         }
@@ -453,7 +450,7 @@ pub fn inspect_surface_reference_expression(
     columns: &[String],
     rows: &[f64],
     size: f64,
-    program: f64,
+    signatures: (Vec<f64>, Vec<String>),
     node: f64,
     names: &[String],
     types: &[f64],
@@ -480,7 +477,7 @@ pub fn inspect_surface_reference_expression(
                         vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, crate::translation::surface_reference_analysis_rules::read_surface_reference_scope(names, types, &(crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, ((size * 2f64) + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, path))))))), 0f64]
                     } else {
                         {
-                            let signature = crate::translation::surface_reference_analysis_rules::find_surface_reference_signature(columns, rows, size, program, &(crate::translation::surface_reference_analysis_rules::read_surface_reference_path(columns, rows, size, path)));
+                            let signature = crate::translation::surface_reference_analysis_rules::find_surface_reference_signature(signatures.clone(), &(crate::translation::surface_reference_analysis_rules::read_surface_reference_path(columns, rows, size, path)));
                             {
                                 let parameters = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, signature, "params");
                                 if (((crate::translation::surface_reference_analysis_rules::read_surface_reference_kind(columns, rows, size, signature)) == "fn") && (parameters >= 0f64)) && ((crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + parameters))) == 0f64) {
@@ -494,11 +491,23 @@ pub fn inspect_surface_reference_expression(
                 }
             } else if kind == "let" {
                 {
-                    let value = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, program, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "value"), names, types);
+                    let value = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, signatures.clone(), crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "value"), names, types);
                     {
                         let name = crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "name"));
                         {
-                            let body = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, program, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "body"), &({ let (ml_append_right, ml_append_left) = (vec![name], names.to_vec()); crate::translation::frontend_rules::ml_array::append(ml_append_left, ml_append_right) }), &({ let (ml_append_right, ml_append_left) = (vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(value), 0f64)], types.to_vec()); crate::translation::frontend_rules::ml_array::append(ml_append_left, ml_append_right) }));
+                            let body = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, signatures.clone(), crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "body"), &({
+                                    let source_ml_source1_concat_value4 = names.to_vec();
+                                    {
+                                        let source_ml_source1_concat_value5 = vec![name];
+                                        crate::translation::frontend_rules::ml_array::append(crate::translation::frontend_rules::ml_array::append(Vec::<String>::new(), source_ml_source1_concat_value4), source_ml_source1_concat_value5)
+                                    }
+                                }), &({
+                                    let source_ml_source1_concat_value6 = types.to_vec();
+                                    {
+                                        let source_ml_source1_concat_value7 = vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(value), 0f64)];
+                                        crate::translation::frontend_rules::ml_array::append(crate::translation::frontend_rules::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value6), source_ml_source1_concat_value7)
+                                    }
+                                }));
                             vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(body), 0f64), if ((crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(value), 1f64)) == 1f64) || ((crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(body), 1f64)) == 1f64) {
                                     1f64
                                 } else {
@@ -513,9 +522,9 @@ pub fn inspect_surface_reference_expression(
                     {
                         let right_node = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "right");
                         {
-                            let left = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, program, left_node, names, types);
+                            let left = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, signatures.clone(), left_node, names, types);
                             {
-                                let right = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, program, right_node, names, types);
+                                let right = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, signatures.clone(), right_node, names, types);
                                 {
                                     let operation = crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "op"));
                                     {
@@ -524,8 +533,8 @@ pub fn inspect_surface_reference_expression(
                                             let own = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "type");
                                             {
                                                 let result_type = {
-                                                    let ml_library_inequality_2 = (crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, own)) != -1f64 ;
-                                                    if ml_library_inequality_2 {
+                                                    let ml_library_inequality_1 = (crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, own)) != -1f64 ;
+                                                    if ml_library_inequality_1 {
                                                         own
                                                     } else if (operation == "plus")
                                                         || (operation == "add")
@@ -555,28 +564,28 @@ pub fn inspect_surface_reference_expression(
                         {
                             let params = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "params");
                             {
-                                let ml_s5 = if params >= 0f64 {
+                                let source_ml_source1_s9 = if params >= 0f64 {
                                     {
                                         let offset = crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, params);
                                         {
                                             let end = offset + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + params));
                                             {
-                                                let ml_s6 = crate::translation::surface_reference_analysis_rules::ml_inspect_surface_reference_expression_loop8(columns, rows, size, inner_names, inner_types, offset, end);
-                                                match ml_s6 {
-                                                                crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionLoop8Result::MlInspectSurfaceReferenceExpressionLoop8Done(inner_names_2, inner_types_2) => {
-                                                                    crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin7::MlInspectSurfaceReferenceExpressionJoin7Next(inner_names_2, inner_types_2)
+                                                let source_ml_source1_s10 = crate::translation::surface_reference_analysis_rules::source_ml_temporary_inspect_surface_reference_expression_loop7(columns, rows, size, inner_names, inner_types, offset, end);
+                                                match source_ml_source1_s10 {
+                                                                crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionLoop7Result::MlTemporaryInspectSurfaceReferenceExpressionLoop7Done(inner_names_2, inner_types_2) => {
+                                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin6::MlTemporaryInspectSurfaceReferenceExpressionJoin6Next(inner_names_2, inner_types_2)
                                                                 }
                                                             }
                                             }
                                         }
                                     }
                                 } else {
-                                    crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin7::MlInspectSurfaceReferenceExpressionJoin7Next(inner_names, inner_types)
+                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin6::MlTemporaryInspectSurfaceReferenceExpressionJoin6Next(inner_names, inner_types)
                                 };
-                                match ml_s5 {
-                                                crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin7::MlInspectSurfaceReferenceExpressionJoin7Next(inner_names_3, inner_types_3) => {
+                                match source_ml_source1_s9 {
+                                                crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin6::MlTemporaryInspectSurfaceReferenceExpressionJoin6Next(inner_names_3, inner_types_3) => {
                                                     {
-                                                        let body_2 = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, program, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "body"), &(inner_names_3), &(inner_types_3));
+                                                        let body_2 = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, signatures.clone(), crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "body"), &(inner_names_3), &(inner_types_3));
                                                         vec![-2f64, crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(body_2), 1f64)]
                                                     }
                                                 }
@@ -589,107 +598,160 @@ pub fn inspect_surface_reference_expression(
                 {
                     let observed_2 = false;
                     {
-                        let offset_2 = crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, node);
+                        let object_type = -1f64;
                         {
-                            let end_2 = offset_2 + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + node));
+                            let then_type = -1f64;
                             {
-                                let observed_3 = crate::translation::surface_reference_analysis_rules::ml_inspect_surface_reference_expression_loop9(columns, rows, size, program, names, types, observed_2, offset_2, end_2);
+                                let else_type = -1f64;
                                 {
-                                    let own_2 = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "type");
-                                    if crate::translation::surface_reference_analysis_rules::accept_surface_reference_truthy_value(columns, size, own_2) {
-                                                    vec![own_2, if observed_3 {
-                                                        1f64
-                                                    } else {
-                                                        0f64
-                                                    }]
-                                                } else {
+                                    let object_node = if (kind == "field") || (kind == "index") {
+                                        crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "object")
+                                    } else {
+                                        -1f64
+                                    };
+                                    {
+                                        let then_node = if kind == "if" {
+                                            crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "then")
+                                        } else {
+                                            -1f64
+                                        };
+                                        {
+                                            let else_node = if kind == "if" {
+                                                crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "else")
+                                            } else {
+                                                -1f64
+                                            };
+                                            {
+                                                let offset_2 = crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, node);
+                                                {
+                                                    let end_2 = offset_2 + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + node));
                                                     {
-                                                        let ml_s7 = if kind == "app" {
-                                                            {
-                                                                let head = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "fn");
-                                                                if (crate::translation::surface_reference_analysis_rules::read_surface_reference_kind(columns, rows, size, head)) == "name" {
-                                                                    {
-                                                                        let path_2 = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, head, "path");
-                                                                        {
-                                                                            let signature_2 = crate::translation::surface_reference_analysis_rules::find_surface_reference_signature(columns, rows, size, program, &(crate::translation::surface_reference_analysis_rules::read_surface_reference_path(columns, rows, size, path_2)));
-                                                                            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin10::MlInspectSurfaceReferenceExpressionJoin10Return(vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, signature_2, "ret")), if observed_3 {
-                                                                                1f64
-                                                                            } else {
-                                                                                0f64
-                                                                            }])
-                                                                        }
-                                                                    }
-                                                                } else {
-                                                                    crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin10::MlInspectSurfaceReferenceExpressionJoin10Next
-                                                                }
-                                                            }
-                                                        } else {
-                                                            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin10::MlInspectSurfaceReferenceExpressionJoin10Next
-                                                        };
-                                                        match ml_s7 {
-                                                            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin10::MlInspectSurfaceReferenceExpressionJoin10Next => {
-                                                                if (kind == "field") || (kind == "index") {
-                                                                    {
-                                                                        let object = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, program, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "object"), names, types);
-                                                                        {
-                                                                            let observed_5 = if (crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(object), 1f64)) == 1f64 {
-                                                                                {
-                                                                                    true
-                                                                                }
-                                                                            } else {
-                                                                                observed_3
-                                                                            };
-                                                                            if kind == "index" {
-                                                                                vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(object), 0f64), "element")), if observed_5 {
-                                                                                    1f64
+                                                        let source_ml_source1_s11 = crate::translation::surface_reference_analysis_rules::source_ml_temporary_inspect_surface_reference_expression_loop8(columns, rows, size, signatures.clone(), names, types, observed_2, object_type, then_type, else_type, object_node, then_node, else_node, offset_2, end_2);
+                                                        match source_ml_source1_s11 {
+                                                                        crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionLoop8Result::MlTemporaryInspectSurfaceReferenceExpressionLoop8Done(observed_3, object_type_2, then_type_2, else_type_2) => {
+                                                                            {
+                                                                                let own_2 = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "type");
+                                                                                if crate::translation::surface_reference_analysis_rules::accept_surface_reference_truthy_value(columns, size, own_2) {
+                                                                                    vec![own_2, if observed_3 {
+                                                                                        1f64
+                                                                                    } else {
+                                                                                        0f64
+                                                                                    }]
                                                                                 } else {
-                                                                                    0f64
-                                                                                }]
-                                                                            } else {
-                                                                                {
-                                                                                    let type_kind = crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(object), 0f64), "kind"));
                                                                                     {
-                                                                                        let ml_s9 = if type_kind == "record" {
+                                                                                        let source_ml_source1_s12 = if kind == "app" {
                                                                                             {
-                                                                                                let wanted = crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "field"));
-                                                                                                {
-                                                                                                    let fields = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(object), 0f64), "fields");
-                                                                                                    if fields >= 0f64 {
+                                                                                                let head = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "fn");
+                                                                                                if (crate::translation::surface_reference_analysis_rules::read_surface_reference_kind(columns, rows, size, head)) == "name" {
+                                                                                                    {
+                                                                                                        let path_2 = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, head, "path");
                                                                                                         {
-                                                                                                            let position = crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, fields);
+                                                                                                            let signature_2 = crate::translation::surface_reference_analysis_rules::find_surface_reference_signature(signatures.clone(), &(crate::translation::surface_reference_analysis_rules::read_surface_reference_path(columns, rows, size, path_2)));
+                                                                                                            crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin9::MlTemporaryInspectSurfaceReferenceExpressionJoin9Return(vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, signature_2, "ret")), if observed_3 {
+                                                                                                                1f64
+                                                                                                            } else {
+                                                                                                                0f64
+                                                                                                            }])
+                                                                                                        }
+                                                                                                    }
+                                                                                                } else {
+                                                                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin9::MlTemporaryInspectSurfaceReferenceExpressionJoin9Next
+                                                                                                }
+                                                                                            }
+                                                                                        } else {
+                                                                                            crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin9::MlTemporaryInspectSurfaceReferenceExpressionJoin9Next
+                                                                                        };
+                                                                                        match source_ml_source1_s12 {
+                                                                                            crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin9::MlTemporaryInspectSurfaceReferenceExpressionJoin9Next => {
+                                                                                                if (kind == "field") || (kind == "index") {
+                                                                                                    if kind == "index" {
+                                                                                                        vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, object_type_2, "element")), if observed_3 {
+                                                                                                            1f64
+                                                                                                        } else {
+                                                                                                            0f64
+                                                                                                        }]
+                                                                                                    } else {
+                                                                                                        {
+                                                                                                            let type_kind = crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, object_type_2, "kind"));
                                                                                                             {
-                                                                                                                let finish = position + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + fields));
-                                                                                                                {
-                                                                                                                    let ml_s10 = crate::translation::surface_reference_analysis_rules::ml_inspect_surface_reference_expression_loop12(columns, rows, size, observed_5, &(wanted), position, finish);
-                                                                                                                    match ml_s10 {
-                                                                                                                        crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionLoop12Result::MlInspectSurfaceReferenceExpressionLoop12Done => {
-                                                                                                                            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin11::MlInspectSurfaceReferenceExpressionJoin11Next
+                                                                                                                let source_ml_source1_s14 = if type_kind == "record" {
+                                                                                                                    {
+                                                                                                                        let wanted = crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "field"));
+                                                                                                                        {
+                                                                                                                            let fields = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, object_type_2, "fields");
+                                                                                                                            if fields >= 0f64 {
+                                                                                                                                {
+                                                                                                                                    let position = crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, fields);
+                                                                                                                                    {
+                                                                                                                                        let finish = position + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + fields));
+                                                                                                                                        {
+                                                                                                                                            let source_ml_source1_s15 = crate::translation::surface_reference_analysis_rules::source_ml_temporary_inspect_surface_reference_expression_loop11(columns, rows, size, observed_3, &(wanted), position, finish);
+                                                                                                                                            match source_ml_source1_s15 {
+                                                                                                                                                crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionLoop11Result::MlTemporaryInspectSurfaceReferenceExpressionLoop11Done => {
+                                                                                                                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin10::MlTemporaryInspectSurfaceReferenceExpressionJoin10Next
+                                                                                                                                                }
+                                                                                                                                                crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionLoop11Result::MlTemporaryInspectSurfaceReferenceExpressionLoop11Return(source_ml_temporary_result11) => {
+                                                                                                                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin10::MlTemporaryInspectSurfaceReferenceExpressionJoin10Return(source_ml_temporary_result11)
+                                                                                                                                                }
+                                                                                                                                            }
+                                                                                                                                        }
+                                                                                                                                    }
+                                                                                                                                }
+                                                                                                                            } else {
+                                                                                                                                crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin10::MlTemporaryInspectSurfaceReferenceExpressionJoin10Next
+                                                                                                                            }
                                                                                                                         }
-                                                                                                                        crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionLoop12Result::MlInspectSurfaceReferenceExpressionLoop12Return(ml_result12) => {
-                                                                                                                            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin11::MlInspectSurfaceReferenceExpressionJoin11Return(ml_result12)
-                                                                                                                        }
+                                                                                                                    }
+                                                                                                                } else {
+                                                                                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin10::MlTemporaryInspectSurfaceReferenceExpressionJoin10Next
+                                                                                                                };
+                                                                                                                match source_ml_source1_s14 {
+                                                                                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin10::MlTemporaryInspectSurfaceReferenceExpressionJoin10Next => {
+                                                                                                                        vec![-1f64, if observed_3 {
+                                                                                                                            1f64
+                                                                                                                        } else {
+                                                                                                                            0f64
+                                                                                                                        }]
+                                                                                                                    }
+                                                                                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin10::MlTemporaryInspectSurfaceReferenceExpressionJoin10Return(source_ml_temporary_result10) => {
+                                                                                                                        source_ml_temporary_result10
                                                                                                                     }
                                                                                                                 }
                                                                                                             }
                                                                                                         }
-                                                                                                    } else {
-                                                                                                        crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin11::MlInspectSurfaceReferenceExpressionJoin11Next
                                                                                                     }
-                                                                                                }
+                                                                                                } else if kind == "if" {
+                                                                                                        vec![if then_type_2 != -1f64 {
+                                                                                                            then_type_2
+                                                                                                        } else {
+                                                                                                            else_type_2
+                                                                                                        }, if observed_3 {
+                                                                                                            1f64
+                                                                                                        } else {
+                                                                                                            0f64
+                                                                                                        }]
+                                                                                                    } else if ((kind == "num") || (kind == "str")) || (kind == "bool") {
+                                                                                                            vec![-2f64, if observed_3 {
+                                                                                                                1f64
+                                                                                                            } else {
+                                                                                                                0f64
+                                                                                                            }]
+                                                                                                        } else if (((kind == "array") || (kind == "record")) || (kind == "set")) || (kind == "map") {
+                                                                                                                vec![-3f64, if observed_3 {
+                                                                                                                    1f64
+                                                                                                                } else {
+                                                                                                                    0f64
+                                                                                                                }]
+                                                                                                            } else {
+                                                                                                                vec![-1f64, if observed_3 {
+                                                                                                                    1f64
+                                                                                                                } else {
+                                                                                                                    0f64
+                                                                                                                }]
+                                                                                                            }
                                                                                             }
-                                                                                        } else {
-                                                                                            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin11::MlInspectSurfaceReferenceExpressionJoin11Next
-                                                                                        };
-                                                                                        match ml_s9 {
-                                                                                            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin11::MlInspectSurfaceReferenceExpressionJoin11Next => {
-                                                                                                vec![-1f64, if observed_5 {
-                                                                                                    1f64
-                                                                                                } else {
-                                                                                                    0f64
-                                                                                                }]
-                                                                                            }
-                                                                                            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin11::MlInspectSurfaceReferenceExpressionJoin11Return(ml_result11) => {
-                                                                                                ml_result11
+                                                                                            crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin9::MlTemporaryInspectSurfaceReferenceExpressionJoin9Return(source_ml_temporary_result11_2) => {
+                                                                                                source_ml_temporary_result11_2
                                                                                             }
                                                                                         }
                                                                                     }
@@ -697,64 +759,11 @@ pub fn inspect_surface_reference_expression(
                                                                             }
                                                                         }
                                                                     }
-                                                                } else if kind == "if" {
-                                                                        {
-                                                                            let yes = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, program, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "then"), names, types);
-                                                                            {
-                                                                                let observed_7 = if (crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(yes), 1f64)) == 1f64 {
-                                                                                    {
-                                                                                        true
-                                                                                    }
-                                                                                } else {
-                                                                                    observed_3
-                                                                                };
-                                                                                {
-let ml_library_inequality_1 = (crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(yes), 0f64)) != -1f64 ;
-if ml_library_inequality_1 {
-                                                                                    vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(yes), 0f64), if observed_7 {
-                                                                                        1f64
-                                                                                    } else {
-                                                                                        0f64
-                                                                                    }]
-                                                                                } else {
-                                                                                    {
-                                                                                        let no = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, program, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "else"), names, types);
-                                                                                        vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(no), 0f64), if observed_7 || ((crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(no), 1f64)) == 1f64) {
-                                                                                            1f64
-                                                                                        } else {
-                                                                                            0f64
-                                                                                        }]
-                                                                                    }
-                                                                                }
-}
-                                                                            }
-                                                                        }
-                                                                    } else if ((kind == "num") || (kind == "str")) || (kind == "bool") {
-                                                                            vec![-2f64, if observed_3 {
-                                                                                1f64
-                                                                            } else {
-                                                                                0f64
-                                                                            }]
-                                                                        } else if (((kind == "array") || (kind == "record")) || (kind == "set")) || (kind == "map") {
-                                                                                vec![-3f64, if observed_3 {
-                                                                                    1f64
-                                                                                } else {
-                                                                                    0f64
-                                                                                }]
-                                                                            } else {
-                                                                                vec![-1f64, if observed_3 {
-                                                                                    1f64
-                                                                                } else {
-                                                                                    0f64
-                                                                                }]
-                                                                            }
-                                                            }
-                                                            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin10::MlInspectSurfaceReferenceExpressionJoin10Return(ml_result12_2) => {
-                                                                ml_result12_2
-                                                            }
-                                                        }
                                                     }
                                                 }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -771,7 +780,7 @@ pub fn inspect_surface_reference_items(
     columns: &[String],
     rows: &[f64],
     size: f64,
-    program: f64,
+    signatures: (Vec<f64>, Vec<String>),
     items: f64,
 ) -> bool {
     if items < 0f64 {
@@ -787,7 +796,7 @@ pub fn inspect_surface_reference_items(
                 {
                     let end = offset + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + items));
                     {
-                        crate::translation::surface_reference_analysis_rules::ml_inspect_surface_reference_items_loop13(columns, rows, size, program, observed, offset, end)
+                        crate::translation::surface_reference_analysis_rules::source_ml_temporary_inspect_surface_reference_items_loop13(columns, rows, size, signatures.clone(), observed, offset, end)
                     }
                 }
             }
@@ -804,36 +813,52 @@ pub fn has_surface_structural_identity(
     program: f64,
 ) -> bool {
     {
-        let observed =
-            crate::translation::surface_reference_analysis_rules::inspect_surface_reference_items(
-                columns,
-                rows,
-                size,
-                program,
-                crate::translation::surface_reference_analysis_rules::read_surface_reference_field(
-                    columns, rows, size, program, "items",
-                ),
+        let items =
+            crate::translation::surface_reference_analysis_rules::read_surface_reference_field(
+                columns, rows, size, program, "items",
             );
         {
-            let main_ =
+            let externals =
                 crate::translation::surface_reference_analysis_rules::read_surface_reference_field(
-                    columns, rows, size, program, "main",
+                    columns,
+                    rows,
+                    size,
+                    program,
+                    "externals",
                 );
             {
-                let effects = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, main_, "effects");
-                if effects < 0f64 {
-                    observed
-                } else {
+                let declared = crate::translation::surface_reference_analysis_rules::collect_surface_reference_item_signatures(columns, rows, size, items, "crate", {
+                    let source_ml_source1_field16 = Vec::<String>::new();
                     {
-                        let names = Vec::<String>::new();
+                        let source_ml_source1_field17 = Vec::<f64>::new();
+                        (source_ml_source1_field17, source_ml_source1_field16)
+                    }
+                }, false);
+                {
+                    let signatures = crate::translation::surface_reference_analysis_rules::collect_surface_reference_item_signatures(columns, rows, size, externals, "crate", declared, true);
+                    {
+                        let observed = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_items(columns, rows, size, signatures.clone(), items);
                         {
-                            let types = Vec::<f64>::new();
+                            let main_ = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, program, "main");
                             {
-                                let offset = crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, effects);
-                                {
-                                    let end = offset + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + effects));
+                                let effects = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, main_, "effects");
+                                if effects < 0f64 {
+                                    observed
+                                } else {
                                     {
-                                        crate::translation::surface_reference_analysis_rules::ml_has_surface_structural_identity_loop16(columns, rows, size, program, observed, names, types, offset, end)
+                                        let names = Vec::<String>::new();
+                                        {
+                                            let types = Vec::<f64>::new();
+                                            {
+                                                let offset = crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, effects);
+                                                {
+                                                    let end = offset + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + effects));
+                                                    {
+                                                        crate::translation::surface_reference_analysis_rules::source_ml_temporary_has_surface_structural_identity_loop16(columns, rows, size, signatures.clone(), observed, names, types, offset, end)
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -866,35 +891,4 @@ pub fn read_surface_reference_result_field(kind: &str) -> String {
     } else {
         String::new()
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn render_surface_reference_operation(
-    format: &str,
-    operation: &str,
-    value: String,
-    temporary: &str,
-) -> String {
-    if (format == "JavaScript")
-        && ((operation == "referenceAllocate") || (operation == "referenceRead"))
-    {
-        value
-    } else if (format == "Rust") && (operation == "referenceAllocate") {
-        format!("std::rc::Rc::new(std::cell::RefCell::new({value}))")
-    } else if (format == "Rust") && (operation == "referenceRead") {
-        format!(
-            "{{ let {} = {value}.borrow().clone(); {} }}",
-            temporary.to_owned(),
-            temporary.to_owned()
-        )
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_surface_reference_refusal() -> String {
-    String::from("shared reference state needs an explicit target state model")
 }

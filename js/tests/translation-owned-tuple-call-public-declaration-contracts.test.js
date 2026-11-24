@@ -101,7 +101,7 @@ test('the exact declared owned-tuple selector requires Rust source',async contex
 
 test('the exact undeclared public owned-tuple signature selector retains its independent header-model refusal',async context=>{
  await assert.rejects(runConsumer('reject-unregistered-owned-tuple-call-source-signature-model',context),error=>{
-  assert.equal(error.kind,'unsupported');assert.equal(error.reason,'Rust source signature model: select the legacy model or Rust source function signature 1');return true;
+  assert.equal(error.kind,'unsupported');assert.equal(error.reason,'Rust source signature model: select the legacy model, Rust source function signature 1, or the explicit borrowed vector signature 3');return true;
  });
 });
 

@@ -1,5 +1,7 @@
 //! Mechanical JSON transport for the generated surface reference rules.
 
+use std::collections::HashMap;
+
 use serde_json::Value;
 
 /// Packed primitive columns; the JavaScript transport defines their order.
@@ -33,6 +35,24 @@ fn number(value: usize) -> f64 {
 
 /// Serialize only field labels, primitive spellings and ordered graph edges.
 pub fn create_surface_reference_facts(value: &Value) -> SurfaceReferenceFacts<'_> {
+    create_facts(value, false)
+}
+
+/// Share exact scalar leaves and retain all object identities and labeled edges.
+pub(super) fn create_surface_reference_facts_with_shared_scalars(
+    value: &Value,
+) -> SurfaceReferenceFacts<'_> {
+    create_facts(value, true)
+}
+
+fn create_facts(value: &Value, share_scalars: bool) -> SurfaceReferenceFacts<'_> {
+    #[derive(PartialEq, Eq, Hash)]
+    enum Scalar<'a> {
+        Null,
+        Bool(bool),
+        Number(u64),
+        Text(&'a str),
+    }
     #[derive(Default)]
     struct Columns<'a> {
         forms: Vec<String>,
@@ -42,9 +62,25 @@ pub fn create_surface_reference_facts(value: &Value) -> SurfaceReferenceFacts<'_
         labels: Vec<String>,
         targets: Vec<f64>,
         values: Vec<&'a Value>,
+        scalar_identities: Option<HashMap<Scalar<'a>, f64>>,
     }
     fn insert<'a>(value: &'a Value, into: &mut Columns<'a>) -> f64 {
         let identity = into.forms.len();
+        if let Some(identities) = &mut into.scalar_identities {
+            let key = match value {
+                Value::Null => Some(Scalar::Null),
+                Value::Bool(value) => Some(Scalar::Bool(*value)),
+                Value::Number(value) => value.as_f64().map(|value| Scalar::Number(value.to_bits())),
+                Value::String(value) => Some(Scalar::Text(value)),
+                Value::Array(_) | Value::Object(_) => None,
+            };
+            if let Some(key) = key {
+                if let Some(identity) = identities.get(&key) {
+                    return *identity;
+                }
+                identities.insert(key, number(identity));
+            }
+        }
         let (form, text) = match value {
             Value::Null => ("null", String::new()),
             Value::Bool(value) => ("boolean", value.to_string()),
@@ -87,7 +123,10 @@ pub fn create_surface_reference_facts(value: &Value) -> SurfaceReferenceFacts<'_
         }
         number(identity)
     }
-    let mut data = Columns::default();
+    let mut data = Columns {
+        scalar_identities: share_scalars.then(HashMap::new),
+        ..Columns::default()
+    };
     let root = insert(value, &mut data);
     let size = number(data.forms.len());
     let columns = [data.forms.clone(), data.texts.clone(), data.labels.clone()].concat();
@@ -111,3 +150,5 @@ pub fn create_surface_reference_facts(value: &Value) -> SurfaceReferenceFacts<'_
         values: data.values,
     }
 }
+
+include!("../../tests/internal/translation/surface_reference_facts.rs");

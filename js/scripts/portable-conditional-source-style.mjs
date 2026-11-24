@@ -47,8 +47,6 @@ function acceptFamilyLibraryStandardMacros(complete) {
 // nested unknown macros and every other macro payload remain opaque data.
 function readFamilyLibraryConditionTokens(source, context = source) {
   const parsed = readFamilyLibraryTokens(source);
-  const complete = source === context ? parsed : readFamilyLibraryTokens(context);
-  if (!acceptFamilyLibraryStandardMacros(complete)) return parsed;
   const {tokens, frames} = parsed, argumentsFrom = new Map();
   for (const frame of frames) {
     if (frame.macro !== 'format' || tokens[frame.open + 1]?.kind !== 'string'
@@ -58,6 +56,8 @@ function readFamilyLibraryConditionTokens(source, context = source) {
     argumentsFrom.set(frame, frame.open + 3);
   }
   if (!argumentsFrom.size) return parsed;
+  const complete = source === context ? parsed : readFamilyLibraryTokens(context);
+  if (!acceptFamilyLibraryStandardMacros(complete)) return parsed;
   const opaque = new Set();
   for (const frame of frames) for (let index = frame.open; index <= frame.close; index += 1) {
     const from = argumentsFrom.get(frame);
@@ -152,6 +152,17 @@ function readFamilyLibraryEqualityProof(source, tokens, matching, context) {
     }
     return null;
   };
+  const moduleBodies = [], implementationBodies = [];
+  let nextBrace;
+  for (let index = contextTokens.length - 1; index >= 0; index -= 1) {
+    const token = contextTokens[index];
+    if (token.value === 'mod' && contextTokens[index + 2]?.value === '{') moduleBodies.push(index + 2);
+    if (token.kind === 'identifier' && token.value === 'impl' && nextBrace !== undefined) {
+      implementationBodies.push(nextBrace);
+    }
+    if (token.value === '{') nextBrace = index;
+  }
+  const contains = (opening, index) => opening < index && index < complete.matching.get(opening);
   for (let at = 0; at < contextTokens.length; at += 1) {
     if (!complete.opaque.has(at) && contextTokens[at].kind === 'identifier' && contextTokens[at].value === 'fn'
       && contextTokens[at + 1]?.kind === 'identifier') {
@@ -169,16 +180,9 @@ function readFamilyLibraryEqualityProof(source, tokens, matching, context) {
         && index + 2 < at && at < complete.matching.get(index + 2))) {
       textMethods.add(contextTokens[at + 1].value);
     }
-    if (contextTokens.some((token, index) => token.value === 'mod' && contextTokens[index + 2]?.value === '{'
-      && index + 2 < at && at < complete.matching.get(index + 2))) continue;
-    let method = false;
-    for (let index = 0; index < at; index += 1) {
-      if (contextTokens[index].kind !== 'identifier' || contextTokens[index].value !== 'impl') continue;
-      let open = index + 1;
-      while (open < at && contextTokens[open].value !== '{') open += 1;
-      if (open < at && at < complete.matching.get(open)) method = true;
-    }
-    if (method || functions.some(value => value.body < at && at < value.end)) continue;
+    if (moduleBodies.some(opening => contains(opening, at))
+      || implementationBodies.some(opening => contains(opening, at))
+      || functions.some(value => value.body < at && at < value.end)) continue;
     const result = contextTokens[close + 1]?.value === '->' ? type(spelling(contextTokens, close + 2, body)) : null;
     functions.push({name: contextTokens[at + 1].value, result, body, end: complete.matching.get(body)});
   }
@@ -318,8 +322,7 @@ function readFamilyLibraryBooleanNegationCondition(tokens, matching, opaque, ind
 export function invertFamilyLibraryInequalityBranches(source, {context = source} = {}) {
   for (let pass = 0; pass < 100; pass += 1) {
     const {tokens, matching, opaque} = readFamilyLibraryConditionTokens(source, context);
-    const equivalent = readFamilyLibraryEqualityProof(source, tokens, matching, context);
-    let replacement;
+    let equivalent, replacement;
     for (let index = 0; index < tokens.length; index += 1) {
       const negation = readFamilyLibraryBooleanNegationCondition(tokens, matching, opaque, index);
       const candidate = negation ?? readFamilyLibraryInequalityCondition(tokens, matching, opaque, index);
@@ -329,7 +332,11 @@ export function invertFamilyLibraryInequalityBranches(source, {context = source}
       // The checked primitive functions have no type-parameter declaration.
       let owner = index;
       while (owner >= 0 && !(tokens[owner].kind === 'identifier' && tokens[owner].value === 'fn')) owner -= 1;
-      if (!negation && (owner < 0 || !equivalent(start, candidate.operation, end + 1, owner))) continue;
+      if (!negation) {
+        if (owner < 0) continue;
+        equivalent ??= readFamilyLibraryEqualityProof(source, tokens, matching, context);
+        if (!equivalent(start, candidate.operation, end + 1, owner)) continue;
+      }
       const operation = tokens[candidate.operation];
       const condition = source.slice(tokens[index].end, operation.start) + (negation ? '' : '==') + source.slice(operation.end, tokens[node.open].start);
       const originalThen = source.slice(tokens[node.open].start, tokens[node.close].end);
@@ -390,7 +397,7 @@ export function simplifyFamilyLibraryNegatedConjunctions(source) {
     if (tokens[start]?.value !== '!' || tokens[middle + 1]?.value !== '!') continue;
     if (tokens.slice(start, end + 1).some(token => token.kind === 'macro' && token.value !== 'vec'
       || token.kind !== 'string' && ['let', 'unsafe', '{', '}'].includes(token.value))) continue;
-    const first = source.slice(tokens[start].start, tokens[middle].start);
+    const first = source.slice(tokens[start].start, tokens[middle].start).trimEnd();
     const second = source.slice(tokens[middle + 1].start, tokens[end].end);
     if (!acceptRustWholeConditionNegation(first.trim()) || !acceptRustWholeConditionNegation(second.trim())) continue;
     edits.push([tokens[start].start, tokens[end].end,
@@ -464,7 +471,7 @@ export function flattenFamilyLibraryElseIf(source) {
 
 /** Merge exact sibling bodies; || retains the original conditional order. */
 export function mergeFamilyLibraryIdenticalBranches(source, {context = source, closedOptionStringPresence = false} = {}) {
-  const standardMacros = acceptFamilyLibraryStandardMacros(readFamilyLibraryTokens(context));
+  let standardMacros;
   for (let pass = 0; pass < 100; pass += 1) {
     const {tokens, matching, opaque} = readFamilyLibraryTokens(source);
     let replacement;
@@ -521,6 +528,7 @@ export function mergeFamilyLibraryIdenticalBranches(source, {context = source, c
       if (tokens.slice(index + 1, second.close).some((token, offset) => {
         if (token.kind !== 'macro') return false;
         const at = index + 1 + offset;
+        standardMacros ??= acceptFamilyLibraryStandardMacros(readFamilyLibraryTokens(context));
         return !standardMacros || token.value !== 'vec' || tokens[at - 1]?.value === '::'
           && !(tokens[at - 2]?.value === 'std' && tokens[at - 3]?.value !== '::');
       })) continue;

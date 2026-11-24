@@ -1,4 +1,5 @@
 import { grammarSelectionMappingObservationSections } from '../tests/support/grammar-selection-mapping-cases.js';
+import { linkCliArchiveReconstructionFixture, linkCliReconstruction } from './link-cli-archive-reconstruction-assertions.mjs';
 
 // Critical conversation obligations. Captures are requirements, not behavioral
 // fixtures or successful execution evidence. Missing implementations stay null.
@@ -21,8 +22,21 @@ const modernJavaScriptParitySource = 'parity/sources/modern-javascript-parity-ex
 const compactContributorInstructionsSource = 'parity/sources/compact-contributor-instructions-and-assertion-corrections-2026-10-16.txt';
 const versionBoundedAssertionsSource = 'parity/sources/version-bounded-assertions-2026-10-16.txt';
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
+const scannerModeStackFixture = 'parity/fixtures/regular-grammar-inference.lino';
+const scannerModeStackRequirement = 'I195-GRAMMAR-INFERENCE-SCANNER-MODE-STACK';
+const delimiterProductionsRequirement = 'I195-GRAMMAR-INFERENCE-DELIMITER-PRODUCTIONS';
+const structuralRefinementRequirement = 'I195-GRAMMAR-INFERENCE-STRUCTURAL-REFINEMENT';
+const concreteAttributeRequirement = 'I195-GRAMMAR-INFERENCE-CONCRETE-ATTRIBUTES';
+const concreteAttributeFixture = 'parity/fixtures/grammar-attribute-inference.lino';
+const parserOracleRequirement = 'I195-GRAMMAR-INFERENCE-NATIVE-PARSER-ORACLE';
+const recursiveOracleRequirement = 'I195-GRAMMAR-INFERENCE-RECURSIVE-PARSER-ORACLE';
+const scannerOracleRequirement = 'I195-GRAMMAR-INFERENCE-SCANNER-PARSER-ORACLE';
+const parserOracleFixture = 'parity/fixtures/dynamic-language-command.lino';
 
 const sourceTooling = {
+  'I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-CI-FEEDBACK': [
+    'AGENTS.md', 'docs/vision.md', 'js/scripts/issue-195-sources.mjs',
+  ],
   'I195-CONVERSATION-CRITICAL-DELIVERY': [
     'js/scripts/issue-195-requirements.mjs', 'js/scripts/issue-195-acceptance-lib.mjs',
     'js/tests/issue-195-evidence-critical-delivery.test.js',
@@ -83,6 +97,12 @@ const sourceToolingFixtures = {
 // Each concrete version assertion has its own fixture. Appending its cell
 // preserves the original conversation behavior cell and all its obligations.
 const sourceToolingVerificationCells = {
+  [linkCliReconstruction.requirementId]: ['javascript', 'rust'].map(runtime => ({
+    runtime, suffix: linkCliReconstruction.suffix,
+    fixtures: [{ id: linkCliArchiveReconstructionFixture(runtime), path: linkCliReconstruction.fixtureFile,
+      selector: 'The full shared command sequence through the installed Link CLI 3.1.1 store with Links Notation 0.31.8, removing original inputs during replay and comparing the eager archive graph with both canonical text and versioned binary transport.',
+    }], assertions: linkCliReconstruction.assertions,
+  })),
   'I195-ASSERTION-EXPLICIT-VERSION-RANGES': [{
     runtime: 'tooling', suffix: 'antlr-command-order',
     fixtures: [{
@@ -196,6 +216,38 @@ const dataToolingFixtures = {
 };
 
 const runtimeEntryPoints = {
+  [parserOracleRequirement]: {
+    javascript: ['js/src/grammar-discovery-parser-oracle.js', 'js/src/grammar-inference.js', 'js/src/dynamic-language-cli.js', 'js/tests/dynamic-language-command.test.js'],
+    rust: ['rust/src/grammar_discovery_parser_oracle.rs', 'rust/src/grammar_inference.rs', 'rust/src/dynamic_language_cli.rs', 'rust/tests/dynamic_language_command.rs'],
+  },
+  [recursiveOracleRequirement]: {
+    javascript: ['js/src/grammar-discovery-parser-oracle.js', 'js/src/grammar-structural-inference.js', 'js/src/dynamic-language-cli.js', 'js/tests/dynamic-language-command.test.js'],
+    rust: ['rust/src/grammar_discovery_parser_oracle.rs', 'rust/src/grammar_inference/structural.rs', 'rust/src/dynamic_language_cli.rs', 'rust/tests/dynamic_language_command.rs'],
+  },
+  [scannerOracleRequirement]: {
+    javascript: ['js/src/grammar-discovery-parser-oracle.js', 'js/src/grammar-inference.js', 'js/src/dynamic-language-cli.js', 'js/tests/dynamic-language-command.test.js'],
+    rust: ['rust/src/grammar_discovery_parser_oracle.rs', 'rust/src/grammar_inference.rs', 'rust/src/dynamic_language_cli.rs', 'rust/tests/dynamic_language_command.rs'],
+  },
+  [concreteAttributeRequirement]: {
+    javascript: ['js/src/grammar-attribute-inference-rules.js', 'js/src/grammar-attribute-inference.js', 'js/src/dynamic-language-cli.js', 'js/tests/grammar-attribute-inference.test.js'],
+    rust: ['rust/src/grammar_attribute_inference_rules.rs', 'rust/src/grammar/attribute_inference.rs', 'rust/src/dynamic_language_cli.rs', 'rust/tests/unit/grammar_attribute_inference.rs'],
+  },
+  [structuralRefinementRequirement]: {
+    javascript: ['js/src/grammar-structural-inference.js', 'js/src/dynamic-language-cli.js', 'js/tests/grammar-inference.test.js'],
+    rust: ['rust/src/grammar_inference/structural.rs', 'rust/src/dynamic_language_cli.rs', 'rust/tests/unit/regular_grammar_inference.rs'],
+  },
+  [delimiterProductionsRequirement]: {
+    javascript: ['js/src/grammar-structural-inference-rules.js', 'js/src/grammar-structural-inference.js', 'js/tests/grammar-inference.test.js'],
+    rust: ['rust/src/grammar_structural_inference_rules.rs', 'rust/src/grammar_inference/structural.rs', 'rust/tests/unit/regular_grammar_inference.rs'],
+  },
+  [scannerModeStackRequirement]: {
+    javascript: ['js/src/grammar-scanner-mode-stack-rules.js', 'js/src/grammar-scanner-inference.js', 'js/src/grammar-inference.js', 'js/tests/grammar-inference.test.js'],
+    rust: ['rust/src/grammar_scanner_mode_stack_rules.rs', 'rust/src/grammar_scanner_inference.rs', 'rust/src/grammar_inference.rs', 'rust/tests/unit/regular_grammar_inference.rs'],
+  },
+  [linkCliReconstruction.requirementId]: {
+    javascript: ['js/src/meta-language-archive.js', 'js/src/dynamic-language-cli.js', 'experiments/link-cli-archive-reconstruction.mjs'],
+    rust: ['rust/src/meta_language_archive/link_cli_store.rs', 'rust/src/dynamic_language_cli.rs', 'experiments/link-cli-archive-reconstruction.mjs'],
+  },
   'I195-LINK-FOUNDATION-OPTIONAL-TYPE-ROOT': {
     javascript: ['js/src/network.js', 'js/src/primitives.js', 'js/src/link-network-binary.js',
       'js/tests/issue-195-evidence-root-types.test.js'],
@@ -237,6 +289,13 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
   return declarations.map(([id, construct, expectedBehavior, assertions]) => ({
     id, construct, expectedBehavior, assertions, sourceKey, fixture,
     fixtureId: `conversation-contract:${sourceKey}`,
+    ...(id === scannerModeStackRequirement ? { fixture: scannerModeStackFixture, fixtureId: 'regular-grammar-inference-scanner-mode-stack' } : {}),
+    ...(id === delimiterProductionsRequirement ? { fixture: scannerModeStackFixture, fixtureId: 'grammar-inference-delimiter-productions' } : {}),
+    ...(id === structuralRefinementRequirement ? { fixture: scannerModeStackFixture, fixtureId: 'grammar-inference-structural-refinement' } : {}),
+    ...(id === concreteAttributeRequirement ? { fixture: concreteAttributeFixture, fixtureId: 'grammar-attribute-inference' } : {}),
+    ...(id === parserOracleRequirement ? { fixture: parserOracleFixture, fixtureId: 'grammar-discovery-parser-oracle' } : {}),
+    ...(id === recursiveOracleRequirement ? { fixture: parserOracleFixture, fixtureId: 'grammar-discovery-recursive-parser-oracle' } : {}),
+    ...(id === scannerOracleRequirement ? { fixture: parserOracleFixture, fixtureId: 'grammar-discovery-scanner-parser-oracle' } : {}),
     ...(area === 'formal-concept-definitions' ? {
       additionalFixtures: [{ id: 'formal-concept-definitions', path: 'parity/fixtures/formal-concept-definitions.json' }],
     } : {}),
@@ -354,8 +413,22 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
   ...rows('grammarInferenceIssue', inferenceSource, 'dynamic-knowledge-and-language-extension', 'grammar-inference', [
     ['I195-GRAMMAR-INFERENCE-PUBLIC-API-CLI', 'matching public grammar discovery library and CLI interfaces',
       'JavaScript and Rust library and CLI interfaces accept pinned positive and negative examples, independent membership or parser oracles, optional execution traces and existing grammars. Diagnostics identify unresolved context sensitivity, scanners and action semantics rather than silently approximating them.', ['matchingDiscoveryApiAndCliExecuted', 'examplesOraclesTracesAndSourcesAccepted', 'unsupportedSemanticsPreciselyDiagnosed']],
+    [parserOracleRequirement, 'bounded native parser oracle for scalar regular grammar discovery',
+      'Both library and command interfaces check declared labels against a bounded native Links grammar, refuse contradictions and ungrounded candidate words, retain distinct ordered observations through source-free link-cli and binary refinement, and parse an independently classified positive and reject a negative after installation.', ['nativeOracleChecksDeclaredAndIndependentWords', 'oracleObservationsReplaySourceFreeAfterRefinement', 'installedCandidateExecutesIndependentOracleCases']],
+    [recursiveOracleRequirement, 'bounded native parser oracle for recursive delimiter grammar discovery',
+      'Both library and command interfaces classify distinct nested inputs with the independent native oracle, replay the exact transcript against the original training prefix after binary and link-cli refinement, and install a grammar that parses a deeper recursive control and rejects an independently classified negative.', ['recursiveOracleLabelsAndAnswersReplayed', 'recursiveOracleCheckpointSurvivesSourceFreeRefinement', 'installedRecursiveGrammarParsesDeeperAndRejectsNegative']],
+    [scannerOracleRequirement, 'bounded native parser oracle for source spellings and scanner tokens',
+      'Both runtime interfaces query concrete source spellings, check accepted named token leaves, refuse inconsistent spellings and replay the complete transcript through source-free refinement and installation. The installed native scanner accepts a held-out Unicode source with exact bytes and rejects an independently classified negative.', ['scannerOracleChecksNativeTokenKindsAndConflictingSpellings', 'scannerOracleReplaysExactSourceSpellings', 'installedScannerParsesHeldOutSourceAndRejectsNegative']],
     ['I195-GRAMMAR-INFERENCE-NATIVE-OUTPUT', 'fully native executable discovered grammars and attributed behavior',
       'Discovery emits executable Links grammars with lossless CST structure, lexer and scanner state, precedence, ambiguity, recovery and attributed semantic actions. Foreign parser blobs, opaque sources and host callbacks cannot stand in for native operational definitions.', ['discoveredGrammarNativeAndExecutable', 'discoveredCstAndScannerSemanticsPreserved', 'attributedActionsAndRecoveryExplicit']],
+    [scannerModeStackRequirement, 'finite scanner mode stack operations from bounded pre-token and post-token observations',
+      'Both discovery runtimes lower observed unchanged, replace, push and pop transitions to native scanner operations for the shared scannerModeStack fixture. Exact trees and rejected inputs exercise the restored parent and optional observed character classes. The stored definitions replay through text reload and binary refinement, and incompatible stack deltas and competing effects are refused.', ['scannerModeStackTreesAndRejectionsMatch', 'scannerModeStackArchiveReplaysAndRefines', 'unsupportedScannerModeStackEffectsAreRefused']],
+    [delimiterProductionsRequirement, 'recursive delimiter productions from bounded labelled token observations',
+      'Both inference runtimes infer the exact ordered delimiter productions from the shared structural fixture. Native parsing accepts every listed nested control and rebuilds its source bytes while rejecting every negative control. Text and binary archives preserve and recheck the productions and grammar. The inference refuses malformed positive examples, a negative admitted by a proposed merge, and exhausted nesting and production limits.', ['recursiveDelimiterProductionsAndConcreteBytesMatch', 'recursiveDelimiterArchiveReplays', 'invalidAndUnboundedDelimiterMergesAreRefused']],
+    [structuralRefinementRequirement, 'source-free refinement of recursive grammar candidates with retained labelled premises',
+      'Both runtimes append new positive and negative samples to an archived structural candidate and retain each earlier revision identity and sample boundary. Text and binary reconstruction recheck earlier and current premises against the algorithm and executable candidate. Independent controls retain earlier accepted programs and negative labels, admit a newly observed production, and refuse contradictory labels and reused archived revision identities.', ['structuralRefinementReplaysExactEarlierPremises', 'structuralRefinementPreservesEarlierGrammarAndLabels', 'contradictoryLabelsAndReusedRevisionIdentitiesAreRefused']],
+    [concreteAttributeRequirement, 'native grammar attribute inference from selected concrete rule occurrences',
+      'Both runtimes infer a unique native action from the bounded shared fixture with UTF-8 byte spans and independent expected attributes. A text reload and linked edit affect ordinary parsing of an independent positive while preserving rejection and rule documentation. Competing candidates remain available and forged spans and unsupported observations remain explicit. The shared command returns the executable grammar or reports its surviving alternatives.', ['concreteAttributeObservationsInferNativeAction', 'reloadedActionAndLinkedEditExecuteOnHoldout', 'ambiguousForgedAndUnsupportedTracesRemainExplicit', 'attributeInferenceCommandReturnsExecutableActionsAndAlternatives']],
     ['I195-GRAMMAR-INFERENCE-GENERIC-UNION', 'generic structural and semantic discovery through the source-union pipeline',
       'Discover lexical classes, recursion and semantic relations generically, preserving every source production and provenance. Merge discovered definitions with the applicable official and mature grammars through the existing automatic native pipeline.', ['lexicalRecursiveAndSemanticDiscoveryExecuted', 'allSourceProductionsAndProvenanceRetained', 'discoveredAndOfficialGrammarsMerged']],
     ['I195-GRAMMAR-INFERENCE-FORMAL-CONCEPT-INTEGRATION', 'discovered concepts integrated with recursive formal definitions',
@@ -665,4 +738,24 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
       'Deliver full JavaScript and Rust parsing and source emission, with complete concrete syntax by default, and translation between both languages for the real project codebase as the most critical end-to-end baseline. Validate complete source inventories, lossless source reconstruction and executable semantics independently; carried original source, registration or declarations do not establish semantic translation. Complete the remaining languages and capabilities after this baseline while preserving every inherited requirement.',
       ['javascriptRustCompleteParsingAndEmissionPrioritized', 'realOwnSourceInventoryExercised', 'bidirectionalExecutableTranslationChecked', 'defaultConcreteSyntaxAndLosslessSourceRetained', 'remainingScopePreserved']],
   ]),
+  ...rows('bulkDraftBeforeTestingRequest', 'parity/sources/bulk-draft-before-testing-2026-10-23.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-TESTING', 'complete outstanding requirements drafted before integrated testing',
+      'Draft every outstanding requirement and known CI repair before testing the complete integrated batch. Include shared behavior, both runtime adapters, automatic translation and complete fixtures; refresh generated histories and manifests once after drafting, then execute required validation. Continue independent drafting while existing CI executes, preserve every inherited gate and distinguish unverified drafts from executed evidence.',
+      ['allOutstandingRequirementsDraftedBeforeTesting', 'knownCiRepairsIncluded', 'metadataIntegratedOnceAfterDrafting', 'completeValidationRetained', 'draftAndEvidenceDistinguished']],
+  ], true),
+  ...rows('completeDraftBeforeCiFeedbackRequest', 'parity/sources/complete-draft-before-ci-feedback-2026-10-25.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-CI-FEEDBACK', 'complete all implementation drafts before addressing CI feedback',
+      'Continue drafting every inherited issue, pull-request and conversation requirement in implementation code. Commits and coherent batch pushes are authorized to collect later feedback. Do not investigate or address any CI feedback until the entire implementation draft is complete; terminal run status may be read only to coordinate pushes. This current phase supersedes the earlier obligation to repair previous CI errors before pushing. Preserve all gates, recorded failures and later verification obligations, and retain the prohibition on code testing until every requirement has its complete code draft.',
+      ['allImplementationDraftsPrecedeCiFeedbackInvestigation', 'draftCommitsAndCoherentPushesAuthorized', 'ciGatesAndLaterVerificationRetained', 'noCodeTestsBeforeFullDraftRetained']],
+  ], true),
+  ...rows('draftEntireScopeWithoutCodeTestsRequest', 'parity/sources/draft-entire-scope-without-code-tests-2026-10-24.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-NO-CODE-TESTS-BEFORE-FULL-DRAFT', 'no code testing before exactly all requirements have implementation drafts',
+      'Continue drafting exactly the full issue, pull-request and conversation scope in implementation code. Do not run code tests, validation, behavioral comparisons or fixture oracles until every requirement has an implementation draft. Preserve all fixtures, assertions and later verification obligations. A registry entry, carried source, stub or unexecuted test declaration is insufficient implementation drafting, and drafting is distinct from verified delivery.',
+      ['everyRequirementHasImplementationDraft', 'codeExecutionForTestingDeferredUntilWholeDraft', 'allLaterVerificationRetained', 'stubsAndDeclarationsDoNotReplaceBehavior']],
+  ], true),
+  ...rows('draftWithoutTestsOrCompilationRequest', 'parity/sources/continue-bulk-draft-without-tests-or-compilation-2026-10-27.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-DRAFT-WITHOUT-COMPILATION', 'continue actual implementation drafting without local compilation',
+      'Continue bulk drafting all inherited requirements in implementation code while any requirement remains undrafted. A handoff preserves remaining work and does not replace continuing that work. Execute no local code tests or build compilation during this drafting phase; retain every required later compilation, behavioral verification, fixture, assertion and CI gate. Source-only code generation remains drafting, with no original/generated program execution or executable build artifact presented as verification.',
+      ['remainingHandoffWorkContinuesInImplementationCode', 'noLocalBuildCompilationDuringDrafting', 'noCodeTestsBeforeFullDraft', 'allLaterCompilationAndVerificationRetained']],
+  ], true),
 ]);

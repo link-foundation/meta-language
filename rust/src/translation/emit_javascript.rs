@@ -22,6 +22,9 @@ use super::ir::{
     Program, Semantics, rename_function, rename_main, tail_loop,
 };
 use super::lexer::json_string;
+use super::javascript_constructor_field_type_rules::{
+    render_java_script_optional_constructor_binding, render_java_script_optional_constructor_property,
+};
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::{Type, fixed_bounds};
 
@@ -78,7 +81,12 @@ fn ctor_object(ctor: &Ctor, args: &[String], language: Language, explicit_frozen
         .enumerate()
         .map(|(index, field)| {
             let arg = args.get(index).map_or("undefined", String::as_str);
-            format!("[{}]: {arg}", field_key(&field.name))
+            let key = field_key(&field.name);
+            if field.optional {
+                render_java_script_optional_constructor_property(&key, arg)
+            } else {
+                format!("[{key}]: {arg}")
+            }
         })
         .collect();
     let fields = if fields.is_empty() {
@@ -120,6 +128,8 @@ pub fn emit_javascript_with_options(
     program: &Program,
     options: JavaScriptEmissionOptions<'_>,
 ) -> Result<Emitted> {
+    let prepared = super::ordered_record_preparation::prepare(program)?;
+    let program = prepared.as_ref();
     let target_identifier = identifier_model::select(options.identifier_model)?;
     if options.identifier_model.is_some() && options.scoped_binding_model.is_some() {
         return Err(unsupported(
@@ -128,6 +138,7 @@ pub fn emit_javascript_with_options(
             None,
         ));
     }
+    super::class_owners::validate_program(program)?;
     super::source_type_namespaces::validate_source_type_namespaces(program)?;
     let runtime = super::runtime_shell::validate_program(program)?;
     if runtime.is_some() && options.scoped_binding_model.is_some() {
@@ -619,10 +630,14 @@ impl<'p> JavaScriptEmitter<'p> {
                 .enumerate()
                 .filter_map(|(index, bind)| {
                     bind.as_ref().map(|bind| {
-                        format!(
-                            "const {bind} = {subject}[{}];",
-                            field_key(&ctor.fields[index].name)
-                        )
+                        let field = &ctor.fields[index];
+                        let key = field_key(&field.name);
+                        let value = if field.optional {
+                            render_java_script_optional_constructor_binding(&subject, &key)
+                        } else {
+                            format!("{subject}[{key}]")
+                        };
+                        format!("const {bind} = {value};")
                     })
                 })
                 .collect();
@@ -737,7 +752,51 @@ impl<'p> JavaScriptEmitter<'p> {
         })
     }
 
-    fn cast(&mut self, arg: &Expr, flavor: Flavor, message: Option<&str>) -> Result<String> {
+    fn cast(
+        &mut self,
+        arg: &Expr,
+        from: &Type,
+        to: &Type,
+        flavor: Flavor,
+        message: Option<&str>,
+    ) -> Result<String> {
+        if flavor == Flavor::Wrapping {
+            let (
+                Type::Fixed {
+                    signed: source_signed,
+                    ..
+                },
+                Type::Fixed { bits, signed },
+            ) = (from, to)
+            else {
+                return Err(unsupported(
+                    "wrapping integer cast",
+                    "requires actual fixed integer source and target types",
+                    arg.span,
+                ));
+            };
+            let argument = self.expr(arg)?;
+            let code =
+                crate::translation::fixed_integer_cast_rules::render_wrapping_fixed_integer_cast(
+                    "JavaScript",
+                    &argument,
+                    f64::from(*bits),
+                    *signed,
+                    *source_signed,
+                );
+            if code.is_empty() {
+                return Err(unsupported(
+                    "wrapping integer cast",
+                    "the integer width needs an exact target encoding",
+                    arg.span,
+                ));
+            }
+            self.state.encode(
+                "fixed integer casts",
+                &crate::translation::fixed_integer_cast_rules::read_fixed_integer_cast_statement(),
+            );
+            return Ok(code);
+        }
         let arg = self.expr(arg)?;
         Ok(match flavor {
             Flavor::Exact => arg,
@@ -748,6 +807,9 @@ impl<'p> JavaScriptEmitter<'p> {
                     "ml_toNatChecked({arg}, {})",
                     json_string(cast_message(message))
                 )
+            }
+            Flavor::Wrapping => {
+                unreachable!("wrapping casts return their checked fixed representation above")
             }
         })
     }

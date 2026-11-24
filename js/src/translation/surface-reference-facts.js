@@ -1,13 +1,20 @@
 // Mechanical object/array transport for the portable reference analysis.
 // Field labels and primitive values retain their original spellings. Decisions
 // about scopes, types, syntax and representation live in the checked rules.
-export function createSurfaceReferenceFacts(value, { retainValues = false } = {}) {
+export function createSurfaceReferenceFacts(value, { retainValues = false, shareScalars = false } = {}) {
   const forms = [], texts = [], starts = [], counts = [], labels = [], targets = [];
   const values = [];
   const identities = new WeakMap();
+  const scalarIdentities = new Map();
+  const negativeZero = Symbol();
   function insert(node) {
     if (node && typeof node === 'object' && identities.has(node)) return identities.get(node);
+    const kind = typeof node;
+    const sharedScalar = shareScalars && (node === null || kind === 'string' || kind === 'boolean' || kind === 'number' || kind === 'undefined');
+    const scalarKey = Object.is(node, -0) ? negativeZero : node;
+    if (sharedScalar && scalarIdentities.has(scalarKey)) return scalarIdentities.get(scalarKey);
     const identity = forms.length;
+    if (sharedScalar) scalarIdentities.set(scalarKey, identity);
     if (retainValues) values.push(node);
     const form = node === null ? 'null' : Array.isArray(node) ? 'array' : typeof node;
     forms.push(form);

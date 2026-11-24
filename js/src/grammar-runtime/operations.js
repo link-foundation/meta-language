@@ -107,7 +107,8 @@ export function evaluateValue(value, machine) {
       const text = evaluateValue(value.value, machine);
       if (typeof text === 'number') return text;
       if (!/^-?[0-9]{1,15}$/u.test(text)) failOperation();
-      return Number(text);
+      // Grammar operations produce signed integers with one zero value.
+      return Number(text) + 0;
     }
     case 'add': return checked(integer(evaluateValue(value.left, machine)) + integer(evaluateValue(value.right, machine)));
     case 'subtract':

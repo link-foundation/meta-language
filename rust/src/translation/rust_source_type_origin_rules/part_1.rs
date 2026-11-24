@@ -1,0 +1,41 @@
+// Generated from complete js/src/translation/rust-source-type-origin-rules.js. Do not edit by hand.
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_source_type_origin_runtime_field_plan() -> Vec<String> {
+    vec![
+        String::from("sourceBindingIdentity"),
+        String::from("delete"),
+        String::from("sourcePlaceBindingIdentity"),
+        String::from("delete"),
+        String::from("sourceLexicalBindingIdentity"),
+        String::from("delete"),
+        String::from("sourceRecordStateCollectingSite"),
+        String::from("delete"),
+        String::from("sourceValueBorrowBindings"),
+        String::from("empty list"),
+        String::from("sourceValueFieldBorrowBindings"),
+        String::from("delete"),
+        String::from("sourceLoanBindingIdentities"),
+        String::from("empty list"),
+        String::from("sourcePlaceLoanBindingIdentities"),
+        String::from("empty list"),
+        String::from("sourceExtendingTemporaryBindings"),
+        String::from("empty list"),
+        String::from("sourceBorrowedPlace"),
+        String::from("false"),
+        String::from("sourceOwnedResultProof"),
+        String::from("false"),
+        String::from("sourceStandardSumPatternMove"),
+        String::from("false"),
+        String::from("sourceStandardSumBorrowedField"),
+        String::from("false"),
+        String::from("sourceNominalPatternMove"),
+        String::from("false"),
+        String::from("sourceNominalBorrowedField"),
+        String::from("false"),
+        String::from("sourceBoxLayers"),
+        String::from("empty list"),
+        String::from("freshArrayValue"),
+        String::from("absent fresh array"),
+    ]
+}

@@ -2,7 +2,7 @@ import { readRuntimeProjectData } from '../project-data-loader.js';
 import { unsupported, typeError } from './diagnostics.js';
 import { RustSourceOrigins } from './rust-source-origins.js';
 import { RUST_SOURCE_SIGNATURE_POLICY } from './rust-source-signatures.js';
-import { acceptRustSourceHeaderLifetimeCharacter } from './rust-source-header-emission-rules.js';
+import { acceptRustSourceIdentifierName } from './unicode-identifiers.js';
 import {checkRustUnitCloneDerivation} from './rust-unit-clone.js';
 import {checkOwnedProgramContainers} from './owned-program-containers.js';
 import { acceptRustTypeNamespaceModel, acceptRustTypeNamespacePosition,
@@ -50,11 +50,7 @@ export function checkRustTypeNamespaceRecordShapes(program) {
 
 /** Reuse the shared character predicate matching the actual Rust lexer. */
 export function acceptRustTypeNamespaceSpellingSegment(value) {
-  if (typeof value !== 'string' || value.length === 0) return false;
-  for (let index = 0; index < value.length; index += 1) {
-    if (!acceptRustSourceHeaderLifetimeCharacter(value.charCodeAt(index), index === 0)) return false;
-  }
-  return true;
+  return acceptRustSourceIdentifierName(value);
 }
 
 /** Capture actual ordered source spellings alongside the existing signature. */

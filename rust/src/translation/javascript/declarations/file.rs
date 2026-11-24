@@ -20,7 +20,10 @@ impl JavaScriptParser {
             tdz: self.block_declarations(self.cursor.index, ScanEnd::File),
             mutable: HashSet::new(),
         };
-        self.global_binding_names.clone_from(&self.scope.tdz);
+        // Keep actual outer module owners supplied before parsing this item.
+        // Replacing the set loses carried class/constant shadowing evidence.
+        self.global_binding_names
+            .extend(self.scope.tdz.iter().cloned());
         for name in &self.scope.tdz {
             self.lexical.binding(name, None);
         }
@@ -139,7 +142,7 @@ impl JavaScriptParser {
             if exported {
                 for entry in &entries {
                     if let SEffect::Let { name, .. } = entry
-                        && !name.starts_with("ml_")
+                        && !name.starts_with(&self.generated_prefix)
                     {
                         self.exported_names.insert(name.clone());
                     }
@@ -157,7 +160,9 @@ impl JavaScriptParser {
             ));
         }
         items.append(&mut self.generated);
-        if !self.eliminated_owned_array_append_operations.is_empty() {
+        if self.reference_state.permitted
+            && !self.eliminated_owned_array_append_operations.is_empty()
+        {
             self.reference_state.enabled = self.reference_state.forced
                 || super::super::reference_analysis::requires_reference_semantics(
                     &self.cursor.tokens,
@@ -165,6 +170,8 @@ impl JavaScriptParser {
                 );
         }
         let program = SProgram {
+            source_class_owners: self.closed_class_owners.clone(),
+            source_class_methods:self.closed_class_methods.clone(),
             reference_semantics: self.reference_state.enabled.then(|| true.into()),
             language: Language::JavaScript,
             items,
@@ -188,12 +195,16 @@ impl JavaScriptParser {
                 &self.nested_product_bindings,
             )?;
             super::super::scalar_loops::finish_scalar_loops(&mut program)?;
-            super::super::reference_analysis::select_structural_reference_semantics(&mut program)?;
+            if self.reference_state.permitted {
+                super::super::reference_analysis::select_structural_reference_semantics(&mut program)?;
+            }
             Ok(program)
         } else {
             let mut program = infer_javascript_types(program)?;
             super::super::scalar_loops::finish_scalar_loops(&mut program)?;
-            super::super::reference_analysis::select_structural_reference_semantics(&mut program)?;
+            if self.reference_state.permitted {
+                super::super::reference_analysis::select_structural_reference_semantics(&mut program)?;
+            }
             Ok(program)
         }
     }

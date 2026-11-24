@@ -62,11 +62,21 @@ test('38 complete source refusals preserve exact diagnostics and spans, includin
  assert.throws(()=>createTypedProgramLinks('function empty(){}','JavaScript',options),/requires Rust source/u);
 });
 
-test('default Unit-helper and main-call refusals, full ml_main and std wrapper diagnostics stay unchanged',()=>{
- assert.throws(()=>parseRust('fn noop(){}fn main(){}'),error=>error.reason==='function without a result: noop returns (); only value-returning functions are portable'&&assert.deepEqual(error.span,{start:0,end:9})===undefined);
- assert.throws(()=>parseRust('fn noop()->(){()}fn main(){noop();}'),error=>error.reason==='main statement: main may only print, bind and assert');
+test('default Unit helpers and calls retain former inputs with active semantic controls and the std wrapper boundary',()=>{
+ const corrections=readProjectData(new URL('../../parity/fixtures/rust-unit-values.lino',import.meta.url));
+ assert.equal(corrections.correctedAssertions[0].previousAssertion,'parseRust throws function without a result: noop returns (); only value-returning functions are portable');
+ assert.deepEqual(corrections.correctedAssertions[0].previousSpan,{start:0,end:9});
+ assert.equal(corrections.correctedAssertions[1].previousAssertion,'parseRust throws main statement: main may only print, bind and assert');
+ for(const row of corrections.correctedAssertions.slice(0,2)){
+  const packet=createTypedProgramLinks(row.source,'Rust'),program=decodeTypedProgramLinks(packet.network,packet.root);
+  assert.deepEqual(program.declarations.get('noop').ret,{kind:'unit'});
+  assert.equal(Object.hasOwn(program,'sourcePureUnitCalls'),false);
+  for(const network of [packet.network,LinkNetwork.fromLino(packet.network.toLino())])assert.deepEqual(observeCalls({network,root:packet.root}),row.calls);
+ }
+ for(const source of corrections.mainSources){const packet=createTypedProgramLinks(source,'Rust');assert.equal(observe(packet).output,'');}
  const full=emitRust(checkProgram(parseRust('fn main(){}'))).text;
- assert.throws(()=>parseRust(full),/function without a result: ml_main/u);assert.throws(()=>parseRust(full,{pureUnitCallModel:fixture.model}),/attributes require a separate compilation context proof/u);
+ assert.equal(corrections.correctedAssertions[2].previousAssertion,'parseRust throws function without a result: ml_main');
+ assert.throws(()=>parseRust(full),/std::env::args: the standard library is outside the portable core/u);assert.throws(()=>parseRust(full,{pureUnitCallModel:fixture.model}),/attributes require a separate compilation context proof/u);
  const wrapper=full.slice(full.lastIndexOf('fn main()'));
  assert.throws(()=>parseRust(wrapper),/std::env::args: the standard library is outside the portable core/u);assert.throws(()=>parseRust(wrapper,{pureUnitCallModel:fixture.model}));
 });

@@ -1,0 +1,1 @@
+JavaScript optional type inference now retains both absence paths when a guarded projection and another branch contribute `undefined` and `null`. Signature discovery reaches a fixed point for modules using this pattern.

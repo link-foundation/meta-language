@@ -65,6 +65,14 @@ export function rustArraySourceFixture() {
     }),
     invalid: [...refused, [correction.invalidId, correction.originalSource]].map(([id, body]) => {
       const source = body + (body.includes('fn main()') ? '' : ' fn main(){}');
+      // These rows remain the exact historical document, not a present
+      // refusal oracle. Current tests exercise its authenticated positive view.
+      if(['array-return','unconverted-source-length','other-length-conversion','source-indexing'].includes(id)){
+        const original=readProjectData(new URL('../../parity/fixtures/rust-fresh-vector-results.lino',import.meta.url)).corrections.find(row=>row.id===id);
+        assert.equal(source,original.source,'the correction retains the entire original input');
+        const program=checkProgram(parseRust(source));assert.deepEqual(program.declarations.get(original.functionName).ret,original.resultType,'the current default has its actual source result type');
+        return {id,source,...original.previousExpectation};
+      }
       try { checkProgram(parseRust(source)); } catch (error) {
         return { id, source, kind: error.kind, reason: error.reason, span: error.span ?? null,
           ...(id === correction.invalidId ? { sourceCorrection: { caseId: correction.caseId, originalSourceSha256: correction.originalSourceSha256, decoratorId: correction.decoratorId } } : {}) };

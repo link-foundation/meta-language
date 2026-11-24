@@ -1,0 +1,26 @@
+// Symbolic state transport for the independently checked actual extraction,
+// selected call and reconstruction graph. No archived epochs are trusted.
+import {readRustSourceSharedReferentPlaceRegions} from './rust-source-reference-places.js';
+import {unsupported} from './diagnostics.js';
+import {readRustSourcePlaceTransformPlan} from './rust-source-place-transforms.js';
+import * as rules from './rust-borrowed-source-region-rules.js';
+import {readRustBorrowedSourceCallParameter} from './rust-borrowed-source-call-interfaces.js';
+import {checkRustClosedSourceCallback} from './rust-closed-callback-regions.js';
+import {publishRustSourceFieldUpdates,checkRustSourceSelectedFieldImage,sealRustSourceStateImage} from './rust-source-partial-state.js';
+import {readRustSourceReadonlyMatchGuardRegions,readRustSourceReadonlyPatternPlaceRegions} from './rust-source-match-guards.js';
+const fail=(reason,node)=>{throw unsupported('Rust source place regions',reason,node?.span);};
+const callPosition=position=>({...position,lifetimes:position.lifetimes.map(value=>value==='static'?'static':null)});
+export function readRustSourcePlaceTransformRegions(visitor,node,env,bindings,depth){
+ const plan=readRustSourcePlaceTransformPlan(node.sourcePlaceTransform,node,visitor.program.sourceLanguage,value=>value,value=>visitor.program.declarations.get(value.name),name=>visitor.program.declarations.get(name));if(plan.kind==='shared referent place')return readRustSourceSharedReferentPlaceRegions(visitor,plan,node,env,bindings,depth);if(plan.kind==='readonly match guard')return readRustSourceReadonlyMatchGuardRegions(visitor,plan,node,env,bindings,depth);if(plan.kind==='readonly pattern place')return readRustSourceReadonlyPatternPlaceRegions(visitor,plan,node,env,bindings,depth);const {facet,interface:interface_}=plan;
+ if(!visitor.composed)fail('source place calls retain the explicit closed-call region composition',node);
+ const assignment=plan.kind==='field assignment';if(['replacement','field assignment'].includes(plan.kind))for(const operand of facet.operands)visitor.scope(operand.position,bindings,node);
+ const roots=facet.slots.map((slot,index)=>{visitor.scope(slot.position,bindings,node);visitor.closedOutput(slot.position,node);const actual=env.get(slot.input);if(!actual)fail('a source place input retains its actual enclosing lexical binder',node);visitor.compatible(visitor.readLifetime(actual,node),slot.position,node);const storage=visitor.storages.get(slot.binder.identity);if(!storage||actual.storageIdentity!==slot.binder.identity||actual.storageRoot!==storage.root||actual.regions.length||storage.binder.name!==slot.binder.name||storage.binder.start!==slot.binder.start||storage.binder.end!==slot.binder.end)fail('a source place input retains its actual initialized original binder and current closed storage revision',node);const paths=facet.places.filter(place=>place.slot===index).map(place=>place.fields);if(!assignment)for(const path of paths)checkRustSourceSelectedFieldImage(visitor,storage.root,slot.position,path,node);return {slot,actual,storage,paths};});
+ for(const position of interface_.outputs)visitor.closedOutput(position,node);const ordinary=[];
+ for(let index=0;index<plan.arguments.length;index++){const place=facet.places.find(place=>place.parameter===index);if(place){const root=roots[place.slot];checkRustSourceSelectedFieldImage(visitor,root.storage.root,root.slot.position,place.fields,node);continue;}const argument=plan.arguments[index],parameter=interface_.parameters[index],mode=interface_.modes[index];if(mode==='callback'){checkRustClosedSourceCallback(visitor,argument,interface_,env);continue;}visitor.closedTarget(parameter,argument);const shared=readRustBorrowedSourceCallParameter(parameter,mode),expected=callPosition(visitor.position(shared)),actual=visitor.compatible(visitor.expression(argument,env,bindings,expected,depth+1),expected,argument);visitor.read(actual,mode==='shared'?'read':'move',argument);ordinary.push(actual);}
+ // Acquire distinct real whole-root epochs once, even when several disjoint
+ // fields of the same record are selected by separate mutable formals.
+ const published=roots.map(root=>{visitor.readLifetime(root.actual,node);if(!assignment)for(const path of root.paths)checkRustSourceSelectedFieldImage(visitor,root.storage.root,root.slot.position,path,node);return publishRustSourceFieldUpdates(visitor,root.storage.root,root.slot.position,root.paths,node);});
+ for(const root of roots){visitor.states[root.storage.root]=rules.consumeRustBorrowedSourceRegion(visitor.states[root.storage.root]);if(root.actual.root!==null&&root.actual.root!==root.storage.root)visitor.states[root.actual.root]=rules.consumeRustBorrowedSourceRegion(visitor.states[root.actual.root]);}
+ for(const actual of ordinary)if(['reference','borrowed vector'].includes(actual.role))visitor.read({...actual,root:null,producer:true},'read',node);
+ const fields=[visitor.value(visitor.position(interface_.result),visitor.root(),[],true),...roots.map(({slot,storage},index)=>{const root=published[index];visitor.storages.set(slot.binder.identity,{...storage,root});return sealRustSourceStateImage(visitor,{...visitor.value(visitor.position(slot.position),null,[],true),storageRoot:root,storageIdentity:slot.binder.identity,packetState:true},node);})];return visitor.packet(fields,node);
+}

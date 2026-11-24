@@ -8,6 +8,7 @@ use super::super::scalar_parameters::read_rust_scalar_parameter_body;
 use super::super::{
     Result, RustParser, SFn, SParam, SourceDeclaration, TokenKind, Type, span, unsupported,
 };
+use crate::translation::rust_fresh_vector_result_rules::accept_rust_ordinary_fresh_vector_result;
 
 impl RustParser {
     pub(in super::super) fn function(&mut self, path: &[String]) -> Result<SFn> {
@@ -31,8 +32,27 @@ impl RustParser {
         let const_keyword = self.const_function_keyword.take();
         let start = const_keyword.as_ref().unwrap_or(&function_keyword).clone();
         let name = self.cursor.identifier(Some("fn"))?.value;
+        if let Some(directory) = &self.fn_mut_source_declarations
+            && let Some(declaration) = directory.capture(path, &function_keyword)?
+        {
+            if const_keyword.is_some() {
+                return Err(unsupported(
+                    "Rust source FnMut function",
+                    "const generic FnMut calls need their independent const trait/effect interpretation",
+                    Some(start.span()),
+                ));
+            }
+            if declaration.callback.parameter + 1 != declaration.formal_count {
+                return Err(unsupported(
+                    "Rust source FnMut function",
+                    "this closed callback profile requires the actual callback as the final original source operand",
+                    Some(start.span()),
+                ));
+            }
+        }
+        let fn_mut_replay = self.consume_fn_mut_source_generics(path, &name, &function_keyword)?;
         let mut source_lifetime_bindings = Vec::new();
-        if self.cursor.is("<") {
+        if !fn_mut_replay && self.cursor.is("<") {
             let generic = self.cursor.advance();
             while !self.cursor.is(">") {
                 if self.cursor.eat("'").is_none() {
@@ -73,8 +93,17 @@ impl RustParser {
         let mut params = Vec::new();
         let mut source_params = Vec::new();
         let mut mutable_params = Vec::new();
+        let mut exclusive_params = Vec::new();
         while !self.cursor.is(")") {
             let param_token = self.peek();
+            if let Some((parameter, origin)) = self.inherent_receiver(&name, path, params.len())? {
+                params.push(parameter);
+                source_params.push(origin);
+                if self.cursor.eat(",").is_none() {
+                    break;
+                }
+                continue;
+            }
             let mutable = self.cursor.eat("mut").is_some();
             if self.cursor.is("self") || self.cursor.is("&") {
                 return Err(unsupported(
@@ -84,10 +113,22 @@ impl RustParser {
                 ));
             }
             let param_name = self.cursor.identifier(Some("parameter"))?.value;
+            self.require_nonconstant_binding(&param_name, path, Some(param_token.span()))?;
             self.cursor.expect(":", Some("parameter"))?;
             let type_token = self.peek();
-            let ty = self.parse_type()?;
-            if mutable {
+            let callback_type = self.read_fn_mut_source_formal_type(path, &param_name, params.len())?;
+            let callback_formal = callback_type.is_some();
+            let ty = match callback_type {
+                Some(ty) => ty,
+                None => match self.read_fn_mut_source_exclusive_type()? {
+                    Some(ty) => {
+                        exclusive_params.push(params.len());
+                        ty
+                    }
+                    None => self.parse_type()?,
+                },
+            };
+            if mutable && !callback_formal {
                 mutable_params.push((
                     param_token.clone(),
                     type_token,
@@ -110,15 +151,29 @@ impl RustParser {
             }
         }
         self.cursor.expect(")", Some("fn"))?;
-        if self.cursor.eat("->").is_none() {
+        let explicit_result = self.cursor.eat("->").is_some();
+        let ret = if explicit_result {
+            self.parse_type()?
+        } else {
+            self.origins.typed(Type::Unit, path, Vec::new())
+        };
+        let mut source_result = self.origins.current_type.clone();
+        if !explicit_result {
+            source_result.source_owner = Some(crate::translation::source_signatures::SourceOwner {
+                kind: "unit".to_owned(),
+                path: Vec::new(),
+                arguments: Vec::new(),
+            });
+        }
+        if !self.shared_array_handle_source_model.is_empty()
+            && (!mutable_params.is_empty() || !self.lifetime_bindings.is_empty())
+        {
             return Err(unsupported(
-                "function without a result",
-                &format!("{name} returns (); only value-returning functions are portable"),
+                "Rust shared array handle source",
+                "mutable parameters and named lifetime binders need another source profile",
                 span(&start, self.cursor.peek()),
             ));
         }
-        let ret = self.parse_type()?;
-        let mut source_result = self.origins.current_type.clone();
         if !self.const_function_model.is_empty()
             && (!mutable_params.is_empty() || !self.lifetime_bindings.is_empty())
         {
@@ -158,7 +213,7 @@ impl RustParser {
             for (token, type_token, origin, _) in mutable_params {
                 let resolved = self.resolve(std::slice::from_ref(&type_token.value), path);
                 let shadowed = type_token.kind != TokenKind::Identifier
-                    || self.origins.lookup(&resolved, path).is_some();
+                    || self.origins.lookup_type_owner(&resolved, path).is_some();
                 if !accept_rust_unwritten_scalar_parameter(
                     origin.ty.as_ref().map_or("", Type::kind),
                     (origin.direct_copy_value(), shadowed, closed, possible_write),
@@ -171,7 +226,10 @@ impl RustParser {
                 }
             }
         }
+        let borrowed_vector_result_phase=self.borrowed_vector_signature_phase(&source_result);
         if let Type::Array { element, .. } = &ret
+            && !self.shared_array_origin(&source_result)
+            && borrowed_vector_result_phase.is_empty()
             && !accept_rust_source_array_result(
                 &self.origins.array_result_model,
                 element.kind(),
@@ -179,6 +237,16 @@ impl RustParser {
                     && source_result.wrappers.is_empty(),
                 true,
             )
+            && !accept_rust_ordinary_fresh_vector_result(
+                self.ordinary_completion_context(),
+                source_result.array_source_model.unwrap_or(""),
+                serde_json::Number::from(source_result.wrappers.len())
+                    .as_f64()
+                    .expect("actual result wrapper count"),
+                element.kind(),
+                true,
+            )
+            && self.owned_vector_signature_phase(&source_result).is_empty()
         {
             return Err(unsupported(
                 "Rust array result",
@@ -199,14 +267,22 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
-        self.origins.declaration(
-            &name,
-            path,
-            SourceDeclaration::Function {
-                parameters: source_params.clone(),
-                result: source_result.clone(),
-            },
-        )?;
+        source_result.fresh_vector_result_contract = source_result.array_element_position.is_none() && crate::translation::rust_fresh_vector_call_result_rules::accept_rust_fresh_vector_result_declaration(
+            self.ordinary_completion_context(), source_result.array_source_model.unwrap_or(""),
+            u32::try_from(source_result.wrappers.len()).map_or(f64::INFINITY, f64::from),
+            if let Type::Array { element, .. } = &ret { element.kind() } else { "" },
+            source_result.array_element_copy_evidence,
+        );
+        if !fn_mut_replay {
+            self.origins.declaration(
+                &name,
+                path,
+                SourceDeclaration::Function {
+                    parameters: source_params.clone(),
+                    result: source_result.clone(),
+                },
+            )?;
+        }
         if self.cursor.is("where") {
             return Err(unsupported(
                 "where clause",
@@ -214,22 +290,93 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
+        if !fn_mut_replay && self.ordinary_completion_context() {
+            self.capture_source_constant_function(
+                &name,
+                path,
+                &function_keyword,
+                const_keyword.as_ref(),
+                &source_params,
+                &source_result,
+            );
+        }
+        // Private inventory only; these bodies are never emitted or returned publicly.
+        if let Some(read) = &mut self.fn_mut_source_header_read {
+            read.resolved = Some(super::super::fn_mut_source_headers::ResolvedFnMutSourceHeader {
+                parameters: source_params.clone(),
+                exclusive_parameters: exclusive_params,
+                result: source_result.clone(),
+            });
+        }
+        let fn_mut_body_replay = self
+            .fn_mut_source_header_read
+            .as_ref()
+            .is_some_and(|read| read.body_replay);
+        if self.header_discovery || fn_mut_replay && !fn_mut_body_replay {
+            let close = self.declaration_body_boundary()?;
+            return Ok(SFn {
+                source_state_transform: None,
+                source_vector_mutation: None,
+                source_fn_mut_specialization: None,
+                source_finite_record_loop_helper:false,
+                source_finite_record_loop_witness:None,
+                source_diagnostic_attributes: None,
+                semantic_ret: None,
+                name,
+                params,
+                ret: Some(ret),
+                body: super::super::SExpr::new(super::super::SNode::Unit, Some(close.span())),
+                span: Some(super::super::Span::new(start.start, close.end)),
+                generated: false,
+                source_signature: None,
+                source_primitive_owners: None,
+                source_empty_option: None,
+                source_type_namespace: None,
+                source_loop: None,
+                source_standard_collection_library_owner: None,
+                source_pure_unit: None,
+                source_local_state: None,
+                source_const_function: None,
+            });
+        }
         let const_header_end = self.cursor.peek().start;
-        let source_signature = self.capture_source_signature(
+        let source_region_body_closed = self.read_source_region_body_closed(&source_params, &source_result)?;
+        let mut source_signature = self.capture_source_signature(
             &source_params,
             &source_result,
             source_lifetime_bindings,
             scalar_loop,
         )?;
+        if source_region_body_closed && let Some(signature) = &mut source_signature {
+            signature.model = "Rust source function signature 2".to_owned();
+        }
         self.lifetime_header = false;
         let scope = params
             .iter()
             .zip(source_params.iter().cloned())
             .map(|(parameter, origin)| (parameter.name.clone(), origin))
             .collect();
+        let function_ownership = self.origins.snapshot_owned_bindings();
+        let function_temporaries = self.origins.owned_temporary_frame();
         let previous = self.origins.enter(Some(scope));
+        if let Some(read) = &mut self.fn_mut_source_header_read {
+            read.callback_binding = self
+                .origins
+                .scope
+                .get(&read.callback.owner.callback.name)
+                .and_then(|origin| origin.source_lexical_binding_identity.clone());
+        }
+        let parameter_names=params.iter().map(|parameter|parameter.name.clone()).collect::<Vec<_>>();
+        if !borrowed_vector_result_phase.is_empty(){self.seed_borrowed_vector_parameter_regions(&parameter_names);}
         let mut source_loop = None;
         let mut source_local_state = None;
+        let temporary_frame = self.origins.owned_temporary_frame();
+        let previous_sum_return=std::mem::replace(&mut self.standard_sum_source.return_origin,Some(source_result.clone()));
+        let previous_sum_expected=std::mem::replace(&mut self.standard_sum_source.expected_origin,Some(source_result.clone()));
+        let previous_source_region_body_closed =
+            std::mem::replace(&mut self.source_region_body_closed, source_region_body_closed);
+        let source_state_frame = self.begin_fn_mut_source_function_state();
+        let body_read: Result<SExpr> = source_state_frame.as_ref().map_err(Clone::clone).and_then(|frame| {
         let body = if scalar_loop {
             if !path.is_empty() {
                 return Err(unsupported(
@@ -255,11 +402,28 @@ impl RustParser {
             source_local_state = Some(Box::new(proof));
             body
         } else if self.completion_model.is_empty() {
-            self.block(path)?
+            if let Some(body) = self.copy_pointer_result_block(path, Some(&source_result))? {
+                body
+            } else if self.ordinary_completion_selected() {
+                self.ordinary_function_completion(path, &ret, &source_result)?
+            } else if frame.is_some() {
+                self.read_record_state_block(path, true)?
+            } else {
+                self.block_with_context(path, true)?
+            }
         } else {
             self.closed_function_completion(path)?
         };
-        let source_const_function = const_keyword.as_ref().map(|keyword| {
+        Ok(body)
+        });
+        if let Some(token) = source_state_frame? {
+            self.end_owned_record_state_block(token)?;
+        }
+        self.source_region_body_closed = previous_source_region_body_closed;
+        self.standard_sum_source.return_origin=previous_sum_return;
+        self.standard_sum_source.expected_origin=previous_sum_expected;
+        let body=body_read?;
+        let source_const_function = const_keyword.as_ref().filter(|_| crate::translation::rust_function_qualifier_rules::require_rust_const_predicate_proof(true, !self.const_function_model.is_empty())).map(|keyword| {
             Box::new(self.create_const_function_proof(
                 &name,
                 keyword,
@@ -267,23 +431,50 @@ impl RustParser {
                 const_header_end,
             ))
         });
-        if let Type::Array { element, .. } = &ret {
+        self.origins
+            .finish_owned_expression(&body, path, &temporary_frame, false);
+        let borrowed_result=self.validate_borrowed_vector_function_result_regions(&body,&source_result,&parameter_names)?;
+        if let Some(regions)=borrowed_result.as_ref(){
+            self.origins.transfer_owned_result(&body,path)?;
+            let origin=self.origins.origin(&body,path);
+            self.origins.expire_owned_bindings_with_retained_regions(&function_ownership,&origin,regions)?;
+        }else{
+            let body_origin=self.origins.origin(&body,path);
+            self.origins.expire_owned_bindings(&function_ownership,&body_origin)?;
+            self.origins.transfer_owned_result(&body,path)?;
+        }
+        if let Type::Array { element, .. } = &ret
+            && !self.shared_array_origin(&source_result)
+        {
+            let owned_vector_body=borrowed_result.is_some()||self.owned_vector_function_body(&body,path,&source_result);
             if !accept_rust_source_array_result(
                 &self.origins.array_result_model,
                 element.kind(),
                 source_result.array_source_model == Some("owned vector")
                     && source_result.wrappers.is_empty(),
                 self.origins.fresh_array_result(&body, path),
-            ) {
+            ) && !accept_rust_ordinary_fresh_vector_result(
+                self.ordinary_completion_context(),
+                source_result.array_source_model.unwrap_or(""),
+                serde_json::Number::from(source_result.wrappers.len())
+                    .as_f64()
+                    .expect("actual result wrapper count"),
+                element.kind(),
+                self.origins.fresh_vector_argument(&body, path, true),
+            ) && !owned_vector_body {
                 return Err(unsupported(
                     "fresh Rust array result",
                     "every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs",
                     body.span,
                 ));
             }
-            source_result.fresh_array_value = body.span;
-            self.origins.certify_array_result(&name, path, body.span);
-            self.origins.mark(&body, source_result.clone());
+            if !owned_vector_body{source_result.fresh_array_value = body.span;}
+            self.origins.pointer_integer_argument(
+                &self.origins.origin(&body, path),
+                &source_result,
+                body.span,
+            )?;
+            if !owned_vector_body{self.origins.certify_array_result(&name, path, body.span);self.origins.mark(&body, source_result.clone());}
         }
         self.origins
             .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
@@ -298,7 +489,16 @@ impl RustParser {
         let source_type_namespace = self
             .capture_type_namespace(&source_params, &source_result)
             .map(Box::new);
+        // Exit only after validating return transfers and capturing source contracts.
+        // Restore live outer states without rewinding binding identity allocation.
+        self.origins.restore_owned_bindings(function_ownership);
+        self.origins.restore_owned_temporary_frame(function_temporaries);
         Ok(SFn {
+            source_state_transform: None,
+            source_vector_mutation: None,
+            source_fn_mut_specialization: None,
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             source_diagnostic_attributes: None,
             semantic_ret: None,
             name,
@@ -312,6 +512,7 @@ impl RustParser {
             source_empty_option: None,
             source_type_namespace,
             source_loop: source_loop.map(Box::new),
+            source_standard_collection_library_owner: None,
             source_pure_unit: None,
             source_local_state,
             source_const_function,

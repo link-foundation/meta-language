@@ -1,3 +1,4 @@
+import {restoreTypedSourceDescriptorHostSource} from '../scripts/typed-source-descriptor-host-history.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
@@ -74,7 +75,8 @@ test('original Node dependency test discovery preserves all draft source and the
   const registrationHistory=readOwnCodebaseTestRegistrationHistory();
   assert.equal(registrationHistory.revision,'52132727d7ce158762a4499b7032a42a9f16f3c3');
   for(const row of registrationHistory.sources){
-    const current=readFileSync(new URL('../../'+row.file,import.meta.url));
+    const physical=readFileSync(new URL('../../'+row.file,import.meta.url));
+    const current=Buffer.from(restoreTypedSourceDescriptorHostSource(physical.toString('utf8'),row.file));
     assert.equal(current.length,row.current.bytes);
     assert.equal(createHash('sha256').update(current).digest('hex'),row.current.sha256);
   }

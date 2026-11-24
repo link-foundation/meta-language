@@ -16,6 +16,13 @@ struct Frame {
     parameters: HashSet<String>,
 }
 
+struct Declaration {
+    scope: usize,
+    name: String,
+    kind: u8,
+    span: Span,
+}
+
 struct Read {
     scope: usize,
     name: String,
@@ -28,6 +35,7 @@ pub(super) struct Trace {
     frames: Vec<Frame>,
     current: usize,
     reads: Vec<Read>,
+    declarations: Vec<Declaration>,
 }
 
 impl Default for Trace {
@@ -36,6 +44,7 @@ impl Default for Trace {
             frames: vec![Frame::default()],
             current: 0,
             reads: Vec::new(),
+            declarations: Vec::new(),
         }
     }
 }
@@ -62,6 +71,15 @@ impl Trace {
             .declaration_counts
             .get(name)
             .is_some_and(|count| *count > 1)
+    }
+
+    pub(super) fn declaration(&mut self, name: &str, span: Span, kind: u8) {
+        self.declarations.push(Declaration {
+            scope: self.current,
+            name: name.to_owned(),
+            span,
+            kind,
+        });
     }
 
     pub(super) fn parameter(&mut self, name: &str) {
@@ -119,6 +137,47 @@ impl Trace {
     }
 
     pub(super) fn validate(&self) -> Result<()> {
+        let parents = self
+            .frames
+            .iter()
+            .map(|frame| frame.parent.map_or(-1.0, number))
+            .collect::<Vec<_>>();
+        let boundaries = self
+            .frames
+            .iter()
+            .map(|frame| f64::from(frame.boundary))
+            .collect::<Vec<_>>();
+        let mut parameter_scopes = Vec::new();
+        let mut parameter_names = Vec::new();
+        for (scope, frame) in self.frames.iter().enumerate() {
+            for name in &frame.parameters {
+                parameter_scopes.push(number(scope));
+                parameter_names.push(name.clone());
+            }
+        }
+        let scopes = self
+            .declarations
+            .iter()
+            .map(|row| number(row.scope))
+            .collect::<Vec<_>>();
+        let names = self
+            .declarations
+            .iter()
+            .map(|row| row.name.clone())
+            .collect::<Vec<_>>();
+        let kinds = self
+            .declarations
+            .iter()
+            .map(|row| f64::from(row.kind))
+            .collect::<Vec<_>>();
+        let plan=crate::translation::lexical_declaration_rules::find_java_script_lexical_declaration_conflict(&parents,&boundaries,&parameter_scopes,&parameter_names,&scopes,&names,&kinds);
+        if let Some(index) = plan.first() {
+            let declaration = &self.declarations[position(*index)];
+            return Err(super::TranslationError::syntax(
+                format!("duplicate lexical binding {}", declaration.name),
+                Some(declaration.span),
+            ));
+        }
         self.validate_reads(None)
     }
 

@@ -27,7 +27,8 @@ const verificationDomain="${{ github.event_name == 'pull_request' && format('pul
 
 test('main dependency refresh retains failed live findings and delivers their outcome to repair pull requests', async () => {
   const {mkdirSync, writeFileSync} = await import('node:fs');
-  const text = workflow('dependency-refresh.yml'), job = jobs('dependency-refresh.yml').get('refresh');
+  const text = read('.github/workflows/dependency-refresh.yml');
+  const job = parseWorkflow(text).find(entry => entry.id === 'refresh');
   assert.deepEqual(triggers(text).sort(), ['schedule', 'workflow_dispatch']);
   assert.match(condition(job), /github\.ref == 'refs\/heads\/main'/u);
   const audit = job.steps.find(step => step.name === 'Refresh the dependency audit from the registries');
@@ -41,6 +42,7 @@ test('main dependency refresh retains failed live findings and delivers their ou
   assert.match(retain.text, /if-no-files-found: error/u);
   for (const step of [summary, publish]) assert.ok(step.text.includes('AUDIT_OUTCOME: ${{ steps.audit.outcome }}'));
   assert.doesNotMatch(publish.text, /continue-on-error/u);
+  assert.match(publish.run, /git push origin "\$refresh_commit:\$branch_ref"/u);
   assert.match(job.header, /group: dependency-refresh-\$\{\{ github\.repository \}\}-write\n\s+cancel-in-progress: false/u);
   const script = step => step.run.replace(/^\|\s*\n/u, '').replace(/^ {10}/gmu, '');
   for (const step of [audit, summary, publish]) {
@@ -54,11 +56,7 @@ test('main dependency refresh retains failed live findings and delivers their ou
     {cwd: directory, encoding: 'utf8'});
     assert.equal(failure.status, 1, 'the real audit command keeps its failure status under pipefail');
     assert.equal(readFileSync(path.join(directory, 'dependency-refresh.log'), 'utf8'), '23 dependency inventory problem(s)\n');
-    const stub = `git() {
-      if [ "$1" = diff ]; then return 1; fi
-      printf '%s\\n' "$*" >> "$CALLS"
-    }
-    gh() {
+    const stub = `gh() {
       if [ "$1 $2" = 'pr list' ]; then printf '%s' "$EXISTING"; return 0; fi
       printf '%s\\n' "$*" >> "$CALLS"
       while [ "$#" -gt 0 ]; do
@@ -74,6 +72,36 @@ test('main dependency refresh retains failed live findings and delivers their ou
       const environment = {...process.env, AUDIT_OUTCOME: outcome, EXISTING: existing, RUNNER_TEMP: selected,
         BRANCH: 'automation/dependency-refresh', CALLS: calls, CAPTURED_BODY: body, GITHUB_STEP_SUMMARY: report};
       writeFileSync(calls, '');
+      const git = (...args) => {
+        const result = spawnSync('git', args, {cwd: selected, env: environment, encoding: 'utf8'});
+        assert.equal(result.status, 0, result.stderr);
+        return result.stdout.trim();
+      };
+      const branchRef = 'refs/heads/' + environment.BRANCH;
+      git('init', '--initial-branch=main', '.');
+      git('config', 'user.name', 'Test Author');
+      git('config', 'user.email', 'test@example.invalid');
+      const remote = path.join(selected, 'remote.git');
+      git('init', '--bare', remote);
+      git('--git-dir', remote, 'config', 'receive.denyNonFastForwards', 'true');
+      git('remote', 'add', 'origin', remote);
+      const lockfile = path.join(selected, 'package-lock.json');
+      writeFileSync(lockfile, 'original\n');
+      git('add', 'package-lock.json');
+      git('commit', '-m', 'Initial lockfile');
+      let previous;
+      if (existing) {
+        git('switch', '-c', environment.BRANCH);
+        writeFileSync(lockfile, 'previous refresh\n');
+        git('commit', '-am', 'Previous refresh');
+        previous = git('rev-parse', 'HEAD');
+        git('push', 'origin', branchRef);
+        git('switch', 'main');
+      }
+      writeFileSync(lockfile, 'main lockfile\n');
+      git('commit', '-am', 'Update main');
+      const main = git('rev-parse', 'HEAD');
+      writeFileSync(lockfile, 'refreshed from main\n');
       const note = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', script(summary)], {cwd: selected, env: environment, encoding: 'utf8'});
       assert.equal(note.status, 0, note.stderr);
       assert.ok(readFileSync(report, 'utf8').includes('**' + outcome + '**'));
@@ -84,7 +112,9 @@ test('main dependency refresh retains failed live findings and delivers their ou
       assert.match(readFileSync(body, 'utf8'), /Required offline PR checks and current-dependency delivery gates remain unchanged/u);
       const invocations = readFileSync(calls, 'utf8');
       assert.ok(invocations.includes(existing ? 'pr edit 227 --body-file ' : 'pr create --base main --head automation/dependency-refresh'));
-      assert.ok(invocations.includes('push --force origin automation/dependency-refresh'));
+      assert.equal(git('--git-dir', remote, 'show', branchRef + ':package-lock.json'), 'refreshed from main');
+      assert.equal(git('--git-dir', remote, 'rev-parse', branchRef + '^1'), main);
+      if (previous) assert.equal(git('--git-dir', remote, 'rev-parse', branchRef + '^2'), previous);
     }
   } finally {rmSync(directory, {recursive: true, force: true});}
 });
@@ -1308,10 +1338,33 @@ const RAW_EMISSION_FRESHNESS_REVISION = Object.freeze({
   current: RAW_SOURCE_PACKAGE_STEPS[0][1].replace('generate-raw.mjs', 'generate-raw-current-emission.mjs'),
 });
 
-function readRawEmissionFreshnessPredecessor(step) {
-  const revision = RAW_EMISSION_FRESHNESS_REVISION;
+const packageFreshnessRevisions = new Map([
+  RAW_EMISSION_FRESHNESS_REVISION,
+  {
+    name: COMPLETE_TABLE_PACKAGE_STEPS[0][0],
+    previous: COMPLETE_TABLE_PACKAGE_STEPS[0][1],
+    current: COMPLETE_TABLE_PACKAGE_STEPS[0][1].replace('generate.mjs', 'historical-table-generation.mjs'),
+  },
+  {
+    name: 'Check generated binary link network rules',
+    previous: 'node js/scripts/generate-link-network-binary-rules.mjs --check',
+    current: 'node experiments/binary-metadata-buffer/historical-translation.mjs legacy',
+  },
+  {
+    name: BINARY_METADATA_PACKAGE_STEPS[1][0],
+    previous: BINARY_METADATA_PACKAGE_STEPS[1][1],
+    current: 'node ../experiments/binary-metadata-buffer/historical-translation.mjs candidate',
+  },
+  {
+    name: BINARY_RECORD_PACKAGE_STEPS[0][0],
+    previous: BINARY_RECORD_PACKAGE_STEPS[0][1],
+    current: 'node ../experiments/binary-metadata-buffer/historical-translation.mjs record',
+  },
+].map(revision => [revision.name, revision]));
+
+function readPackageFreshnessPredecessor(step, revision) {
   assert.equal(step.name, revision.name);
-  assert.equal(step.run.trim(), revision.current, 'the exact current raw freshness driver is required');
+  assert.equal(step.run.trim(), revision.current, 'the exact package freshness driver is required');
   assert.equal(step.text.split(revision.current).length, 2, 'only one complete command may be revised');
   assert.equal(step.text.split(revision.previous).length, 1, 'the obsolete generator cannot remain as an extra command');
   const previous = {...step, run: step.run.replace(revision.current, revision.previous),
@@ -1320,16 +1373,19 @@ function readRawEmissionFreshnessPredecessor(step) {
   return previous;
 }
 
-test('raw emission freshness retains the exact historical gate around one authenticated current provider', () => {
-  const step = jobs('js.yml').get('package-checks').steps.find(row => row.name === RAW_EMISSION_FRESHNESS_REVISION.name);
-  const previous = readRawEmissionFreshnessPredecessor(step);
-  assert.equal(previous.run.trim(), RAW_SOURCE_PACKAGE_STEPS[0][1]);
-  assert.equal(packageStepSignature(previous, true), RAW_SOURCE_PACKAGE_STEPS[0][2]);
-  for (const replacement of [RAW_EMISSION_FRESHNESS_REVISION.previous,
-    RAW_EMISSION_FRESHNESS_REVISION.current.replace('--check', '--record-attempt'),
-    RAW_EMISSION_FRESHNESS_REVISION.current + '\nnode bypass.mjs']) {
-    assert.throws(() => readRawEmissionFreshnessPredecessor({...step, run: replacement,
-      text: step.text.replace(RAW_EMISSION_FRESHNESS_REVISION.current, replacement)}), assert.AssertionError);
+test('package artifact checks retain their exact workflow gates and can access pinned compiler history', () => {
+  const sources = jobs('js.yml').get('package-checks').steps;
+  const activePackage = parseWorkflow(read('.github/workflows/js.yml')).find(job => job.id === 'package-checks').steps;
+  assert.match(activePackage.find(row => row.text.includes('actions/checkout@')).text, /fetch-depth: 0/u);
+  const native = parseWorkflow(read('.github/workflows/rust.yml')).find(job => job.id === 'test').steps;
+  assert.match(native.find(row => row.text.includes('actions/checkout@')).text, /fetch-depth: 0/u);
+  for (const revision of packageFreshnessRevisions.values()) {
+    const step = sources.find(row => row.name === revision.name);
+    assert.equal(readPackageFreshnessPredecessor(step, revision).run.trim(), revision.previous);
+    for (const replacement of [revision.previous, revision.current + '\nnode bypass.mjs']) {
+      assert.throws(() => readPackageFreshnessPredecessor({...step, run: replacement,
+        text: step.text.replace(revision.current, replacement)}, revision), assert.AssertionError);
+    }
   }
 });
 
@@ -2498,7 +2554,8 @@ function checkPackageStepConservation(parsed) {
       const owner = id === 'test' ? 'package' : group ?? 'all';
       assert.equal(owner, baseline.owner === 'all' ? (id === 'test' ? 'package' : 'all') : baseline.owner,
         `package step owner changed: ${step.name}`);
-      const preservedStep = step.name === RAW_EMISSION_FRESHNESS_REVISION.name ? readRawEmissionFreshnessPredecessor(step) : step;
+      const revision = packageFreshnessRevisions.get(step.name);
+      const preservedStep = revision ? readPackageFreshnessPredecessor(step, revision) : step;
       if (baseline.addition) assert.equal(preservedStep.run.trim(), baseline.command, `additive gate command changed: ${step.name}`);
       assert.equal(packageStepSignature(preservedStep, baseline.addition), baseline.hash, `package step semantics changed: ${step.name}`);
       if (id === 'package-checks') {

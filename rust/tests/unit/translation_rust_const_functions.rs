@@ -105,11 +105,6 @@ fn three_actual_complete_styled_sources_and_archives_retain_const_qualification(
             serde_json::to_value(function.source_signature.as_ref().unwrap()).unwrap(),
             entry["signature"]
         );
-        let original = parse_rust(entry["source"].as_str().unwrap()).unwrap_err();
-        assert_eq!(
-            original.reason,
-            entry["originalRefusal"]["reason"].as_str().unwrap()
-        );
         let emitted = emit_rust(&actual).unwrap();
         assert_eq!(
             emitted.definitions[0],
@@ -191,6 +186,51 @@ fn three_actual_complete_styled_sources_and_archives_retain_const_qualification(
         )
         .is_err()
     );
+}
+
+#[test]
+fn ordinary_const_sources_project_runtime_values_through_the_public_archive() {
+    let history = read_structured_data_lino(include_str!(
+        "../../../experiments/rust-const-function-refusal-history.lino"
+    ))
+    .unwrap();
+    let cases = fixture()["cases"].as_array().unwrap();
+    let recorded = history["cases"].as_array().unwrap();
+    assert_eq!(recorded.len(), cases.len());
+    for (entry, predecessor) in cases.iter().zip(recorded) {
+        assert_eq!(predecessor["name"], entry["name"]);
+        assert_eq!(predecessor["originalRefusal"], entry["originalRefusal"]);
+        let source = entry["source"].as_str().unwrap();
+        let span = &entry["originalRefusal"]["span"];
+        let start = usize::try_from(span["start"].as_u64().unwrap()).unwrap();
+        let end = usize::try_from(span["end"].as_u64().unwrap()).unwrap();
+        assert_eq!(source.get(start..end), entry["name"].as_str());
+        let ordinary = check_program(&parse_rust(source).unwrap()).unwrap();
+        let Decl::Fn(function) = &ordinary.declarations[0] else {
+            unreachable!()
+        };
+        assert!(function.source_const_function.is_none());
+        let rust = emit_rust(&ordinary).unwrap();
+        assert_eq!(
+            rust.definitions[0],
+            entry["ordinaryRustDefinition"].as_str().unwrap()
+        );
+        let packet = encode_typed_program_links(&ordinary).unwrap();
+        let network = LinkNetwork::from_lino(&packet.network.to_lino()).unwrap();
+        assert_eq!(
+            decode_typed_program_links(&network, packet.root).unwrap(),
+            ordinary
+        );
+        assert_eq!(
+            emit_javascript(&ordinary).unwrap().text,
+            entry["ordinaryJavaScript"].as_str().unwrap()
+        );
+        let javascript = emit_typed_program_links(&network, packet.root, "JavaScript")
+            .unwrap()
+            .code;
+        assert_eq!(javascript, entry["ordinaryJavaScript"].as_str().unwrap());
+        observe_javascript(&javascript, entry, false);
+    }
 }
 
 #[test]

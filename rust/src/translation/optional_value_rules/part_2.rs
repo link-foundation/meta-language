@@ -88,18 +88,7 @@ pub fn render_optional_strict_equality(
                                     {
                                         let first = 0f64;
                                         {
-                                            let cases_2 =
-                                                self::ml_render_optional_strict_equality_loop1(
-                                                    format,
-                                                    left_policy,
-                                                    right_policy,
-                                                    &(prefix),
-                                                    &(separator),
-                                                    cases,
-                                                    left_count,
-                                                    right_count,
-                                                    first,
-                                                );
+                                            let cases_2 = self::source_ml_source1_temporary_render_optional_strict_equality_loop1(format, left_policy, right_policy, &(prefix), &(separator), cases, left_count, right_count, first);
                                             {
                                                 let cases_3 = format!(
                                                     "{cases_2}{separator}{prefix}_ => false"
@@ -403,12 +392,22 @@ pub fn accept_optional_literal_absence(absence: &str) -> bool {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_java_script_boolean_builtin_operation(name: &str) -> String {
+    if name == "Boolean" {
+        String::from("convertJavaScriptBooleanValue")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 // The checked primitive-column interface retains every ordered source argument.
 #[expect(
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_render_optional_strict_equality_loop2(
+pub fn source_ml_source1_temporary_render_optional_strict_equality_loop2(
     format: &str,
     left_policy: &str,
     right_policy: &str,
@@ -467,7 +466,7 @@ pub fn ml_render_optional_strict_equality_loop2(
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_render_optional_strict_equality_loop1(
+pub fn source_ml_source1_temporary_render_optional_strict_equality_loop1(
     format: &str,
     left_policy: &str,
     right_policy: &str,
@@ -485,17 +484,18 @@ pub fn ml_render_optional_strict_equality_loop1(
                 {
                     let second = 0f64;
                     {
-                        let cases_2 = self::ml_render_optional_strict_equality_loop2(
-                            format,
-                            left_policy,
-                            right_policy,
-                            prefix,
-                            separator,
-                            cases,
-                            right_count,
-                            &(left_absence),
-                            second,
-                        );
+                        let cases_2 =
+                            self::source_ml_source1_temporary_render_optional_strict_equality_loop2(
+                                format,
+                                left_policy,
+                                right_policy,
+                                prefix,
+                                separator,
+                                cases,
+                                right_count,
+                                &(left_absence),
+                                second,
+                            );
                         {
                             let first_2 = first + 1f64;
                             {

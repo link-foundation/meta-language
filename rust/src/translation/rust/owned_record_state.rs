@@ -1,0 +1,286 @@
+//! Actual mutable record places into pure-core SSA packets. Semantic choices
+//! come from generated JavaScript policy, never a native replacement model.
+use super::{Binding,Options,Result,RustParser,SExpr,SNode,SPattern,SPatternNode,SRow,SourceOrigin,SourceDeclaration,Span,TokenKind,Type,unsupported,type_error};
+use super::records::NamedRecord;
+use super::owned_record_policy::state as rules;
+use super::owned_record_policy::fields as field_rules;
+mod exclusive_owned_string;
+mod exclusive_owned_vector;
+mod exclusive_vector_mutations;
+#[derive(Clone)]
+pub(super) struct Slot{pub(super) lexical:String,pub(super) root:String,pub(super) origin:SourceOrigin,pub(super) current_name:String,pub(super) source_binder:Option<super::super::source_loop_folds::SourceStateBinder>,pub(super) callback_binder:Option<(String,Span)>,frame:usize,callable:usize,sequence:usize,site:Option<Span>}
+#[derive(Clone)]
+struct Request{slots:Vec<Slot>}
+struct Frame{id:usize,before:Vec<Slot>,callable_before:usize,request:Option<Request>}
+#[derive(Default)]
+pub(super) struct OwnedRecordState{slots:Vec<Slot>,frames:Vec<Frame>,next:usize,current_callable:usize,next_callable:usize,request:Option<Request>,completed:Vec<(usize,Vec<Slot>)>,pub(super) declarations:std::collections::HashMap<String,Slot>,pub(super) effects:Option<super::owned_record_effects::OwnedRecordEffects>,pub(super) completion_snapshot_entries:usize,pub(super) completion_snapshot_text:usize}
+pub(super) struct OwnedRecordStateStatement{pub(super) bindings:Vec<Binding>,pub(super) value:SExpr}
+struct StateRead{node:SExpr,origin:SourceOrigin,slots:Vec<Slot>}
+#[derive(Clone)]
+pub(super) struct Layout{record:NamedRecord,fields:Vec<SourceOrigin>,pub(super) index:usize}
+#[derive(Clone)]
+pub(super) struct CollectionPlace{pub(super) slot:Slot,pub(super) layouts:Vec<Layout>,pub(super) target:String}
+fn fail(reason:&str,span:Option<Span>)->super::TranslationError{unsupported("Rust owned record state",reason,span)}
+fn name(value:&str)->SExpr{SExpr::new(SNode::Name{path:vec![value.to_owned()]},None)}
+impl RustParser{
+ pub(super) fn begin_owned_record_state_block(&mut self,function_body:bool)->usize{
+  let state=&mut self.owned_record_state;let id=state.next;state.next+=1;let frame=Frame{id,before:state.slots.clone(),callable_before:state.current_callable,request:state.request.take()};if function_body{state.next_callable+=1;state.current_callable=state.next_callable;}state.frames.push(frame);id
+ }
+ pub(super) fn end_owned_record_state_block(&mut self,token:usize)->Result<()>{
+  let state=&mut self.owned_record_state;let Some(frame)=state.frames.pop()else{return Err(fail("record state scope frames must leave in source order",None));};if frame.id!=token{return Err(fail("record state scope frames must leave in source order",None));}
+  if let Some(request)=frame.request{let slots=request.slots.iter().filter_map(|slot|state.slots.iter().find(|value|value.lexical==slot.lexical).cloned()).collect::<Vec<_>>();state.completed.push((token,slots));}
+  state.slots=frame.before;state.current_callable=frame.callable_before;Ok(())
+ }
+ pub(super) fn begin_owned_record_state_callable(&mut self)->usize{let state=&mut self.owned_record_state;let old=state.current_callable;state.next_callable+=1;state.current_callable=state.next_callable;old}
+ pub(super) fn end_owned_record_state_callable(&mut self,old:usize){self.owned_record_state.current_callable=old;}
+ pub(super) fn owned_record_state_callable(&self)->usize{self.owned_record_state.current_callable}
+ pub(super) fn enter_callback_state_aliases(&mut self, roots:&[Slot],frame:usize)->Result<Vec<Slot>>{
+  let mut aliases=Vec::new();
+  for root in roots{
+   let current_name=self.fresh_product_binding();
+   let slot=self.owned_record_state.slots.iter_mut().find(|slot|slot.lexical==root.lexical&&slot.root==root.root&&slot.callable==root.callable)
+    .ok_or_else(||fail("a callback state root needs its actual enclosing lexical slot",root.site))?;
+   *slot=Slot{current_name,frame,callable:self.owned_record_state.current_callable,..root.clone()};
+   slot.origin.source_borrowed_place=true;
+   slot.origin.source_exclusive_parameter=true;
+   aliases.push(slot.clone());
+  }
+  Ok(aliases)
+ }
+ pub(super) fn check_callback_state_root(&self,slot:&Slot,span:Option<Span>)->Result<()>{
+  if !self.origins.collecting&&(self.origins.copy_closure_lexical_state(&slot.root)!="available"||self.record_state_overlaps(slot,&slot.root)){
+   return Err(fail("a callback capture needs its actual live root without overlapping source loans",span));
+  }
+  Ok(())
+ }
+ fn record_state_slot(&self,origin:&SourceOrigin,source:&str)->Option<Slot>{
+  if let Some(identity)=origin.source_lexical_binding_identity.as_ref(){return self.owned_record_state.slots.iter().find(|slot|&slot.lexical==identity).cloned();}
+  let _=source;self.origins.collecting.then(||origin.source_record_state_collecting_site.and_then(|site|self.owned_record_state.slots.iter().find(|slot|slot.site==Some(site)).cloned())).flatten()
+ }
+ fn record_state_layout(&self,origin:&SourceOrigin)->Option<(NamedRecord,Vec<SourceOrigin>)>{
+  let Type::Named{path,..}=origin.ty.as_ref()? else{return None;};let owner=self.origins.lookup_type_owner(path,&origin.path)?;let record=self.named_records.get(&owner.full_name)?.clone();let mut names=vec!["crate".to_owned()];names.extend(record.constructor.split('.').map(str::to_owned));let entry=self.origins.lookup_value_owner(&names,&[])?;match entry.declaration{SourceDeclaration::Constructor{owner:actual,fields,..}if actual==owner.full_name=>Some((record,fields)),_=>None}
+ }
+ fn require_record_state_storage(&self,origin:&SourceOrigin,span:Option<Span>)->Result<()>{
+  let mut pending=vec![(origin.clone(),0_usize,Vec::<String>::new())];let mut nodes=0_usize;
+  while let Some((origin,depth,active))=pending.pop(){nodes+=1;let error=rules::read_rust_owned_record_state_storage_error(nodes as f64,depth as f64);if !error.is_empty(){return Err(fail(&error,span));}
+   if self.exclusive_source_enabled && !origin.wrappers.is_empty() {
+    let facts = self.origins.owned_container_facts(&origin);
+    let payload = self.origins.peel_closed_owned_box_state(&origin).filter(|_| facts.profile == "owned" && facts.closed)
+     .ok_or_else(|| fail("mutable Box storage retains actual canonical destructor-free closed payload ownership",span))?;
+    pending.push((payload, depth + origin.wrappers.len(), active));
+    continue;
+   }
+   if self.standard_collection_origin(&origin).is_some()&&origin.wrappers.is_empty(){continue;}
+   let source_owner=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref());let role=self.origins.standard_sum_ownership_facts(&origin).profile;let disposition=rules::read_rust_owned_record_state_storage_disposition(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,&role);if disposition=="refuse"||!rules::accept_rust_owned_record_state_storage_owner(source_owner.map_or("",|owner|owner.kind.as_str()),&source_owner.map(|owner|owner.path.join("::")).unwrap_or_default()){return Err(fail("mutable record state requires actual direct storage without callable, reference or Box fields",span));}if disposition=="leaf"{continue;}
+   match origin.ty.as_ref(){
+    Some(Type::Tuple{..})=>{let Some(fields)=origin.fields else{return Err(fail("tuple storage needs every actual complete child origin",span));};pending.extend(fields.into_iter().map(|field|(field,depth+1,active.clone())));}
+    Some(Type::Array{element,..})=>{let owner=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref());let Some(owner)=owner.filter(|owner|owner.kind=="library"&&owner.arguments.len()==1)else{return Err(fail("vector state needs its actual complete source element owner",span));};let position=origin.array_element_position.as_deref();if position.is_some_and(|position|!position.wrappers.is_empty()){return Err(fail("mutable record state requires actual direct storage without callable, reference or Box fields",span));}let mut child=SourceOrigin::with_type(element.as_ref().clone(),&origin.path,Vec::new());self.origins.retain_nominal_copy_origin(&mut child);child.source_owner=Some(position.map_or(&owner.arguments[0],|position|&position.owner).clone());child.array_element_position=position.and_then(|position|position.array_element_position.clone());pending.push((child,depth+1,active));}
+    Some(Type::Named{path,..})=>{let Some(declared)=self.origins.lookup_type_owner(path,&origin.path)else{return Err(fail("state storage needs its actual source declaration",span));};if active.contains(&declared.full_name){return Err(fail("recursive mutable record storage needs its separate finite state interpretation",span));}let mut next=active;next.push(declared.full_name.clone());
+     if let Some(stored)=self.origins.standard_sum_source_origins.get(&declared.full_name){let Some(sum)=stored.standard_sum_source.as_deref()else{return Err(fail("sum state storage needs its actual final source admission",span));};if !stored.proven||sum.provisional{return Err(fail("sum state storage needs actual final source admission",span));}pending.extend(sum.arguments.iter().cloned().map(|field|(field,depth+1,next.clone())));}
+     else{let Some(row)=self.origins.nominal_ownership_declarations.get(&declared.full_name).filter(|row|!row.profile.is_empty())else{return Err(fail("nominal state storage needs its actual destructor-free declaration inventory",span));};for constructor in &row.constructors{let mut path=vec!["crate".to_owned()];path.extend(constructor.split('.').map(str::to_owned));let Some(entry)=self.origins.lookup_value_owner(&path,&[])else{return Err(fail("state fields need their actual complete constructor inventory",span));};let SourceDeclaration::Constructor{owner,fields,..}=entry.declaration else{return Err(fail("state fields need their actual complete constructor inventory",span));};if owner!=declared.full_name{return Err(fail("state fields need their actual complete constructor inventory",span));}pending.extend(fields.into_iter().map(|field|(field,depth+1,next.clone())));}}
+    }
+    _=>return Err(fail("state storage needs every actual child type",span)),
+   }
+  }Ok(())
+ }
+ pub(super) fn register_owned_record_mutable_binding(&mut self,source:&str,span:Option<Span>,binder_span:Span)->Result<String>{
+  if self.exclusive_source_enabled {
+   return self.register_exclusive_owned_state_binding(source, span, binder_span);
+  }
+  let mut origin=self.origins.scope.get(source).cloned().ok_or_else(||fail("a mutable record needs its actual source binding",span))?;let frame=self.owned_record_state.frames.last().map(|frame|frame.id).ok_or_else(||fail("a mutable record needs its actual source block state frame",span))?;
+  let profile=self.origins.nominal_ownership_facts(&origin).profile;
+  let collection=self.standard_collection_origin(&origin).is_some();
+  if self.origins.collecting{
+   if (!collection&&self.record_state_layout(&origin).is_none())||!origin.wrappers.is_empty(){return Err(unsupported("mutable binding","mutation is outside the portable core",span));}
+   self.origins.standard_sum_source_needs_final_admission=true;let sequence=self.owned_record_state.next;self.owned_record_state.next+=2;let lexical=format!("private collecting record slot {sequence}");let current_name=self.fresh_product_binding();origin.source_record_state_collecting_site=span;self.origins.scope.insert(source.to_owned(),origin.clone());let slot=Slot{lexical,root:String::new(),origin,current_name:current_name.clone(),source_binder:None,callback_binder:None,frame,callable:self.owned_record_state.current_callable,sequence:sequence+1,site:span};self.owned_record_state.declarations.insert(current_name.clone(),slot.clone());self.owned_record_state.slots.push(slot);return Ok(current_name);
+  }
+  if profile!="owned"{return Err(unsupported("mutable binding","mutation is outside the portable core",span));}
+  let error=rules::read_rust_owned_record_mutable_binding_error(self.ordinary_completion_context(),true,&profile,origin.source_binding_identity.is_some(),origin.source_lexical_binding_identity.is_some(),origin.wrappers.len() as f64);if !error.is_empty(){return Err(fail(&error,span));}
+  let version=field_rules::read_rust_owned_record_update_version_error(self.source_version_minor);if !version.is_empty(){return Err(fail(&version,span));}if !collection{self.require_record_state_storage(&origin,span)?;}if self.origins.standard_sum_source_identity(&origin).is_none(){return Err(fail("mutable storage needs its actual complete source identity",span));}
+  self.origins.register_mutable_record_loan_root(&origin,span,false)?;
+  let sequence=self.owned_record_state.next;self.owned_record_state.next+=1;let current_name=self.fresh_product_binding();let slot=Slot{lexical:origin.source_lexical_binding_identity.clone().expect("actual lexical mutable root"),root:origin.source_binding_identity.clone().expect("actual owned mutable root"),origin,current_name:current_name.clone(),source_binder:None,callback_binder:None,frame,callable:self.owned_record_state.current_callable,sequence,site:None};self.owned_record_state.declarations.insert(current_name.clone(),slot.clone());self.owned_record_state.slots.push(slot);Ok(current_name)
+ }
+ fn register_exclusive_owned_state_binding(&mut self, source: &str, span: Option<Span>, binder_span: Span) -> Result<String> {
+  let mut origin = self.origins.scope.get(source).cloned().ok_or_else(|| fail("mutable state needs its actual source binding", span))?;
+  let frame = self.owned_record_state.frames.last().map(|frame| frame.id).ok_or_else(|| fail("mutable state needs its actual source block frame", span))?;
+  if origin.source_borrowed_place || (!origin.wrappers.is_empty() && self.origins.peel_closed_owned_box_state(&origin).is_none()) {
+   return Err(fail("owned mutable state needs its actual direct or canonical Box source owner", span));
+  }
+  let sequence = self.owned_record_state.next;
+  self.owned_record_state.next += 1;
+  let lexical = if self.origins.collecting {
+   self.origins.standard_sum_source_needs_final_admission = true;
+   origin.source_record_state_collecting_site = span;
+   format!("private collecting exclusive slot {sequence}")
+  } else {
+   self.require_record_state_storage(&origin, span)?;
+   origin.source_lexical_binding_identity.clone().ok_or_else(|| fail("mutable state needs its actual lexical identity", span))?
+  };
+  let root = origin.source_binding_identity.clone().unwrap_or_else(|| lexical.clone());
+  origin.source_binding_identity = Some(root.clone());
+  if !self.origins.collecting {
+   self.origins.register_mutable_record_loan_root(&origin, span, true)?;
+  }
+  self.origins.scope.insert(source.to_owned(), origin.clone());
+  let current_name = self.fresh_product_binding();
+  let source_binder = if self.retain_source_region_state() && !self.origins.collecting {
+   Some(self.retain_source_state_binder(source, &lexical, binder_span)?)
+  } else {
+   None
+  };
+  let slot = Slot { lexical, root, origin, current_name: current_name.clone(), source_binder, callback_binder: Some((source.to_owned(), binder_span)), frame, callable: self.owned_record_state.current_callable, sequence, site: span };
+  self.owned_record_state.declarations.insert(current_name.clone(), slot.clone());
+  self.owned_record_state.slots.push(slot);
+  Ok(current_name)
+ }
+ pub(super) fn collection_mutable_state_place(&self,node:&SExpr,span:Option<Span>)->Result<CollectionPlace>{
+  let place=super::owned_record_loops::place(self,node).ok_or_else(||fail("collection mutation requires its actual mutable lexical place",span))?;
+  if self.standard_collection_origin(place.origin).is_none(){return Err(fail("collection mutation requires the actual storage field owner",span));}
+  let slot=place.slot;
+  let mut origin=slot.origin.clone();let mut layouts=Vec::new();
+  for &index in &place.indices{
+   let (record,fields)=self.record_state_layout(&origin).ok_or_else(||fail("collection mutation requires its actual record storage layout",span))?;
+   origin=fields.get(index).ok_or_else(||fail("collection mutation requires its actual field position",span))?.clone();
+   layouts.push(Layout{record,fields,index});
+  }
+  let indices=place.indices.iter().map(|index|*index as f64).collect::<Vec<_>>();
+  let target=if indices.is_empty(){slot.root.clone()}else{rules::read_rust_owned_record_state_field_identity(&slot.root,&indices)};
+  if !self.origins.collecting{
+   let snapshot=self.origins.snapshot_owned_bindings();
+   let missing=(1..=indices.len()).any(|count|super::owned_record_updates::field_state(&snapshot,&rules::read_rust_owned_record_state_field_identity(&slot.root,&indices[..count]))!="available");
+   if slot.callable!=self.owned_record_state.current_callable||!self.origins.available_owned_binding(&slot.origin)||missing||self.record_state_overlaps(slot,&target){return Err(fail("collection mutation requires an available receiver without overlapping live loans",span));}
+  }
+  Ok(CollectionPlace{slot:slot.clone(),layouts,target})
+ }
+ pub(super) fn owned_record_mutable_name(&mut self,mut node:SExpr,_path:&[String])->Result<SExpr>{
+  let SNode::Name{path}=&node.node else{return Ok(node);};if path.len()!=1{return Ok(node);}let Some(origin)=self.origins.scope.get(&path[0]).cloned()else{return Ok(node);};let Some(slot)=self.record_state_slot(&origin,&path[0])else{self.origins.mark(&node,origin);return Ok(node);};if !self.origins.collecting&&slot.callable!=self.owned_record_state.current_callable{return Err(fail("a captured mutable record needs its separate callable environment state interpretation",node.span));}if self.owned_record_state.effects.is_some(){return self.owned_record_effect_read(slot,node.span);}node.node=SNode::Name{path:vec![slot.current_name]};self.origins.mark(&node,slot.origin);Ok(node)
+ }
+ pub(super) fn record_state_active_slots(&self)->Vec<Slot>{let mut slots=self.owned_record_state.slots.iter().filter(|slot|slot.callable==self.owned_record_state.current_callable).cloned().collect::<Vec<_>>();slots.sort_by_key(|slot|slot.sequence);slots}
+ fn record_state_packet(&mut self,node:SExpr,slots:&[Slot],path:&[String],span:Option<Span>)->Result<SExpr>{
+  let plan=rules::plan_rust_owned_record_state_packet(slots.len() as f64);if plan.len()!=slots.len()+1{return Err(fail("the complete record state result exceeds its carrier budget",span));}let origin=self.origins.origin(&node,path);let mut origins=vec![origin];origins.extend(slots.iter().map(|slot|slot.origin.clone()));if !self.origins.collecting&&origins.iter().any(|origin|!origin.proven||origin.ty.is_none()){return Err(fail("a state result needs every actual complete value and root type",span));}
+  let mut items=vec![node];items.extend(slots.iter().map(|slot|name(&slot.current_name)));let packet=SExpr::new(SNode::Tuple{items,frozen:false,product_model:None},span);let mut actual=SourceOrigin::unknown();actual.path=path.to_vec();actual.ty=origins.iter().map(|origin|origin.ty.clone()).collect::<Option<Vec<_>>>().map(|elements|Type::Tuple{elements});actual.proven=!self.origins.collecting&&origins.iter().all(|origin|origin.proven);actual.fields=Some(origins);self.origins.mark(&packet,actual);Ok(packet)
+ }
+ fn append_record_state_packet(&mut self,mut node:SExpr,slots:&[Slot],path:&[String],span:Option<Span>)->Result<SExpr>{
+  match &mut node.node{SNode::Let{body,..}|SNode::Print{body,..}=>{let value=self.append_record_state_packet((**body).clone(),slots,path,span)?;*body=Box::new(value);Ok(node)},_=>self.record_state_packet(node,slots,path,span)}
+ }
+ fn read_record_state_packet_block(&mut self,path:&[String],slots:&[Slot])->Result<StateRead>{
+  let previous=self.owned_record_state.request.take();let token=self.owned_record_state.next;self.owned_record_state.request=Some(Request{slots:slots.to_vec()});let read=self.block(path);self.owned_record_state.request=previous;let node=read?;let output=self.owned_record_state.completed.iter().position(|(id,_)|*id==token).map(|index|self.owned_record_state.completed.remove(index).1).ok_or_else(||fail("record state block hooks must return their actual surviving slot snapshots",node.span))?;let origin=self.origins.origin(&node,path);let span=node.span;let node=self.append_record_state_packet(node,&output,path,span)?;Ok(StateRead{node,origin,slots:output})
+ }
+ fn extract_record_state_packet(&mut self,path:&[String],node:SExpr,origin:SourceOrigin,slots:&[Slot],span:Option<Span>)->Result<OwnedRecordStateStatement>{
+  let packet_name=self.fresh_product_binding();let mut bindings=vec![Binding{name:packet_name.clone(),ty:None,value:node,span}];let plan=rules::plan_rust_owned_record_state_packet(slots.len() as f64);
+  for(index,slot)in slots.iter().enumerate(){let fresh=self.fresh_product_binding();let value=SExpr::new(SNode::TupleIndex{object:Box::new(name(&packet_name)),index:plan[index+1] as usize},None);bindings.push(Binding{name:fresh.clone(),ty:None,value,span});if let Some(actual)=self.owned_record_state.slots.iter_mut().find(|actual|actual.lexical==slot.lexical){*actual=Slot{current_name:fresh,..slot.clone()};}}
+  let mut value=SExpr::new(SNode::TupleIndex{object:Box::new(name(&packet_name)),index:0},span);value.block=true;self.origins.mark(&value,origin);let _=path;Ok(OwnedRecordStateStatement{bindings,value})
+ }
+ fn read_record_state_control(&mut self,path:&[String])->Result<Option<OwnedRecordStateStatement>>{
+  let slots=self.record_state_active_slots();if slots.is_empty(){return Ok(None);}if self.cursor.is("{"){let read=self.read_record_state_packet_block(path,&slots)?;let span=read.node.span;return self.extract_record_state_packet(path,read.node,read.origin,&read.slots,span).map(Some);}
+  if !self.cursor.is("if")||self.cursor.is_at("let",1){return Ok(None);}let start=self.cursor.advance();let previous=self.standard_sum_source.expected_origin.take();let read=self.expr(path,Options{no_struct:true,statement:false});self.standard_sum_source.expected_origin=previous;let condition=read?;let before=self.origins.snapshot_owned_bindings();let aliases=self.owned_record_state.slots.clone();let then=self.read_record_state_packet_block(path,&slots)?;let then_states=self.origins.snapshot_owned_bindings();self.origins.restore_owned_bindings(before);self.owned_record_state.slots=aliases.clone();
+  let otherwise=if self.cursor.eat("else").is_some(){if !self.cursor.is("{"){return Err(fail("record state else-if needs its explicit nested block continuation",Some(self.cursor.peek().span())));}self.read_record_state_packet_block(path,&slots)?}else{let unit=SExpr::new(SNode::Unit,Some(start.span()));let origin=self.origins.origin(&unit,path);StateRead{node:self.record_state_packet(unit,&slots,path,Some(start.span()))?,origin,slots:slots.clone()}};
+  let else_states=self.origins.snapshot_owned_bindings();self.origins.join_owned_bindings(&then_states,&else_states,!then.origin.diverging,!otherwise.origin.diverging);self.owned_record_state.slots=aliases;let span=Some(Span::new(start.start,self.cursor.tokens[self.cursor.index-1].end));let origin=self.origins.checked_join(&[then.origin,otherwise.origin])?;let node=SExpr::new(SNode::If{cond:Box::new(condition),then:Box::new(then.node),otherwise:Box::new(otherwise.node)},span);self.extract_record_state_packet(path,node,origin,&slots,span).map(Some)
+ }
+ fn record_state_layout_path(&self,root:&SourceOrigin,fields:&[String],span:Option<Span>)->Result<Vec<Layout>>{
+  let mut result=Vec::new();let mut origin=root.clone();for field in fields{let Some((record,actual))=self.record_state_layout(&origin)else{return Err(fail("an assigned place needs every actual nominal record field owner",span));};let Some(index)=record.names.iter().position(|name|name==field)else{return Err(type_error(&format!("a Rust record has no field {field}"),span));};origin=actual[index].clone();result.push(Layout{record,fields:actual,index});}Ok(result)
+ }
+ fn record_state_layout_indices(&self,root:&SourceOrigin,indices:&[usize],span:Option<Span>)->Result<Vec<Layout>>{
+  let mut result=Vec::new();
+  let mut origin=root.clone();
+  for &index in indices{
+   let (record,fields)=self.record_state_layout(&origin).ok_or_else(||fail("state mutation needs its actual record storage layout",span))?;
+   origin=fields.get(index).ok_or_else(||fail("state mutation needs its actual field position",span))?.clone();
+   result.push(Layout{record,fields,index});
+  }
+  Ok(result)
+ }
+ pub(super) fn project_record_state(&mut self,layouts:&[Layout],mut value:SExpr,span:Option<Span>)->SExpr{
+  for layout in layouts{
+   let binder=self.fresh_product_binding();
+   let mut constructor=vec!["crate".to_owned()];
+   constructor.extend(layout.record.constructor.split('.').map(str::to_owned));
+   let args=(0..layout.fields.len()).map(|index|SPattern{node:if index==layout.index{SPatternNode::Bind{name:binder.clone()}}else{SPatternNode::Wild},span}).collect();
+   value=SExpr::new(SNode::Match{scrutinees:vec![value],rows:vec![SRow{patterns:vec![SPattern{node:SPatternNode::Ctor{path:constructor,args},span}],body:name(&binder),span}]},span);
+  }
+  value
+ }
+ pub(super) fn rebuild_record_state(&mut self,layouts:&[Layout],depth:usize,object:SExpr,replacement:SExpr,span:Option<Span>)->Result<SExpr>{
+  if layouts.is_empty()&&depth==0{return Ok(replacement);}
+  let layout=&layouts[depth];let plan=rules::plan_rust_owned_record_state_fields(layout.fields.len() as f64,layout.index as f64);if plan.len()!=layout.fields.len(){return Err(fail("field reconstruction needs its actual complete declaration-order plan",span));}let names=layout.fields.iter().map(|_|self.fresh_product_binding()).collect::<Vec<_>>();let value=if depth+1==layouts.len(){replacement}else{self.rebuild_record_state(layouts,depth+1,name(&names[layout.index]),replacement,span)?};let args=plan.iter().map(|position|if *position<0.0{value.clone()}else{name(&names[*position as usize])}).collect::<Vec<_>>();let mut constructor=vec!["crate".to_owned()];constructor.extend(layout.record.constructor.split('.').map(str::to_owned));let function=SExpr::new(SNode::Name{path:constructor.clone()},span);let body=if args.is_empty(){function}else{SExpr::new(SNode::App{func:Box::new(function),args},span)};let patterns=names.iter().enumerate().map(|(index,name)|SPattern{node:if index==layout.index&&depth+1==layouts.len(){SPatternNode::Wild}else{SPatternNode::Bind{name:name.clone()}},span}).collect();Ok(SExpr::new(SNode::Match{scrutinees:vec![object],rows:vec![SRow{patterns:vec![SPattern{node:SPatternNode::Ctor{path:constructor,args:patterns},span}],body,span}]},span))
+ }
+ fn record_state_overlaps(&self,slot:&Slot,target:&str)->bool{self.origins.mutable_record_live_loan(&slot.root,target)||self.origins.scope.values().any(|origin|{let value_loans=super::copy_closure_lifetimes::value_borrows(origin);let lexical=value_loans.contains(&slot.lexical);let mut loans=origin.source_binding_identity.iter().cloned().chain(origin.source_place_binding_identity.iter().cloned()).chain(origin.source_loan_binding_identities.iter().cloned()).chain(origin.source_place_loan_binding_identities.iter().cloned()).chain(value_loans.iter().cloned()).collect::<Vec<_>>();loans.dedup();if !crate::translation::rust_mutable_record_loan_rules::accept_rust_mutable_record_value_loans(origin.wrappers.iter().any(|layer|layer=="reference"),origin.source_borrowed_place,origin.direct_copy_value(),value_loans.len() as f64){return false;}rules::test_rust_owned_record_state_loan_overlap(&slot.root,target,&loans,lexical)})}
+ pub(super) fn read_record_state_assignment(&mut self,path:&[String])->Result<Option<OwnedRecordStateStatement>>{
+  use super::BinaryOp;
+  use crate::translation::rust_exclusive_source_compound_rules as compound;
+  let tokens=self.cursor.tokens.iter().skip(self.cursor.index).take(1025).cloned().collect::<Vec<_>>();
+  let forms=tokens.iter().map(|token| {
+   let text=token.value.as_str();
+   if self.exclusive_source_enabled&&(text=="="||!compound::read_rust_exclusive_source_compound_operation(text).is_empty()) {"}".to_owned()}
+   else if ["(",")",".","=","}","*"].contains(&text){token.value.clone()}
+   else if token.kind==TokenKind::Identifier{"name".to_owned()}
+   else if token.kind==TokenKind::Number&&(token.raw=="0"||!token.raw.starts_with('0')&&token.raw.bytes().all(|value|value.is_ascii_digit())){"number".to_owned()}
+   else{"other".to_owned()}
+  }).collect::<Vec<_>>();
+  let (count,root_token,positions)=if self.exclusive_source_enabled{
+   let plan=compound::read_rust_exclusive_source_place_plan(&forms);
+   let [end,root,fields @ ..]=plan.as_slice() else{return Ok(None);};
+   let assignment=tokens[*end as usize].value.as_str();
+   if assignment!="="&&compound::read_rust_exclusive_source_compound_operation(assignment).is_empty(){return Ok(None);}
+   if fields.iter().any(|position|*position<0.0){return Err(fail("state assignment requires an admitted direct place",Some(tokens[0].span())));}
+   (*end as usize,&tokens[*root as usize],fields.iter().map(|position|*position as usize).collect::<Vec<_>>())
+  }else{
+   let count=rules::read_rust_owned_record_state_assignment_token_count(&forms);
+   if count<0.0{return Ok(None);}
+   let count=count as usize;
+   let Some(root)=tokens.iter().take(count).find(|token|token.value!="(")else{return Ok(None);};
+   let positions=tokens.iter().take(count).enumerate().filter_map(|(index,token)|(token.value==".").then_some(index+1)).collect();
+   (count,root,positions)
+  };
+  let Some(source)=self.origins.scope.get(&root_token.value).cloned()else{return Ok(None);};
+  let slot=self.record_state_slot(&source,&root_token.value);
+  if !self.exclusive_source_enabled&&self.record_state_layout(&source).is_none(){return Ok(None);}
+  if self.exclusive_source_enabled&&slot.is_none(){return Err(fail("state assignment requires its actual mutable lexical binding",Some(root_token.span())));}
+  let fields=positions.iter().map(|index|{let field=&tokens[*index];if field.kind==TokenKind::Number{field.raw.clone()}else{field.value.clone()}}).collect::<Vec<_>>();
+  let operation=if self.exclusive_source_enabled{
+   match compound::read_rust_exclusive_source_compound_operation(&tokens[count].value).as_str(){
+    "add"=>Some(BinaryOp::Add),"sub"=>Some(BinaryOp::Sub),"mul"=>Some(BinaryOp::Mul),"div"=>Some(BinaryOp::Div),"rem"=>Some(BinaryOp::Rem),_=>None,
+   }
+  }else{None};
+  let span=Some(Span::new(tokens[0].start,tokens[count-1].end));
+  let readonly_vector_profile = self.origins.borrowed_vector_source_enabled && !self.source_regions_composed;
+  let mutation=crate::translation::rust_borrowed_vector_rules::read_rust_borrowed_vector_mutation_error(readonly_vector_profile);if !mutation.is_empty(){return Err(unsupported("Rust borrowed vector source",&mutation,span));}
+  let layouts=self.record_state_layout_path(&source,&fields,span)?;
+  let field=layouts.last().map_or(&source,|layout|&layout.fields[layout.index]).clone();
+  if operation.is_some()&&!self.origins.collecting{
+   let owner=field.expanded_source_owner.as_ref().or(field.source_owner.as_ref());
+   let (bits,signed)=match field.ty.as_ref(){Some(Type::Fixed{bits,signed,..})=>(bits.to_string(),*signed),_=>(String::new(),false)};
+   if !compound::accept_rust_exclusive_source_compound_primitive(
+    field.ty.as_ref().map_or("",Type::kind),&bits,signed,
+    owner.map_or("",|owner|owner.kind.as_str()),&owner.map_or_else(String::new,|owner|owner.path.join("::")),
+    owner.map_or(-1.0,|owner|owner.arguments.len() as f64),field.proven,field.wrappers.len() as f64,
+   ){return Err(fail("compound assignment requires actual primitive integer or f64 operands",span));}
+  }
+  for _ in 0..=count{self.cursor.advance();}
+  let temporary=self.origins.owned_temporary_frame();
+  let previous=self.standard_sum_source.expected_origin.replace(field.clone());
+  let read=self.read_expected_copy_closure(path,Some(&field));
+  self.standard_sum_source.expected_origin=previous;
+  let value=read?;
+  self.origins.argument(&self.origins.origin(&value,path),&field,value.span)?;
+  let mut actual=self.origins.origin(&value,path);if !self.origins.collecting&&self.origins.standard_sum_ownership_facts(&field).profile=="owned"{actual=self.owned_standard_sum_method_capture(&value,path)?;self.origins.consume_owned_binding(&actual,value.span)?;}
+  let identity=if self.origins.collecting{None}else{self.origins.standard_sum_source_identity(&actual)};let expected=if self.origins.collecting{None}else{self.origins.standard_sum_source_identity(&field)};let same=identity.is_some()&&identity==expected;let indices=layouts.iter().map(|layout|layout.index as f64).collect::<Vec<_>>();let target=slot.as_ref().map(|slot|rules::read_rust_owned_record_state_field_identity(&slot.root,&indices)).unwrap_or_default();let snapshot=self.origins.snapshot_owned_bindings();let mut parent=if self.exclusive_source_enabled&&indices.is_empty(){"available".to_owned()}else{slot.as_ref().and_then(|slot|snapshot.get(&slot.root)).cloned().unwrap_or_default()};for index in 1..indices.len(){let root=rules::read_rust_owned_record_state_field_identity(slot.as_ref().map_or("",|slot|slot.root.as_str()),&indices[..index]);if super::owned_record_updates::field_state(&snapshot,&root)!="available"{parent="moved".into();}}
+  let frame=self.owned_record_state.frames.last();let allowed=slot.as_ref().is_some_and(|slot|self.owned_record_state.effects.is_some()||frame.is_some_and(|frame|slot.frame==frame.id||frame.request.as_ref().is_some_and(|request|request.slots.iter().any(|outer|outer.lexical==slot.lexical))));if !self.origins.collecting{let error=rules::read_rust_owned_record_state_write_error(slot.is_some(),slot.as_ref().is_some_and(|slot|slot.callable==self.owned_record_state.current_callable),allowed,&parent,&super::owned_record_updates::field_state(&snapshot,&target),same,slot.as_ref().is_some_and(|slot|self.record_state_overlaps(slot,&target)));if !error.is_empty(){return Err(fail(&error,span));}}
+  if self.owned_record_state.effects.is_some(){let Some(slot)=slot else{return Err(fail("field assignment needs its actual source mutable declaration",span));};
+   let value=if let Some(op)=operation{
+    if !self.origins.collecting&&super::owned_record_updates::field_state(&snapshot,&target)!="available"{return Err(fail("compound assignment reads its actual initialized place after the right operand",span));}
+    let held=self.fresh_product_binding();
+    let read=self.owned_record_effect_read(slot.clone(),span)?;
+    let left=self.project_record_state(&layouts,read,span);
+    self.origins.mark(&left,field.clone());
+    let expression=SExpr::new(SNode::Binary{op,left:Box::new(left),right:Box::new(name(&held)),rounding:None},span);
+    self.origins.mark(&expression,field.clone());
+    let value_span=value.span;
+    SExpr::new(SNode::Let{name:held,ty:field.ty.clone().map(Into::into),value:Box::new(value),body:Box::new(expression)},value_span)
+   }else{value};
+   if !self.origins.collecting{self.origins.set_owned_record_field_state(&target,"available");}let whole=Some(Span::new(tokens[0].start,value.span.map_or(tokens[count-1].end,|span|span.end)));let node=self.owned_record_effect_write(slot,layouts,field,target,value,path,whole)?;self.origins.finish_owned_expression(&node,path,&temporary,false);return Ok(Some(OwnedRecordStateStatement{bindings:Vec::new(),value:node}));}
+  let Some(slot)=slot else{return Err(fail("field assignment needs its actual source mutable declaration",span));};let rhs=self.fresh_product_binding();let next=self.fresh_product_binding();let node=self.rebuild_record_state(&layouts,0,name(&slot.current_name),name(&rhs),span)?;let bindings=vec![Binding{name:rhs,ty:field.ty.as_ref().map(|ty|self.record_source_type(ty,&field.path)),value:value.clone(),span:value.span},Binding{name:next.clone(),ty:slot.origin.ty.as_ref().map(|ty|self.record_source_type(ty,&slot.origin.path)),value:node,span}];if !self.origins.collecting{self.origins.set_owned_record_field_state(&target,"available");}if let Some(current)=self.owned_record_state.slots.iter_mut().find(|current|current.lexical==slot.lexical){current.current_name=next;}
+  let unit=SExpr::new(SNode::Unit,Some(Span::new(tokens[0].start,value.span.map_or(tokens[count-1].end,|span|span.end))));self.origins.finish_owned_expression(&unit,path,&temporary,false);Ok(Some(OwnedRecordStateStatement{bindings,value:unit}))
+ }
+ pub(super) fn read_owned_record_state_statement(&mut self,path:&[String])->Result<Option<OwnedRecordStateStatement>>{if self.owned_record_state.effects.is_some(){return Ok(None);}if let Some(value)=self.read_record_state_assignment(path)?{Ok(Some(value))}else{self.read_record_state_control(path)}}
+}

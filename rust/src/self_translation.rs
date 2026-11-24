@@ -31,11 +31,28 @@ use crate::{LinkNetwork, ParseConfiguration};
 
 mod binding;
 mod emission;
+mod publication;
+use publication::{carry, comment_fits, record_translated_definitions, source_line};
+mod javascript_classes;
+mod reference_context;
 pub mod representation;
 mod representation_rules;
+mod shared_array_handles;
+pub use binding::read_intrinsic_module_initializer_binding;
+pub use binding::{accept_declaration_owned_emission, read_inert_module_binding};
 use emission::emit_item;
+pub use emission::{
+    CheckedItem as CheckedDeclarationEmission,
+    check_and_emit_item_with_ownership as check_and_emit_declaration_with_ownership,
+};
+pub use representation::Context as DeclarationTranslationContext;
 use representation::Context;
+mod diagnostics;
+mod group_translation;
 mod scope;
+mod semantic_input;
+pub use diagnostics::{SelfTranslationDiagnosticReport, self_translate_with_diagnostics};
+use group_translation::{translate_group, translate_group_bound};
 mod typescript_erasure;
 mod typescript_erasure_rules;
 mod typescript_portable_typing;
@@ -46,7 +63,7 @@ use typescript_erasure::requires_type_script_erasure;
 pub use typescript_erasure::{ErasedTypeScript, Erasure, erase_type_script};
 pub use typescript_portable_typing::project_type_script_typing;
 
-/// The signature of an exported item of a JavaScript or TypeScript module.
+/// The checked signature of an exported source-module item.
 ///
 /// It binds the name a module that imports it uses: a function's parameters
 /// and result, or a constant's type and whether a literal gives its value.
@@ -55,6 +72,15 @@ pub type SelfTranslationSignature = External;
 /// What [`self_translate_with`] translates a module with.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct SelfTranslationOptions {
+    /// Force the shared reference representation across every module item.
+    /// False retains automatic whole-module selection.
+    pub reference_semantics: bool,
+    /// Reparse actual emitted code; saved originals never restore semantics.
+    pub semantic_translation: bool,
+    /// Canonical source std selection, independent of the generated target compiler.
+    pub rust_source_version: Option<String>,
+    /// Independent interpretation of complete actual standard Rust shared handles.
+    pub rust_shared_array_handle_source_model: String,
     /// The emitter decorators, as [`self_translate_decorated`] applies them.
     pub decorators: DecoratorSet,
     /// The module's directory inside its crate, as path segments: the crate
@@ -248,19 +274,28 @@ pub fn self_translate_with(
         .map(|(translation, _)| translation)
 }
 
-/// The signatures of the exported items of the JavaScript or TypeScript
-/// module `source` that translate into Rust, in source order, for the
-/// `imports` of a module that imports them.
+/// Checked exported source interfaces in declaration order, for dependent
+/// modules. Rust interfaces require semantic translation and check every body.
 ///
 /// # Errors
 ///
-/// A [`SelfTranslationError`] for an unknown or a Rust language or a source
-/// its links do not reproduce.
+/// A [`SelfTranslationError`] for an unsupported source interpretation, failed
+/// body or source its links do not reproduce.
 pub fn self_translation_signatures(
     source: &str,
     language: &str,
     options: &SelfTranslationOptions,
 ) -> Result<Vec<SelfTranslationSignature>, SelfTranslationError> {
+    if family(required(language)?) == "Rust"
+        && !options.rust_shared_array_handle_source_model.is_empty()
+    {
+        return translate_module(source, language, "JavaScript", options)
+            .map(|(_, signatures)| signatures);
+    }
+    if family(required(language)?) == "Rust" && options.semantic_translation {
+        selected_rust_source_version(language, options.rust_source_version.as_deref())?;
+        return semantic_input::read_independent_rust_module_signatures(source, options);
+    }
     if family(required(language)?) != "JavaScript" {
         return Err(SelfTranslationError {
             message: format!(
@@ -271,15 +306,47 @@ pub fn self_translation_signatures(
     translate_module(source, language, "Rust", options).map(|(_, signatures)| signatures)
 }
 
+fn selected_rust_source_version(
+    language: &str,
+    version: Option<&str>,
+) -> Result<String, SelfTranslationError> {
+    let Some(version) = version else {
+        return Ok(String::new());
+    };
+    if family(required(language)?) != "Rust" {
+        return Err(SelfTranslationError {
+            message: "Rust source version requires Rust source".to_owned(),
+        });
+    }
+    crate::translation::rust::source_versions::canonical(version).map_err(|error| {
+        SelfTranslationError {
+            message: error.to_string(),
+        }
+    })
+}
+
 fn translate_module(
     source: &str,
     source_language: &str,
     target_language: &str,
     options: &SelfTranslationOptions,
 ) -> Result<(SelfTranslation, Vec<SelfTranslationSignature>), SelfTranslationError> {
+    translate_module_diagnostic(source, source_language, target_language, options, None)
+}
+
+fn translate_module_diagnostic(
+    source: &str,
+    source_language: &str,
+    target_language: &str,
+    options: &SelfTranslationOptions,
+    mut diagnostics: Option<&mut Vec<Option<serde_json::Value>>>,
+) -> Result<(SelfTranslation, Vec<SelfTranslationSignature>), SelfTranslationError> {
     let decorators = &options.decorators;
     let from = required(source_language)?;
     let to = required(target_language)?;
+    let source_version =
+        selected_rust_source_version(from, options.rust_source_version.as_deref())?;
+    shared_array_handles::validate_options(source, from, options)?;
     let network = LinkNetwork::parse(source, from, ParseConfiguration::default());
     let reconstructed = network.reconstruct_text();
     let utf16_strings = representation::select(&network, source, from, options.utf16_strings);
@@ -314,8 +381,74 @@ fn translate_module(
     let mut preludes: Vec<String> = Vec::new();
     let mut recorded = Vec::new();
     let mut gap = String::new();
-    let groups = group_items(&items, source);
-    let (outs, scans, signature_context) = if family(to) == "Rust" {
+    let mut whole_publication = if options.rust_shared_array_handle_source_model.is_empty() {
+        None
+    } else {
+        Some(shared_array_handles::read_whole_module(
+            source,
+            &options.rust_shared_array_handle_source_model,
+            &source_version,
+        )?)
+    };
+    if whole_publication.is_none()
+        && options.semantic_translation
+        && from == "JavaScript"
+        && family(to) == "Rust"
+        && options.module_directory.is_empty()
+        && options.imports.is_empty()
+        && !options.utf16_strings
+    {
+        whole_publication = javascript_classes::read(source).ok().flatten();
+    }
+    if whole_publication.is_none()
+        && options.semantic_translation
+        && from == "Rust"
+        && family(to) == "JavaScript"
+        && options.imports.is_empty()
+        && !options.utf16_strings
+        && !options.reference_semantics
+    {
+        // A refused whole module retains all ordinary per-item diagnostics;
+        // unsupported owners cannot publish provisional helper signatures.
+        whole_publication = semantic_input::read_independent_rust_module_publication(
+            source,
+            &items,
+            &source_version,
+        )
+        .ok()
+        .flatten();
+    }
+    let groups = if whole_publication.is_some() {
+        vec![Group {
+            kind: GroupKind::Item {
+                text: source.to_owned(),
+                term: "source_file".to_owned(),
+            },
+            items: items.clone(),
+            after: "",
+        }]
+    } else if options.semantic_translation {
+        semantic_input::group_semantic_items(&items, source, from)
+    } else {
+        group_items(&items, source)
+    };
+    let reference_semantics = reference_context::select(source, from, &groups, options)?;
+    let (outs, scans, signature_context) = if let Some((emitted, signatures)) = &whole_publication {
+        (
+            vec![record_translated_definitions(
+                (source, "source_file", from, to, decorators),
+                emitted.clone(),
+                signatures.clone(),
+                Some(false),
+            )],
+            Vec::new(),
+            ModuleSignatureContext {
+                module_scope_known: true,
+                owner_counts: HashMap::new(),
+                module_binding_names: Vec::new(),
+            },
+        )
+    } else if family(to) == "Rust" {
         Binder {
             groups: &groups,
             source,
@@ -325,6 +458,7 @@ fn translate_module(
             module_directory: &options.module_directory,
             imports: &options.imports,
             utf16_strings,
+            reference_semantics,
         }
         .translate()
     } else {
@@ -337,7 +471,9 @@ fn translate_module(
                     to,
                     decorators,
                     &Context {
+                        rust_source_version: source_version.clone(),
                         utf16_strings,
+                        reference_semantics,
                         ..Context::default()
                     },
                 )
@@ -362,7 +498,9 @@ fn translate_module(
         decorators,
         &outs,
         BindingScopeContext {
+            rust_source_version: source_version.clone(),
             utf16_strings,
+            reference_semantics,
             module_scope_known,
             module_binding_names: signature_context.module_binding_names.clone(),
         },
@@ -392,19 +530,31 @@ fn translate_module(
         .filter(|scan| scan.exported)
         .filter_map(|scan| scan.declares.as_deref())
         .collect();
-    let signatures: Vec<SelfTranslationSignature> = results
-        .iter()
-        .filter(|(_, out)| out.status == "translated")
-        .flat_map(|(_, out)| {
-            out.signatures
-                .iter()
-                .filter(|signature| {
-                    exported_names.contains(signature.name())
-                        && signature_context.accept_signature_binding(signature.name())
-                })
-                .cloned()
-        })
-        .collect();
+    let signatures: Vec<SelfTranslationSignature> = if let Some((_, signatures)) = whole_publication
+    {
+        if results
+            .first()
+            .is_some_and(|(_, out)| out.status == "translated")
+        {
+            signatures
+        } else {
+            Vec::new()
+        }
+    } else {
+        results
+            .iter()
+            .filter(|(_, out)| out.status == "translated")
+            .flat_map(|(_, out)| {
+                out.signatures
+                    .iter()
+                    .filter(|signature| {
+                        exported_names.contains(signature.name())
+                            && signature_context.accept_signature_binding(signature.name())
+                    })
+                    .cloned()
+            })
+            .collect()
+    };
     for (group, out) in results {
         for prelude in out.preludes {
             if !preludes.contains(&prelude) {
@@ -412,6 +562,15 @@ fn translate_module(
             }
         }
         for item in &group.items {
+            if let Some(records) = diagnostics.as_deref_mut() {
+                records.push(out.diagnostic.as_ref().map(|error| {
+                    diagnostics::retained(
+                        error,
+                        group.items.first().map_or(item.start, |item| item.start),
+                        group.items.last().map_or(item.end, |item| item.end),
+                    )
+                }));
+            }
             recorded.push(SelfTranslationItem {
                 term: item.term.clone(),
                 start: item.start,
@@ -435,9 +594,9 @@ fn translate_module(
     }
     let body = format!("{}\n", blocks.concat());
     // An unedited translation back gives the source its header describes.
-    let header = items
-        .iter()
-        .find(|item| item.comment && item.text.starts_with(HEADER));
+    let header = items.iter().find(|item| {
+        !options.semantic_translation && item.comment && item.text.starts_with(HEADER)
+    });
     if let Some(header) = header
         && header.text.contains(&format!(" source={to} "))
         && header.text.contains(&format!(" sha256={} ", sha256(&body)))
@@ -513,9 +672,14 @@ fn translate_module(
     }
     let mut lines = vec![
         format!(
-            "{HEADER}source={from} target={to} sha256={} bytes={}",
+            "{HEADER}source={from} target={to} sha256={} bytes={}{}",
             sha256(source),
-            source.len()
+            source.len(),
+            if source_version.is_empty() {
+                String::new()
+            } else {
+                format!(" rust-source-version={source_version}")
+            }
         ),
         String::new(),
     ];
@@ -779,187 +943,7 @@ struct Translated {
     preludes: Vec<String>,
     status: &'static str,
     reason: Option<String>,
+    diagnostic: Option<crate::translation::diagnostics::TranslationError>,
     /// The signatures a translated item gives the other items of its module.
     signatures: Vec<External>,
-}
-
-fn translate_group(
-    group: &Group<'_>,
-    from: &str,
-    to: &str,
-    decorators: &DecoratorSet,
-    context: &Context,
-) -> Translated {
-    translate_group_bound(group, from, to, decorators, context, &HashMap::new())
-}
-
-fn translate_group_bound(
-    group: &Group<'_>,
-    from: &str,
-    to: &str,
-    decorators: &DecoratorSet,
-    context: &Context,
-    literal_bindings: &HashMap<String, SExpr>,
-) -> Translated {
-    let done = |code: String, status: &'static str| Translated {
-        code: Some(code),
-        preludes: Vec::new(),
-        status,
-        reason: None,
-        signatures: Vec::new(),
-    };
-    let (text, term) = match &group.kind {
-        GroupKind::Provenance => {
-            return Translated {
-                code: None,
-                preludes: Vec::new(),
-                status: "provenance",
-                reason: None,
-                signatures: Vec::new(),
-            };
-        }
-        GroupKind::Carried { language, lines } => {
-            if family(language) == family(to) {
-                return done(lines.join("\n"), "restored");
-            }
-            let mut code = vec![group.items[0].text.to_owned()];
-            code.extend(lines.iter().map(|line| source_line(line)));
-            return Translated {
-                reason: Some("carried from another language".to_owned()),
-                ..done(code.join("\n"), "carried")
-            };
-        }
-        GroupKind::Comment { text, term } => {
-            // A copied comment has no provenance, so it must also fit the source.
-            if group
-                .items
-                .iter()
-                .all(|item| comment_fits(item.text, from) && comment_fits(item.text, to))
-            {
-                return done(text.clone(), "comment");
-            }
-            return carry(text, term, from, "comment the target cannot hold");
-        }
-        GroupKind::Item { text, term } => (text, term),
-    };
-    if term == "ERROR" {
-        return carry(text, term, from, "syntax");
-    }
-    if from == "TypeScript" && to == "JavaScript" {
-        let erased = match erase_type_script(text) {
-            Ok(erased) => erased,
-            Err(error) => return carry(text, term, from, &error.reason),
-        };
-        let erased_code = erased.code.trim();
-        let count = top_level_items(erased_code, "JavaScript")
-            .iter()
-            .filter(|item| !item.comment)
-            .count();
-        let code = if count == 0 { "" } else { erased_code };
-        let mut lines = vec![format!(
-            "{TRANSLATED}{from} {term} items={count} sha256={}",
-            sha256(code)
-        )];
-        lines.extend(LINE_BREAK.split(text).map(source_line));
-        if !code.is_empty() {
-            lines.push(code.to_owned());
-        }
-        return done(lines.join("\n"), "translated");
-    }
-    let (emitted, signatures) = match emit_item(text, from, to, context, literal_bindings) {
-        Ok(Some(emitted)) => emitted,
-        Ok(None) => return carry(text, term, from, "top-level statement"),
-        Err(error) => {
-            return carry(
-                text,
-                term,
-                from,
-                if from == "TypeScript"
-                    || error.construct.as_deref() == Some("UTF16 Text representation")
-                {
-                    &error.reason
-                } else {
-                    error.kind.as_str()
-                },
-            );
-        }
-    };
-    if emitted.definitions.is_empty() {
-        return carry(text, term, from, "no definition");
-    }
-    let exported = family(to) == "JavaScript"
-        && if family(from) == "Rust" {
-            RUST_EXPORT.is_match(text)
-        } else {
-            JAVASCRIPT_EXPORT.is_match(text)
-        };
-    let generic = emitted
-        .definitions
-        .iter()
-        .map(|definition| {
-            if exported {
-                format!("export {definition}")
-            } else {
-                definition.clone()
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n\n");
-    let code = decorate_emitted(to, &generic, decorators);
-    if code.trim().is_empty() {
-        return carry(text, term, from, "dropped by a decorator");
-    }
-    let count = emitted.definitions.len();
-    let marker = format!(
-        "{TRANSLATED}{from} {term} items={} sha256={}",
-        count,
-        sha256(&code)
-    );
-    let mut lines = vec![marker];
-    lines.extend(LINE_BREAK.split(text).map(source_line));
-    lines.push(code);
-    Translated {
-        code: Some(lines.join("\n")),
-        preludes: emitted.preludes,
-        status: "translated",
-        reason: None,
-        signatures,
-    }
-}
-
-fn carry(text: &str, term: &str, from: &str, reason: &str) -> Translated {
-    let mut lines = vec![format!("{CARRIED}{from} {term} ({reason})")];
-    lines.extend(LINE_BREAK.split(text).map(source_line));
-    Translated {
-        code: Some(lines.join("\n")),
-        preludes: Vec::new(),
-        status: "carried",
-        reason: Some(reason.to_owned()),
-        signatures: Vec::new(),
-    }
-}
-
-fn source_line(line: &str) -> String {
-    if line.is_empty() {
-        SOURCE_LINE.to_owned()
-    } else {
-        format!("{SOURCE_LINE} {line}")
-    }
-}
-
-// A comment keeps its text when the target reads it as an ordinary comment:
-// a Rust doc comment needs an item after it, and Rust block comments nest.
-fn comment_fits(text: &str, to: &str) -> bool {
-    if text.starts_with("/*") {
-        let inner = text
-            .get(2..text.len().saturating_sub(2))
-            .unwrap_or_default();
-        if inner.contains("/*") || inner.contains("*/") {
-            return false;
-        }
-    }
-    family(to) != "Rust"
-        || !["///", "//!", "/**", "/*!"]
-            .iter()
-            .any(|prefix| text.starts_with(prefix))
 }

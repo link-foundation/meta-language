@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData} from '../../scripts/project-data.mjs';
 import {verifyGitArtifactCertificate} from '../../scripts/git-object-certificate.mjs';
+import {restoreCiTestPartitionWorkflow} from '../../scripts/ci-test-partition-history.mjs';
 const file=new URL('../../../parity/self-translation/translation-workflow-history.lino',import.meta.url);
 const historyHash='d0789b7e0c01d83b684b71a3ff2c3a624782e6344a24fd4a891250a5e4385409';
 const digest=value=>createHash('sha256').update(value).digest('hex');
@@ -11,6 +12,7 @@ let history;
 /** Restore exact scheduling inputs before the retained historical CI assertions. */
 export function restoreTranslationWorkflowHistory(source) {
   assert.equal(typeof source,'string');
+  source=restoreCiTestPartitionWorkflow(source);
   source=restoreCurrentCiRepairSource(source,'.github/workflows/rust.yml');
   source=restoreEvidenceTranslationSourceHistory('.github/workflows/ci.yml',source);
   if(!history){assert.equal(digest(readFileSync(file)),historyHash);history=readProjectData(file);}

@@ -39,6 +39,11 @@ native Program re-encoding or paired source frontend. Rust output is generated
 here; native compilation/execution remains CI work. Other source models and
 whole runtime/resource/termination claims remain outside this experiment.
 
+The generation check replays the original compiler at the model commit and
+compares every definition and complete artifact byte. The native oracle
+also checks the same source with the current compiler and uses its JavaScript
+output in the table and refusal comparisons.
+
 The separate `native-observations.test.mjs` oracle is CI-only. CI with
 `ORIGINAL_LINK_COMPLETE_TABLE_NATIVE=0` authenticates and plans all 66 unchanged
 definitions and runs injected process contracts. Setting that flag to `1` in CI
@@ -87,7 +92,7 @@ Run the bounded checks with Node 22:
 
 ```sh
 node scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 experiments/original-link-complete-table-projection/projection.test.mjs
-node experiments/original-link-complete-table-projection/generate.mjs --check
+node experiments/original-link-complete-table-projection/historical-table-generation.mjs --check
 node scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 experiments/original-link-complete-table-projection/raw-projection.test.mjs
 node --max-old-space-size=1024 experiments/original-link-complete-table-projection/generate-raw.mjs --native --check
 ```

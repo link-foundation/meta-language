@@ -5,18 +5,20 @@ import { isDeepStrictEqual } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { readProjectData, writeProjectData } from './project-data.mjs';
 import { writeRecordRuleLibrary } from './record-rule-library.mjs';
+import { readTypeSyntaxSourceModule } from './generate-type-syntax-rules.mjs';
 
 const sourceFile = new URL('../src/translation/record-type-syntax-rules.js', import.meta.url);
 const factsFile = new URL('../src/translation/fact-column-rules.js', import.meta.url);
+const typeSyntaxFile = new URL('../src/translation/type-syntax-rules.js', import.meta.url);
 const policyFile = new URL('../src/translation/data/record-type-syntax.lino', import.meta.url);
 const nativePolicyFile = new URL('../../rust/src/data/record-type-syntax.lino', import.meta.url);
 const artifactFile = new URL('../../parity/self-translation/record-type-syntax-rules-native.lino', import.meta.url);
-const requiredImport = "import { readRequiredNumberFact } from './fact-column-rules.js';\n";
+const requiredImport = "import { readTypeSeparatorPositions } from './type-syntax-rules.js';\n";
 const hash = source => createHash('sha256').update(source).digest('hex');
 
 export function readRecordTypeSyntaxSourceModule(source = readFileSync(sourceFile, 'utf8')) {
   if (source.split(requiredImport).length !== 2) throw new Error('record type syntax retains its exact required-column source import');
-  return readFileSync(factsFile, 'utf8') + '\n' + source.replace(requiredImport, '');
+  return readTypeSyntaxSourceModule() + '\n' + source.replace(requiredImport, '');
 }
 
 function originalCompositeType() {
@@ -38,8 +40,9 @@ export function recordTypeSyntaxRulesPolicy(original) {
   return { schemaVersion: 1, model: 'source record type field syntax 1', original, source, sourceSha256: hash(source),
     sourceClosure: { source: readRecordTypeSyntaxSourceModule(source), sourceSha256: hash(readRecordTypeSyntaxSourceModule(source)), removedImport: requiredImport,
       inputs: [{ path: 'js/src/translation/record-type-syntax-rules.js', sourceSha256: hash(source) },
+        { path: 'js/src/translation/type-syntax-rules.js', sourceSha256: hash(readFileSync(typeSyntaxFile, 'utf8')) },
         { path: 'js/src/translation/fact-column-rules.js', sourceSha256: hash(readFileSync(factsFile, 'utf8')) }] },
-    boundary: 'Exact record boundaries, first field colon and optional suffix decisions retain the existing reader. Common outer separators, source UTF16 slices/trim and recursive child type checking remain mandatory; no optional property omission or union coercion is granted.' };
+    boundary: 'Read exact record boundaries, the first unquoted field colon and the optional suffix through shared outer separators. Source UTF16 slices, trimming, lexical name decoding and recursive field type checking remain mandatory.' };
 }
 
 export async function generateRecordTypeSyntaxRules({ check = false, native = false } = {}) {

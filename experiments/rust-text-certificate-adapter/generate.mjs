@@ -4,6 +4,7 @@ import {writeProjectData,checkProjectData} from '../../js/scripts/project-data.m
 import {DecoratorSet} from '../../js/src/decorators.js';
 import {rustTextCertificateAdapterPolicy,rustTextCertificateIdentityTransport} from './policy.mjs';
 import {readReviewedOverlayProviderSources,restoreReviewedOverlayProviderSources,writeReviewedOverlayProviderPolicy} from './reviewed-providers.mjs';
+import {ROOT_IDENTIFIER_PROVIDER_REVISION} from './provider-succession.mjs';
 const hash=source=>createHash('sha256').update(source).digest('hex');
 const importLine=path=>"import {checkOwnedRustTextCertificate,emitOwnedRustTextCertificate,decodeRustTextCertificateFacet} from '"+path+"';";
 export function rustTextCertificateOverlayRecords({sourceCommit}={}){
@@ -11,10 +12,16 @@ export function rustTextCertificateOverlayRecords({sourceCommit}={}){
  const {sources,revision}=sourceCommit===undefined?readReviewedOverlayProviderSources(options):restoreReviewedOverlayProviderSources({...options,sourceCommit});
  const changes=new Map([...sources].map(([module,source])=>[module,[{from:source.split('\n')[0],to:importLine(module.startsWith('translation/')?'../rust-text-certificate-adapter.js':'./rust-text-certificate-adapter.js')+'\n'+source.split('\n')[0]}]]));
  const add=(module,from,to)=>changes.get(module).push({from,to});
- add('typed-program-links.js','  return { network, root };','  decodeRustTextCertificateFacet(network, root);\n  return { network, root };');
- add('typed-program-links.js','function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, depthLimit = 256 } = {}) {','function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, depthLimit = 256 } = {}) {\n  decodeRustTextCertificateFacet(network, root);');
- add('typed-program-links-validation.js','export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {','export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {\n  checkOwnedRustTextCertificate(program);');
- add('typed-program-checked-projection.js','export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {','export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {\n  if(checkOwnedRustTextCertificate(program))return program;');
+ const current=revision.sourceCommit===ROOT_IDENTIFIER_PROVIDER_REVISION;
+ const after=(module,hook,statement)=>add(module,hook,hook+'\n  '+statement);
+ if(current)after('typed-program-links.js','  if (shapeWriter) shapeWriter.finish(root);','decodeRustTextCertificateFacet(network, root);');
+ else add('typed-program-links.js','  return { network, root };','  decodeRustTextCertificateFacet(network, root);\n  return { network, root };');
+ after('typed-program-links.js',current
+  ? 'function decodeTypedProgramLinksContext(network, root, { nodeLimit, depthLimit = 256, wholeProgram = false } = {}) {'
+  : 'function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, depthLimit = 256 } = {}) {',
+  'decodeRustTextCertificateFacet(network, root);');
+ after('typed-program-links-validation.js','export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap()'+(current?', sourceOwners':'')+' } = {}) {','checkOwnedRustTextCertificate(program);');
+ after('typed-program-checked-projection.js','export function recheckLinkedTypedProgram(program, {wholeProgram=false'+(current?', sourceOwners':'')+'}={}) {','if(checkOwnedRustTextCertificate(program))return program;');
  add('translation/emit-javascript.js','export function emitJavaScript(program, options = {}) {','export function emitJavaScript(program, options = {}) {\n  if(checkOwnedRustTextCertificate(program))return emitOwnedRustTextCertificate(program,"JavaScript",options);');
  add('translation/emit-rust.js','export function emitRust(program, options = {}) {','export function emitRust(program, options = {}) {\n  if(checkOwnedRustTextCertificate(program))return emitOwnedRustTextCertificate(program,"Rust",options);');
  return[...sources].map(([module,source])=>{

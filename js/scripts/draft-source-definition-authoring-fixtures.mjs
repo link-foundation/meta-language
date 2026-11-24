@@ -1,0 +1,13 @@
+// Minimal source-metadata inputs only: no represented program is constructed
+// or executed. Source fixtures are not graph-validation evidence.
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const root=id=>'('+id+': (meta: (t: semantic) (n: 1) (term: typed%20program) (def: 1) (lang: meta-language%20typed%20program)))\n';
+const source=root(1),changed=root(2),duplicate=source+changed,asset='sample-program.lino';
+const pin=text=>({bytes:Buffer.byteLength(text),sha256:createHash('sha256').update(text).digest('hex')});
+const preceding={identifier:'meta-language/source-program/sample-program',asset,...pin(source),root:'1'};
+const invalidCaches=[{name:'wrong asset',edit:{asset:'other-program.lino'}},{name:'wrong identifier',edit:{identifier:'other'}},{name:'wrong byte count',edit:{bytes:preceding.bytes+1}},{name:'wrong complete digest',edit:{sha256:'0'.repeat(64)}},{name:'numeric root',edit:{root:1}},{name:'zero root',edit:{root:'0'}},{name:'negative root',edit:{root:'-1'}},{name:'noncanonical root',edit:{root:'01'}},{name:'unsafe root',edit:{root:'9007199254740992'}}];
+const revision='67eb5399',history=['js/scripts/draft-source-definition-catalog.mjs','js/package.json'].map(path=>{const bytes=execFileSync('git',['show',revision+':'+path],{maxBuffer:4*1024*1024});return{path,revision,source:bytes.toString('utf8'),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};});
+writeProjectData(new URL('../../parity/fixtures/source-definition-catalog-authoring.lino',import.meta.url),{schemaVersion:1,asset,source,changed,duplicate,preceding,invalidCaches,history,versions:{Node:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0'},assertions:['onlyActualMatchingAssetIdentifierByteCountCompleteDigestAndRootShapePermitAuthorReuse','changedGraphBytesUseTheOriginalStreamingMetadataReader','everyCompleteCheckIgnoresCachedRootsAndRetainsTheOriginalWholeNetworkReader','duplicateRootsStillRefuseDuringACompleteCheckEvenWithAMatchingAuthoredCache','checkAndDefaultDraftCommandsRemainUnchangedAndScopedCheckFlagsRefuse','cacheSnapshotsUseLinksAndBoundedRegularFilesWithoutRepresentedCodeExecution'],boundary:'Unexecuted source/tooling draft. Inputs contain minimal root metadata, not executable typed programs. The optional writing cache retains an authored root only when complete current file bytes match its digest and size; matching cached root metadata establishes no node/reference validation or runtime evidence. Existing default authoring remains complete; --check always ignores cache entries. No test, fixture execution, product or native compiler ran.'});

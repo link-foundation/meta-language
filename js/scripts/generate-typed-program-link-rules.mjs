@@ -12,6 +12,7 @@ import { readPortableSourceParameterStyles, readPortableSourceLintStyles } from 
 import { readSourceTextRustBlock } from './source-text-byte-library-style.mjs';
 
 if (process.argv.includes('--check') && process.argv.some(argument => argument.startsWith('--update-'))) throw new Error('freshness checks cannot update recorded styles');
+if(process.argv.includes('--draft')&&process.argv.includes('--check'))throw new TypeError('source construction cannot execute freshness checks');
 
 const schemaSource = new URL('../src/data/typed-program-links-schema.json', import.meta.url);
 const schemaText = readProjectFileBytes(schemaSource).toString('utf8');

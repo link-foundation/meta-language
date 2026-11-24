@@ -1,0 +1,84 @@
+// Source property spelling never proves that a receiver owns a builtin method.
+/** @param {string} operation @returns {string} */
+export function readJavaScriptSourcePropertyOperationKind(operation) {
+  if(readJavaScriptStringUnitCallForm(operation)!=='')return 'unit';
+  if(operation==='slice'||operation==='substring'||operation==='substr')return 'range';
+  if(operation==='indexOf'||operation==='lastIndexOf')return 'index';
+  if (operation === 'includes' || operation === 'startsWith' || operation === 'endsWith') return 'test';
+  if (operation === 'trim' || operation === 'trimStart' || operation === 'trimEnd'
+      || operation === 'toLowerCase' || operation === 'toUpperCase') return 'map';
+  return operation === 'toString' ? 'text' : '';
+}
+/** @param {string} receiver @param {string} operation @returns {string} */
+export function readJavaScriptResolvedPropertyCallForm(receiver, operation) {
+  const kind = readJavaScriptSourcePropertyOperationKind(operation);
+  if (kind === '') return '';
+  if (receiver === 'record') return 'record';
+  if (kind === 'text') return 'text';
+  return receiver === 'string' ? kind : '';
+}
+/** @param {string} kind @param {number} parameters @param {number} argumentsCount @returns {string} */
+export function readJavaScriptRecordMethodInferenceStep(kind, parameters, argumentsCount) {
+  if (kind === 'var') return 'infer';
+  return kind === 'function' && parameters === argumentsCount ? 'apply' : 'checked error';
+}
+/** @param {string} operation @param {string} selected @returns {string} */
+export function readJavaScriptPropertyCallFallbackKind(operation, selected) {
+  if (operation === 'includes') return 'string';
+  if (operation === 'toString') return 'scalar';
+  return selected;
+}
+/** @param {string} operation @param {string} selected @returns {string} */
+export function readJavaScriptConcatenationFallbackKind(operation, selected) {
+  return operation === 'concat' ? 'array' : readJavaScriptPropertyCallFallbackKind(operation, selected);
+}
+/** @param {string} receiver @param {string} argument @param {boolean} force @returns {string} */
+export function readJavaScriptConcatenationArgumentRole(receiver, argument, force) {
+  if (argument === 'var' && !force) return 'defer';
+  if (receiver === 'array') return argument === 'array' ? 'spread' : 'item';
+  if (receiver !== 'string') return '';
+  return ['string','float','bool','int','nat','fixed','unit','option'].includes(argument) ? 'text' : 'unsupported';
+}
+
+/** @param {string} kind @returns {string} */
+export function readJavaScriptPrimitiveTextForm(kind){
+ if(kind==='string')return 'identity';
+ if(kind==='unit')return 'undefined';
+ if(kind==='option')return 'optional';
+ return kind==='float'||kind==='bool'||kind==='int'||kind==='nat'||kind==='fixed'?'convert':'refuse';
+}
+/** Missing/undefined end positions select the complete receiver.
+ * @param {string} operation @returns {string} */
+export function readJavaScriptStringSearchDefaultPosition(operation){return operation==='endsWith'?'Infinity':operation==='lastIndexOf'?'NaN':'0';}
+/** Slicing uses an explicitly nonnegative position, never a relative offset.
+ * @param {string} operation @returns {string[]} */
+export function planJavaScriptStringSearchWindow(operation){return operation==='endsWith'?['0','position']:['position','Infinity'];}
+
+/** @param {string} operation @returns {string} */
+export function readJavaScriptStringSearchResultKind(operation){return operation==='indexOf'||operation==='lastIndexOf'?'float':'bool';}
+
+/** Source unit methods normalize primitives after every raw argument evaluation.
+ * @param {string} operation @returns {string} */
+export function readJavaScriptStringUnitCallForm(operation){
+ if(operation==='repeat')return 'repetition';
+ if(operation==='padStart'||operation==='padEnd')return 'padding';
+ if(operation==='replace'||operation==='replaceAll')return 'replacement';
+ if(operation==='split')return 'split';
+ return operation==='charCodeAt'||operation==='charAt'||operation==='at'||operation==='codePointAt'?'position':'';
+}
+/** @param {string} operation @returns {string} */
+export function readJavaScriptStringUnitCallResultForm(operation){
+ if(operation==='split')return 'array-string';
+ if(operation==='charCodeAt')return 'float';
+ if(operation==='codePointAt')return 'optional-float';
+ return operation==='at'?'optional-string':'string';
+}
+/** Build the Number-only ToLength early-return predicate before filler conversion.
+ * @returns {string[]} */
+export function planJavaScriptStringPaddingUnchanged(){
+ return ['count','isNaN','true','count','trunc','length','le','if'];
+}
+/** @returns {string[]} */
+export function planJavaScriptStringRepetitionInvalid(){
+ return ['count','trunc','zero','lt','count','infinity','eq','or'];
+}

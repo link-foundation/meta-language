@@ -1,5 +1,5 @@
 //! Host JSON boundary adapter for the shared mechanical projection instructions.
-use super::{Result, error, typed_program_links_schema};
+use super::{Language, Result, error, typed_program_links_schema};
 use crate::translation::ir::{Decl, Expr, Program};
 use crate::translation::record_value_rules::{
     read_record_projection, read_record_projection_error,
@@ -18,6 +18,112 @@ use serde_json::{Map, Value, json};
 mod number_projection;
 
 fn expression(value: &Value, program: &Program) -> Result<Value> {
+    let mut projected = expression_value(value, program)?;
+    for field in [
+        "sourcePosition",
+        "sourceStateTransition",
+        "sourceLoopFold",
+        "sourceRecordPlace",
+        "sourcePlaceTransform",
+    ] {
+        if let Some(facet) = value.get(field) {
+            projected
+                .as_object_mut()
+                .ok_or_else(|| error("a source facet needs its actual projected expression"))?
+                .insert(field.to_owned(), facet.clone());
+        }
+    }
+    Ok(projected)
+}
+
+fn expression_value(value: &Value, program: &Program) -> Result<Value> {
+    if program.source_language.as_str() == "JavaScript"
+        && value["k"] == "let"
+        && value["value"]["k"] == "record"
+        && let Some([capture]) = value["value"]["entries"].as_array().map(Vec::as_slice)
+    {
+        use crate::translation::javascript_optional_chain_rules as rules;
+        let body = &value["body"];
+        let branch = if body["k"] == "flattenOption" {
+            &body["value"]
+        } else {
+            body
+        };
+        let scope = &branch["then"]["value"];
+        let receiver = &scope["value"]["arg"];
+        let ty = &capture["value"]["type"];
+        let field = rules::read_java_script_optional_chain_field();
+        if capture["name"].as_str() == Some(field.as_str())
+            && rules::read_java_script_optional_chain_form(
+                ty["kind"].as_str().unwrap_or_default(),
+                ty["element"]["kind"].as_str().unwrap_or_default(),
+            ) == "guarded"
+            && branch["k"] == "if"
+            && branch["then"]["k"] == "some"
+            && scope["k"] == "let"
+            && scope["value"]["k"] == "unwrapOption"
+            && receiver["k"] == "recordField"
+            && receiver["field"] == capture["name"]
+            && receiver["index"].as_u64() == Some(0)
+            && receiver["object"]["k"] == "var"
+            && receiver["object"]["name"] == value["name"]
+        {
+            // The source checker reconstructs the condition and extraction.
+            let mut result = json!({
+                "k": "math", "op": rules::read_java_script_optional_chain_operation(), "name": value["name"],
+                "args": [{ "spread": false, "value": {
+                    "k": "let", "name": scope["name"],
+                    "value": expression(&capture["value"], program)?,
+                    "body": expression(&scope["body"], program)?,
+                }}],
+            });
+            if let Some(span) = value.get("span") {
+                result["span"] = span.clone();
+            }
+            return Ok(result);
+        }
+    }
+    if program.source_language == Language::JavaScript
+        && value["k"] == "unwrapOption"
+        && value["arg"]["type"]["kind"] == "option"
+    {
+        let operation = crate::translation::javascript_nominal_spread_rules::read_java_script_guarded_optional_projection_operation();
+        let mut result = json!({
+            "k": "math", "op": operation, "name": "",
+            "args": [{ "value": expression(&value["arg"], program)?, "spread": false }],
+        });
+        if let Some(span) = value.get("span") {
+            result["span"] = span.clone();
+        }
+        return Ok(result);
+    }
+    if crate::translation::rust_array_length_rules::accept_rust_exact_array_length_result(
+        value["k"].as_str().unwrap_or_default(),
+        value["type"]["kind"].as_str().unwrap_or_default(),
+        value["type"]["bits"].as_f64().unwrap_or_default(),
+        value["type"]["signed"] == true,
+        value["array"]["type"]["kind"].as_str().unwrap_or_default(),
+    ) {
+        let mut result = json!({"k":"cast","arg":{"k":"length","object":expression(&value["array"],program)?,"integer":true},"to":value["type"],"flavor":"exact"});
+        if let Some(span) = value.get("span") {
+            result["span"] = span.clone();
+        }
+        return Ok(result);
+    }
+    if value["k"] == "binary"
+        && crate::translation::rust_shared_array_handle_rules::read_rust_shared_array_handle_comparison_projection(
+            program.source_language.as_str(), value["op"].as_str().unwrap_or_default(),
+            value["domain"]["kind"].as_str().unwrap_or_default(), value["domain"]["reference"] == true,
+        ) == "referenceIdentity"
+    {
+        let mut result = Map::new();
+        result.insert("k".to_owned(), Value::String("referenceIdentity".to_owned()));
+        result.insert("op".to_owned(), value["op"].clone());
+        result.insert("left".to_owned(), expression(&value["left"], program)?);
+        result.insert("right".to_owned(), expression(&value["right"], program)?);
+        if let Some(span) = value.get("span") { result.insert("span".to_owned(), span.clone()); }
+        return Ok(Value::Object(result));
+    }
     if value["k"].as_str() == Some("record")
         && value.as_object().is_some_and(|fields| {
             fields
@@ -73,7 +179,54 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
             value["k"].as_str().unwrap_or_default()
         )));
     }
+    if value["k"] == "strictEqual" {
+        let typed_absence = |node: &Value, peer: &Value| {
+            peer["k"] != "none"
+                && crate::translation::javascript_nominal_spread_rules::accept_java_script_projected_typed_absence(
+                    node["k"].as_str().unwrap_or_default(),
+                    peer["type"]["kind"].as_str().unwrap_or_default(),
+                    node["absence"].as_str().unwrap_or_default(),
+                    peer["type"]["absence"].as_str().unwrap_or_default(),
+                    node["type"] == peer["type"],
+                )
+        };
+        let name = if program.source_language != Language::JavaScript {
+            ""
+        } else if typed_absence(&value["left"], &value["right"]) {
+            "left"
+        } else if typed_absence(&value["right"], &value["left"]) {
+            "right"
+        } else {
+            ""
+        };
+        let mut result = json!({
+            "k": "math", "op": key, "name": name, "args": [
+                { "value": expression(&value["left"], program)?, "spread": false },
+                { "value": expression(&value["right"], program)?, "spread": false },
+            ]
+        });
+        if let Some(span) = value.get("span") {
+            result["span"] = span.clone();
+        }
+        return Ok(result);
+    }
     let plan = &plans[&key];
+    let snapshot = crate::translation::record_write_source_interfaces::read_linked_ordered_record_snapshot_operation(
+        value["k"].as_str().unwrap_or_default(),
+        value["type"]["kind"].as_str().unwrap_or_default(),
+        value["type"]["ordered"] == true,
+    );
+    if !snapshot.is_empty() {
+        let mut result = json!({"k":"referencePayload","value":{
+            "k":"math","op":snapshot,"name":"","args":[
+                {"value":expression(&value["reference"], program)?,"spread":false}
+            ]
+        }});
+        if let Some(span) = value.get("span") {
+            result["span"] = span.clone();
+        }
+        return Ok(result);
+    }
     let reference_form = read_surface_reference_projection_form(
         value["k"].as_str().unwrap_or_default(),
         value["type"]["kind"].as_str().unwrap_or_default(),
@@ -118,6 +271,13 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
         let source = rule[2].as_str();
         let child = source.map_or(&Value::Null, |source| &value[source]);
         let projected = match mode {
+            "proposition-comparison" => {
+                let mut prop = json!({"p":value["op"],"left":expression(&value["left"],program)?,"right":expression(&value["right"],program)?});
+                if value["sameValue"] == true {
+                    prop["sameValue"] = json!(true);
+                }
+                prop
+            }
             "copy" => {
                 if source.and_then(|source| value.get(source)).is_none() {
                     continue;
@@ -140,6 +300,12 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                     .map(|item| expression(item, program))
                     .collect::<Result<_>>()?,
             ),
+            "optional-expression" => {
+                if child.is_null() {
+                    continue;
+                }
+                expression(child, program)?
+            }
             "nullable-expressions" => Value::Array(
                 child
                     .as_array()

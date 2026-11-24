@@ -197,10 +197,7 @@ fn legacy_refusals_and_unproved_fresh_result_premises_remain_explicit() {
         original["source"],
         "fn values()->Vec<f64>{vec![1f64]} fn main(){}"
     );
-    let error = parse_rust(original["source"].as_str().unwrap()).unwrap_err();
-    assert_eq!(error.kind.as_str(), original["kind"].as_str().unwrap());
-    assert_eq!(error.reason, original["reason"].as_str().unwrap());
-    assert_eq!(serde_json::to_value(error.span).unwrap(), original["span"]);
+    super::translation_rust_fresh_vector_results::assert_original_array_result_case(original);
     check_program(
         &parse_rust_with_array_result_model(original["source"].as_str().unwrap(), model).unwrap(),
     )

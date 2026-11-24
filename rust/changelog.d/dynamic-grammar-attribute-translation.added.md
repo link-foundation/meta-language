@@ -1,0 +1,1 @@
+Translate selected attributes from an installed grammar into executable JavaScript or Rust. The translation returns the checked Links graph and retains the complete concrete parse under its definition snapshot.

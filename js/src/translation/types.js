@@ -52,8 +52,8 @@ export function immutableProductType(type) {
 }
 
 /** Fields are named; their declaration order is not part of a record's shape. */
-export function record(fields, open = false, reference = false) {
-  return Object.freeze({ kind: 'record', fields: Object.freeze(fields.map((field) => Object.freeze({ ...field }))), ...(open && { open }), ...(reference && { reference: true }) });
+export function record(fields, open = false, reference = false, ordered = false, sourceClassOwner = undefined) {
+  return Object.freeze({ kind: 'record', fields: Object.freeze(fields.map((field) => Object.freeze({ ...field }))), ...(open && { open }), ...(reference && { reference: true }), ...(ordered && { ordered: true }), ...(sourceClassOwner!==undefined&&{sourceClassOwner}) });
 }
 
 export function map(key, value, reference = false) {
@@ -80,6 +80,8 @@ function ordinaryTypeKey(type) {
       return renderPortableTypeIdentity(type.kind, `${type.signed ? 'i' : 'u'}${type.bits}`, []);
     case 'data':
       return renderPortableTypeIdentity(type.kind, type.name, []);
+    case 'named':
+      return 'named:' + JSON.stringify(type.path);
     case 'array':
     case 'cell':
       return renderPortableTypeIdentity(type.kind, '', [typeKey(type.element)]);
@@ -92,7 +94,7 @@ function ordinaryTypeKey(type) {
     case 'union':
       return renderPortableTypeIdentity(type.kind, '', type.alternatives.map(typeKey));
     case 'record':
-      return renderPortableTypeIdentity(type.kind, type.open ? 'open:' : '', [...type.fields].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0).map(({ name, type: fieldType }) => JSON.stringify([name, typeKey(fieldType)])));
+      return renderPortableTypeIdentity(type.kind, (type.open ? 'open:' : '')+(type.ordered?'ordered:':'')+(type.sourceClassOwner!==undefined?'class:'+JSON.stringify(type.sourceClassOwner)+':':''), [...type.fields].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0).map(({ name, type: fieldType, optional }) => JSON.stringify(optional ? [name, typeKey(fieldType), true] : [name, typeKey(fieldType)])));
     case 'map':
       return renderPortableTypeIdentity(type.kind, '', [typeKey(type.key), typeKey(type.value)]);
     case 'set':

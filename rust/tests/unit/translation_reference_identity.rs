@@ -6,7 +6,8 @@ use meta_language::translation::{
 };
 use meta_language::{
     BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
-    encode_link_network_binary, encode_typed_program_links, read_structured_data_lino,
+    emit_typed_program_links, encode_link_network_binary, encode_typed_program_links,
+    read_structured_data_lino,
 };
 use serde_json::Value;
 use std::{fs, path::Path, process::Command};
@@ -75,6 +76,50 @@ fn archives(program: &meta_language::translation::ir::Program) -> Vec<meta_langu
         .unwrap(),
     ]
 }
+
+#[test]
+fn standalone_formal_functions_keep_their_local_reference_store_and_scalar_signature() {
+    let source =
+        include_str!("../../../parity/fixtures/translation-corpus/standalone-reference-store.mjs");
+    assert_eq!(
+        observe(&format!(
+            "{source}\nconsole.log(localAliasMutation(true));\nconsole.log(localAliasMutation(false));"
+        )),
+        "true\nfalse\n"
+    );
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let packet = encode_typed_program_links(&program).unwrap();
+    let reloaded = archives(&program);
+    let escaping = check_program(
+        &parse_javascript(
+            "export function escaped(){const values = [false];values.fill(true);return values;}",
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    let escaping = encode_typed_program_links(&escaping).unwrap();
+    for (target, signature) in [
+        ("Lean", "def localAliasMutation (replacement : Bool) : Bool"),
+        (
+            "Rocq",
+            "Definition localAliasMutation (replacement : bool) : bool",
+        ),
+    ] {
+        let emitted = emit_typed_program_links(&packet.network, packet.root, target).unwrap();
+        assert!(emitted.code.contains(signature), "{}", emitted.code);
+        for archive in &reloaded {
+            assert_eq!(
+                emit_typed_program_links(archive, packet.root, target).unwrap(),
+                emitted
+            );
+        }
+        let error = emit_typed_program_links(&escaping.network, escaping.root, target).unwrap_err();
+        assert!(
+            error.to_string().contains("shared reference state"),
+            "{error}"
+        );
+    }
+}
 fn compiled(source: &str) -> (bool, String, String) {
     let directory = TemporaryDirectory::new("reference-identity");
     let input = directory.0.join("reference-identity.rs");
@@ -134,12 +179,21 @@ fn reference_identity_keeps_actual_aliases_distinct_allocations_order_and_both_c
 
 #[test]
 fn reference_identity_keeps_every_explicit_surface_refusal() {
+    versions();
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let policy = policy();
     for row in policy["refusals"].as_array().unwrap() {
         let script = r"
 import {parseJavaScript} from './js/src/translation/javascript.js';
-console.log(JSON.stringify(parseJavaScript(process.argv[1],JSON.parse(process.argv[2]))));
+import {structuredDataToLino} from './js/src/structured-data-links.js';
+import {TranslationError} from './js/src/translation/diagnostics.js';
+let result;
+try{result={surface:parseJavaScript(process.argv[1],JSON.parse(process.argv[2]))};}
+catch(error){
+ if(!(error instanceof TranslationError)||error.kind!=='type')throw error;
+ result={diagnostic:{kind:error.kind,reason:error.reason,span:error.span??null}};
+}
+process.stdout.write(structuredDataToLino(result));
 ";
         let source = row["source"].as_str().unwrap();
         let output = run(Command::new("node").current_dir(root).args([
@@ -150,8 +204,27 @@ console.log(JSON.stringify(parseJavaScript(process.argv[1],JSON.parse(process.ar
             &row["options"].to_string(),
         ]));
         assert!(output.ok, "{}", output.stderr);
-        let surface = serde_json::from_str(&output.stdout).unwrap();
-        assert!(check_program(&surface).is_err(), "{}", row["name"]);
+        let result = read_structured_data_lino(&output.stdout).unwrap();
+        if let Some(surface) = result.get("surface") {
+            let surface = serde_json::from_value(surface.clone()).unwrap();
+            assert!(check_program(&surface).is_err(), "{}", row["name"]);
+        } else {
+            // The same original input can fail during frontend inference before
+            // a Surface exists. Both implementations must actually reject it.
+            assert_eq!(result["diagnostic"]["kind"], "type");
+            assert!(
+                result["diagnostic"]["reason"]
+                    .as_str()
+                    .is_some_and(|reason| !reason.is_empty())
+            );
+            assert!(
+                parse_javascript(source)
+                    .and_then(|surface| check_program(&surface))
+                    .is_err(),
+                "{}",
+                row["name"]
+            );
+        }
     }
 }
 

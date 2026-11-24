@@ -223,11 +223,6 @@ fn rejected_programs_raise_the_javascript_errors() {
             "use std::collections::HashMap: only items of this crate can be imported; the standard library is outside the portable core at 0..29",
         ),
         (
-            "fn f(n: u64) -> u64 { match n { k if k > 2 => 1, _ => 0 } } fn main() { println!(\"x\"); }",
-            ErrorKind::Unsupported,
-            "match guard: guards are outside the portable pattern language at 32..34",
-        ),
-        (
             "fn f(n: u64) -> u64 {\n  n < 1 < 2\n}\nfn main() { println!(\"x\"); }\n",
             ErrorKind::Syntax,
             "comparison operators cannot be chained but found \"<\" at 30..31",
@@ -413,4 +408,14 @@ fn suffixed_separator_admission_keeps_old_rust_and_javascript_refusals() {
             ErrorKind::Syntax
         );
     }
+}
+
+#[test]
+fn original_guarded_match_input_retains_its_complete_source() {
+    super::translation_javascript_object_binding_declarations::require_supported_rust_version();
+    let original = "fn f(n: u64) -> u64 { match n { k if k > 2 => 1, _ => 0 } } fn main() { println!(\"x\"); }";
+    let program =
+        parse_rust(original).expect("shared ordered guard continuations admit the original input");
+    meta_language::translation::check::check_program(&program)
+        .expect("the original typed guard retains its full source meaning");
 }

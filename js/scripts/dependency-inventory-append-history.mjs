@@ -31,6 +31,19 @@ export function restoreNodeDependencyInventoryTestSource(source) {
   return original;
 }
 
+/** Reconstruct the action declaration before CI added the same release pin. */
+export function restoreDependencyDeclaration(entry, original) {
+  const action = 'action dtolnay/rust-toolchain@master';
+  if (entry?.id !== action || original?.id !== action) return entry;
+  const rustWorkflow = '.github/workflows/rust.yml';
+  const ciWorkflow = '.github/workflows/ci.yml';
+  if (original.declaredIn.length === 1 && original.declaredIn[0] === rustWorkflow
+      && entry.declaredIn.length === 2 && entry.declaredIn[0] === ciWorkflow && entry.declaredIn[1] === rustWorkflow) {
+    return {...entry, declaredIn: original.declaredIn};
+  }
+  return entry;
+}
+
 /** Check every current declaration and every old byte before removing appends. */
 export function verifyDependencyInventoryAppends(inventory,declarations,history) {
   // Impossible current inventories cannot select a historical view. Reject
@@ -46,7 +59,9 @@ export function verifyDependencyInventoryAppends(inventory,declarations,history)
   const before=readStructuredDataLino(history.inventory.source);
   assert.equal(before.items.length,745);
   assert.ok(inventory.items.length>=before.items.length);
-  const prefix={...inventory,items:inventory.items.slice(0,before.items.length)};
+  const items=inventory.items.slice(0,before.items.length)
+    .map((entry,index)=>restoreDependencyDeclaration(entry,before.items[index]));
+  const prefix={...inventory,items};
   assert.equal(structuredDataToLino(prefix),history.inventory.source,'every complete original item, audit fact, order and alias stays exact');
   const ids=new Set(prefix.items.map(row=>row.id));
   for(const entry of inventory.items.slice(before.items.length)){

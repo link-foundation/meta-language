@@ -2,7 +2,7 @@
 use serde::{Deserialize, Deserializer};
 use serde_json::Value;
 
-use super::{ConstructorPrototypeDefinition, SRecordEntry, Type};
+use super::{ConstructorPrototypeDefinition, SExpr, SRecordEntry, Type};
 use crate::translation::record_value_rules::read_record_projection_error;
 
 type RecordProjectionFields = (
@@ -10,6 +10,7 @@ type RecordProjectionFields = (
     Option<Value>,
     Option<Type>,
     Option<ConstructorPrototypeDefinition>,
+    Option<Box<SExpr>>,
 );
 
 #[derive(Deserialize)]
@@ -22,6 +23,8 @@ struct RecordFields {
     ty: Option<Type>,
     #[serde(default)]
     prototype_definition: Option<ConstructorPrototypeDefinition>,
+    #[serde(default)]
+    property_order: Option<Box<SExpr>>,
 }
 
 // Preserve every present value, including null, so shared admission cannot
@@ -91,5 +94,6 @@ pub(super) fn read_record_projection<'de, D: Deserializer<'de>>(
         fields.record_projection,
         fields.ty,
         fields.prototype_definition,
+        fields.property_order,
     ))
 }

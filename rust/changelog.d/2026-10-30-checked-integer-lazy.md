@@ -1,0 +1,1 @@
+Draft checked integer `unwrap_or_else` with contextual immutable Copy callbacks, preserving eager callable construction and failure-only invocation. Retain original rejection inputs as positive controls with documented expectation revisions. Shared rules automatically generate Rust; behavioral checks remain deferred.

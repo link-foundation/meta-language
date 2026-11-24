@@ -1,14 +1,188 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
+use super::accept_callable_creation_effect_traversal;
 use super::accept_callable_effect_field;
 use super::callable_emission_field;
 use super::callable_emission_has_name;
 use super::callable_emission_text;
 use super::ml;
 use super::ml_array;
-use super::read_callable_eager_effects;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
+use super::require_callable_output_effect;
+use super::source_ml_temporary_callable_emission_obligations_loop15;
+use super::source_ml_temporary_plan_callable_output_obligations_loop17;
+use super::source_ml_temporary_read_callable_effectful_declarations_loop12;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn read_callable_eager_effects(
+    forms: &[String],
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    node: f64,
+    names: &[String],
+) -> bool {
+    if node < 0f64 {
+        false
+    } else {
+        {
+            let form = self::read_required_text_fact(forms, node);
+            if (form != "object") && (form != "array") {
+                false
+            } else {
+                {
+                    let kind = self::callable_emission_text(
+                        texts, starts, counts, labels, targets, node, "k",
+                    );
+                    if (self::accept_callable_creation_effect_traversal(&(kind))) {
+                        if (self::require_callable_output_effect(
+                            &(kind),
+                            &(self::callable_emission_text(
+                                texts,
+                                starts,
+                                counts,
+                                labels,
+                                targets,
+                                node,
+                                "semantics",
+                            )),
+                            &(self::callable_emission_text(
+                                texts, starts, counts, labels, targets, node, "flavor",
+                            )),
+                            &(self::callable_emission_text(
+                                texts, starts, counts, labels, targets, node, "byZero",
+                            )),
+                        )) || ((kind == "call")
+                            && self::callable_emission_has_name(
+                                names,
+                                &(self::callable_emission_text(
+                                    texts, starts, counts, labels, targets, node, "fn",
+                                )),
+                            ))
+                        {
+                            true
+                        } else {
+                            {
+                                let source_ml_source1_s3 = if kind == "apply" {
+                                    {
+                                        let fn_ = self::callable_emission_field(
+                                            starts, counts, labels, targets, node, "fn",
+                                        );
+                                        {
+                                            let target = self::callable_emission_text(
+                                                texts, starts, counts, labels, targets, fn_, "k",
+                                            );
+                                            if ((target == "functionRef")
+                                                && self::callable_emission_has_name(
+                                                    names,
+                                                    &(self::callable_emission_text(
+                                                        texts, starts, counts, labels, targets,
+                                                        fn_, "fn",
+                                                    )),
+                                                ))
+                                                || ((target == "lambda")
+                                                    && self::read_callable_eager_effects(
+                                                        forms,
+                                                        texts,
+                                                        starts,
+                                                        counts,
+                                                        labels,
+                                                        targets,
+                                                        self::callable_emission_field(
+                                                            starts, counts, labels, targets, fn_,
+                                                            "body",
+                                                        ),
+                                                        names,
+                                                    ))
+                                            {
+                                                self::MlTemporaryReadCallableEagerEffectsJoin10::MlTemporaryReadCallableEagerEffectsJoin10Return(true)
+                                            } else {
+                                                self::MlTemporaryReadCallableEagerEffectsJoin10::MlTemporaryReadCallableEagerEffectsJoin10Next
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    self::MlTemporaryReadCallableEagerEffectsJoin10::MlTemporaryReadCallableEagerEffectsJoin10Next
+                                };
+                                match source_ml_source1_s3 {
+                                        self::MlTemporaryReadCallableEagerEffectsJoin10::MlTemporaryReadCallableEagerEffectsJoin10Next => {
+                                            {
+                                                let at = self::read_required_number_fact(starts, node);
+                                                {
+                                                    let end = at + self::read_required_number_fact(counts, node);
+                                                    {
+                                                        let source_ml_source1_s4 = self::source_ml_temporary_read_callable_eager_effects_loop11(forms, texts, starts, counts, labels, targets, names, at, end);
+                                                        match source_ml_source1_s4 {
+                                                            self::MlTemporaryReadCallableEagerEffectsLoop11Result::MlTemporaryReadCallableEagerEffectsLoop11Done => {
+                                                                false
+                                                            }
+                                                            self::MlTemporaryReadCallableEagerEffectsLoop11Result::MlTemporaryReadCallableEagerEffectsLoop11Return(source_ml_temporary_result11) => {
+                                                                source_ml_temporary_result11
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        self::MlTemporaryReadCallableEagerEffectsJoin10::MlTemporaryReadCallableEagerEffectsJoin10Return(source_ml_temporary_result11_2) => {
+                                            source_ml_temporary_result11_2
+                                        }
+                                    }
+                            }
+                        }
+                    } else {
+                        false
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_callable_effectful_declarations(
+    forms: &[String],
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    declarations: f64,
+) -> Vec<f64> {
+    {
+        let selected = Vec::<f64>::new();
+        {
+            let names = Vec::<String>::new();
+            {
+                let grew = true;
+                {
+                    self::source_ml_temporary_read_callable_effectful_declarations_loop12(
+                        forms,
+                        texts,
+                        starts,
+                        counts,
+                        labels,
+                        targets,
+                        declarations,
+                        selected,
+                        names,
+                        grew,
+                    )
+                }
+            }
+        }
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -126,10 +300,7 @@ pub fn callable_emission_obligations(
                                             let end =
                                                 at + self::read_required_number_fact(counts, node);
                                             {
-                                                self::ml_callable_emission_obligations_loop12(
-                                                    forms, texts, starts, counts, labels, targets,
-                                                    names, selected_9, at, end,
-                                                )
+                                                self::source_ml_temporary_callable_emission_obligations_loop15(forms, texts, starts, counts, labels, targets, names, selected_9, at, end)
                                             }
                                         }
                                     }
@@ -163,19 +334,19 @@ pub fn plan_callable_output_obligations(
     {
         let names = Vec::<String>::new();
         {
-            let ml_values13 = declarations.to_vec();
+            let source_ml_temporary_values16 = declarations.to_vec();
             {
-                let ml_index13 = self::ml::Big::from_i128(0);
+                let source_ml_temporary_index16 = self::ml::Big::from_i128(0);
                 {
-                    let names_2 = self::ml_plan_callable_output_obligations_loop14(
+                    let names_2 = self::source_ml_temporary_plan_callable_output_obligations_loop17(
                         texts,
                         starts,
                         counts,
                         labels,
                         targets,
                         names,
-                        &(ml_values13),
-                        ml_index13,
+                        &(source_ml_temporary_values16),
+                        source_ml_temporary_index16,
                     );
                     self::callable_emission_obligations(
                         forms,
@@ -206,26 +377,24 @@ pub fn read_callable_output_target_refusal(target: &str, count: f64) -> String {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlCallableEmissionFieldLoop1Result {
-    MlCallableEmissionFieldLoop1Done,
-    MlCallableEmissionFieldLoop1Return(f64),
+pub enum MlTemporaryCallableEmissionFieldLoop1Result {
+    MlTemporaryCallableEmissionFieldLoop1Done,
+    MlTemporaryCallableEmissionFieldLoop1Return(f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_callable_emission_field_loop1(
+pub fn source_ml_temporary_callable_emission_field_loop1(
     labels: &[String],
     targets: &[f64],
     field: &str,
     mut at: f64,
     mut end: f64,
-) -> self::MlCallableEmissionFieldLoop1Result {
+) -> self::MlTemporaryCallableEmissionFieldLoop1Result {
     loop {
         return if at < end {
             if (self::read_required_text_fact(labels, at)) == field {
-                self::MlCallableEmissionFieldLoop1Result::MlCallableEmissionFieldLoop1Return(
-                    self::read_required_number_fact(targets, at),
-                )
+                self::MlTemporaryCallableEmissionFieldLoop1Result::MlTemporaryCallableEmissionFieldLoop1Return(self::read_required_number_fact(targets, at))
             } else {
                 {
                     let at_2 = at + 1f64;
@@ -236,7 +405,7 @@ pub fn ml_callable_emission_field_loop1(
                 }
             }
         } else {
-            self::MlCallableEmissionFieldLoop1Result::MlCallableEmissionFieldLoop1Done
+            self::MlTemporaryCallableEmissionFieldLoop1Result::MlTemporaryCallableEmissionFieldLoop1Done
         };
     }
 }
@@ -248,7 +417,7 @@ pub fn ml_callable_emission_field_loop1(
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_plan_callable_capture_bindings_loop4(
+pub fn source_ml_temporary_plan_callable_capture_bindings_loop4(
     texts: &[String],
     starts: &[f64],
     counts: &[f64],
@@ -293,20 +462,25 @@ pub fn ml_plan_callable_capture_bindings_loop4(
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_plan_callable_capture_bindings_loop3(
+pub fn source_ml_temporary_plan_callable_capture_bindings_loop3(
     texts: &[String],
     starts: &[f64],
     counts: &[f64],
     labels: &[String],
     targets: &[f64],
     mut selected: Vec<f64>,
-    ml_values2: &[f64],
-    mut ml_index2: self::ml::Big,
+    source_ml_temporary_values2: &[f64],
+    mut source_ml_temporary_index2: self::ml::Big,
 ) -> Vec<f64> {
     loop {
-        if ml_index2 < (self::ml::Big::from_u128(ml_values2.len() as u128)) {
+        if source_ml_temporary_index2
+            < (self::ml::Big::from_u128(source_ml_temporary_values2.len() as u128))
+        {
             {
-                let reference = self::ml_array::at(ml_values2, ml_index2.to_index());
+                let reference = self::ml_array::at(
+                    source_ml_temporary_values2,
+                    source_ml_temporary_index2.to_index(),
+                );
                 {
                     let name = self::callable_emission_text(
                         texts, starts, counts, labels, targets, reference, "name",
@@ -316,29 +490,41 @@ pub fn ml_plan_callable_capture_bindings_loop3(
                         {
                             let at = 0f64;
                             {
-                                let position_2 = self::ml_plan_callable_capture_bindings_loop4(
-                                    texts,
-                                    starts,
-                                    counts,
-                                    labels,
-                                    targets,
-                                    &(selected),
-                                    &(name),
-                                    position,
-                                    at,
-                                );
+                                let position_2 =
+                                    self::source_ml_temporary_plan_callable_capture_bindings_loop4(
+                                        texts,
+                                        starts,
+                                        counts,
+                                        labels,
+                                        targets,
+                                        &(selected),
+                                        &(name),
+                                        position,
+                                        at,
+                                    );
                                 if position_2 < 0f64 {
                                     {
                                         let selected_2 = {
-                                            let (ml_append_right, ml_append_left) =
-                                                (vec![reference], selected);
-                                            self::ml_array::append(ml_append_left, ml_append_right)
+                                            let source_ml_source1_concat_value5 = selected;
+                                            {
+                                                let source_ml_source1_concat_value6 =
+                                                    vec![reference];
+                                                self::ml_array::append(
+                                                    self::ml_array::append(
+                                                        Vec::<f64>::new(),
+                                                        source_ml_source1_concat_value5,
+                                                    ),
+                                                    source_ml_source1_concat_value6,
+                                                )
+                                            }
                                         };
                                         {
-                                            let ml_index2_2 =
-                                                ml_index2.add(&self::ml::Big::from_i128(1));
+                                            let source_ml_temporary_index2_2 =
+                                                source_ml_temporary_index2
+                                                    .add(&self::ml::Big::from_i128(1));
                                             {
-                                                (selected, ml_index2) = (selected_2, ml_index2_2);
+                                                (selected, source_ml_temporary_index2) =
+                                                    (selected_2, source_ml_temporary_index2_2);
                                                 continue;
                                             }
                                         }
@@ -346,22 +532,47 @@ pub fn ml_plan_callable_capture_bindings_loop3(
                                 }
                                 {
                                     {
-                                        let selected_3 = self::ml_array::append(
-                                            self::ml_array::append(
-                                                self::ml_array::slice(&selected, 0f64, position_2),
-                                                vec![reference],
-                                            ),
-                                            self::ml_array::slice(
-                                                &selected,
-                                                (position_2 + 1f64),
-                                                f64::INFINITY,
-                                            ),
-                                        );
-                                        {
-                                            let ml_index2_3 =
-                                                ml_index2.add(&self::ml::Big::from_i128(1));
+                                        let selected_3 = {
+                                            let source_ml_source1_concat_value9 = {
+                                                let source_ml_source1_concat_value7 =
+                                                    self::ml_array::slice(
+                                                        &selected, 0f64, position_2,
+                                                    );
+                                                {
+                                                    let source_ml_source1_concat_value8 =
+                                                        vec![reference];
+                                                    self::ml_array::append(
+                                                        self::ml_array::append(
+                                                            Vec::<f64>::new(),
+                                                            source_ml_source1_concat_value7,
+                                                        ),
+                                                        source_ml_source1_concat_value8,
+                                                    )
+                                                }
+                                            };
                                             {
-                                                (selected, ml_index2) = (selected_3, ml_index2_3);
+                                                let source_ml_source1_concat_value10 =
+                                                    self::ml_array::slice(
+                                                        &selected,
+                                                        (position_2 + 1f64),
+                                                        f64::INFINITY,
+                                                    );
+                                                self::ml_array::append(
+                                                    self::ml_array::append(
+                                                        Vec::<f64>::new(),
+                                                        source_ml_source1_concat_value9,
+                                                    ),
+                                                    source_ml_source1_concat_value10,
+                                                )
+                                            }
+                                        };
+                                        {
+                                            let source_ml_temporary_index2_3 =
+                                                source_ml_temporary_index2
+                                                    .add(&self::ml::Big::from_i128(1));
+                                            {
+                                                (selected, source_ml_temporary_index2) =
+                                                    (selected_3, source_ml_temporary_index2_3);
                                                 continue;
                                             }
                                         }
@@ -378,46 +589,158 @@ pub fn ml_plan_callable_capture_bindings_loop3(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlCallableEmissionHasNameLoop6Result {
-    MlCallableEmissionHasNameLoop6Done,
-    MlCallableEmissionHasNameLoop6Return(bool),
+pub enum MlTemporaryPlanFormalReferenceStoreFunctionsLoop6Result {
+    MlTemporaryPlanFormalReferenceStoreFunctionsLoop6Done(Vec<String>, bool),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryPlanFormalReferenceStoreFunctionsJoin7 {
+    MlTemporaryPlanFormalReferenceStoreFunctionsJoin7Next(Vec<String>, bool),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_callable_emission_has_name_loop6(
-    name: &str,
-    ml_values5: &[String],
-    mut ml_index5: self::ml::Big,
-) -> self::MlCallableEmissionHasNameLoop6Result {
+pub fn source_ml_temporary_plan_formal_reference_store_functions_loop6(
+    callers: &[String],
+    callees: &[String],
+    mut selected: Vec<String>,
+    mut changed: bool,
+    mut position: f64,
+) -> self::MlTemporaryPlanFormalReferenceStoreFunctionsLoop6Result {
     loop {
-        return if ml_index5 < (self::ml::Big::from_u128(ml_values5.len() as u128)) {
+        return if position < (callers.len() as f64) {
             {
-                let previous = self::ml_array::at(ml_values5, ml_index5.to_index());
+                let caller = self::read_required_text_fact(callers, position);
+                {
+                    let source_ml_source1_s13 = if !(self::callable_emission_has_name(
+                        &(selected),
+                        &(caller),
+                    )) && self::callable_emission_has_name(
+                        &(selected),
+                        &(self::read_required_text_fact(callees, position)),
+                    ) {
+                        {
+                            let selected_2 = {
+                                let source_ml_source1_concat_value14 = selected;
+                                {
+                                    let source_ml_source1_concat_value15 = vec![caller.clone()];
+                                    self::ml_array::append(
+                                        self::ml_array::append(
+                                            Vec::<String>::new(),
+                                            source_ml_source1_concat_value14,
+                                        ),
+                                        source_ml_source1_concat_value15,
+                                    )
+                                }
+                            };
+                            {
+                                let changed_2 = true;
+                                self::MlTemporaryPlanFormalReferenceStoreFunctionsJoin7::MlTemporaryPlanFormalReferenceStoreFunctionsJoin7Next(selected_2, changed_2)
+                            }
+                        }
+                    } else {
+                        self::MlTemporaryPlanFormalReferenceStoreFunctionsJoin7::MlTemporaryPlanFormalReferenceStoreFunctionsJoin7Next(selected, changed)
+                    };
+                    match source_ml_source1_s13 {
+                        self::MlTemporaryPlanFormalReferenceStoreFunctionsJoin7::MlTemporaryPlanFormalReferenceStoreFunctionsJoin7Next(selected_3, changed_3) => {
+                            {
+                                let position_2 = position + 1f64;
+                                {
+                                    (selected, changed, position) = (selected_3, changed_3, position_2);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryPlanFormalReferenceStoreFunctionsLoop6Result::MlTemporaryPlanFormalReferenceStoreFunctionsLoop6Done(selected, changed)
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_plan_formal_reference_store_functions_loop5(
+    callers: &[String],
+    callees: &[String],
+    mut selected: Vec<String>,
+    mut changed: bool,
+) -> Vec<String> {
+    loop {
+        return if changed {
+            {
+                let changed_2 = false;
+                {
+                    let position = 0f64;
+                    {
+                        let source_ml_source1_s16 =
+                            self::source_ml_temporary_plan_formal_reference_store_functions_loop6(
+                                callers, callees, selected, changed_2, position,
+                            );
+                        match source_ml_source1_s16 {
+                            self::MlTemporaryPlanFormalReferenceStoreFunctionsLoop6Result::MlTemporaryPlanFormalReferenceStoreFunctionsLoop6Done(selected_2, changed_3) => {
+                                {
+                                    (selected, changed) = (selected_2, changed_3);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            selected
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryCallableEmissionHasNameLoop9Result {
+    MlTemporaryCallableEmissionHasNameLoop9Done,
+    MlTemporaryCallableEmissionHasNameLoop9Return(bool),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_callable_emission_has_name_loop9(
+    name: &str,
+    source_ml_temporary_values8: &[String],
+    mut source_ml_temporary_index8: self::ml::Big,
+) -> self::MlTemporaryCallableEmissionHasNameLoop9Result {
+    loop {
+        return if source_ml_temporary_index8
+            < (self::ml::Big::from_u128(source_ml_temporary_values8.len() as u128))
+        {
+            {
+                let previous = self::ml_array::at(
+                    source_ml_temporary_values8,
+                    source_ml_temporary_index8.to_index(),
+                );
                 if previous == name {
-                    self::MlCallableEmissionHasNameLoop6Result::MlCallableEmissionHasNameLoop6Return(
-                        true,
-                    )
+                    self::MlTemporaryCallableEmissionHasNameLoop9Result::MlTemporaryCallableEmissionHasNameLoop9Return(true)
                 } else {
                     {
-                        let ml_index5_2 = ml_index5.add(&self::ml::Big::from_i128(1));
+                        let source_ml_temporary_index8_2 =
+                            source_ml_temporary_index8.add(&self::ml::Big::from_i128(1));
                         {
-                            ml_index5 = ml_index5_2;
+                            source_ml_temporary_index8 = source_ml_temporary_index8_2;
                             continue;
                         }
                     }
                 }
             }
         } else {
-            self::MlCallableEmissionHasNameLoop6Result::MlCallableEmissionHasNameLoop6Done
+            self::MlTemporaryCallableEmissionHasNameLoop9Result::MlTemporaryCallableEmissionHasNameLoop9Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlReadCallableEagerEffectsLoop8Result {
-    MlReadCallableEagerEffectsLoop8Done,
-    MlReadCallableEagerEffectsLoop8Return(bool),
+pub enum MlTemporaryReadCallableEagerEffectsLoop11Result {
+    MlTemporaryReadCallableEagerEffectsLoop11Done,
+    MlTemporaryReadCallableEagerEffectsLoop11Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
@@ -427,7 +750,7 @@ pub enum MlReadCallableEagerEffectsLoop8Result {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_read_callable_eager_effects_loop8(
+pub fn source_ml_temporary_read_callable_eager_effects_loop11(
     forms: &[String],
     texts: &[String],
     starts: &[f64],
@@ -437,7 +760,7 @@ pub fn ml_read_callable_eager_effects_loop8(
     names: &[String],
     mut at: f64,
     mut end: f64,
-) -> self::MlReadCallableEagerEffectsLoop8Result {
+) -> self::MlTemporaryReadCallableEagerEffectsLoop11Result {
     loop {
         return if at < end {
             if self::accept_callable_effect_field(&(self::read_required_text_fact(labels, at)))
@@ -452,9 +775,7 @@ pub fn ml_read_callable_eager_effects_loop8(
                     names,
                 )
             {
-                self::MlReadCallableEagerEffectsLoop8Result::MlReadCallableEagerEffectsLoop8Return(
-                    true,
-                )
+                self::MlTemporaryReadCallableEagerEffectsLoop11Result::MlTemporaryReadCallableEagerEffectsLoop11Return(true)
             } else {
                 {
                     let at_2 = at + 1f64;
@@ -465,25 +786,25 @@ pub fn ml_read_callable_eager_effects_loop8(
                 }
             }
         } else {
-            self::MlReadCallableEagerEffectsLoop8Result::MlReadCallableEagerEffectsLoop8Done
+            self::MlTemporaryReadCallableEagerEffectsLoop11Result::MlTemporaryReadCallableEagerEffectsLoop11Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlReadCallableEagerEffectsJoin7 {
-    MlReadCallableEagerEffectsJoin7Next,
-    MlReadCallableEagerEffectsJoin7Return(bool),
+pub enum MlTemporaryReadCallableEagerEffectsJoin10 {
+    MlTemporaryReadCallableEagerEffectsJoin10Next,
+    MlTemporaryReadCallableEagerEffectsJoin10Return(bool),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadCallableEffectfulDeclarationsLoop10Result {
-    MlReadCallableEffectfulDeclarationsLoop10Done(Vec<f64>, Vec<String>, bool),
+pub enum MlTemporaryReadCallableEffectfulDeclarationsLoop13Result {
+    MlTemporaryReadCallableEffectfulDeclarationsLoop13Done(Vec<f64>, Vec<String>, bool),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadCallableEffectfulDeclarationsJoin11 {
-    MlReadCallableEffectfulDeclarationsJoin11Next(Vec<f64>, Vec<String>, bool),
+pub enum MlTemporaryReadCallableEffectfulDeclarationsJoin14 {
+    MlTemporaryReadCallableEffectfulDeclarationsJoin14Next(Vec<f64>, Vec<String>, bool),
 }
 
 /// Execute the checked shared source algorithm.
@@ -493,7 +814,7 @@ pub enum MlReadCallableEffectfulDeclarationsJoin11 {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_read_callable_effectful_declarations_loop10(
+pub fn source_ml_temporary_read_callable_effectful_declarations_loop13(
     forms: &[String],
     texts: &[String],
     starts: &[f64],
@@ -505,7 +826,7 @@ pub fn ml_read_callable_effectful_declarations_loop10(
     mut grew: bool,
     mut at: f64,
     mut end: f64,
-) -> self::MlReadCallableEffectfulDeclarationsLoop10Result {
+) -> self::MlTemporaryReadCallableEffectfulDeclarationsLoop13Result {
     loop {
         return if at < end {
             {
@@ -519,7 +840,7 @@ pub fn ml_read_callable_effectful_declarations_loop10(
                             texts, starts, counts, labels, targets, entry, "fullName",
                         );
                         {
-                            let ml_s5 = if ((kind == "fn")
+                            let source_ml_source1_s21 = if ((kind == "fn")
                                 && !(self::callable_emission_has_name(&(names), &(name))))
                                 && self::read_callable_eager_effects(
                                     forms,
@@ -535,27 +856,44 @@ pub fn ml_read_callable_effectful_declarations_loop10(
                                 ) {
                                 {
                                     let selected_2 = {
-                                        let (ml_append_right, ml_append_left) =
-                                            (vec![entry], selected);
-                                        self::ml_array::append(ml_append_left, ml_append_right)
+                                        let source_ml_source1_concat_value22 = selected;
+                                        {
+                                            let source_ml_source1_concat_value23 = vec![entry];
+                                            self::ml_array::append(
+                                                self::ml_array::append(
+                                                    Vec::<f64>::new(),
+                                                    source_ml_source1_concat_value22,
+                                                ),
+                                                source_ml_source1_concat_value23,
+                                            )
+                                        }
                                     };
                                     {
                                         let names_2 = {
-                                            let (ml_append_right, ml_append_left) =
-                                                (vec![name.clone()], names);
-                                            self::ml_array::append(ml_append_left, ml_append_right)
+                                            let source_ml_source1_concat_value24 = names;
+                                            {
+                                                let source_ml_source1_concat_value25 =
+                                                    vec![name.clone()];
+                                                self::ml_array::append(
+                                                    self::ml_array::append(
+                                                        Vec::<String>::new(),
+                                                        source_ml_source1_concat_value24,
+                                                    ),
+                                                    source_ml_source1_concat_value25,
+                                                )
+                                            }
                                         };
                                         {
                                             let grew_2 = true;
-                                            self::MlReadCallableEffectfulDeclarationsJoin11::MlReadCallableEffectfulDeclarationsJoin11Next(selected_2, names_2, grew_2)
+                                            self::MlTemporaryReadCallableEffectfulDeclarationsJoin14::MlTemporaryReadCallableEffectfulDeclarationsJoin14Next(selected_2, names_2, grew_2)
                                         }
                                     }
                                 }
                             } else {
-                                self::MlReadCallableEffectfulDeclarationsJoin11::MlReadCallableEffectfulDeclarationsJoin11Next(selected, names, grew)
+                                self::MlTemporaryReadCallableEffectfulDeclarationsJoin14::MlTemporaryReadCallableEffectfulDeclarationsJoin14Next(selected, names, grew)
                             };
-                            match ml_s5 {
-                                self::MlReadCallableEffectfulDeclarationsJoin11::MlReadCallableEffectfulDeclarationsJoin11Next(selected_3, names_3, grew_3) => {
+                            match source_ml_source1_s21 {
+                                self::MlTemporaryReadCallableEffectfulDeclarationsJoin14::MlTemporaryReadCallableEffectfulDeclarationsJoin14Next(selected_3, names_3, grew_3) => {
                                     {
                                         let at_2 = at + 1f64;
                                         {
@@ -570,161 +908,7 @@ pub fn ml_read_callable_effectful_declarations_loop10(
                 }
             }
         } else {
-            self::MlReadCallableEffectfulDeclarationsLoop10Result::MlReadCallableEffectfulDeclarationsLoop10Done(selected, names, grew)
+            self::MlTemporaryReadCallableEffectfulDeclarationsLoop13Result::MlTemporaryReadCallableEffectfulDeclarationsLoop13Done(selected, names, grew)
         };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn ml_read_callable_effectful_declarations_loop9(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    mut declarations: f64,
-    mut selected: Vec<f64>,
-    mut names: Vec<String>,
-    mut grew: bool,
-) -> Vec<f64> {
-    loop {
-        return if grew {
-            {
-                let grew_2 = false;
-                {
-                    let at = self::read_required_number_fact(starts, declarations);
-                    {
-                        let end = at + self::read_required_number_fact(counts, declarations);
-                        {
-                            let ml_s6 = self::ml_read_callable_effectful_declarations_loop10(
-                                forms, texts, starts, counts, labels, targets, selected, names,
-                                grew_2, at, end,
-                            );
-                            match ml_s6 {
-                                self::MlReadCallableEffectfulDeclarationsLoop10Result::MlReadCallableEffectfulDeclarationsLoop10Done(selected_2, names_2, grew_3) => {
-                                    {
-                                        (selected, names, grew) = (selected_2, names_2, grew_3);
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            selected
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn ml_callable_emission_obligations_loop12(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    names: &[String],
-    mut selected: Vec<f64>,
-    mut at: f64,
-    mut end: f64,
-) -> Vec<f64> {
-    loop {
-        if at < end {
-            {
-                let selected_3 = if self::accept_callable_effect_field(
-                    &(self::read_required_text_fact(labels, at)),
-                ) {
-                    {
-                        {
-                            let (ml_append_right, ml_append_left) = (
-                                self::callable_emission_obligations(
-                                    forms,
-                                    texts,
-                                    starts,
-                                    counts,
-                                    labels,
-                                    targets,
-                                    self::read_required_number_fact(targets, at),
-                                    names,
-                                ),
-                                selected,
-                            );
-                            self::ml_array::append(ml_append_left, ml_append_right)
-                        }
-                    }
-                } else {
-                    selected
-                };
-                {
-                    let at_2 = at + 1f64;
-                    {
-                        (selected, at) = (selected_3, at_2);
-                        continue;
-                    }
-                }
-            }
-        }
-        return { selected };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn ml_plan_callable_output_obligations_loop14(
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    mut names: Vec<String>,
-    ml_values13: &[f64],
-    mut ml_index13: self::ml::Big,
-) -> Vec<String> {
-    loop {
-        if ml_index13 < (self::ml::Big::from_u128(ml_values13.len() as u128)) {
-            {
-                let entry = self::ml_array::at(ml_values13, ml_index13.to_index());
-                {
-                    let names_2 = {
-                        let (ml_append_right, ml_append_left) = (
-                            vec![self::callable_emission_text(
-                                texts, starts, counts, labels, targets, entry, "fullName",
-                            )],
-                            names,
-                        );
-                        self::ml_array::append(ml_append_left, ml_append_right)
-                    };
-                    {
-                        let ml_index13_2 = ml_index13.add(&self::ml::Big::from_i128(1));
-                        {
-                            (names, ml_index13) = (names_2, ml_index13_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-        }
-        return { names };
     }
 }

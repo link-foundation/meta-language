@@ -1,7 +1,7 @@
 // Record layout is supplied by the checked type. Host adapters render each
 // actual child once and quote JavaScript property labels with the existing
 // source-string adapter before applying these target syntax rules.
-import { readRequiredTextFact } from './fact-column-rules.js';
+import { readRequiredTextFact, readRequiredBooleanFact } from './fact-column-rules.js';
 
 /** @param {string[]} items @param {string} separator @returns {string} */
 function joinRecordItems(items, separator) {
@@ -39,6 +39,29 @@ export function renderRecordField(target, object, field, index) {
   if (target === 'JavaScript') return '(' + object + ')[' + field + ']';
   if (target === 'Rust') return '(' + object + ').' + index;
   return '';
+}
+
+/** @param {string[]} labels @param {string[]} items
+ * @param {boolean[]} optional @returns {string} */
+export function renderJavaScriptOptionalRecordValue(labels, items, optional) {
+  const entries = [];
+  let index = 0;
+  while (index < items.length) {
+    const label = readRequiredTextFact(labels, index);
+    const item = readRequiredTextFact(items, index);
+    if (readRequiredBooleanFact(optional, index)) {
+      entries.push('...((field) => field === undefined ? {} : {[' + label + ']: field[0]})(' + item + ')');
+    } else {
+      entries.push('[' + label + ']: ' + item);
+    }
+    index += 1;
+  }
+  return '({' + joinRecordItems(entries, ', ') + '})';
+}
+
+/** @param {string} object @param {string} field @returns {string} */
+export function renderJavaScriptOptionalRecordField(object, field) {
+  return '((object) => Object.hasOwn(object, ' + field + ') ? [object[' + field + ']] : undefined)(' + object + ')';
 }
 
 /** @param {string} target @param {string} object @param {number} index

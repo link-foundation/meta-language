@@ -1,0 +1,5 @@
+import {draftTranslationProfileInventory} from './draft-translation-profile-inventory.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+draftTranslationProfileInventory({id:'javascript-all-supplied-argument-capture',fixture:'excess-arguments',programAsset:'excess-argument-program',nativeTest:'translation_javascript_excess_arguments',
+ javascript:['js/src/translation/excess-argument-rules.js','js/src/translation/excess-arguments.js','js/src/translation/optional-callables.js','js/src/translation/check.js','js/src/translation/javascript-infer.js','js/tests/translation-excess-arguments.test.js'],
+ rust:['rust/src/translation/excess_argument_rules.rs','rust/src/translation/check/excess_arguments.rs','rust/src/translation/check/callables.rs','rust/src/translation/check/expressions/calls.rs','rust/src/translation/check/optional_callables.rs','rust/src/translation/javascript/infer/callables/optional_arguments.rs','rust/src/translation/javascript/infer/products.rs','rust/tests/unit/translation_javascript_excess_arguments.rs']});

@@ -14,15 +14,64 @@ use super::{
     guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim, jsdoc_tags, lower,
     lower_imperative, non_empty, span, statement_uses, tokenize, type_error, unsupported,
 };
+use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::frontend_rules::{
     find_default_parameter_reference, read_java_script_lexical_declaration_step,
 };
+use crate::translation::javascript_constructor_field_type_rules::read_java_script_constructor_field_boundary;
 use crate::translation::primitive_value_rules::accept_object_property_definition;
 use crate::translation::surface::SExpr;
+use crate::translation::types::option;
 
 mod file;
 mod jsdoc;
 use jsdoc::{jsdoc_type, promised};
+
+/// An actual function expression or arrow function at a source token index.
+pub(in crate::translation) fn test_javascript_source_function_start(
+    tokens: &[Token],
+    index: usize,
+) -> bool {
+    let Some(mut token) = tokens.get(index) else {
+        return false;
+    };
+    if token.kind == TokenKind::Identifier
+        && !crate::translation::javascript_identifier_rules::accept_java_script_source_keyword_token(
+            &token.value,
+            &token.raw,
+        )
+        && tokens.get(index + 1).map(|next| next.value.as_str()) != Some("=>")
+    {
+        return false;
+    }
+    let mut index = index;
+    if token.kind == TokenKind::Identifier
+        && token.value == "async"
+        && tokens.get(index + 1).map(|next| next.value.as_str()) != Some("=>")
+    {
+        index += 1;
+        let Some(next) = tokens.get(index) else {
+            return false;
+        };
+        token = next;
+    }
+    let kind = match token.kind {
+        TokenKind::Identifier => "identifier",
+        TokenKind::Punct => "punct",
+        _ => "",
+    };
+    let after_group = if token.kind == TokenKind::Punct && token.value == "(" {
+        tokens.get(super::matching_source_group(tokens, index) + 1)
+    } else {
+        None
+    };
+    super::surface_rules::accept_java_script_function_start(
+        kind,
+        &token.value,
+        tokens.get(index + 1).map_or("", |next| next.value.as_str()),
+        after_group.map_or("", |next| next.value.as_str()),
+    )
+}
 
 /// How a function's body is written: a block, or an arrow's block or expression.
 #[derive(Clone)]
@@ -30,6 +79,7 @@ enum Body {
     Block,
     Arrow,
     RecordParameters(Box<super::record_parameters::RecordParameters>),
+    RecordArrowParameters(Box<super::record_parameters::RecordParameters>),
 }
 
 impl JavaScriptParser {
@@ -81,14 +131,20 @@ impl JavaScriptParser {
                     ctors: ctors.clone(),
                     span: None,
                     generated: false,
+                    source_standard_collection_library_owner: None,
+                    source_standard_collection_carrier: None,
                     source_unit_clone_derivation: None,
+                    source_field_signatures: None,
                 });
                 items.push(SItem::Data(SData {
                     name,
                     ctors,
                     span: Some(range),
                     generated: false,
+                    source_standard_collection_library_owner: None,
+                    source_standard_collection_carrier: None,
                     source_unit_clone_derivation: None,
+                    source_field_signatures: None,
                 }));
             }
         }
@@ -101,20 +157,50 @@ impl JavaScriptParser {
             tokenize(text, Language::JavaScript)?.tokens,
             Language::JavaScript,
         );
+        let punctuation: Vec<String> = c
+            .tokens
+            .iter()
+            .map(|token| {
+                if token.kind == TokenKind::Punct {
+                    token.value.clone()
+                } else {
+                    String::new()
+                }
+            })
+            .collect();
         let mut ctors: Vec<SCtor> = Vec::new();
         loop {
             if !c.is("{") {
-                return Err(unsupported(
-                    &format!("@typedef {name}"),
-                    "a portable data type is a union of { $: 'tag', … } object types",
-                    Some(range),
-                ));
+                let reference = c.identifier(Some("tagged object type alternative"))?;
+                let alternatives = self
+                    .data_types
+                    .iter()
+                    .find(|data| data.name == reference.value)
+                    .ok_or_else(|| unsupported(
+                        &format!("@typedef {name}"),
+                        &format!("tagged object alternative {} needs its declared constructor layout", reference.value),
+                        Some(range),
+                    ))?;
+                for constructor in &alternatives.ctors {
+                    if ctors.iter().any(|ctor| ctor.name == constructor.name) {
+                        return Err(type_error(
+                            format!("duplicate tag {} in {name}", constructor.name),
+                            Some(range),
+                        ));
+                    }
+                    ctors.push(constructor.clone());
+                }
+                if c.eat("|").is_none() {
+                    break;
+                }
+                continue;
             }
             c.advance();
             let mut tag = None;
             let mut fields = Vec::new();
             while !c.is("}") {
                 let key = c.identifier(Some("object type"))?;
+                let optional = key.value != "$" && c.eat("?").is_some();
                 c.expect(":", Some("object type"))?;
                 if key.value == "$" {
                     let value = c.advance();
@@ -125,45 +211,50 @@ impl JavaScriptParser {
                             Some(range),
                         ));
                     }
+                    self.require_scalar_string_token(&value, "datatype constructor tag")?;
                     tag = Some(value.value);
                 } else {
-                    let mut ty = c.identifier(Some("field type"))?.value;
-                    if c.is("<") {
-                        // Array<T>, whose closing brackets may be read as one >> token.
-                        let mut depth = 0i32;
-                        loop {
-                            let token = c.advance();
-                            for char in token.value.chars() {
-                                depth += match char {
-                                    '<' => 1,
-                                    '>' => -1,
-                                    _ => 0,
-                                };
-                            }
-                            ty.push_str(&token.value);
-                            if depth <= 0 || c.at_end() {
-                                break;
-                            }
-                        }
-                    }
-                    while c.is("[") {
-                        c.advance();
-                        c.expect("]", Some("field type"))?;
-                        ty.push_str("[]");
-                    }
-                    if !c.is(",") && !c.is(";") && !c.is("}") {
-                        return Err(unsupported(
+                    let invalid_type = || {
+                        unsupported(
                             &format!("field type of {}", key.value),
-                            "field types are number, bigint, boolean, string, a @typedef name or an array T[] of one",
+                            "the complete field type needs balanced delimiters",
                             Some(range),
-                        ));
+                        )
+                    };
+                    let start = c.index;
+                    let start_number = f64::from(u32::try_from(start).map_err(|_| invalid_type())?);
+                    let boundary =
+                        read_java_script_constructor_field_boundary(&punctuation, start_number);
+                    let end = number_index(boundary)
+                        .filter(|end| *end > start && *end < c.tokens.len())
+                        .ok_or_else(invalid_type)?;
+                    let mut field_type = String::new();
+                    for (index, token) in c.tokens[start..end].iter().enumerate() {
+                        if index > 0
+                            && c.tokens[start + index - 1].kind != TokenKind::Punct
+                            && token.kind != TokenKind::Punct
+                        {
+                            field_type.push(' ');
+                        }
+                        field_type.push_str(if token.kind == TokenKind::Identifier {
+                            &token.value
+                        } else {
+                            &token.raw
+                        });
                     }
+                    let ty = self.ty(&field_type, range)?;
                     fields.push(SField {
+                        optional,
                         name: Some(key.value),
-                        ty: self.ty(&ty, range)?,
+                        ty: if optional {
+                            crate::translation::javascript_constructor_presence::field_type(ty)
+                        } else {
+                            ty
+                        },
                         rocq_type: None,
                         span: None,
                     });
+                    c.index = end;
                 }
                 if c.eat(",").is_none() && c.eat(";").is_none() {
                     break;
@@ -256,6 +347,7 @@ impl JavaScriptParser {
         }
         let name = self.cursor.identifier(Some("function"))?;
         global(&name)?;
+        self.lexical.declaration(&name.value, name.span(), 0);
         self.function_rest(start, &name, is_async, true)
     }
 
@@ -269,20 +361,34 @@ impl JavaScriptParser {
     ) -> Result<SFn> {
         let doc = self.jsdoc_for(doc_token)?;
         self.cursor.expect("(", Some(&name_token.value))?;
-        if named_record_parameters
-            && let Some(records) = self.read_named_record_parameters(doc.as_ref(), is_async)?
-        {
+        let arrays = self.read_array_formal_parameters(
+            if named_record_parameters {
+                "ordinary named function declaration"
+            } else {
+                "ordinary namespace object method"
+            },
+            doc.as_ref(),
+            is_async,
+        )?;
+        let records = if arrays.is_some() {
+            arrays
+        } else if named_record_parameters {
+            self.read_named_record_parameters(doc.as_ref(), is_async)?
+        } else {
+            self.read_record_namespace_parameters(doc.as_ref(), is_async)?
+        };
+        if let Some(records) = records {
             return self.function_body(
                 doc_token,
                 name_token,
                 doc,
                 &[],
-                Body::RecordParameters(Box::new(records)),
+                &Body::RecordParameters(Box::new(records)),
                 is_async,
             );
         }
         let tokens = self.parameters(&name_token.value)?;
-        self.function_body(doc_token, name_token, doc, &tokens, Body::Block, is_async)
+        self.function_body(doc_token, name_token, doc, &tokens, &Body::Block, is_async)
     }
 
     /// `const name = (…) => …` or `const name = function (…) { … }` before any
@@ -293,6 +399,8 @@ impl JavaScriptParser {
         self.cursor.expect("const", Some("function"))?;
         let name_token = self.cursor.identifier(Some("function"))?;
         global(&name_token)?;
+        self.lexical
+            .declaration(&name_token.value, name_token.span(), 1);
         self.cursor.expect("=", Some("function"))?;
         self.scope.tdz.remove(&name_token.value);
         let is_async = self.cursor.is("async") && !self.cursor.is_at("=>", 1);
@@ -322,16 +430,45 @@ impl JavaScriptParser {
                 self.cursor.advance();
             }
             self.cursor.expect("(", Some(&name_token.value))?;
-            let tokens = self.parameters(&name_token.value)?;
-            self.function_body(start, &name_token, doc, &tokens, Body::Block, is_async)?
-        } else {
-            let tokens = if self.cursor.eat("(").is_some() {
+            let context=crate::translation::record_callable_parameter_rules::read_java_script_record_constant_context(true).to_string();
+            let arrays = self.read_array_formal_parameters(&context, doc.as_ref(), is_async)?;
+            let records = if arrays.is_some() {
+                arrays
+            } else {
+                self.read_record_constant_parameters(doc.as_ref(), is_async, true)?
+            };
+            let tokens = if records.is_some() {
+                Vec::new()
+            } else {
                 self.parameters(&name_token.value)?
+            };
+            let body = records.map_or(Body::Block, |records| {
+                Body::RecordParameters(Box::new(records))
+            });
+            self.function_body(start, &name_token, doc, &tokens, &body, is_async)?
+        } else {
+            let mut records = None;
+            let tokens = if self.cursor.eat("(").is_some() {
+                let context=crate::translation::record_callable_parameter_rules::read_java_script_record_constant_context(false).to_string();
+                let arrays = self.read_array_formal_parameters(&context, doc.as_ref(), is_async)?;
+                records = if arrays.is_some() {
+                    arrays
+                } else {
+                    self.read_record_constant_parameters(doc.as_ref(), is_async, false)?
+                };
+                if records.is_some() {
+                    Vec::new()
+                } else {
+                    self.parameters(&name_token.value)?
+                }
             } else {
                 vec![(self.cursor.identifier(Some("parameter"))?, None)]
             };
             self.cursor.expect("=>", Some(&name_token.value))?;
-            self.function_body(start, &name_token, doc, &tokens, Body::Arrow, is_async)?
+            let body = records.map_or(Body::Arrow, |records| {
+                Body::RecordArrowParameters(Box::new(records))
+            });
+            self.function_body(start, &name_token, doc, &tokens, &body, is_async)?
         };
         self.cursor.eat(";");
         Ok(function)
@@ -381,43 +518,35 @@ impl JavaScriptParser {
     /// Whether the tokens from `index` are a function expression or an arrow
     /// function, either maybe async.
     pub(super) fn starts_function(&self, index: usize) -> bool {
-        let tokens = &self.cursor.tokens;
-        let Some(mut token) = tokens.get(index) else {
-            return false;
-        };
-        let mut index = index;
-        if token.kind == TokenKind::Identifier
-            && token.value == "async"
-            && tokens.get(index + 1).map(|next| next.value.as_str()) != Some("=>")
-        {
-            index += 1;
-            let Some(next) = tokens.get(index) else {
-                return false;
-            };
-            token = next;
-        }
-        let kind = match token.kind {
-            TokenKind::Identifier => "identifier",
-            TokenKind::Punct => "punct",
-            _ => "",
-        };
-        let after_group = if token.kind == TokenKind::Punct && token.value == "(" {
-            tokens.get(self.matching(index) + 1)
-        } else {
-            None
-        };
-        super::surface_rules::accept_java_script_function_start(
-            kind,
-            &token.value,
-            tokens.get(index + 1).map_or("", |next| next.value.as_str()),
-            after_group.map_or("", |next| next.value.as_str()),
-        )
+        test_javascript_source_function_start(&self.cursor.tokens, index)
     }
 
     /// A parameter list after its `(`, through its `)`.
     pub(super) fn parameters(&mut self, name: &str) -> Result<Vec<(Token, Option<SExpr>)>> {
         let mut tokens: Vec<(Token, Option<SExpr>)> = Vec::new();
         let binding_names = self.parameter_binding_names();
+        let start = self.cursor.index;
+        let close = self.matching(start.saturating_sub(1));
+        let source = self.cursor.tokens[start..=close].to_vec();
+        let ordinary_kinds = source
+            .iter()
+            .map(|token| super::record_parameters::token_kind(token).to_owned())
+            .collect::<Vec<_>>();
+        let ordinary_values = source
+            .iter()
+            .map(|token| token.value.clone())
+            .collect::<Vec<_>>();
+        let census=crate::translation::sequential_parameter_default_rules::plan_ordinary_parameter_binding_positions(&ordinary_kinds,&ordinary_values,0.0);
+        let positions = census.get(1..).unwrap_or_default();
+        let bound_names = positions
+            .iter()
+            .map(|at| {
+                source[crate::translation::frontend_rules::ml_array::number_index(*at)
+                    .expect("actual ordinary binder")]
+                .value
+                .clone()
+            })
+            .collect::<Vec<_>>();
         while !self.cursor.is(")") {
             let token = self.peek();
             if self.cursor.is("...") {
@@ -436,7 +565,7 @@ impl JavaScriptParser {
             }
             let param = self.cursor.identifier(Some("parameter"))?;
             let default_value = if self.cursor.eat("=").is_some() {
-                let remaining = &self.cursor.tokens[self.cursor.index..];
+                let remaining = &self.cursor.tokens[self.cursor.index..start + source.len()];
                 let kinds = remaining
                     .iter()
                     .map(|token| {
@@ -455,29 +584,63 @@ impl JavaScriptParser {
                     .collect();
                 let reference = find_default_parameter_reference(kinds, values, parameters);
                 if reference >= 0.0 {
-                    // The generated rule returns an index into the token input.
-                    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                    let token = &remaining[reference as usize];
-                    return Err(unsupported(
-                        &format!("default reading parameter {}", token.value),
-                        "a call fills in a default where it leaves the argument out, so a default reads no parameter",
-                        Some(token.span()),
-                    ));
+                    use crate::translation::array_formal_parameter_rules::{
+                        self as rules, ml_string::Text,
+                    };
+                    use crate::translation::frontend_rules::ml_array::number_index;
+                    let first = self.cursor.index - start;
+                    let kinds = ordinary_kinds
+                        .iter()
+                        .map(|text| Text::from_text(text))
+                        .collect::<Vec<_>>();
+                    let values = ordinary_values
+                        .iter()
+                        .map(|text| Text::from_text(text))
+                        .collect::<Vec<_>>();
+                    let first_number = serde_json::Number::from(first)
+                        .as_f64()
+                        .expect("actual initializer token");
+                    let last =
+                        number_index(rules::find_java_script_pattern_default_expression_end(
+                            &kinds,
+                            &values,
+                            first_number,
+                            &Text::from_text(")"),
+                        ))
+                        .ok_or_else(|| {
+                            unsupported(
+                                "ordinary parameter default transport",
+                                "the actual initializer needs its complete source interval",
+                                Some(param.span()),
+                            )
+                        })?;
+                    let binding = source
+                        .iter()
+                        .position(|token| token.start == param.start && token.end == param.end)
+                        .expect("actual ordinary binding token");
+                    let binding = serde_json::Number::from(binding)
+                        .as_f64()
+                        .expect("actual binding position");
+                    let value = self.read_formal_initializer(
+                        &source,
+                        super::formal_initializers::FormalInitializer {
+                            interval_positions: (first, last, start),
+                            binding_positions: positions,
+                            binding,
+                            bound_names: &bound_names,
+                            context: "ordinary named function declaration",
+                            profile: "ordinary parameter default",
+                        },
+                    )?;
+                    self.cursor.index = start + last;
+                    Some(value)
+                } else {
+                    let outer_tdz = self.scope.tdz.clone();
+                    self.scope.tdz.extend(binding_names.iter().cloned());
+                    let value = self.with_lexical_scope(&[], 2, Self::expr);
+                    self.scope.tdz = outer_tdz;
+                    Some(value?)
                 }
-                let outer_tdz = self.scope.tdz.clone();
-                self.scope.tdz.extend(binding_names.iter().cloned());
-                let value = self.with_lexical_scope(&[], 2, Self::expr);
-                self.scope.tdz = outer_tdz;
-                Some(value?)
-            } else if tokens
-                .last()
-                .is_some_and(|(_, default_value)| default_value.is_some())
-            {
-                return Err(unsupported(
-                    &format!("parameter {} after a default", param.value),
-                    "a call fills in trailing defaults only; give it a default too",
-                    Some(param.span()),
-                ));
             } else {
                 None
             };
@@ -499,7 +662,7 @@ impl JavaScriptParser {
         name_token: &Token,
         doc: Option<JsDoc>,
         tokens: &[(Token, Option<SExpr>)],
-        body: Body,
+        body: &Body,
         is_async: bool,
     ) -> Result<SFn> {
         let name = name_token.value.clone();
@@ -507,8 +670,10 @@ impl JavaScriptParser {
             self.sequential_async = true;
         }
         // A type JSDoc does not declare is inferred once the whole program is read.
-        let records = match &body {
-            Body::RecordParameters(records) => Some(records.as_ref()),
+        let records = match body {
+            Body::RecordParameters(records) | Body::RecordArrowParameters(records) => {
+                Some(records.as_ref())
+            }
             _ => None,
         };
         let mut params = records.map_or_else(Vec::new, |records| records.parameters.clone());
@@ -542,10 +707,7 @@ impl JavaScriptParser {
                 }),
                 ty: declared.map(|declared| {
                     if optional {
-                        Type::Option {
-                            element: Box::new(declared),
-                            absence: "undefined".to_owned(),
-                        }
+                        option(declared, "undefined")
                     } else {
                         declared
                     }
@@ -599,6 +761,11 @@ impl JavaScriptParser {
             self.top_level = outer_top_level;
             let (body, proof) = read?;
             return Ok(SFn {
+                source_state_transform: None,
+                source_vector_mutation: None,
+                source_fn_mut_specialization: None,
+                source_finite_record_loop_helper: false,
+                source_finite_record_loop_witness: None,
                 semantic_ret: None,
                 name,
                 params,
@@ -614,6 +781,7 @@ impl JavaScriptParser {
                 source_diagnostic_attributes: None,
                 span: Some(self.read_complete_declaration_span(doc_token)?),
                 generated: false,
+                source_standard_collection_library_owner: None,
                 source_pure_unit: None,
             });
         }
@@ -630,7 +798,7 @@ impl JavaScriptParser {
                     super::tag_context::TagReceiverFact::Declared(parameter.ty.clone()),
                 );
             }
-            match &body {
+            match body {
                 Body::Arrow if !parser.cursor.is("{") => {
                     let token = parser.peek();
                     let expr = if is_async {
@@ -646,6 +814,20 @@ impl JavaScriptParser {
                     })
                 }
                 Body::RecordParameters(records) => parser.read_named_record_parameter_body(records),
+                Body::RecordArrowParameters(records) => {
+                    parser.read_record_parameter_body_with(records, |parser| {
+                        if parser.cursor.is("{") {
+                            parser.block_statements()
+                        } else {
+                            let token = parser.peek();
+                            let expr = parser.expr()?;
+                            Ok(vec![Stmt::Return {
+                                expr,
+                                span: parser.to_here(&token),
+                            }])
+                        }
+                    })
+                }
                 _ => parser.block_statements(),
             }
         });
@@ -719,9 +901,19 @@ impl JavaScriptParser {
         let body = if imperative(tail) {
             lower_imperative(self, &name, &params, tail, place)?
         } else {
-            lower(tail, place, &mut self.generated_count)?
+            lower(
+                tail,
+                place,
+                &mut self.generated_count,
+                &self.generated_prefix,
+            )?
         };
         let declaration = SFn {
+            source_state_transform: None,
+            source_vector_mutation: None,
+            source_fn_mut_specialization: None,
+            source_finite_record_loop_helper: false,
+            source_finite_record_loop_witness: None,
             semantic_ret: None,
             name,
             params,
@@ -737,6 +929,7 @@ impl JavaScriptParser {
             body,
             span: Some(self.read_complete_declaration_span(doc_token)?),
             generated: false,
+            source_standard_collection_library_owner: None,
             source_pure_unit: None,
         };
         if self.owned_array_reader_namespace == 0 {
@@ -751,193 +944,6 @@ impl JavaScriptParser {
         }
         Ok(declaration)
     }
-
-    /// `const Name = { method(…) { … }, Nested: { … } };` is a module.
-    pub(super) fn namespace(&mut self, start: &Token) -> Result<SModule> {
-        self.cursor.expect("const", Some("namespace"))?;
-        let name = self.cursor.identifier(Some("namespace"))?;
-        global(&name)?;
-        self.cursor.expect("=", Some("namespace"))?;
-        self.scope.tdz.remove(&name.value);
-        let module = self.namespace_body(name.value, start)?;
-        self.cursor.eat(";");
-        Ok(module)
-    }
-
-    pub(super) fn namespace_body(&mut self, name: String, start: &Token) -> Result<SModule> {
-        self.cursor.expect("{", Some("namespace"))?;
-        let mut items = Vec::new();
-        while !self.cursor.is("}") {
-            let member = self.peek();
-            if member.kind != TokenKind::Identifier {
-                return Err(unsupported(
-                    &format!("namespace member {}", describe(&member)),
-                    "members are methods or nested namespaces with identifier names",
-                    Some(span(&member, &member)),
-                ));
-            }
-            if ["get", "set", "async", "static"].contains(&member.value.as_str())
-                && self.cursor.is_kind_at(TokenKind::Identifier, 1)
-            {
-                return Err(unsupported(
-                    &format!("{} member", member.value),
-                    "accessors and asynchronous methods are outside the portable core",
-                    Some(span(&member, self.cursor.peek_at(1))),
-                ));
-            }
-            self.cursor.advance();
-            if !accept_object_property_definition(&member.value, false, self.cursor.is(":")) {
-                return Err(unsupported(
-                    "object prototype definition",
-                    "an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes",
-                    Some(span(&member, &member)),
-                ));
-            }
-            if super::surface_rules::accept_java_script_namespace_method(
-                "identifier",
-                &self.cursor.peek().value,
-            ) {
-                self.function_names
-                    .insert(format!("{name}.{}", member.value));
-                self.owned_array_reader_namespace += 1;
-                let function = self.function_rest(&member, &member, false, false);
-                self.owned_array_reader_namespace -= 1;
-                items.push(SItem::Fn(function?));
-            } else if self.cursor.eat(":").is_some() {
-                if self.cursor.is("{") {
-                    items.push(SItem::Module(
-                        self.namespace_body(member.value.clone(), &member)?,
-                    ));
-                } else {
-                    return Err(unsupported(
-                        &format!("namespace property {}", member.value),
-                        "namespaces hold methods, name(…) { … }, and nested namespaces only",
-                        Some(self.to_here(&member)),
-                    ));
-                }
-            } else {
-                return Err(self.fail_here(&format!("expected ( or : after {}", member.value)));
-            }
-            if self.cursor.eat(",").is_none() {
-                break;
-            }
-        }
-        self.cursor.expect("}", Some("namespace"))?;
-        Ok(SModule {
-            name,
-            items,
-            span: Some(self.to_here(start)),
-        })
-    }
-
-    /// Names a block declares with `const` or `let`, which are in their temporal dead zone until declared.
-    pub(super) fn block_declarations(&mut self, from: usize, _end: ScanEnd) -> HashSet<String> {
-        self.block_declaration_counts(from).0
-    }
-
-    fn block_declaration_counts(
-        &mut self,
-        from: usize,
-    ) -> (HashSet<String>, HashMap<String, usize>) {
-        let mut names = HashSet::new();
-        let mut counts = HashMap::new();
-        let mut collect = |name: String| {
-            names.insert(name.clone());
-            *counts.entry(name).or_insert(0) += 1;
-        };
-        let saved = self.cursor.index;
-        self.cursor.index = from;
-        // Signed Number depth retains the shared parser's malformed-delimiter
-        // behavior without unsigned underflow. No token columns are copied.
-        let mut depth = 0.0;
-        let mut declaration = false;
-        loop {
-            let token = self.cursor.advance();
-            let kind = match token.kind {
-                TokenKind::Punct => "punct",
-                TokenKind::Identifier => "identifier",
-                TokenKind::Eof => "eof",
-                _ => "other",
-            };
-            let step = crate::translation::frontend_rules::ml_array::number_index(
-                read_java_script_lexical_declaration_step(kind, &token.value, depth, declaration),
-            );
-            match step {
-                None => break,
-                Some(1) => depth += 1.0,
-                Some(2) => depth -= 1.0,
-                Some(3 | 4) => declaration = true,
-                Some(5) => declaration = false,
-                _ => {}
-            }
-            if !matches!(step, Some(3 | 4)) {
-                continue;
-            }
-            let binding_start = self.cursor.index;
-            let c = &self.cursor;
-            if c.peek().kind == TokenKind::Identifier {
-                collect(c.peek().value.clone());
-            } else if c.is("{") {
-                let mut offset = 1;
-                while !c.is_at("}", offset) && !c.is_kind_at(TokenKind::Eof, offset) {
-                    if c.peek_at(offset).kind == TokenKind::Identifier
-                        && (c.is_at(",", offset + 1) || c.is_at("}", offset + 1))
-                    {
-                        collect(c.peek_at(offset).value.clone());
-                    }
-                    offset += 1;
-                }
-            } else if c.is("[") {
-                for token in self.array_binding_names(c.index) {
-                    collect(token.value);
-                }
-            }
-            self.cursor.index = binding_start;
-        }
-        self.cursor.index = saved;
-        (names, counts)
-    }
-
-    pub(super) fn declare_local(&mut self, name: &str, mutable: bool) {
-        self.lexical.binding(name, None);
-        self.scope.locals.insert(name.to_owned());
-        self.scope.tdz.remove(name);
-        if mutable {
-            self.scope.mutable.insert(name.to_owned());
-        } else {
-            self.scope.mutable.remove(name);
-        }
-    }
-
-    pub(super) fn block_statements(&mut self) -> Result<Vec<Stmt>> {
-        self.cursor.expect("{", Some("block"))?;
-        let mut tdz = self.scope.tdz.clone();
-        let (names, counts) = self.block_declaration_counts(self.cursor.index);
-        let names = names.into_iter().collect::<Vec<_>>();
-        tdz.extend(names.iter().cloned());
-        let inner = Scope {
-            locals: self.scope.locals.clone(),
-            tdz,
-            mutable: self.scope.mutable.clone(),
-        };
-        let outer = std::mem::replace(&mut self.scope, inner);
-        let statements = self.with_lexical_scope(&names, 0, |parser| {
-            parser.lexical.declaration_counts(counts);
-            parser.block_body()
-        });
-        self.scope = outer;
-        statements
-    }
-
-    pub(super) fn block_body(&mut self) -> Result<Vec<Stmt>> {
-        let mut statements = Vec::new();
-        while !self.cursor.is("}") {
-            if self.cursor.at_end() {
-                return Err(self.fail_here("expected }"));
-            }
-            statements.push(self.statement()?);
-        }
-        self.cursor.expect("}", Some("block"))?;
-        Ok(statements)
-    }
 }
+
+include!("declaration_scopes.rs");

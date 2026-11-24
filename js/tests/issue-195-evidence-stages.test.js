@@ -306,7 +306,7 @@ test('CI runs each stage as its own job and the aggregate only merges and evalua
   }
   const aggregate = job('acceptance');
   assert.match(aggregate, /name: Full Requirements Aggregate/u);
-  assert.match(aggregate, /needs: \[[^\]]*runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery\]/u);
+  assert.match(aggregate, /needs: \[[^\]]*runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery, rust-source-versions, grammar-inference-holdout\]/u);
   assert.match(aggregate, /pattern: issue-195-stage-\*-\$\{\{ github\.sha \}\}/u);
   assert.match(aggregate, /merge-multiple: true/u);
   assert.match(aggregate, /--aggregate/u);

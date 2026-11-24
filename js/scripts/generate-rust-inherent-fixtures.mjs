@@ -1,0 +1,80 @@
+// Source/input declarations only. No interpreted or compiled product executes.
+import{writeProjectData}from'./project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft to author declarations');
+const cases=[
+ ['associated constructor','struct Point{x:i64,y:i64} impl Point{fn new(x:i64,y:i64)->Self{Self{y,x}}} pub fn result()->i64{let p=Point::new(2,7);p.x*10+p.y}', '27'],
+ ['shared self receiver','struct Point{x:i64,y:i64} impl Point{fn sum(&self)->i64{self.x+self.y}} pub fn result()->i64{Point{x:3,y:7}.sum()}', '10'],
+ ['owned self receiver','struct Point{x:i64,y:i64} impl Point{fn sum(self)->i64{self.x+self.y}} pub fn result()->i64{Point{x:8,y:7}.sum()}', '15'],
+ ['borrowed source receiver','struct Point{x:i64,y:i64} impl Point{fn sum(&self)->i64{self.x+self.y}} fn read(p:&Point)->i64{p.sum()} pub fn result()->i64{read(&Point{x:5,y:6})}', '11'],
+ ['explicit associated method call','struct Point{x:i64,y:i64} impl Point{fn sum(&self)->i64{self.x+self.y}} pub fn result()->i64{Point::sum(&Point{x:4,y:8})}', '12'],
+ ['aliased owner','struct Point{x:i64} use self::Point as Alias; impl Alias{fn new(x:i64)->Self{Self{x}} fn read(&self)->i64{self.x}} pub fn result()->i64{Alias::new(13).read()}', '13'],
+ ['multiple implementation blocks','struct Point{x:i64} impl Point{fn new(x:i64)->Self{Self{x}}} impl Point{fn read(&self)->i64{self.x}} pub fn result()->i64{Point::new(14).read()}', '14'],
+ ['forward method declaration','pub fn result()->i64{Point::new(15).read()} struct Point{x:i64} impl Point{fn new(x:i64)->Self{Self{x}} fn read(&self)->i64{self.x}}', '15'],
+ ['implementation before datatype','impl Point{fn new(x:i64)->Self{Self{x}} fn read(&self)->i64{self.x}} struct Point{x:i64} pub fn result()->i64{Point::new(16).read()}', '16'],
+ ['owned Self result','struct Point{x:i64} impl Point{fn identity(self)->Self{self} fn read(&self)->i64{self.x}} pub fn result()->i64{Point{x:17}.identity().read()}', '17'],
+ ['Self associated path','struct Point{x:i64} impl Point{fn seed()->i64{18} fn new()->Self{Self{x:Self::seed()}} fn read(&self)->i64{self.x}} pub fn result()->i64{Point::new().read()}', '18'],
+ ['chained methods','struct Point{x:i64} impl Point{fn scale(&self,factor:i64)->Self{Self{x:self.x*factor}} fn read(&self)->i64{self.x}} pub fn result()->i64{Point{x:7}.scale(3).read()}', '21'],
+ ['actual lexical module','fn read()->i64{3} struct Point{x:i64} impl Point{fn read(&self)->i64{read()+self.x}} pub fn result()->i64{Point{x:4}.read()}', '7'],
+ ['explicit source module','fn seed()->i64{19} struct Point{x:i64} impl Point{fn new()->Self{Self{x:self::seed()}} fn read(&self)->i64{self.x}} pub fn result()->i64{Point::new().read()}', '19'],
+ ['source parent module','fn seed()->i64{20} mod owner{struct Point{x:i64} impl Point{fn new()->Self{Self{x:super::seed()}} fn read(&self)->i64{self.x}} pub fn read()->i64{Point::new().read()}} pub fn result()->i64{owner::read()}', '20'],
+ ['distinct actual method owners','struct Left{x:i64} struct Right{x:i64} impl Left{fn read(&self)->i64{self.x}} impl Right{fn read(&self)->i64{self.x}} pub fn result()->i64{Left{x:2}.read()*10+Right{x:3}.read()}', '23'],
+ ['enum inherent method','enum Event{Point{x:i64,y:i64},Empty} impl Event{fn read(self)->i64{match self{Self::Empty=>0,Self::Point{y,x}=>x*10+y}}} pub fn result()->i64{Event::Point{x:2,y:4}.read()}', '24'],
+ ['receiver failure before argument','struct Point{x:i64} impl Point{fn add(&self,value:i64)->i64{self.x+value}} fn receiver()->Point{panic!("receiver first")} fn argument()->i64{panic!("argument later")} pub fn result()->i64{receiver().add(argument())}', null,'receiver first'],
+ ['method argument failure order','struct Point{x:i64} impl Point{fn add(&self,left:i64,right:i64)->i64{self.x+left+right}} fn left()->i64{panic!("left first")} fn right()->i64{panic!("right later")} pub fn result()->i64{Point{x:1}.add(left(),right())}', null,'left first'],
+ ['unit receiver retains variable','struct Marker; impl Marker{fn identity(self)->Self{self} fn read(&self)->i64{25}} pub fn result()->i64{Marker.identity().read()}', '25'],
+ ['tuple receiver field','struct Pair(i64,i64); impl Pair{fn read(&self)->i64{self.0*10+self.1}} pub fn result()->i64{Pair(2,6).read()}', '26'],
+ ['contextual fixed fields in Self','struct Pair{left:u8,right:u16} impl Pair{fn new()->Self{Self{right:7,left:2}} fn read(&self)->i64{self.left as i64*10+self.right as i64}} pub fn result()->i64{Pair::new().read()}', '27'],
+ ['associated function shares source type name','struct Point{x:i64} impl Point{fn Point(x:i64)->Self{Self{x:x+1}}} pub fn result()->i64{Point::Point(9).x}', '10'],
+ ['method shares source type name','struct Point{x:i64} impl Point{fn Point(&self)->i64{self.x+2}} pub fn result()->i64{Point{x:9}.Point()}', '11'],
+ ['forward homograph implementation','impl Point{fn Point(x:i64)->Self{Self{x:x+3}}} struct Point{x:i64} pub fn result()->i64{Point::Point(9).x}', '12'],
+ ['constructor name excludes source methods','struct Point{x:i64} impl Point{fn Value()->i64{13} fn Point()->Self{Self{x:Self::Value()}}} pub fn result()->i64{Point::Point().x}', '13'],
+ ['constructor name excludes all reserved source names','struct Point{x:i64} impl Point{fn Value()->i64{14} fn Value2()->i64{2} fn Point()->Self{Self{x:Self::Value()+Self::Value2()}}} pub fn result()->i64{Point::Point().x}', '16'],
+ ['unit struct associated namespace','struct Marker; impl Marker{fn Marker()->Self{Marker} fn read(&self)->i64{17}} pub fn result()->i64{Marker::Marker().read()}', '17'],
+ ['tuple struct associated namespace','struct Pair(i64); impl Pair{fn Pair(x:i64)->Self{Self(x+10)}} pub fn result()->i64{Pair::Pair(8).0}', '18'],
+ ['explicit immutable receiver','struct Point{x:i64} impl Point{fn read(self:&Self)->i64{self.x}} pub fn result()->i64{Point{x:31}.read()}', '31'],
+ ['explicit owned boxed receiver','struct Point{x:i64} impl Point{fn read(self:Box<Self>)->i64{self.x}} pub fn result()->i64{Box::new(Point{x:32}).read()}', '32'],
+ ['borrowed boxed receiver','struct Point{x:i64} impl Point{fn read(self:&Box<Self>)->i64{self.x}} pub fn result()->i64{Box::new(Point{x:33}).read()}', '33'],
+ ['multiple reference receiver','struct Point{x:i64} impl Point{fn read(self:&&Self)->i64{self.x}} pub fn result()->i64{let p=Point{x:34};(&p).read()}', '34'],
+ ['nested boxed receiver','struct Point{x:i64} impl Point{fn read(self:Box<Box<Self>>)->i64{self.x}} pub fn result()->i64{Box::new(Box::new(Point{x:35})).read()}', '35'],
+ ['borrow after nested boxed dereference','struct Point{x:i64} impl Point{fn read(&self)->i64{self.x}} pub fn result()->i64{Box::new(Box::new(Point{x:36})).read()}', '36'],
+ ['move from owned boxed dereference','struct Point{x:i64} impl Point{fn read(self)->i64{self.x}} pub fn result()->i64{Box::new(Box::new(Point{x:37})).read()}', '37'],
+ ['multiple source reference dereference','struct Point{x:i64} impl Point{fn read(&self)->i64{self.x}} fn read(p:&&Point)->i64{p.read()} pub fn result()->i64{let p=Point{x:38};read(&&p)}', '38'],
+ ['boxed dereference stops at expected owner','struct Point{x:i64} impl Point{fn read(self:Box<Self>)->i64{self.x}} pub fn result()->i64{Box::new(Box::new(Point{x:39})).read()}', '39'],
+ ['borrowed source box dereference','struct Point{x:i64} impl Point{fn read(&self)->i64{self.x}} fn read(p:&Box<Point>)->i64{p.read()} pub fn result()->i64{read(&Box::new(Point{x:40}))}', '40'],
+ ['explicit named receiver region','struct Point{x:i64} impl Point{fn read<\'a>(self:&\'a Self)->i64{self.x}} pub fn result()->i64{Point{x:41}.read()}', '41'],
+];
+const rows=cases.map(([name,source,value,abort],index)=>({name,module:'inherent_case_'+index,source,value,abort:abort??null}));
+const originalRefusals=[
+ ['generic implementation','struct Point{x:i64} impl<T> Point{fn f()->i64{1}} fn main(){}','generic Rust implementation: type parameters require their complete trait and ownership interpretation'],
+ ['trait implementation','struct Point{x:i64} impl SomeTrait for Point{fn f()->i64{1}} fn main(){}','generic or trait Rust implementation: traits and predicates need their complete dispatch interpretation'],
+ ['mutable receiver','struct Point{x:i64} impl Point{fn read(&mut self)->i64{self.x}} fn main(){}','Rust mutable or explicit lifetime receiver: receiver mutation and named regions need an explicit ownership interpretation'],
+ ['named lifetime receiver','struct Point{x:i64} impl Point{fn read<\'a>(&\'a self)->i64{self.x}} fn main(){}','Rust mutable or explicit lifetime receiver: receiver mutation and named regions need an explicit ownership interpretation'],
+ ['explicit receiver type','struct Point{x:i64} impl Point{fn read(self:Self)->i64{self.x}} fn main(){}','Rust explicit receiver type: explicit receiver types need their complete arbitrary-self interpretation'],
+ ['associated constant','struct Point{x:i64} impl Point{const VALUE:i64=1;} fn main(){}','Rust associated item: associated constants, types, macros and modified functions need their own source interpretation'],
+ ['implementation in another source module','mod owner{pub struct Point{pub x:i64}} impl owner::Point{fn read(&self)->i64{self.x}} fn main(){}','Rust implementation location: cross-module implementation placement requires its explicit namespace mapping'],
+ ['unknown nominal owner','impl Unknown{fn read()->i64{1}} fn main(){}','Rust implementation owner: an inherent implementation needs its actual source datatype'],
+ ['owned method through borrowed receiver','struct Point{x:i64} impl Point{fn read(self)->i64{self.x}} fn read(p:&Point)->i64{p.read()} fn main(){}','Rust inherent receiver: the method needs its actual owned or single immutable borrowed receiver'],
+ ['boxed receiver needs dereference model','struct Point{x:i64} impl Point{fn read(&self)->i64{self.x}} pub fn result()->i64{Box::new(Point{x:1}).read()} fn main(){}','Rust inherent receiver: the method needs its actual owned or single immutable borrowed receiver'],
+ ['enum constructor homograph needs resolution','enum Event{Value(i64)} impl Event{fn Value(self)->i64{0}} fn main(){}','Rust associated item namespace: an enum constructor homograph needs its complete associated-item resolution'],
+].map(([name,source,reason])=>({name,source,kind:'unsupported',reason}));
+const correctedNames=['named lifetime receiver','explicit receiver type','boxed receiver needs dereference model'];
+const refusals=originalRefusals.filter(row=>!correctedNames.includes(row.name)).map(row=>row.name==='owned method through borrowed receiver'?{...row,previousReason:row.reason,reason:'Rust inherent receiver: the method needs its actual nominal receiver and supported immutable dereference or borrow layers'}:row);
+refusals.push({name:'explicit receiver needs actual owner',source:'struct Point{x:i64} struct Other{x:i64} impl Point{fn read(self:Other)->i64{self.x}} fn main(){}',kind:'unsupported',reason:'Rust explicit receiver owner: an explicit receiver must resolve to its actual implementing datatype'});
+refusals.push({name:'owned boxed receiver cannot move through a reference',source:'struct Point{x:i64} impl Point{fn read(self:Box<Self>)->i64{self.x}} fn read(p:&Box<Point>)->i64{p.read()} fn main(){}',kind:'unsupported',reason:'Rust inherent receiver: the method needs its actual nominal receiver and supported immutable dereference or borrow layers'});
+refusals.push({name:'closed signature profile needs composition',source:'struct Point{x:i64} impl Point{fn read(&self)->i64{self.x}} fn main(){}',kind:'unsupported',reason:'Rust inherent profile composition: closed source models need an explicit method composition proof',sourceSignatureModel:'Rust source function signature 1'});
+writeProjectData(new URL('../../parity/fixtures/rust-inherent.lino',import.meta.url),{
+ schemaVersion:1,model:'pure owned Rust inherent function and immutable receiver 1',cases:rows,refusals,
+ source:rows.map(row=>'pub mod '+row.module+'{\n'+row.source+'\n}').join('\n')+'\nfn main(){}\n',
+ versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},
+ boundary:'Execute every declared ownership, namespace, construction, method, receiver/argument-order, error and codec cell in both runtimes; compare full graphs, all four emissions and original/emitted Rust. No execution observations are authored. Trait/generic dispatch, mutable receivers, full move/drop/custom Deref and escaping regions, cross-module implementations, Rc/Arc/Pin receivers, associated constants/types/macros and closed-profile composition remain separate obligations.',
+});
+for(const[index,name]of correctedNames.entries()){
+ const previous=originalRefusals.find(row=>row.name===name),value=index===2?'1':String(21+index);
+ const caller=index===2?'':'\npub fn result()->i64{Point{x:'+value+'}.read()}\n';
+ writeProjectData(new URL('../../parity/fixtures/rust-inherent-receiver-'+index+'.lino',import.meta.url),{
+  schemaVersion:1,model:'pure owned Rust inherent function and immutable receiver 1',
+  source:previous.source+caller,cases:[{name,module:'',source:previous.source,value,abort:null,correctionKind:name,previousExpectation:{kind:previous.kind,reason:previous.reason}}],refusals:[],
+  versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},
+  correctionBasis:'https://doc.rust-lang.org/reference/items/associated-items.html#associated-functions-and-methods ; https://doc.rust-lang.org/reference/expressions/method-call-expr.html ; immutable self:Self / named reference / standard Box dereference now use actual nominal types and recorded source layers. Exact former inputs and expectations remain above; independent original-source and all translated controls are mandatory.',
+ });
+}

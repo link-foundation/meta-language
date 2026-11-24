@@ -197,34 +197,87 @@ pub mod ml_array {
     }
 }
 
+pub mod ml_source_exception {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct SourceException {
+        pub class_name: String,
+        pub message_units: Vec<u16>,
+        pub message_present: bool,
+    }
+    impl SourceException {
+        #[must_use]
+        pub fn raise(self) -> ! {
+            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
+        }
+        #[must_use]
+        pub fn from_text(class_name: &str, message: &str) -> Self {
+            Self {
+                class_name: class_name.to_owned(),
+                message_units: message.encode_utf16().collect(),
+                message_present: true,
+            }
+        }
+    }
+    impl std::fmt::Display for SourceException {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.message_units))
+        }
+    }
+    impl std::error::Error for SourceException {}
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_number_fact() -> f64 {
-    panic!("{}", "missing required Number fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Number fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_text_fact() -> String {
-    panic!("{}", "missing required text fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required text fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_boolean_fact() -> bool {
-    panic!("{}", "missing required Boolean fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Boolean fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Number fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required Number fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_number_fact)
     }
@@ -233,13 +286,16 @@ pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required text fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required text fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_text_fact)
     }
@@ -248,15 +304,68 @@ pub fn read_required_text_fact(values: &[String], index: f64) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Boolean fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required Boolean fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_boolean_fact)
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn skip_type_string(units: &[f64], start: f64) -> f64 {
+    {
+        let quote = self::read_required_number_fact(units, start);
+        if (quote != 34f64) && (quote != 39f64) {
+            start
+        } else {
+            {
+                let at = start + 1f64;
+                {
+                    let source_ml_source1_s1 =
+                        self::source_ml_temporary_skip_type_string_loop1(units, quote, at);
+                    match source_ml_source1_s1 {
+                        self::MlTemporarySkipTypeStringLoop1Result::MlTemporarySkipTypeStringLoop1Done => {
+                            units.len() as f64
+                        }
+                        self::MlTemporarySkipTypeStringLoop1Result::MlTemporarySkipTypeStringLoop1Return(source_ml_temporary_result1) => {
+                            source_ml_temporary_result1
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_documentation_type_end(units: &[f64], start: f64) -> f64 {
+    {
+        let depth = 0f64;
+        {
+            let at = start;
+            {
+                let source_ml_source1_s2 =
+                    self::source_ml_temporary_read_documentation_type_end_loop2(units, depth, at);
+                match source_ml_source1_s2 {
+                    self::MlTemporaryReadDocumentationTypeEndLoop2Result::MlTemporaryReadDocumentationTypeEndLoop2Done => {
+                        -1f64
+                    }
+                    self::MlTemporaryReadDocumentationTypeEndLoop2Result::MlTemporaryReadDocumentationTypeEndLoop2Return(source_ml_temporary_result2) => {
+                        source_ml_temporary_result2
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -270,7 +379,7 @@ pub fn read_type_separator_positions(units: &[f64], separator: f64) -> Vec<f64> 
             {
                 let at = 0f64;
                 {
-                    self::ml_read_type_separator_positions_loop1(
+                    self::source_ml_temporary_read_type_separator_positions_loop4(
                         units, separator, depth, positions, at,
                     )
                 }
@@ -305,9 +414,125 @@ pub fn read_union_target_refusal(target: &str) -> String {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporarySkipTypeStringLoop1Result {
+    MlTemporarySkipTypeStringLoop1Done,
+    MlTemporarySkipTypeStringLoop1Return(f64),
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_type_separator_positions_loop1(
+pub fn source_ml_temporary_skip_type_string_loop1(
+    units: &[f64],
+    mut quote: f64,
+    mut at: f64,
+) -> self::MlTemporarySkipTypeStringLoop1Result {
+    loop {
+        return if at < (units.len() as f64) {
+            {
+                let unit = self::read_required_number_fact(units, at);
+                if (unit).partial_cmp(&(quote)) == Some(std::cmp::Ordering::Equal) {
+                    self::MlTemporarySkipTypeStringLoop1Result::MlTemporarySkipTypeStringLoop1Return(
+                        at + 1f64,
+                    )
+                } else {
+                    {
+                        let at_2 = at + if unit == 92f64 { 2f64 } else { 1f64 };
+                        {
+                            at = at_2;
+                            continue;
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporarySkipTypeStringLoop1Result::MlTemporarySkipTypeStringLoop1Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryReadDocumentationTypeEndLoop2Result {
+    MlTemporaryReadDocumentationTypeEndLoop2Done,
+    MlTemporaryReadDocumentationTypeEndLoop2Return(f64),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryReadDocumentationTypeEndJoin3 {
+    MlTemporaryReadDocumentationTypeEndJoin3Next(f64),
+    MlTemporaryReadDocumentationTypeEndJoin3Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_documentation_type_end_loop2(
+    units: &[f64],
+    mut depth: f64,
+    mut at: f64,
+) -> self::MlTemporaryReadDocumentationTypeEndLoop2Result {
+    loop {
+        return if at < (units.len() as f64) {
+            {
+                let end = self::skip_type_string(units, at);
+                if end != at {
+                    {
+                        let at_2 = end;
+                        {
+                            at = at_2;
+                            continue;
+                        }
+                    }
+                }
+                {
+                    {
+                        let unit = self::read_required_number_fact(units, at);
+                        {
+                            let depth_3 = if unit == 123f64 {
+                                { depth + 1f64 }
+                            } else {
+                                depth
+                            };
+                            {
+                                let source_ml_source1_s3 = if unit == 125f64 {
+                                    {
+                                        let depth_4 = depth_3 - 1f64;
+                                        if depth_4 == 0f64 {
+                                            self::MlTemporaryReadDocumentationTypeEndJoin3::MlTemporaryReadDocumentationTypeEndJoin3Return(at)
+                                        } else {
+                                            self::MlTemporaryReadDocumentationTypeEndJoin3::MlTemporaryReadDocumentationTypeEndJoin3Next(depth_4)
+                                        }
+                                    }
+                                } else {
+                                    self::MlTemporaryReadDocumentationTypeEndJoin3::MlTemporaryReadDocumentationTypeEndJoin3Next(depth_3)
+                                };
+                                match source_ml_source1_s3 {
+                                    self::MlTemporaryReadDocumentationTypeEndJoin3::MlTemporaryReadDocumentationTypeEndJoin3Next(depth_5) => {
+                                        {
+                                            let at_3 = at + 1f64;
+                                            {
+                                                (depth, at) = (depth_5, at_3);
+                                                continue;
+                                            }
+                                        }
+                                    }
+                                    self::MlTemporaryReadDocumentationTypeEndJoin3::MlTemporaryReadDocumentationTypeEndJoin3Return(source_ml_temporary_result3) => {
+                                        self::MlTemporaryReadDocumentationTypeEndLoop2Result::MlTemporaryReadDocumentationTypeEndLoop2Return(source_ml_temporary_result3)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryReadDocumentationTypeEndLoop2Result::MlTemporaryReadDocumentationTypeEndLoop2Done
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_type_separator_positions_loop4(
     units: &[f64],
     mut separator: f64,
     mut depth: f64,
@@ -317,51 +542,70 @@ pub fn ml_read_type_separator_positions_loop1(
     loop {
         if at < (units.len() as f64) {
             {
-                let unit = self::read_required_number_fact(units, at);
-                {
-                    let depth_3 = if (((unit == 123f64) || (unit == 91f64)) || (unit == 60f64))
-                        || (unit == 40f64)
+                let end = self::skip_type_string(units, at);
+                if end != at {
                     {
-                        { depth + 1f64 }
-                    } else {
-                        depth
-                    };
-                    {
-                        let previous = if at > 0f64 {
-                            self::read_required_number_fact(units, (at - 1f64))
-                        } else {
-                            -1f64
-                        };
+                        let at_2 = end;
                         {
-                            let depth_5 = if ((((unit == 125f64) || (unit == 93f64))
-                                || (unit == 62f64))
-                                || (unit == 41f64))
-                                && !((unit == 62f64) && (previous == 61f64))
+                            at = at_2;
+                            continue;
+                        }
+                    }
+                }
+                {
+                    {
+                        let unit = self::read_required_number_fact(units, at);
+                        {
+                            let depth_3 = if (((unit == 123f64) || (unit == 91f64))
+                                || (unit == 60f64))
+                                || (unit == 40f64)
                             {
-                                { depth_3 - 1f64 }
+                                { depth + 1f64 }
                             } else {
-                                depth_3
+                                depth
                             };
                             {
-                                let positions_3 = if (depth_5 == 0f64)
-                                    && ((unit).partial_cmp(&(separator))
-                                        == Some(std::cmp::Ordering::Equal))
-                                {
-                                    {
-                                        {
-                                            let (ml_append_right, ml_append_left) =
-                                                (vec![at], positions);
-                                            self::ml_array::append(ml_append_left, ml_append_right)
-                                        }
-                                    }
+                                let previous = if at > 0f64 {
+                                    self::read_required_number_fact(units, (at - 1f64))
                                 } else {
-                                    positions
+                                    -1f64
                                 };
                                 {
-                                    let at_2 = at + 1f64;
+                                    let depth_5 = if ((((unit == 125f64) || (unit == 93f64))
+                                        || (unit == 62f64))
+                                        || (unit == 41f64))
+                                        && !((unit == 62f64) && (previous == 61f64))
                                     {
-                                        (depth, positions, at) = (depth_5, positions_3, at_2);
-                                        continue;
+                                        { depth_3 - 1f64 }
+                                    } else {
+                                        depth_3
+                                    };
+                                    {
+                                        let positions_3 = if (depth_5 == 0f64)
+                                            && ((unit).partial_cmp(&(separator))
+                                                == Some(std::cmp::Ordering::Equal))
+                                        {
+                                            {
+                                                {
+                                                    let (ml_append_right, ml_append_left) =
+                                                        (vec![at], positions);
+                                                    self::ml_array::append(
+                                                        ml_append_left,
+                                                        ml_append_right,
+                                                    )
+                                                }
+                                            }
+                                        } else {
+                                            positions
+                                        };
+                                        {
+                                            let at_3 = at + 1f64;
+                                            {
+                                                (depth, positions, at) =
+                                                    (depth_5, positions_3, at_3);
+                                                continue;
+                                            }
+                                        }
                                     }
                                 }
                             }

@@ -8,6 +8,7 @@ use crate::translation::frontend_rules::accept_argument_count;
 use crate::translation::parameter_default_rules::{
     read_parameter_default_value_step, require_parameter_default_argument_bindings,
 };
+mod sequential_defaults;
 
 struct CheckedCallArgument<'a> {
     parameter: &'a Param,
@@ -166,6 +167,62 @@ impl Checker {
         path: &[String],
         span: Option<Span>,
     ) -> Result<Expr> {
+        if self.checked_projection {
+            let number = |value: usize| {
+                serde_json::Number::from(value)
+                    .as_f64()
+                    .expect("actual core arity")
+            };
+            let error = crate::translation::callable_source_rules::read_callable_application_error(
+                "function",
+                number(params.len()),
+                number(args.len()),
+            );
+            if !error.is_empty() {
+                return Err(type_error(error, span));
+            }
+            let checked = args
+                .iter()
+                .zip(params)
+                .map(|(arg, param)| {
+                    let value = self.expr(arg, env, path, Some(&param.ty), false)?;
+                    self.coerce(value, &param.ty, arg.span.or(span))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(Expr::new(
+                Node::Call {
+                    func: full_name,
+                    args: checked,
+                },
+                ret,
+            ));
+        }
+        if let Some(value) = self.excess_named_arguments(
+            &full_name,
+            params,
+            &ret,
+            module_path,
+            args,
+            env,
+            path,
+            span,
+        )? {
+            return Ok(value);
+        }
+        if self.language == crate::translation::Language::JavaScript
+            && sequential_defaults::requires_sequential_defaults(params)
+        {
+            return self.sequential_parameter_call(
+                full_name,
+                params,
+                ret,
+                module_path,
+                args,
+                env,
+                path,
+                span,
+            );
+        }
         let absent = SExpr::new(
             SNode::None {
                 absence: "undefined".to_owned(),
@@ -179,7 +236,12 @@ impl Checker {
             && accept_argument_count(
                 params
                     .iter()
-                    .map(|param| param.default_value.is_some() || param.optional)
+                    .map(|param| {
+                        crate::translation::check::optional_callables::may_omit_parameter(
+                            self.language,
+                            param,
+                        )
+                    })
                     .collect(),
                 argument_count,
             )
@@ -446,13 +508,27 @@ impl Checker {
         env: &Env,
         path: &[String],
         expected: Option<&Type>,
+        frozen: bool,
     ) -> Result<Expr> {
+        let owner = match expected {
+            Some(Type::Option { element, .. }) if self.language.as_str() == "JavaScript" => {
+                Some(element.as_ref())
+            }
+            _ => expected,
+        };
+        let accepts_fields = |ctor: &Ctor| {
+            ctor.fields.iter().all(|field| {
+                field.optional || fields.iter().any(|(name, _)| name == &field.name)
+            }) && fields
+                .iter()
+                .all(|(name, _)| ctor.fields.iter().any(|field| name == &field.name))
+        };
         let mut candidates = Vec::new();
         for name in &self.order {
             let Some(Decl::Data(entry)) = self.decls.get(name) else {
                 continue;
             };
-            if let Some(Type::Data { name: expected }) = expected
+            if let Some(Type::Data { name: expected }) = owner
                 && entry.full_name != *expected
             {
                 continue;
@@ -460,6 +536,9 @@ impl Checker {
             if let Some(ctor) = entry.ctors.iter().find(|ctor| ctor.name == tag) {
                 candidates.push((entry.full_name.clone(), ctor.clone()));
             }
+        }
+        if candidates.len() > 1 && candidates.iter().any(|(_, ctor)| accepts_fields(ctor)) {
+            candidates.retain(|(_, ctor)| accepts_fields(ctor));
         }
         if candidates.len() != 1 {
             return Err(type_error(
@@ -477,15 +556,44 @@ impl Checker {
             .iter()
             .map(|field| field.name.as_str())
             .collect();
-        if fields.len() != expected_names.len()
-            || fields
-                .iter()
-                .any(|(name, _)| !expected_names.contains(&name.as_str()))
-        {
+        if !accepts_fields(&ctor) {
             return Err(type_error(
                 format!("{tag} expects fields {}", expected_names.join(", ")),
                 span,
             ));
+        }
+        if ctor.fields.iter().any(|field| field.optional)
+            || fields.iter().zip(&expected_names).any(|((name, _), expected)| name.as_str() != *expected)
+        {
+            let mut bindings = Vec::new();
+            for (name, source) in fields {
+                let field = ctor.fields.iter().find(|field| field.name == name.as_str()).expect("checked field name");
+                let ty = if field.optional {
+                    crate::translation::javascript_constructor_presence::field_value_type(&field.ty).expect("checked field type")
+                } else {
+                    &field.ty
+                };
+                let value = self.expr(source, env, path, Some(ty), false)?;
+                let value = self.coerce(value, ty, source.span.or(span))?;
+                bindings.push((name, self.fresh_name("ml_constructor_field"), value));
+            }
+            let args = ctor.fields.iter().map(|field| {
+                let Some((_, name, value)) = bindings.iter().rev().find(|(name, _, _)| name.as_str() == field.name) else {
+                    return Expr::new(Node::None { absence: "undefined".to_owned() }, field.ty.clone());
+                };
+                let variable = Expr::var(name.clone(), value.ty.clone());
+                if field.optional {
+                    crate::translation::javascript_constructor_presence::own_value(variable, &field.ty)
+                } else {
+                    variable
+                }
+            }).collect();
+            let ty = data(&data_name);
+            let mut body = Expr::new(Node::Ctor { data: data_name, ctor: ctor.name, args, frozen }, ty.clone());
+            for (_, name, value) in bindings.into_iter().rev() {
+                body = Expr::new(Node::Let { name, value: Box::new(value), body: Box::new(body) }, ty.clone());
+            }
+            return Ok(body);
         }
         let args: Vec<SExpr> = expected_names
             .iter()
@@ -497,7 +605,11 @@ impl Checker {
                     .map(|(_, value)| value.clone())
             })
             .collect();
-        self.construct(&data_name, &ctor, &args, env, path, span)
+        let mut value = self.construct(&data_name, &ctor, &args, env, path, span)?;
+        if let Node::Ctor { frozen: retained, .. } = &mut value.node {
+            *retained = frozen;
+        }
+        Ok(value)
     }
 }
 

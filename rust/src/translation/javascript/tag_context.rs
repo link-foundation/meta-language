@@ -30,6 +30,54 @@ impl JavaScriptParser {
     }
 
     pub(super) fn read_tag_receiver_fact(&self, node: &SExpr) -> Option<TagReceiverFact> {
+        match &node.node {
+            SNode::Index { object, .. } => {
+                let Type::Array { element, .. } = self.read_tag_receiver_type(object)? else {
+                    return None;
+                };
+                return Some(TagReceiverFact::Declared(Some(*element)));
+            }
+            SNode::Field { object, field } => {
+                let parent = self.read_tag_receiver_type(object)?;
+                if let Type::Record { fields, .. } = &parent {
+                    return fields
+                        .iter()
+                        .find(|item| &item.name == field)
+                        .and_then(|item| {
+                            let ty = if item.optional {
+                                crate::translation::javascript_constructor_presence::field_value_type(
+                                    &item.ty,
+                                )?
+                            } else {
+                                &item.ty
+                            };
+                            Some(TagReceiverFact::Declared(Some(ty.clone())))
+                        });
+                }
+                let owner = tag_declared_owner(&parent);
+                let declaration = self.data_types.iter().find(|data| data.name == owner)?;
+                let mut types = declaration
+                    .ctors
+                    .iter()
+                    .flat_map(|ctor| &ctor.fields)
+                    .filter(|item| item.name.as_deref() == Some(field.as_str()));
+                let first = types.next()?;
+                if types
+                    .all(|item| item.optional == first.optional && item.ty.key() == first.ty.key())
+                {
+                    let ty = if first.optional {
+                        crate::translation::javascript_constructor_presence::field_value_type(
+                            &first.ty,
+                        )?
+                    } else {
+                        &first.ty
+                    };
+                    return Some(TagReceiverFact::Declared(Some(ty.clone())));
+                }
+                return None;
+            }
+            _ => {}
+        }
         let target = match &node.node {
             SNode::App { func, .. } => func.as_ref(),
             _ => node,
@@ -55,9 +103,13 @@ impl JavaScriptParser {
     }
 
     pub(super) fn read_tag_receiver_owner(&self, node: &SExpr) -> String {
-        let Some(fact) = self.read_tag_receiver_fact(node) else {
-            return String::new();
-        };
+        self.read_tag_receiver_type(node)
+            .as_ref()
+            .map_or_else(String::new, tag_declared_owner)
+    }
+
+    pub(super) fn read_tag_receiver_type(&self, node: &SExpr) -> Option<Type> {
+        let fact = self.read_tag_receiver_fact(node)?;
         let (mut ty, header, asynchronous) = match fact {
             TagReceiverFact::Declared(ty) => (ty, None, false),
             TagReceiverFact::Header {
@@ -75,17 +127,20 @@ impl JavaScriptParser {
         {
             ty = self.ty(&returns, doc.range).ok();
         }
-        let kind = ty.as_ref().map_or("", Type::kind);
-        let path = match ty.as_ref() {
-            Some(Type::Named { path, .. }) => path.as_slice(),
-            _ => &[],
-        };
-        let name = match ty.as_ref() {
-            Some(Type::Data { name }) => name.as_str(),
-            _ => "",
-        };
-        read_java_script_tag_declared_owner(kind, path, name, ROOT)
+        ty
     }
+}
+
+fn tag_declared_owner(ty: &Type) -> String {
+    let path = match ty {
+        Type::Named { path, .. } => path.as_slice(),
+        _ => &[],
+    };
+    let name = match ty {
+        Type::Data { name } => name.as_str(),
+        _ => "",
+    };
+    read_java_script_tag_declared_owner(ty.kind(), path, name, ROOT)
 }
 
 impl JavaScriptParser {

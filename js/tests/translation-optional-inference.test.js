@@ -21,6 +21,67 @@ const number = { kind: 'float' };
 const text = { kind: 'string' };
 const unit = { kind: 'unit' };
 
+test('compound guards refine the exact immutable nominal field path', () => {
+  const source = `
+/** @typedef {{ $: 'count', payload: number } | { $: 'text', payload: string } | { $: 'other' }} Value */
+/** @typedef {{ $: 'entry', current: Value, extra?: number }} Entry */
+/** @param {Entry} entry @returns {number} */
+function read(entry) {
+  if (entry.current.$ !== 'count' || entry.extra === undefined) return -1;
+  return entry.current.payload + entry.extra;
+}
+console.log(read({ $: 'entry', current: { $: 'count', payload: 4 }, extra: 3 }));
+console.log(read({ $: 'entry', current: { $: 'text', payload: 'four' }, extra: 3 }));
+console.log(read({ $: 'entry', current: { $: 'count', payload: 4 } }));`;
+  const program = checkProgram(parseJavaScript(source));
+  assert.equal(observations(emitJavaScript(program).text), '7\n-1\n-1\n');
+});
+
+test('literal absence and empty arrays acquire the type of the other branch', () => {
+  const source = `
+/** @typedef {{ $: 'row', name: string }} Row */
+/** @param {boolean} skip @param {Row[]} rows @returns {string} */
+function read(skip, rows) {
+  const selected = skip ? [] : rows;
+  const next = skip ? undefined : selected[0];
+  return next === undefined ? 'empty' : next.name;
+}
+console.log(read(false, [{ $: 'row', name: 'sample' }]));
+console.log(read(true, []));`;
+  const program = checkProgram(parseJavaScript(source));
+  assert.equal(observations(emitJavaScript(program).text), 'sample\nempty\n');
+});
+
+test('an actual own-property test guards optional nominal constructor data', () => {
+  const source = `
+/** @typedef {{ $: 'request', constructor?: number }} Request */
+/** @param {Request} request @returns {number} */
+function read(request) {
+  const selected = Object.hasOwn(request, 'constructor') ? request.constructor : undefined;
+  return selected ?? -1;
+}
+console.log(read({ $: 'request', constructor: 0 }));
+console.log(read({ $: 'request' }));`;
+  const program = checkProgram(parseJavaScript(source));
+  assert.equal(observations(emitJavaScript(program).text), '0\n-1\n');
+});
+
+test('an absent constructor case retains the payload of an optional lookup in another case', () => {
+  const source = `
+    /** @typedef {{$:'indexed', index:number} | {$:'absent'}} Selection */
+    /** @param {Selection} input @param {string[]} values @returns {string} */
+    function select(input, values) {
+      const selected = input.$ === 'indexed' ? values[input.index] : undefined;
+      return selected ?? 'missing';
+    }
+    console.log(select({$:'indexed', index:0}, ['found']));
+    console.log(select({$:'indexed', index:1}, ['found']));
+    console.log(select({$:'absent'}, ['found']));
+  `;
+  const program = checkProgram(parseJavaScript(source));
+  assert.equal(observations(emitJavaScript(program).text), 'found\nmissing\nmissing\n');
+});
+
 function observations(source) {
   const lines = [];
   runInNewContext(source, { console: { log: (...values) => lines.push(format(...values)) } }, { timeout: 1000 });
@@ -102,6 +163,19 @@ test('absent branch joins reuse exact fixed point identities and keep nested opt
   assert.equal(merged.value, inner);
   assert.equal(merged.pair[0], number);
   assert.equal(merged.pair[1], inner);
+});
+
+test('a guarded projection and a null branch retain both absences at the inference fixed point', () => {
+  const source = `
+function select(row, take) { return take ? row?.count : null; }
+console.log(select({ count: 4 }, true));
+console.log(select(undefined, true));
+console.log(select({ count: 4 }, false));`;
+  const checked = checkProgram(parseJavaScript(source));
+  assert.deepEqual(checked.declarations.get('select').ret, { kind: 'option', element: number, absence: 'both' });
+  const expected = '4\nundefined\nnull\n';
+  assert.equal(observations(source), expected);
+  assert.equal(observations(emitJavaScript(checked).text), expected);
 });
 
 test('actual nullable inference preserves falsy values field shapes and recursive return joins', () => {

@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { readStructuredDataLino, structuredDataToLino } from '../../js/src/structured-data-links.js';
 import { restoreCompleteDeclarationReceipt } from '../../js/scripts/complete-declaration-receipts.mjs';
 import {restoreTranslationSourceHistory} from '../../js/scripts/translation-source-history.mjs';
+import {rawEmissionProducerRevision, rawEmissionSourceIdentity, restoreRawEmissionProducerSource} from './raw-emission-source-history.mjs';
 
 const applicabilityDigest = value => createHash('sha256').update(value).digest('hex');
 const freezeApplicability = value => {
@@ -176,16 +177,27 @@ function verifyCollectionApplicabilityClosure(sources) {
 /** Authenticate exact historical inputs or the one reviewed whole-source extraction. */
 export function verifyOriginalLinkRawEmissionProducerApplicability(producerSources) {
   const revision = ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY;
-  const inference=producerSources[revision.inference.file];
-  if(Object.keys(producerSources).length!==originalProducerDescriptors.length&&Buffer.isBuffer(inference)
-    &&applicabilityDigest(inference)!==revision.inference.sha256){
-    const previous=Buffer.from(restoreTranslationSourceHistory(inference.toString('utf8'),revision.inference.file,
-      '81107a5945651f17c962e4bb81fb560f96c65ccd'));
-    const original=verifyOriginalLinkRawEmissionProducerApplicability({...producerSources,[revision.inference.file]:previous});
-    const current={file:revision.inference.file,bytes:inference.length,sha256:applicabilityDigest(inference)};
-    return freezeApplicability({...original,sources:original.sources.map(row=>row.file===current.file?current:row),
-      sourceHistory:{revision:'81107a5945651f17c962e4bb81fb560f96c65ccd',previous:{...revision.inference},current}});
+  if (Object.keys(producerSources).length === originalProducerDescriptors.length) {
+    return verifyOriginalLinkRawEmissionProducerInputs(producerSources, revision);
   }
+  const previousSources = Object.fromEntries(Object.entries(producerSources).map(([file, bytes]) =>
+    [file, restoreRawEmissionProducerSource(file, bytes)]));
+  const inference = producerSources[revision.inference.file];
+  if (Buffer.isBuffer(inference) && applicabilityDigest(inference) !== revision.inference.sha256) {
+    const previous = previousSources[revision.inference.file];
+    if (applicabilityDigest(previous) !== revision.inference.sha256) {
+      previousSources[revision.inference.file] = Buffer.from(restoreTranslationSourceHistory(
+        previous.toString('utf8'), revision.inference.file, rawEmissionProducerRevision));
+    }
+    const original = verifyOriginalLinkRawEmissionProducerInputs(previousSources, revision);
+    const current = { file: revision.inference.file, ...rawEmissionSourceIdentity(inference) };
+    return freezeApplicability({ ...original, sources: original.sources.map(row => row.file === current.file ? current : row),
+      sourceHistory: { revision: rawEmissionProducerRevision, previous: { ...revision.inference }, current } });
+  }
+  return verifyOriginalLinkRawEmissionProducerInputs(previousSources, revision);
+}
+
+function verifyOriginalLinkRawEmissionProducerInputs(producerSources, revision) {
   const originalFiles = originalProducerDescriptors.map(row => row.file);
   const suppliedFiles = Object.keys(producerSources);
   if (suppliedFiles.length === originalFiles.length) {

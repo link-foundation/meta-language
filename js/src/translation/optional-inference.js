@@ -1,9 +1,11 @@
 // Mechanical term transport for the portable optional constraint plans.
 // Solving the returned pairs remains the responsibility of the common unifier.
 import { createSurfaceReferenceFacts } from './surface-reference-facts.js';
+import {requireJavaScriptAbsenceOnlyValue} from './absence-only-rules.js';
+import { mergeOptionalAbsence } from './structured-type-rules.js';
 import {
   planInferenceTermIdentity, planOptionalAnnotationConstraints, planOptionalAdditionalAbsence, planOptionalCoalescingConstraints, planOptionalFieldInference,
-  planOptionalJoinConstraints, planOptionalTypeConstraints,
+  planOptionalGuardedResult, planOptionalJoinConstraints, planOptionalTypeConstraints,
 } from './optional-inference-rules.js';
 
 function optionalFacts(value) {
@@ -29,6 +31,7 @@ export function readOptionalTypeConstraints(left, right) {
 }
 
 export function readOptionalCoalescingConstraints(left, resolved, right, force = false) {
+  if(requireJavaScriptAbsenceOnlyValue('JavaScript',resolved.kind,resolved.element?.kind??''))return [right,right];
   const facts = optionalFacts({ left, resolved, right });
   const plan = planOptionalCoalescingConstraints(...optionalArrays(facts), optionalChild(facts, 'left'), optionalChild(facts, 'resolved'), optionalChild(facts, 'right'), force);
   if (!plan.length) return null;
@@ -42,8 +45,12 @@ export function readOptionalFieldInference(object, resolved) {
   return { element: facts.values[plan[0]], bind: facts.values[plan[1]] };
 }
 
-export function readOptionalJoinConstraints(left, right, resolvedLeft, resolvedRight, current) {
+export function readOptionalJoinConstraints(left, right, resolvedLeft, resolvedRight, current, guarded) {
   const facts = optionalFacts({ left, right, resolvedLeft, resolvedRight, current });
+  if (guarded) {
+    const [element, owner] = planOptionalGuardedResult(...optionalArrays(facts), optionalChild(facts, 'left'), optionalChild(facts, 'resolvedLeft'));
+    return { pair: null, value: { kind: 'option', element: facts.values[element], absence: mergeOptionalAbsence(facts.values[owner]?.absence ?? 'undefined', 'undefined') } };
+  }
   const plan = planOptionalJoinConstraints(...optionalArrays(facts), optionalChild(facts, 'left'), optionalChild(facts, 'right'), optionalChild(facts, 'resolvedLeft'), optionalChild(facts, 'resolvedRight'), optionalChild(facts, 'current'));
   const selected = facts.values[plan[1]];
   return {

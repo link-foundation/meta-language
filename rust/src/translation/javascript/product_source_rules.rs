@@ -182,6 +182,13 @@ pub enum MlClosure1Loop2Result {
 // Checked closure lowering passes its captured state explicitly.
 #[allow(clippy::too_many_arguments)]
 #[must_use]
+/// Execute the complete checked source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
 pub fn ml_closure1_loop2(
     targets: &[f64],
     previous: &[bool],
@@ -193,7 +200,7 @@ pub fn ml_closure1_loop2(
     mut edge: f64,
 ) -> self::MlClosure1Loop2Result {
     loop {
-        if (edge < (targets.len() as f64)) {
+        if edge < (targets.len() as f64) {
             if match (
                 self::ml_array::optional_at(targets, self::ml_array::number_index(edge)),
                 index,
@@ -222,7 +229,7 @@ pub fn ml_closure1_loop2(
                         {
                             let any_2 = true;
                             {
-                                let edge_2 = (edge + 1f64);
+                                let edge_2 = edge + 1f64;
                                 {
                                     (found, any, edge) = (found_2, any_2, edge_2);
                                     continue;
@@ -234,7 +241,7 @@ pub fn ml_closure1_loop2(
                         {
                             let all_2 = false;
                             {
-                                let edge_3 = (edge + 1f64);
+                                let edge_3 = edge + 1f64;
                                 {
                                     (found, all, edge) = (found_2, all_2, edge_3);
                                     continue;
@@ -246,7 +253,7 @@ pub fn ml_closure1_loop2(
             }
             {
                 {
-                    let edge_4 = (edge + 1f64);
+                    let edge_4 = edge + 1f64;
                     {
                         edge = edge_4;
                         continue;

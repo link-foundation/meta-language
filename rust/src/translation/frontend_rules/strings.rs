@@ -128,22 +128,27 @@ pub fn read_rust_number_bounds(units: &[f64], start: f64) -> Vec<f64> {
     {
         let at = start;
         {
-            let at_2 =
-                crate::translation::frontend_rules::ml_read_rust_number_bounds_loop22(units, at);
+            let at_2 = crate::translation::frontend_rules::source_ml_source1_temporary_read_rust_number_bounds_loop22(units.to_vec(), at);
             {
                 let floating = false;
                 {
-                    let ml_s15 = if ((at_2 < (units.len() as f64))
-                        && match (
+                    let source_ml_source2_s67 = if ((at_2 < (units.len() as f64)) && {
+                        let source_ml_source2_comparison_operand68 =
                             crate::translation::frontend_rules::ml_array::optional_at(
                                 units,
                                 crate::translation::frontend_rules::ml_array::number_index(at_2),
-                            ),
-                            46f64,
-                        ) {
-                            (Some(ml_left), ml_right) => ml_left == ml_right,
-                            _ => false,
-                        }) {
+                            );
+                        {
+                            let source_ml_source2_comparison_operand69 = 46f64;
+                            match (
+                                source_ml_source2_comparison_operand68.clone(),
+                                source_ml_source2_comparison_operand69,
+                            ) {
+                                (Some(ml_left), ml_right) => ml_left == ml_right,
+                                _ => false,
+                            }
+                        }
+                    }) {
                         {
                             let member = false;
                             {
@@ -151,48 +156,186 @@ pub fn read_rust_number_bounds(units: &[f64], start: f64) -> Vec<f64> {
                                     {
                                         let next = crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(at_2 + 1f64));
                                         {
-                                            (((match (next, 46f64) {
-                                                (Some(ml_left), ml_right) => ml_left == ml_right,
-                                                _ => false,
-                                            } || match (next, 95f64) {
-                                                (Some(ml_left), ml_right) => ml_left == ml_right,
-                                                _ => false,
-                                            }) || ((next.unwrap_or(f64::NAN) >= (65f64))
-                                                && (next.unwrap_or(f64::NAN) <= (90f64))))
-                                                || ((next.unwrap_or(f64::NAN) >= (97f64))
-                                                    && (next.unwrap_or(f64::NAN) <= (122f64))))
+                                            let member_2 = ((({
+                                                let source_ml_source2_comparison_operand70 =
+                                                    next.clone();
+                                                {
+                                                    let source_ml_source2_comparison_operand71 =
+                                                        46f64;
+                                                    match (
+                                                        source_ml_source2_comparison_operand70
+                                                            .clone(),
+                                                        source_ml_source2_comparison_operand71,
+                                                    ) {
+                                                        (Some(ml_left), ml_right) => {
+                                                            ml_left == ml_right
+                                                        }
+                                                        _ => false,
+                                                    }
+                                                }
+                                            } || {
+                                                let source_ml_source2_comparison_operand72 =
+                                                    next.clone();
+                                                {
+                                                    let source_ml_source2_comparison_operand73 =
+                                                        95f64;
+                                                    match (
+                                                        source_ml_source2_comparison_operand72
+                                                            .clone(),
+                                                        source_ml_source2_comparison_operand73,
+                                                    ) {
+                                                        (Some(ml_left), ml_right) => {
+                                                            ml_left == ml_right
+                                                        }
+                                                        _ => false,
+                                                    }
+                                                }
+                                            }) || ({
+                                                let source_ml_source2_comparison_operand74 =
+                                                    next.clone();
+                                                {
+                                                    let source_ml_source2_comparison_operand75 =
+                                                        65f64;
+                                                    if match (
+                                                        source_ml_source2_comparison_operand74
+                                                            .clone(),
+                                                        None::<f64>,
+                                                    ) {
+                                                        (Some(ml_left), Some(ml_right)) => {
+                                                            ml_left == ml_right
+                                                        }
+                                                        (None, None) => true,
+                                                        _ => false,
+                                                    } {
+                                                        ((f64::NAN) >= source_ml_source2_comparison_operand75)
+                                                    } else {
+                                                        ((source_ml_source2_comparison_operand74.clone().expect("a proven present value")) >= source_ml_source2_comparison_operand75)
+                                                    }
+                                                }
+                                            } && {
+                                                let source_ml_source2_comparison_operand76 =
+                                                    next.clone();
+                                                {
+                                                    let source_ml_source2_comparison_operand77 =
+                                                        90f64;
+                                                    if match (
+                                                        source_ml_source2_comparison_operand76
+                                                            .clone(),
+                                                        None::<f64>,
+                                                    ) {
+                                                        (Some(ml_left), Some(ml_right)) => {
+                                                            ml_left == ml_right
+                                                        }
+                                                        (None, None) => true,
+                                                        _ => false,
+                                                    } {
+                                                        ((f64::NAN) <= source_ml_source2_comparison_operand77)
+                                                    } else {
+                                                        ((source_ml_source2_comparison_operand76.clone().expect("a proven present value")) <= source_ml_source2_comparison_operand77)
+                                                    }
+                                                }
+                                            })) || ({
+                                                let source_ml_source2_comparison_operand78 =
+                                                    next.clone();
+                                                {
+                                                    let source_ml_source2_comparison_operand79 =
+                                                        97f64;
+                                                    if match (
+                                                        source_ml_source2_comparison_operand78
+                                                            .clone(),
+                                                        None::<f64>,
+                                                    ) {
+                                                        (Some(ml_left), Some(ml_right)) => {
+                                                            ml_left == ml_right
+                                                        }
+                                                        (None, None) => true,
+                                                        _ => false,
+                                                    } {
+                                                        ((f64::NAN) >= source_ml_source2_comparison_operand79)
+                                                    } else {
+                                                        ((source_ml_source2_comparison_operand78.clone().expect("a proven present value")) >= source_ml_source2_comparison_operand79)
+                                                    }
+                                                }
+                                            } && {
+                                                let source_ml_source2_comparison_operand80 =
+                                                    next.clone();
+                                                {
+                                                    let source_ml_source2_comparison_operand81 =
+                                                        122f64;
+                                                    if match (
+                                                        source_ml_source2_comparison_operand80
+                                                            .clone(),
+                                                        None::<f64>,
+                                                    ) {
+                                                        (Some(ml_left), Some(ml_right)) => {
+                                                            ml_left == ml_right
+                                                        }
+                                                        (None, None) => true,
+                                                        _ => false,
+                                                    } {
+                                                        ((f64::NAN) <= source_ml_source2_comparison_operand81)
+                                                    } else {
+                                                        ((source_ml_source2_comparison_operand80.clone().expect("a proven present value")) <= source_ml_source2_comparison_operand81)
+                                                    }
+                                                }
+                                            }));
+                                            member_2
                                         }
                                     }
                                 } else {
                                     member
                                 };
-                                if member_3 {
-                                    crate::translation::frontend_rules::MlReadRustNumberBoundsJoin23::MlReadRustNumberBoundsJoin23Next(at_2, floating)
-                                } else {
+                                if !member_3 {
                                     {
                                         let floating_2 = true;
                                         {
                                             let at_3 = at_2 + 1f64;
                                             {
-                                                let at_4 = crate::translation::frontend_rules::ml_read_rust_number_bounds_loop27(units, at_3);
-                                                crate::translation::frontend_rules::MlReadRustNumberBoundsJoin23::MlReadRustNumberBoundsJoin23Next(at_4, floating_2)
+                                                let at_4 = crate::translation::frontend_rules::source_ml_source1_temporary_read_rust_number_bounds_loop27(units.to_vec(), at_3);
+                                                crate::translation::frontend_rules::MlSource1TemporaryReadRustNumberBoundsJoin23::MlSource1TemporaryReadRustNumberBoundsJoin23Next(at_4, floating_2)
                                             }
                                         }
                                     }
+                                } else {
+                                    crate::translation::frontend_rules::MlSource1TemporaryReadRustNumberBoundsJoin23::MlSource1TemporaryReadRustNumberBoundsJoin23Next(at_2, floating)
                                 }
                             }
                         }
                     } else {
-                        crate::translation::frontend_rules::MlReadRustNumberBoundsJoin23::MlReadRustNumberBoundsJoin23Next(at_2, floating)
+                        crate::translation::frontend_rules::MlSource1TemporaryReadRustNumberBoundsJoin23::MlSource1TemporaryReadRustNumberBoundsJoin23Next(at_2, floating)
                     };
-                    match ml_s15 {
-                        crate::translation::frontend_rules::MlReadRustNumberBoundsJoin23::MlReadRustNumberBoundsJoin23Next(at_5, floating_3) => {
+                    match source_ml_source2_s67.clone() {
+                        crate::translation::frontend_rules::MlSource1TemporaryReadRustNumberBoundsJoin23::MlSource1TemporaryReadRustNumberBoundsJoin23Next(at_5, floating_3) => {
                             {
-                                let ml_s16 = if ((at_5 < (units.len() as f64)) && (match (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(at_5)), 69f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } || match (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(at_5)), 101f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false })) {
+                                let source_ml_source2_s94 = if ((at_5 < (units.len() as f64)) && ({
+                                    let source_ml_source2_comparison_operand95 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(at_5));
+                                    {
+                                        let source_ml_source2_comparison_operand96 = 69f64;
+                                        match (source_ml_source2_comparison_operand95.clone(), source_ml_source2_comparison_operand96) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }
+                                    }
+                                } || {
+                                    let source_ml_source2_comparison_operand97 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(at_5));
+                                    {
+                                        let source_ml_source2_comparison_operand98 = 101f64;
+                                        match (source_ml_source2_comparison_operand97.clone(), source_ml_source2_comparison_operand98) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }
+                                    }
+                                })) {
                                     {
                                         let exponent = (at_5 + 1f64);
                                         {
-                                            let exponent_3 = if ((exponent < (units.len() as f64)) && (match (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(exponent)), 43f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } || match (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(exponent)), 45f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false })) {
+                                            let exponent_3 = if ((exponent < (units.len() as f64)) && ({
+                                                let source_ml_source2_comparison_operand99 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(exponent));
+                                                {
+                                                    let source_ml_source2_comparison_operand100 = 43f64;
+                                                    match (source_ml_source2_comparison_operand99.clone(), source_ml_source2_comparison_operand100) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }
+                                                }
+                                            } || {
+                                                let source_ml_source2_comparison_operand101 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(exponent));
+                                                {
+                                                    let source_ml_source2_comparison_operand102 = 45f64;
+                                                    match (source_ml_source2_comparison_operand101.clone(), source_ml_source2_comparison_operand102) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }
+                                                }
+                                            })) {
                                                 {
 
                                                     (exponent + 1f64)
@@ -200,43 +343,113 @@ pub fn read_rust_number_bounds(units: &[f64], start: f64) -> Vec<f64> {
                                             } else {
                                                 exponent
                                             };
-                                            if (((exponent_3 < (units.len() as f64)) && (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(exponent_3)).unwrap_or(f64::NAN) >= (48f64))) && (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(exponent_3)).unwrap_or(f64::NAN) <= (57f64))) {
+                                            if (((exponent_3 < (units.len() as f64)) && {
+                                                let source_ml_source2_comparison_operand103 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(exponent_3));
+                                                {
+                                                    let source_ml_source2_comparison_operand104 = 48f64;
+                                                    if match (source_ml_source2_comparison_operand103.clone(), None::<f64>) { (Some(ml_left), Some(ml_right)) => ml_left == ml_right, (None, None) => true, _ => false } {
+                                                        ((f64::NAN) >= source_ml_source2_comparison_operand104)
+                                                    } else {
+                                                        ((source_ml_source2_comparison_operand103.clone().expect("a proven present value")) >= source_ml_source2_comparison_operand104)
+                                                    }
+                                                }
+                                            }) && {
+                                                let source_ml_source2_comparison_operand105 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(exponent_3));
+                                                {
+                                                    let source_ml_source2_comparison_operand106 = 57f64;
+                                                    if match (source_ml_source2_comparison_operand105.clone(), None::<f64>) { (Some(ml_left), Some(ml_right)) => ml_left == ml_right, (None, None) => true, _ => false } {
+                                                        ((f64::NAN) <= source_ml_source2_comparison_operand106)
+                                                    } else {
+                                                        ((source_ml_source2_comparison_operand105.clone().expect("a proven present value")) <= source_ml_source2_comparison_operand106)
+                                                    }
+                                                }
+                                            }) {
                                                 {
                                                     let floating_4 = true;
                                                     {
                                                         let at_6 = (exponent_3 + 1f64);
                                                         {
-                                                            let at_7 = crate::translation::frontend_rules::ml_read_rust_number_bounds_loop26(units, at_6);
-                                                            crate::translation::frontend_rules::MlReadRustNumberBoundsJoin24::MlReadRustNumberBoundsJoin24Next(at_7, floating_4)
+                                                            let at_7 = crate::translation::frontend_rules::source_ml_source1_temporary_read_rust_number_bounds_loop26(units.to_vec(), at_6);
+                                                            crate::translation::frontend_rules::MlSource1TemporaryReadRustNumberBoundsJoin24::MlSource1TemporaryReadRustNumberBoundsJoin24Next(at_7, floating_4)
                                                         }
                                                     }
                                                 }
                                             } else {
-                                                crate::translation::frontend_rules::MlReadRustNumberBoundsJoin24::MlReadRustNumberBoundsJoin24Next(at_5, floating_3)
+                                                crate::translation::frontend_rules::MlSource1TemporaryReadRustNumberBoundsJoin24::MlSource1TemporaryReadRustNumberBoundsJoin24Next(at_5, floating_3)
                                             }
                                         }
                                     }
                                 } else {
-                                    crate::translation::frontend_rules::MlReadRustNumberBoundsJoin24::MlReadRustNumberBoundsJoin24Next(at_5, floating_3)
+                                    crate::translation::frontend_rules::MlSource1TemporaryReadRustNumberBoundsJoin24::MlSource1TemporaryReadRustNumberBoundsJoin24Next(at_5, floating_3)
                                 };
-                                match ml_s16 {
-                                    crate::translation::frontend_rules::MlReadRustNumberBoundsJoin24::MlReadRustNumberBoundsJoin24Next(at_8, floating_5) => {
+                                match source_ml_source2_s94.clone() {
+                                    crate::translation::frontend_rules::MlSource1TemporaryReadRustNumberBoundsJoin24::MlSource1TemporaryReadRustNumberBoundsJoin24Next(at_8, floating_5) => {
                                         {
                                             let suffix = at_8;
                                             {
-                                                let at_11 = if (((at_8 < (units.len() as f64)) && (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(at_8)).unwrap_or(f64::NAN) >= (97f64))) && (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(at_8)).unwrap_or(f64::NAN) <= (122f64))) {
+                                                let at_11 = if (((at_8 < (units.len() as f64)) && {
+                                                    let source_ml_source2_comparison_operand107 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(at_8));
+                                                    {
+                                                        let source_ml_source2_comparison_operand108 = 97f64;
+                                                        if match (source_ml_source2_comparison_operand107.clone(), None::<f64>) { (Some(ml_left), Some(ml_right)) => ml_left == ml_right, (None, None) => true, _ => false } {
+                                                            ((f64::NAN) >= source_ml_source2_comparison_operand108)
+                                                        } else {
+                                                            ((source_ml_source2_comparison_operand107.clone().expect("a proven present value")) >= source_ml_source2_comparison_operand108)
+                                                        }
+                                                    }
+                                                }) && {
+                                                    let source_ml_source2_comparison_operand109 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(at_8));
+                                                    {
+                                                        let source_ml_source2_comparison_operand110 = 122f64;
+                                                        if match (source_ml_source2_comparison_operand109.clone(), None::<f64>) { (Some(ml_left), Some(ml_right)) => ml_left == ml_right, (None, None) => true, _ => false } {
+                                                            ((f64::NAN) <= source_ml_source2_comparison_operand110)
+                                                        } else {
+                                                            ((source_ml_source2_comparison_operand109.clone().expect("a proven present value")) <= source_ml_source2_comparison_operand110)
+                                                        }
+                                                    }
+                                                }) {
                                                     {
                                                         let at_9 = (at_8 + 1f64);
                                                         {
-
-                                                            crate::translation::frontend_rules::ml_read_rust_number_bounds_loop25(units, at_9)
+                                                            let at_10 = crate::translation::frontend_rules::source_ml_source1_temporary_read_rust_number_bounds_loop25(units.to_vec(), at_9);
+                                                            at_10
                                                         }
                                                     }
                                                 } else {
                                                     at_8
                                                 };
                                                 {
-                                                    let floating_7 = if ((((at_11 - suffix) == (3f64)) && match (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(suffix)), 102f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }) && ((match (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(suffix + 1f64)), 51f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } && match (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(suffix + 2f64)), 50f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }) || (match (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(suffix + 1f64)), 54f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } && match (crate::translation::frontend_rules::ml_array::optional_at(units, crate::translation::frontend_rules::ml_array::number_index(suffix + 2f64)), 52f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }))) {
+                                                    let floating_7 = if (((((at_11 - suffix)) == (3f64)) && {
+                                                        let source_ml_source2_comparison_operand111 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index(suffix));
+                                                        {
+                                                            let source_ml_source2_comparison_operand112 = 102f64;
+                                                            match (source_ml_source2_comparison_operand111.clone(), source_ml_source2_comparison_operand112) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }
+                                                        }
+                                                    }) && (({
+                                                        let source_ml_source2_comparison_operand113 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index((suffix + 1f64)));
+                                                        {
+                                                            let source_ml_source2_comparison_operand114 = 51f64;
+                                                            match (source_ml_source2_comparison_operand113.clone(), source_ml_source2_comparison_operand114) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }
+                                                        }
+                                                    } && {
+                                                        let source_ml_source2_comparison_operand115 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index((suffix + 2f64)));
+                                                        {
+                                                            let source_ml_source2_comparison_operand116 = 50f64;
+                                                            match (source_ml_source2_comparison_operand115.clone(), source_ml_source2_comparison_operand116) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }
+                                                        }
+                                                    }) || ({
+                                                        let source_ml_source2_comparison_operand117 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index((suffix + 1f64)));
+                                                        {
+                                                            let source_ml_source2_comparison_operand118 = 54f64;
+                                                            match (source_ml_source2_comparison_operand117.clone(), source_ml_source2_comparison_operand118) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }
+                                                        }
+                                                    } && {
+                                                        let source_ml_source2_comparison_operand119 = crate::translation::frontend_rules::ml_array::optional_at(&units, crate::translation::frontend_rules::ml_array::number_index((suffix + 2f64)));
+                                                        {
+                                                            let source_ml_source2_comparison_operand120 = 52f64;
+                                                            match (source_ml_source2_comparison_operand119.clone(), source_ml_source2_comparison_operand120) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }
+                                                        }
+                                                    }))) {
                                                         {
 
                                                             true
@@ -318,18 +531,13 @@ pub fn accept_precedence_operand_context(
     {
         let index = 0f64;
         {
-            let ml_s17 =
-                crate::translation::frontend_rules::ml_accept_precedence_operand_context_loop28(
-                    owner_contexts,
-                    child_contexts,
-                    index,
-                );
-            match ml_s17 {
-                crate::translation::frontend_rules::MlAcceptPrecedenceOperandContextLoop28Result::MlAcceptPrecedenceOperandContextLoop28Done => {
+            let source_ml_source2_s121 = crate::translation::frontend_rules::source_ml_source1_temporary_accept_precedence_operand_context_loop28(owner_contexts.clone(), child_contexts.clone(), index);
+            match source_ml_source2_s121.clone() {
+                crate::translation::frontend_rules::MlSource1TemporaryAcceptPrecedenceOperandContextLoop28Result::MlSource1TemporaryAcceptPrecedenceOperandContextLoop28Done => {
                     false
                 }
-                crate::translation::frontend_rules::MlAcceptPrecedenceOperandContextLoop28Result::MlAcceptPrecedenceOperandContextLoop28Return(ml_result28) => {
-                    ml_result28
+                crate::translation::frontend_rules::MlSource1TemporaryAcceptPrecedenceOperandContextLoop28Result::MlSource1TemporaryAcceptPrecedenceOperandContextLoop28Return(source_ml_source1_temporary_result28) => {
+                    source_ml_source1_temporary_result28
                 }
             }
         }
@@ -352,98 +560,103 @@ pub const fn accept_precedence_operand_head(
     source_rule_matches || source_reduction_matches
 }
 
-pub fn read_lexical_winner_index(ends: &[f64], eligible: &[bool]) -> f64 {
+pub fn read_lexical_winner_index(ends: Vec<f64>, eligible: Vec<bool>) -> f64 {
     {
         let best = (-1f64);
         {
             let index = 0f64;
             {
-                crate::translation::frontend_rules::ml_read_lexical_winner_index_loop29(
-                    ends, eligible, best, index,
-                )
+                let best_2 = crate::translation::frontend_rules::source_ml_source1_temporary_read_lexical_winner_index_loop29(ends.clone(), eligible.clone(), best, index);
+                best_2
             }
         }
     }
 }
 
-/// Execute the complete checked source algorithm.
-#[must_use]
 pub fn read_java_script_temporal_binding_read(
-    parents: &[f64],
-    bounds: &[f64],
-    names: &[String],
-    ends: &[f64],
-    read_scopes: &[f64],
-    read_names: &[String],
-    read_starts: &[f64],
+    parents: Vec<f64>,
+    bounds: Vec<f64>,
+    names: Vec<String>,
+    ends: Vec<f64>,
+    read_scopes: Vec<f64>,
+    read_names: Vec<String>,
+    read_starts: Vec<f64>,
 ) -> Vec<f64> {
     {
         let read = 0f64;
         {
-            let ml_s18 = crate::translation::frontend_rules::ml_read_java_script_temporal_binding_read_loop30(parents, bounds, names, ends, read_scopes, read_names, read_starts, read);
-            match ml_s18 {
-                crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Done => {
+            let source_ml_source2_s122 = crate::translation::frontend_rules::source_ml_source1_temporary_read_java_script_temporal_binding_read_loop30(parents.clone(), bounds.clone(), names.clone(), ends.clone(), read_scopes.clone(), read_names.clone(), read_starts.clone(), read);
+            match source_ml_source2_s122.clone() {
+                crate::translation::frontend_rules::MlSource1TemporaryReadJavaScriptTemporalBindingReadLoop30Result::MlSource1TemporaryReadJavaScriptTemporalBindingReadLoop30Done => {
                     Vec::<f64>::new()
                 }
-                crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Return(ml_result30) => {
-                    ml_result30
+                crate::translation::frontend_rules::MlSource1TemporaryReadJavaScriptTemporalBindingReadLoop30Result::MlSource1TemporaryReadJavaScriptTemporalBindingReadLoop30Return(source_ml_source1_temporary_result30) => {
+                    source_ml_source1_temporary_result30.clone()
                 }
             }
         }
     }
 }
 
-/// Execute the complete checked source algorithm.
-#[must_use]
 pub fn read_java_script_lexical_declaration_step(
-    kind: &str,
-    value: &str,
+    kind: String,
+    value: String,
     depth: f64,
     declaration: bool,
 ) -> f64 {
-    if (kind == "eof") || (((depth == 0f64) && (kind == "punct")) && (value == "}")) {
-        -1f64
+    if ((kind == "eof") || (((depth == (0f64)) && (kind == "punct")) && (value == "}"))) {
+        (-1f64)
     } else {
         {
-            let ml_s19 = if depth == 0f64 {
-                if (kind == "identifier") && ((value == "const") || (value == "let")) {
-                    crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Return(3f64)
-                } else if ((kind == "punct") && (value == ",")) && declaration {
-                    crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Return(4f64)
-                } else if ((kind == "punct") && (value == ";"))
-                    || ((kind == "identifier")
-                        && (((((((((((((value == "return") || (value == "throw"))
-                            || (value == "function"))
-                            || (value == "if"))
-                            || (value == "while"))
-                            || (value == "for"))
-                            || (value == "switch"))
-                            || (value == "class"))
-                            || (value == "break"))
-                            || (value == "continue"))
-                            || (value == "try"))
-                            || (value == "import"))
-                            || (value == "export")))
-                {
-                    crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Return(5f64)
+            let source_ml_source2_s123 = if (depth == (0f64)) {
+                if ((kind == "identifier") && ((value == "const") || (value == "let"))) {
+                    crate::translation::frontend_rules::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33Return(3f64)
                 } else {
-                    crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Next
+                    if (((kind == "punct") && (value == ",")) && declaration) {
+                        crate::translation::frontend_rules::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33Return(4f64)
+                    } else {
+                        if ((kind == "punct") && (value == ";")) {
+                            crate::translation::frontend_rules::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33Return(5f64)
+                        } else {
+                            if ((kind == "identifier")
+                                && (((((((((((((value == "return")
+                                    || (value == "throw"))
+                                    || (value == "function"))
+                                    || (value == "if"))
+                                    || (value == "while"))
+                                    || (value == "for"))
+                                    || (value == "switch"))
+                                    || (value == "class"))
+                                    || (value == "break"))
+                                    || (value == "continue"))
+                                    || (value == "try"))
+                                    || (value == "import"))
+                                    || (value == "export")))
+                            {
+                                crate::translation::frontend_rules::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33Return(5f64)
+                            } else {
+                                crate::translation::frontend_rules::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33Next
+                            }
+                        }
+                    }
                 }
             } else {
-                crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Next
+                crate::translation::frontend_rules::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33Next
             };
-            match ml_s19 {
-                crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Next => {
-                    if (kind == "punct") && (((value == "{") || (value == "(")) || (value == "[")) {
+            match source_ml_source2_s123.clone() {
+                crate::translation::frontend_rules::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33Next => {
+                    if ((kind == "punct") && (((value == "{") || (value == "(")) || (value == "["))) {
                         1f64
-                    } else if (kind == "punct") && (((value == "}") || (value == ")")) || (value == "]")) {
+                    } else {
+                        if ((kind == "punct") && (((value == "}") || (value == ")")) || (value == "]"))) {
                             2f64
                         } else {
                             0f64
                         }
+                    }
                 }
-                crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Return(ml_result33) => {
-                    ml_result33
+                crate::translation::frontend_rules::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33::MlSource1TemporaryReadJavaScriptLexicalDeclarationStepJoin33Return(source_ml_source1_temporary_result33) => {
+                    source_ml_source1_temporary_result33
                 }
             }
         }

@@ -36,6 +36,7 @@ pub(super) fn lower(
     statements: &[Stmt],
     place: Span,
     generated_count: &mut usize,
+    generated_prefix: &str,
 ) -> Result<SExpr> {
     let list: Vec<&Stmt> = statements
         .iter()
@@ -47,7 +48,7 @@ pub(super) fn lower(
         })
         .filter(|statement| !matches!(statement, Stmt::Empty))
         .collect();
-    lower_at(&list, 0, place, generated_count)
+    lower_at(&list, 0, place, generated_count, generated_prefix)
 }
 
 pub(super) const fn statement_span(statement: &Stmt) -> Option<Span> {
@@ -87,13 +88,14 @@ pub(super) fn lower_at(
     index: usize,
     place: Span,
     generated_count: &mut usize,
+    generated_prefix: &str,
 ) -> Result<SExpr> {
     // A function that finishes without returning returns undefined, the unit value.
     let Some(statement) = list.get(index) else {
         return Ok(node(SNode::Unit, place));
     };
     if let Some(guards) = tag_guard_sequence(list[index..].iter().copied()) {
-        return lower(&[guards], place, generated_count);
+        return lower(&[guards], place, generated_count, generated_prefix);
     }
     match statement {
         Stmt::Const { name, value, span } => Ok(node(
@@ -101,7 +103,13 @@ pub(super) fn lower_at(
                 name: name.clone(),
                 ty: None,
                 value: Box::new(value.clone()),
-                body: Box::new(lower_at(list, index + 1, place, generated_count)?),
+                body: Box::new(lower_at(
+                    list,
+                    index + 1,
+                    place,
+                    generated_count,
+                    generated_prefix,
+                )?),
             },
             *span,
         )),
@@ -109,8 +117,15 @@ pub(super) fn lower_at(
             unreachable(list, index)?;
             Ok(expr.clone())
         }
-        Stmt::Throw { message, span } => {
+        Stmt::Throw {
+            message,
+            exception,
+            span,
+        } => {
             unreachable(list, index)?;
+            if let Some(exception) = exception {
+                return Ok(exception.clone());
+            }
             Ok(node(
                 SNode::Abort {
                     message: message.clone(),
@@ -127,7 +142,7 @@ pub(super) fn lower_at(
                 ));
             }
             unreachable(list, index)?;
-            lower(body, *span, generated_count)
+            lower(body, *span, generated_count, generated_prefix)
         }
         Stmt::If {
             cond,
@@ -142,22 +157,22 @@ pub(super) fn lower_at(
                     Some(*span),
                 ));
             }
-            let then = lower(then, *span, generated_count)?;
+            let then = lower(then, *span, generated_count, generated_prefix)?;
             if let Some(test) = tag_condition(cond) {
                 if otherwise.is_some() {
                     unreachable(list, index)?;
                 }
                 let other = match otherwise {
-                    Some(branch) => lower(branch, *span, generated_count)?,
-                    None => lower_at(list, index + 1, place, generated_count)?,
+                    Some(branch) => lower(branch, *span, generated_count, generated_prefix)?,
+                    None => lower_at(list, index + 1, place, generated_count, generated_prefix)?,
                 };
                 return lower_tag_if(test, then, other, *span);
             }
             let other = if let Some(branch) = otherwise {
                 unreachable(list, index)?;
-                lower(branch, *span, generated_count)?
+                lower(branch, *span, generated_count, generated_prefix)?
             } else {
-                lower_at(list, index + 1, place, generated_count)?
+                lower_at(list, index + 1, place, generated_count, generated_prefix)?
             };
             Ok(node(
                 SNode::If {
@@ -168,7 +183,14 @@ pub(super) fn lower_at(
                 *span,
             ))
         }
-        Stmt::Switch(switch) => lower_switch(switch, list, index, place, generated_count),
+        Stmt::Switch(switch) => lower_switch(
+            switch,
+            list,
+            index,
+            place,
+            generated_count,
+            generated_prefix,
+        ),
         Stmt::Expr { span, .. } => Err(unsupported(
             "expression statement",
             "statements with effects are outside the portable core in function bodies",
@@ -257,6 +279,7 @@ pub(super) fn lower_switch(
     index: usize,
     place: Span,
     generated_count: &mut usize,
+    generated_prefix: &str,
 ) -> Result<SExpr> {
     for clause in &node.clauses {
         if !terminates(&clause.body) {
@@ -276,7 +299,7 @@ pub(super) fn lower_switch(
                 .any(|test| matches!(test, CaseTest::Value { .. }))
         }),
     ) {
-        return lower_value_switch(node, list, index, place, generated_count);
+        return lower_value_switch(node, list, index, place, generated_count, generated_prefix);
     }
     let tag_switch = node.tag.as_ref().map(|(subject, data)| TagSwitch {
         subject,
@@ -289,7 +312,7 @@ pub(super) fn lower_switch(
     let mut has_default = false;
     for clause in &node.clauses {
         for test in &clause.tests {
-            let body = lower(&clause.body, clause.span, generated_count)?;
+            let body = lower(&clause.body, clause.span, generated_count, generated_prefix)?;
             match (test, &tag_switch) {
                 (CaseTest::Default { span }, tag_switch) => {
                     has_default = true;
@@ -351,7 +374,7 @@ pub(super) fn lower_switch(
     } else if !at_end && !has_default {
         rows.push(SRow {
             patterns: vec![wild(node.span)],
-            body: lower_at(list, index + 1, place, generated_count)?,
+            body: lower_at(list, index + 1, place, generated_count, generated_prefix)?,
             span: Some(node.span),
         });
     } else if has_default {
@@ -424,6 +447,7 @@ fn lower_value_switch(
     index: usize,
     place: Span,
     generated_count: &mut usize,
+    generated_prefix: &str,
 ) -> Result<SExpr> {
     let fallback = switch.clauses.iter().find(|clause| {
         clause
@@ -452,7 +476,7 @@ fn lower_value_switch(
         match instruction.as_str() {
             "capture" => {
                 *generated_count += 1;
-                name = format!("ml_switch{generated_count}");
+                name = format!("{generated_prefix}temporary_switch{generated_count}");
                 read = Some(node(
                     SNode::Name {
                         path: vec![name.clone()],
@@ -462,9 +486,9 @@ fn lower_value_switch(
             }
             "fallback" => {
                 body = Some(if let Some(clause) = fallback {
-                    lower(&clause.body, clause.span, generated_count)?
+                    lower(&clause.body, clause.span, generated_count, generated_prefix)?
                 } else if index + 1 < list.len() {
-                    lower_at(list, index + 1, place, generated_count)?
+                    lower_at(list, index + 1, place, generated_count, generated_prefix)?
                 } else {
                     node(SNode::Unit, switch.span)
                 });
@@ -508,7 +532,14 @@ fn lower_value_switch(
                                 span,
                             ));
                     }
-                    "body" => branch = Some(lower(&clause.body, clause.span, generated_count)?),
+                    "body" => {
+                        branch = Some(lower(
+                            &clause.body,
+                            clause.span,
+                            generated_count,
+                            generated_prefix,
+                        )?)
+                    }
                     _ => {
                         body = Some(node(
                             SNode::If {
@@ -588,13 +619,15 @@ pub(super) fn lower_tag_if(
     };
     let mut rows = vec![tag_row(&tag_switch, &test.tag, place, &matching, place)?];
     rows.extend(default_rows(&tag_switch, other, place)?);
-    Ok(node(
+    let mut lowered = node(
         SNode::Match {
             scrutinees: vec![test.object.clone()],
             rows,
         },
         place,
-    ))
+    );
+    lowered.tag_test = Some(Box::new(test.clone()));
+    Ok(lowered)
 }
 
 pub(super) fn tag_row(
@@ -630,7 +663,10 @@ pub(super) fn tag_row(
             break;
         };
         if object.simple_name() != Some(subject)
-            || !has_field(field)
+            || !ctor
+                .fields
+                .iter()
+                .any(|candidate| !candidate.optional && candidate.name.as_deref() == Some(field))
             || binders.iter().any(|(bound, _)| bound == field)
             || name == subject
             || direct.contains(&name.as_str())
@@ -653,7 +689,15 @@ pub(super) fn tag_row(
     for (_, name) in &binders {
         used.insert(name.clone());
     }
-    let mut binder_for = |field: &str| -> Result<String> {
+    let mut binder_for = |field: &str, span| -> Result<SExpr> {
+        if field == "$" {
+            return Ok(SExpr::new(
+                SNode::Str {
+                    value: tag.to_owned(),
+                },
+                span,
+            ));
+        }
         if !has_field(field) {
             return Err(type_error(
                 format!(
@@ -663,22 +707,33 @@ pub(super) fn tag_row(
                 Some(place),
             ));
         }
-        if let Some((_, name)) = binders.iter().find(|(bound, _)| bound == field) {
-            return Ok(name.clone());
-        }
-        let mut name = if used.contains(field) || field == subject {
-            format!("{subject}_{field}")
+        let optional = ctor
+            .fields
+            .iter()
+            .any(|candidate| candidate.optional && candidate.name.as_deref() == Some(field));
+        let name = if let Some((_, name)) = binders.iter().find(|(bound, _)| bound == field) {
+            name.clone()
         } else {
-            field.to_owned()
+            let mut name = if used.contains(field) || field == subject {
+                format!("{subject}_{field}")
+            } else {
+                field.to_owned()
+            };
+            let mut index = 2;
+            while used.contains(&name) {
+                name = format!("{subject}_{field}{index}");
+                index += 1;
+            }
+            used.insert(name.clone());
+            binders.push((field.to_owned(), name.clone()));
+            name
         };
-        let mut index = 2;
-        while used.contains(&name) {
-            name = format!("{subject}_{field}{index}");
-            index += 1;
-        }
-        used.insert(name.clone());
-        binders.push((field.to_owned(), name.clone()));
-        Ok(name)
+        let binding = SExpr::new(SNode::Name { path: vec![name] }, span);
+        Ok(if optional {
+            crate::translation::javascript_constructor_presence::surface_projection(binding, span)
+        } else {
+            binding
+        })
     };
     substitute_fields(&mut body, subject, &mut binder_for)?;
     let args = ctor
@@ -689,7 +744,7 @@ pub(super) fn tag_row(
                 .iter()
                 .find(|(name, _)| Some(name.as_str()) == field.name.as_deref());
             SPattern {
-                node: bound.map_or(SPatternNode::Wild, |(_, name)| SPatternNode::BindOrCtor {
+                node: bound.map_or(SPatternNode::Wild, |(_, name)| SPatternNode::Bind {
                     name: name.clone(),
                 }),
                 span: Some(test_span),
@@ -712,10 +767,17 @@ pub(super) fn tag_row(
 /// The names patterns bind.
 pub(super) fn pattern_names(pattern: &SPattern, names: &mut HashSet<String>) {
     match &pattern.node {
+        SPatternNode::Alias {
+            name,
+            pattern: inner,
+        } => {
+            names.insert(name.clone());
+            pattern_names(inner, names);
+        }
         SPatternNode::BindOrCtor { name } | SPatternNode::Bind { name } => {
             names.insert(name.clone());
         }
-        SPatternNode::Ctor { args, .. } => {
+        SPatternNode::Ctor { args, .. } | SPatternNode::Tuple { args, .. } => {
             for arg in args {
                 pattern_names(arg, names);
             }
@@ -773,16 +835,15 @@ pub(super) fn reads_fields(expr: &SExpr, subject: &str) -> bool {
 }
 
 /// Replaces `subject.field` by the case's pattern variables, up to a rebinding of `subject`.
-pub(super) fn substitute_fields(
+fn substitute_fields(
     expr: &mut SExpr,
     subject: &str,
-    binder_for: &mut dyn FnMut(&str) -> Result<String>,
+    binder_for: &mut dyn FnMut(&str, Option<Span>) -> Result<SExpr>,
 ) -> Result<()> {
     if let SNode::Field { object, field } = &expr.node
         && object.simple_name() == Some(subject)
     {
-        let name = binder_for(field)?;
-        expr.node = SNode::Name { path: vec![name] };
+        *expr = binder_for(field, expr.span)?;
         return Ok(());
     }
     match &mut expr.node {
@@ -904,7 +965,13 @@ pub(super) fn guarded_parameter(statement: &Stmt, params: &[SParam]) -> Option<u
         .iter()
         .filter(|inner| !matches!(inner, Stmt::Empty))
         .collect();
-    if !matches!(then.as_slice(), [Stmt::Throw { .. }]) {
+    if !matches!(
+        then.as_slice(),
+        [Stmt::Throw {
+            exception: None,
+            ..
+        }]
+    ) {
         return None;
     }
     let SNode::Binary {

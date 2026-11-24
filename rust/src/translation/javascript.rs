@@ -29,13 +29,17 @@ use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, array};
 use super::{Language, Span};
 
 mod array_bindings;
+mod array_formal_parameters;
 mod array_methods;
 mod callables;
+mod classes;
 mod console;
 mod constructed_guarded_array_writes;
 mod declarations;
 mod expressions;
+mod fixed_integer_casts;
 mod flow;
+mod formal_initializers;
 mod guarded_private_array_writes;
 mod imperative;
 mod imports;
@@ -44,19 +48,46 @@ mod lexical_bindings;
 mod loops;
 mod lowering;
 mod math;
+mod object_binding_declarations;
+mod object_constructor_spreads;
 mod object_properties;
 mod owned_array_append;
 mod product_source_rules;
 mod products;
 mod record_parameters;
+mod recursive_object_bindings;
+mod recursive_object_formals;
 mod reference_analysis;
+mod scalar_assignments;
 mod scalar_loops;
 mod statements;
 mod surface_rules;
 mod tag_context;
+mod whole_parameter_defaults;
 use self::flow::{imperative, statement_uses};
 use self::imperative::lower_imperative;
 use self::lowering::{assertion_kind, guarded_parameter, lower, prop_of};
+
+pub(super) use declarations::test_javascript_source_function_start;
+
+fn matching_source_group(tokens: &[Token], index: usize) -> usize {
+    let mut depth = 0_i64;
+    for (at, token) in tokens.iter().enumerate().skip(index) {
+        if token.kind != TokenKind::Punct {
+            continue;
+        }
+        if ["(", "[", "{"].contains(&token.value.as_str()) {
+            depth += 1;
+        }
+        if [")", "]", "}"].contains(&token.value.as_str()) {
+            depth -= 1;
+            if depth == 0 {
+                return at;
+            }
+        }
+    }
+    tokens.len() - 1
+}
 
 const ROOT: &str = "crate";
 const ASSIGNMENTS: [&str; 16] = [
@@ -73,7 +104,6 @@ const COMPOUND: [(&str, BinaryOp); 7] = [
     ("&&=", BinaryOp::And),
     ("||=", BinaryOp::Or),
 ];
-const ERRORS: [&str; 3] = ["Error", "RangeError", "TypeError"];
 const GLOBALS: [&str; 24] = [
     "Math",
     "Number",
@@ -137,6 +167,27 @@ pub fn parse_javascript(source: &str) -> Result<SProgram> {
     parse_javascript_in(source, &ModuleContext::default())
 }
 
+pub(super) fn parse_ordinary_javascript_source_library(source: &str) -> Result<SProgram> {
+    let tokens = tokenize(source, Language::JavaScript)?;
+    let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
+    parser.reference_state.permitted = false;
+    parser.reference_state.enabled = false;
+    parser.file()
+}
+
+pub(crate) fn has_source_library_typedef(text: &str, span: Span, name: &str) -> bool {
+    text.starts_with("/**")
+        && jsdoc_tags(&Comment {
+            text: text.to_owned(),
+            start: span.start,
+            end: span.end,
+        })
+        .is_ok_and(|tags| {
+            tags.iter()
+                .any(|tag| tag.tag == "typedef" && tag.name.as_deref() == Some(name))
+        })
+}
+
 /// Read actual emitted scalar loops under the selected Number/Boolean interface.
 ///
 /// # Errors
@@ -150,6 +201,20 @@ pub fn parse_javascript_with_scalar_loop_model(source: &str, model: &str) -> Res
         ));
     }
     let tokens = tokenize(source, Language::JavaScript)?;
+    if let Some(classes) = classes::read(source, &tokens.tokens, &ModuleContext::default())? {
+        let result = (|| {
+            let lowered = tokenize(&classes.text, Language::JavaScript)?;
+            let mut parser =
+                JavaScriptParser::new(&classes.text, lowered.tokens, &lowered.comments);
+            parser.reference_state.enabled = true;
+            parser.reference_state.forced = true;
+            parser.closed_class_methods=classes.prototype_methods.clone();
+            parser.closed_class_owners=Some(classes.owners.clone());
+            model.clone_into(&mut parser.scalar_loop_model);
+            parser.file()
+        })();
+        return classes::project(result, &classes);
+    }
     let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
     model.clone_into(&mut parser.scalar_loop_model);
     parser.file()
@@ -203,6 +268,32 @@ pub(crate) fn parse_javascript_bound_in_with_module_scope(
     readonly_module_constants: bool,
     module_scope: Option<&ModuleBindingScope>,
 ) -> Result<SProgram> {
+    parse_javascript_bound_in_with_module_representation(
+        source,
+        context,
+        literal_bindings,
+        readonly_module_constants,
+        module_scope,
+        false,
+    )
+}
+
+pub(crate) fn requires_javascript_reference_semantics(source: &str) -> Result<bool> {
+    let tokens = tokenize(source, Language::JavaScript)?;
+    Ok(reference_analysis::requires_reference_semantics(
+        &tokens.tokens,
+        &[],
+    ))
+}
+
+pub(crate) fn parse_javascript_bound_in_with_module_representation(
+    source: &str,
+    context: &ModuleContext,
+    literal_bindings: &HashMap<String, SExpr>,
+    readonly_module_constants: bool,
+    module_scope: Option<&ModuleBindingScope>,
+    reference_semantics: bool,
+) -> Result<SProgram> {
     if module_scope.is_some_and(|scope| {
         scope.names.len() > 100_000 || scope.names.iter().any(String::is_empty)
     }) {
@@ -213,7 +304,26 @@ pub(crate) fn parse_javascript_bound_in_with_module_scope(
         ));
     }
     let tokens = tokenize(source, Language::JavaScript)?;
+    if let Some(classes) = classes::read(source, &tokens.tokens, context)? {
+        classes::require_bindings(source, literal_bindings.len(), module_scope)?;
+        let result = (|| {
+            let lowered = tokenize(&classes.text, Language::JavaScript)?;
+            let mut parser =
+                JavaScriptParser::new(&classes.text, lowered.tokens, &lowered.comments);
+            parser.reference_state.enabled = true;
+            parser.reference_state.forced = true;
+            parser.readonly_constants.module = readonly_module_constants;
+            parser.closed_class_methods=classes.prototype_methods.clone();
+            parser.closed_class_owners=Some(classes.owners.clone());
+            parser.file()
+        })();
+        return classes::project(result, &classes);
+    }
     let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
+    if reference_semantics {
+        parser.reference_state.enabled = true;
+        parser.reference_state.forced = true;
+    }
     parser.literal_bindings.clone_from(literal_bindings);
     parser.readonly_constants.module = readonly_module_constants;
     parser.externals.clone_from(&context.externals);
@@ -226,6 +336,9 @@ pub(crate) fn parse_javascript_bound_in_with_module_scope(
     parser
         .module_directory
         .clone_from(&context.module_directory);
+    parser.closed_collection_iteration_scope=crate::translation::disjoint_collection_iteration_rules::accept_disjoint_collection_iteration_scope(
+        module_scope.is_none_or(|scope|scope.known),context.externals.len() as f64,literal_bindings.len() as f64,module_scope.map_or(0,|scope|scope.names.len()) as f64,context.module_directory.is_some(),
+        parser.cursor.tokens.iter().any(|token|token.value=="import"||token.value=="export"));
     parser.file()
 }
 
@@ -317,6 +430,7 @@ enum Stmt {
     },
     Throw {
         message: String,
+        exception: Option<SExpr>,
         span: Span,
     },
     /// A braced block; `inline` for the bindings of a destructuring `const`.
@@ -400,6 +514,7 @@ struct ReadonlyConstants {
 }
 
 struct ReferenceSemantics {
+    permitted: bool,
     enabled: bool,
     forced: bool,
 }
@@ -428,11 +543,15 @@ struct JavaScriptParser {
     top_level: bool,
     readonly_constants: ReadonlyConstants,
     reference_state: ReferenceSemantics,
+    closed_collection_iteration_scope: bool,
+    closed_class_methods: Vec<String>,
+    closed_class_owners: Option<serde_json::Value>,
     eliminated_owned_array_append_operations: Vec<Span>,
     scalar_loop_model: String,
     /// Functions and data types that loops and joins of statements lower to, and their count.
     generated: Vec<SItem>,
     generated_count: usize,
+    generated_prefix: String,
     indexed_reference_writes: usize,
     /// The other items of the module an item may call and read.
     externals: Vec<External>,
@@ -455,6 +574,11 @@ struct JavaScriptParser {
 impl JavaScriptParser {
     fn new(source: &str, tokens: Vec<Token>, comments: &[Comment]) -> Self {
         let reference_semantics = reference_analysis::requires_reference_semantics(&tokens, &[]);
+        let closed_collection_iteration_scope=crate::translation::disjoint_collection_iteration_rules::accept_disjoint_collection_iteration_scope(true,0.0,0.0,0.0,false,tokens.iter().any(|token|token.value=="import"||token.value=="export"));
+        let generated_prefix =
+            crate::translation::source_identifiers::read_source_parser_identifier_supply(
+                source, &tokens,
+            );
         Self {
             source: Source::new(source),
             cursor: TokenCursor::new(tokens, Language::JavaScript),
@@ -478,13 +602,18 @@ impl JavaScriptParser {
             top_level: false,
             readonly_constants: ReadonlyConstants::default(),
             reference_state: ReferenceSemantics {
+                permitted: true,
                 enabled: reference_semantics,
                 forced: false,
             },
+            closed_collection_iteration_scope,
+            closed_class_methods: Vec::new(),
+            closed_class_owners: None,
             eliminated_owned_array_append_operations: Vec::new(),
             scalar_loop_model: String::new(),
             generated: Vec::new(),
             generated_count: 0,
+            generated_prefix,
             indexed_reference_writes: 0,
             externals: Vec::new(),
             module_directory: None,
@@ -576,6 +705,7 @@ fn jsdoc_tags(comment: &Comment) -> Result<Vec<JsDocTag>> {
         .chars()
         .collect();
     let mut tags = Vec::new();
+    let mut type_units = None;
     let mut at = 0;
     while let Some((tag_start, tag_end)) = next_tag(&text, at) {
         let tag: String = text[tag_start + 1..tag_end].iter().collect();
@@ -585,26 +715,21 @@ fn jsdoc_tags(comment: &Comment) -> Result<Vec<JsDocTag>> {
         }
         let mut ty = None;
         if text.get(index) == Some(&'{') {
-            let mut depth = 0;
-            let mut end = index;
-            while end < text.len() {
-                if text[end] == '{' {
-                    depth += 1;
-                }
-                if text[end] == '}' {
-                    depth -= 1;
-                    if depth == 0 {
-                        break;
-                    }
-                }
-                end += 1;
-            }
-            if depth != 0 {
+            let units = type_units.get_or_insert_with(|| {
+                text.iter()
+                    .map(|character| f64::from(u32::from(*character)))
+                    .collect::<Vec<_>>()
+            });
+            let start = serde_json::Number::from(index)
+                .as_f64()
+                .expect("a source coordinate has a finite binary64 projection");
+            let end = super::type_syntax_rules::read_documentation_type_end(units, start);
+            let Some(end) = super::frontend_rules::ml_array::number_index(end) else {
                 return Err(TranslationError::syntax(
                     format!("unbalanced braces in the JSDoc type of @{tag}"),
                     Some(Span::new(comment.start, comment.end)),
                 ));
-            }
+            };
             ty = Some(
                 text[index + 1..end]
                     .iter()

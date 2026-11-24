@@ -264,8 +264,8 @@ pub fn ml_accept_recursive_declaration_owned_emission_loop37(
                                                 {
                                                     let position = 0f64;
                                                     {
-                                                        let ml_s40 = self::ml_accept_recursive_declaration_owned_emission_loop38(mappings, forbidden_targets, targets, declaration, start, count, position);
-                                                        match ml_s40 {
+                                                        let ml_s4400 = self::ml_accept_recursive_declaration_owned_emission_loop38(mappings, forbidden_targets, targets, declaration, start, count, position);
+                                                        match ml_s4400 {
                                                             self::MlAcceptRecursiveDeclarationOwnedEmissionLoop38Result::MlAcceptRecursiveDeclarationOwnedEmissionLoop38Done(targets_2) => {
                                                                 {
                                                                     let mapping_offset_2 = mapping_offset + count;
@@ -500,7 +500,7 @@ pub fn ml_accept_deferred_declaration_parameters_loop44(
                                 {
                                     let text = self::read_required_text_fact(texts, child);
                                     if ((((text.encode_utf16().count() as f64) == 0f64)
-                                        || text.contains("\\"))
+                                        || text.contains('\\'))
                                         || (text == "eval"))
                                         || (text == "arguments")
                                     {
@@ -511,8 +511,8 @@ pub fn ml_accept_deferred_declaration_parameters_loop44(
                                             {
                                                 let ml_index43 = self::ml::Big::from_i128(0);
                                                 {
-                                                    let ml_s41 = self::ml_accept_deferred_declaration_parameters_loop45(&(text), &(ml_values43), ml_index43);
-                                                    match ml_s41 {
+                                                    let ml_s4411 = self::ml_accept_deferred_declaration_parameters_loop45(&(text), &(ml_values43), ml_index43);
+                                                    match ml_s4411 {
                                                     self::MlAcceptDeferredDeclarationParametersLoop45Result::MlAcceptDeferredDeclarationParametersLoop45Done => {
                                                         {
                                                             let names_2 = { let (ml_append_right, ml_append_left) = (vec![text.clone()], names); self::ml_array::append(ml_append_left, ml_append_right) };
@@ -605,7 +605,7 @@ pub fn ml_read_declaration_deferred_binding_loop58(
                             {
                                 let text = self::read_required_text_fact(texts, child);
                                 if ((((text.encode_utf16().count() as f64) == 0f64)
-                                    || text.contains("\\"))
+                                    || text.contains('\\'))
                                     || (text == "eval"))
                                     || (text == "arguments")
                                 {

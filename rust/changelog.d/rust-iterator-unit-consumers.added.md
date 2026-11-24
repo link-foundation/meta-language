@@ -1,0 +1,1 @@
+Draft ordinary Rust for_each and inspect through shared source-derived iterator plans, retaining Unit types, item ownership, lazy visit order, callback construction and abort behavior. Both runtime adapters reuse common fold/application terms; independent native-original controls remain deferred.

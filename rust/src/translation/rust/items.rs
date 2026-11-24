@@ -4,10 +4,10 @@ use super::array_rules::accept_rust_source_array_owner;
 use super::indirection_rules::accept_rust_source_box_owner;
 use super::read_only_query_rules::accept_rust_read_only_query_owner;
 use super::{
-    FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS, Result, RustParser, SComparison, SCtor,
-    SData, SEffect, SExpr, SField, SItem, SMain, SModule, SNode, SProgram, SProp, SPropNode,
+    Binding, FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS, Result, RustParser, SComparison,
+    SCtor, SData, SEffect, SExpr, SField, SItem, SMain, SModule, SNode, SProgram, SProp, SPropNode,
     ShowStyle, SourceDeclaration, SourceOrigin, Token, TokenKind, TranslationError, Type, absolute,
-    format, is_if_or_match, prop_of, span, unsupported,
+    is_if_or_match, prop_of, span, unsupported,
 };
 
 mod attributes;
@@ -19,9 +19,33 @@ mod types;
 
 impl RustParser {
     pub(super) fn file(&mut self) -> Result<SProgram> {
+        self.initialize_type_aliases()?;
+        if !self.header_discovery {
+            self.finish_type_aliases()?;
+        }
         self.inner_attributes()?;
         let mut items = self.items(&[], ItemsEnd::File)?;
-        let Some(main) = self.main.take() else {
+        self.finish_type_aliases()?;
+        self.finish_fn_mut_source_items(&mut items)?;
+        self.install_ordinary_completion_declarations(&mut items)?;
+        self.finish_standard_sum_source(&mut items)?;
+        let main = self.main.take();
+        if !self.shared_array_handle_source_model.is_empty() {
+            self.finish_shared_array_source(&items, main.as_ref())?;
+            return Ok(SProgram {
+                source_class_owners: None,
+                source_class_methods: Vec::new(),
+                reference_semantics: Some(true.into()),
+                language: Language::Rust,
+                items,
+                main,
+                imports: Vec::new(),
+                externals: Vec::new(),
+                source_pure_unit_calls: None,
+                source_runtime_shell: None,
+            });
+        }
+        let Some(main) = main else {
             return Err(TranslationError::syntax(
                 "a Rust program needs fn main",
                 Some(self.cursor.peek().span()),
@@ -40,7 +64,9 @@ impl RustParser {
         let source_pure_unit_calls = self.finish_pure_unit_source(&items, &main)?;
         self.require_owned_local_program(&items, &main)?;
         self.require_const_function_program(&items, &main)?;
-        Ok(SProgram {
+        let mut program = SProgram {
+            source_class_owners: None,
+            source_class_methods: Vec::new(),
             reference_semantics: None,
             language: Language::Rust,
             items,
@@ -49,7 +75,14 @@ impl RustParser {
             externals: Vec::new(),
             source_pure_unit_calls,
             source_runtime_shell: None,
-        })
+        };
+        self.finish_owned_record_effects(&mut program)?;
+        self.refuse_standard_sum_private_completions(&program)?;
+        if !self.origins.collecting {
+            self.refuse_standard_sum_source_patterns(&program)?;
+        }
+        self.finish_standard_collection_source(&mut program)?;
+        Ok(program)
     }
 
     pub(super) fn items(&mut self, path: &[String], end: ItemsEnd) -> Result<Vec<SItem>> {
@@ -83,12 +116,25 @@ impl RustParser {
                     ),
                 ));
             }
-            if !self.const_function_model.is_empty()
-                && self.cursor.is("const")
-                && self.cursor.is_at("fn", 1)
-            {
+            if crate::translation::rust_function_qualifier_rules::accept_rust_const_function_prefix(
+                self.ordinary_completion_context(),
+                !self.const_function_model.is_empty(),
+                self.cursor.is("const"),
+                self.cursor.is_at("fn", 1),
+            ) {
                 let const_keyword_index = self.cursor.index;
                 self.const_function_keyword = Some(self.cursor.advance());
+                if !crate::translation::rust_function_qualifier_rules::accept_rust_const_function_location(
+                    path.len() as f64,
+                    self.inherent_owner.is_some(),
+                    &self.cursor.peek_at(1).value,
+                ) {
+                    return Err(unsupported(
+                        "Rust const function entry",
+                        "a qualified executable main requires its own entry interpretation",
+                        span(self.const_function_keyword.as_ref().unwrap(), self.cursor.peek_at(1)),
+                    ));
+                }
                 let mut function = self.function(path)?;
                 if !diagnostic_attributes.is_empty() {
                     function.source_diagnostic_attributes =
@@ -105,6 +151,10 @@ impl RustParser {
             self.empty_option_item_guard(path, &start)?;
             self.require_unit_clone_attached_enum(&derivations, &start)?;
             self.require_type_namespace_without_externals(&start)?;
+            if self.cursor.is("type") && self.ordinary_completion_context() {
+                self.read_type_alias_item(path)?;
+                continue;
+            }
             let c = &mut self.cursor;
             if c.is("mod") {
                 c.advance();
@@ -118,6 +168,7 @@ impl RustParser {
                 }
                 c.expect("{", Some("mod"))?;
                 let module_span = span(&start, c.peek());
+                self.inner_attributes()?;
                 self.origins
                     .declaration(&name, path, SourceDeclaration::Module)?;
                 let mut inner = path.to_vec();
@@ -166,6 +217,14 @@ impl RustParser {
                 items.push(self.enum_item(path, &derivations)?);
                 continue;
             }
+            if c.is("struct") {
+                items.push(SItem::Data(self.record_item(path, &derivations)?));
+                continue;
+            }
+            if c.is("impl") {
+                items.push(SItem::Module(self.inherent_item(path)?));
+                continue;
+            }
             if c.is("fn") || c.is("const") {
                 if c.is("fn") && c.is_at("main", 1) && path.is_empty() {
                     if !self.const_function_model.is_empty() && self.empty_option_main_seen {
@@ -187,6 +246,9 @@ impl RustParser {
                     continue;
                 }
                 let item = if c.is("fn") {
+                    if self.capture_fn_mut_source_item(path)? {
+                        continue;
+                    }
                     self.function(path)?
                 } else {
                     self.const_item(path)?
@@ -288,6 +350,12 @@ impl RustParser {
         let standard_primitive = self
             .read_standard_primitive_position(&full, path)?
             .is_some();
+        let standard_selection = !self.primitive_selection_import_role(&full, path).is_empty();
+        let standard_associated = self.primitive_associated_import(&full, path);
+        let standard_try_from = self.primitive_try_from_import(&full, path);
+        let standard_default = self.primitive_default_import(&full, path);
+        let standard_sum = self.read_standard_sum_source_import(&full, path);
+        let standard_collection = self.standard_collection_import(&full, path);
         let c = &mut self.cursor;
         if !self.primitive_owner_model.is_empty() && !standard_primitive {
             return Err(unsupported(
@@ -301,6 +369,12 @@ impl RustParser {
             && !standard_vector
             && !standard_string
             && !standard_primitive
+            && !standard_selection
+            && !standard_associated
+            && !standard_try_from
+            && !standard_default
+            && !standard_sum
+            && !standard_collection
         {
             return Err(unsupported(
                 &format!("use {}", full.join("::")),
@@ -331,7 +405,17 @@ impl RustParser {
                 span(start, c.peek()),
             ));
         }
-        let target = if standard_box || standard_vector || standard_string || standard_primitive {
+        let target = if standard_box
+            || standard_vector
+            || standard_string
+            || standard_primitive
+            || standard_selection
+            || standard_associated
+            || standard_try_from
+            || standard_default
+            || standard_sum
+            || standard_collection
+        {
             full
         } else {
             absolute(&full, path, span(start, c.peek()))?
@@ -354,6 +438,9 @@ impl RustParser {
 
     /// A `use` alias is visible only in the module that declares it.
     pub(super) fn resolve(&self, segments: &[String], path: &[String]) -> Vec<String> {
+        if let Some(inherent) = self.inherent_path(segments, path) {
+            return inherent;
+        }
         self.aliases
             .get(&path.join("."))
             .and_then(|aliases| aliases.get(&segments[0]))
@@ -364,6 +451,25 @@ impl RustParser {
     }
 
     pub(super) fn enum_item(
+        &mut self,
+        path: &[String],
+        derivations: &[serde_json::Value],
+    ) -> Result<SItem> {
+        let previous = self.declaration_self_owner.clone();
+        if self.origins.owned_container_source_enabled {
+            let mut owner = path.to_vec();
+            owner.push(self.cursor.peek_at(1).value.clone());
+            self.declaration_self_owner = Some(super::inherent::InherentOwner {
+                path: owner,
+                module_path: path.to_vec(),
+            });
+        }
+        let result = self.enum_declaration(path, derivations);
+        self.declaration_self_owner = previous;
+        result
+    }
+
+    fn enum_declaration(
         &mut self,
         path: &[String],
         derivations: &[serde_json::Value],
@@ -379,6 +485,7 @@ impl RustParser {
         }
         self.cursor.expect("{", Some("enum"))?;
         let mut ctors = Vec::new();
+        let mut field_groups = Vec::new();
         let owner = path
             .iter()
             .chain(std::iter::once(&name))
@@ -396,6 +503,7 @@ impl RustParser {
             if self.cursor.eat("(").is_some() {
                 while !self.cursor.is(")") {
                     fields.push(SField {
+                        optional: false,
                         name: None,
                         ty: self.parse_type()?,
                         rocq_type: None,
@@ -408,11 +516,10 @@ impl RustParser {
                 }
                 self.cursor.expect(")", Some("variant"))?;
             } else if self.cursor.is("{") {
-                return Err(unsupported(
-                    "struct variant",
-                    "use a tuple variant; named fields are outside the Rust frontend",
-                    span(&variant, self.cursor.peek()),
-                ));
+                let (named_fields, named_origins) =
+                    self.named_variant_fields(path, &name, &variant)?;
+                fields.extend(named_fields);
+                source_fields.extend(named_origins);
             } else if self.cursor.is("=") {
                 return Err(unsupported(
                     "explicit discriminant",
@@ -424,6 +531,9 @@ impl RustParser {
             constructor_path.push(name.clone());
             let mut type_path = vec!["crate".to_owned()];
             type_path.extend(constructor_path.iter().cloned());
+            if self.retain_source_type_owners {
+                field_groups.push((variant.value.clone(), source_fields.clone()));
+            }
             self.origins.declaration(
                 &variant.value,
                 &constructor_path,
@@ -449,12 +559,26 @@ impl RustParser {
             }
         }
         self.cursor.expect("}", Some("enum"))?;
+        let source_field_signatures = self.capture_data_field_signatures(
+            &name,
+            path,
+            field_groups
+                .iter()
+                .map(|(name, fields)| (name.as_str(), fields.as_slice())),
+        )?;
+        if self.ordinary_completion_context() {
+            self.origins
+                .register_nominal_copy_declaration(&name, path, derivations);
+        }
         let mut declaration = SData {
             name,
             ctors,
             span: span(&start, self.cursor.peek()),
             generated: false,
+            source_standard_collection_library_owner: None,
+            source_standard_collection_carrier: None,
             source_unit_clone_derivation: None,
+            source_field_signatures,
         };
         if !self.type_namespace_model.is_empty() {
             let proof =
@@ -487,246 +611,8 @@ impl RustParser {
         }
         Ok(segments)
     }
-
-    /// A block `{ let x = e; …; tail }` is a chain of lets ending in its tail
-    /// expression. Statements with effects are not values of the portable core.
-    pub(super) fn block(&mut self, path: &[String]) -> Result<SExpr> {
-        let open = self.cursor.expect("{", Some("block"))?;
-        let previous = self.origins.enter(None);
-        let mut lets = Vec::new();
-        let mut tail: Option<SExpr> = None;
-        while !self.cursor.is("}") {
-            let token = self.peek();
-            if self.cursor.is("let") {
-                lets.extend(self.let_statement(path)?);
-                continue;
-            }
-            if self.cursor.is("return") {
-                return Err(unsupported(
-                    "early return",
-                    "write the result as the tail expression of the block",
-                    span(&token, &token),
-                ));
-            }
-            if token.kind == TokenKind::Identifier
-                && ["while", "loop", "for"].contains(&token.value.as_str())
-            {
-                return Err(unsupported(
-                    &format!("{} loop", token.value),
-                    "loops over mutable state are outside the portable core; use recursion",
-                    span(&token, &token),
-                ));
-            }
-            let expr = self.expr(
-                path,
-                Options {
-                    statement: true,
-                    no_struct: false,
-                },
-            )?;
-            if self.cursor.eat(";").is_some() {
-                if matches!(expr.node, SNode::Abort { .. }) {
-                    tail = Some(expr);
-                    continue;
-                }
-                return Err(unsupported(
-                    "expression statement",
-                    "statements with effects are outside the portable core in function bodies",
-                    expr.span,
-                ));
-            }
-            let ends_block_statement = is_if_or_match(&expr);
-            let expr_span = expr.span;
-            tail = Some(expr);
-            if !self.cursor.is("}") {
-                if ends_block_statement {
-                    return Err(unsupported(
-                        "expression statement",
-                        "a block value must be its last expression",
-                        expr_span,
-                    ));
-                }
-                return Err(Self::fail("expected }", self.cursor.peek()));
-            }
-        }
-        let close = self.cursor.expect("}", Some("block"))?;
-        let Some(tail) = tail else {
-            return Err(unsupported(
-                "block without a value",
-                "the block evaluates to (), which is not a portable result",
-                span(&open, &close),
-            ));
-        };
-        let origin = self.origins.origin(&tail, path);
-        let result = lets.into_iter().rev().fold(tail, |body, binding| {
-            SExpr::new(
-                SNode::Let {
-                    name: binding.name,
-                    ty: binding.ty.map(Into::into),
-                    value: Box::new(binding.value),
-                    body: Box::new(body),
-                },
-                binding.span,
-            )
-        });
-        self.origins.mark(&result, origin);
-        self.origins.scope = previous;
-        Ok(result)
-    }
-
-    pub(super) fn main_fn(&mut self) -> Result<SMain> {
-        if !self.pure_unit_call_model.is_empty() {
-            return self.pure_unit_main();
-        }
-        let start = self.cursor.advance();
-        self.cursor.expect("main", Some("fn main"))?;
-        self.cursor.expect("(", Some("fn main"))?;
-        self.cursor.expect(")", Some("fn main"))?;
-        if self.cursor.is("->") {
-            return Err(unsupported(
-                "main with a result",
-                "main must return ()",
-                span(&start, self.cursor.peek()),
-            ));
-        }
-        self.module_path = Vec::new();
-        let previous = self.origins.enter(Some(std::collections::HashMap::new()));
-        self.cursor.expect("{", Some("fn main"))?;
-        let mut effects = Vec::new();
-        while !self.cursor.is("}") {
-            let token = self.peek();
-            if self.cursor.is("let") {
-                for binding in self.let_statement(&[])? {
-                    effects.push(SEffect::Let {
-                        name: binding.name,
-                        ty: binding.ty,
-                        value: binding.value,
-                        constant: false,
-                        span: binding.span,
-
-                        source_pure_unit_call: None,
-                    });
-                }
-                continue;
-            }
-            if token.kind == TokenKind::Macro {
-                effects.push(self.main_macro()?);
-                self.cursor.expect(";", Some(&token.value))?;
-                continue;
-            }
-            return Err(unsupported(
-                "main statement",
-                "main may only print, bind and assert",
-                span(&token, &token),
-            ));
-        }
-        let close = self.cursor.expect("}", Some("fn main"))?;
-        self.origins.scope = previous;
-        Ok(SMain {
-            effects,
-            span: if self.empty_option_source_model.is_empty() {
-                span(&start, self.cursor.peek())
-            } else {
-                Some(super::Span {
-                    start: start.start,
-                    end: close.end,
-                })
-            },
-            sequential_async: false,
-            source_runtime_worker: None,
-        })
-    }
-
-    pub(super) fn main_macro(&mut self) -> Result<SEffect> {
-        let token = self.cursor.advance();
-        let mut args = self.macro_arguments(&token, &[])?;
-        match token.value.as_str() {
-            "println" => {
-                let expr = if args.is_empty() {
-                    SExpr::new(
-                        SNode::Str {
-                            value: String::new(),
-                        },
-                        None,
-                    )
-                } else {
-                    format(args, &token)?
-                };
-                Ok(SEffect::Print {
-                    expr,
-                    style: ShowStyle::Rust,
-                    span: span(&token, self.cursor.peek()),
-                })
-            }
-            "assert" => {
-                if args.len() != 1 {
-                    return Err(unsupported(
-                        "assert! message",
-                        "custom assertion messages are not kept",
-                        span(&token, self.cursor.peek()),
-                    ));
-                }
-                Ok(SEffect::Assert {
-                    prop: prop_of(args.remove(0)),
-                    span: span(&token, self.cursor.peek()),
-                })
-            }
-            "assert_eq" | "assert_ne" => {
-                if args.len() != 2 {
-                    return Err(unsupported(
-                        &format!("{}! message", token.value),
-                        "custom assertion messages are not kept",
-                        span(&token, self.cursor.peek()),
-                    ));
-                }
-                let right = args.remove(1);
-                let comparison = SComparison {
-                    left: args.remove(0),
-                    right,
-                    reference: false,
-                    same_value: false,
-                };
-                let node = if token.value == "assert_eq" {
-                    SPropNode::Eq(comparison)
-                } else {
-                    SPropNode::Ne(comparison)
-                };
-                Ok(SEffect::Assert {
-                    prop: SProp { node, span: None },
-                    span: span(&token, self.cursor.peek()),
-                })
-            }
-            _ => Err(unsupported(
-                &format!("{}!", token.value),
-                "main may only use println!, assert!, assert_eq! and assert_ne!",
-                span(&token, &token),
-            )),
-        }
-    }
-
-    /// Macro arguments, parsed as expressions; the first one of a format macro is its literal.
-    pub(super) fn macro_arguments(&mut self, token: &Token, path: &[String]) -> Result<Vec<SExpr>> {
-        let close = match self.cursor.peek().value.as_str() {
-            "(" => ")",
-            "[" => "]",
-            "{" => "}",
-            _ => {
-                return Err(Self::fail(
-                    &format!("expected ( after {}!", token.value),
-                    self.cursor.peek(),
-                ));
-            }
-        };
-        self.cursor.advance();
-        let mut args = Vec::new();
-        while !self.cursor.is(close) {
-            args.push(self.expr(path, Options::default())?);
-            if self.cursor.eat(",").is_none() {
-                break;
-            }
-        }
-        self.cursor
-            .expect(close, Some(&format!("{}!", token.value)))?;
-        Ok(args)
-    }
 }
+
+include!("item_blocks.rs");
+
+mod data_field_signatures;

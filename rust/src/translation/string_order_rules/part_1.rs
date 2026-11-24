@@ -37,90 +37,84 @@ pub fn render_string_order_expression(
     right: &str,
 ) -> String {
     {
-        let ml_s1 = if operation == "unicodeCodeUnitLessThan" {
+        let source_ml_source2_s1 = if operation == "unicodeCodeUnitLessThan" {
             if target == "JavaScript" {
-                self::MlRenderStringOrderExpressionJoin1::MlRenderStringOrderExpressionJoin1Return(
-                    format!("(({}) < ({}))", left.to_owned(), right.to_owned()),
-                )
+                self::MlSource1TemporaryRenderStringOrderExpressionJoin1::MlSource1TemporaryRenderStringOrderExpressionJoin1Return(format!("(({}) < ({}))", left.to_owned(), right.to_owned()))
             } else if target == "Rust" {
-                self::MlRenderStringOrderExpressionJoin1::MlRenderStringOrderExpressionJoin1Return(
-                    format!(
-                        "<crate::ml_string::Text as std::cmp::PartialOrd>::lt({}, {})",
-                        left.to_owned(),
-                        right.to_owned()
-                    ),
-                )
+                self::MlSource1TemporaryRenderStringOrderExpressionJoin1::MlSource1TemporaryRenderStringOrderExpressionJoin1Return(format!("<crate::ml_string::Text as std::cmp::PartialOrd>::lt({}, {})", left.to_owned(), right.to_owned()))
             } else {
-                self::MlRenderStringOrderExpressionJoin1::MlRenderStringOrderExpressionJoin1Next
+                self::MlSource1TemporaryRenderStringOrderExpressionJoin1::MlSource1TemporaryRenderStringOrderExpressionJoin1Next
             }
         } else {
-            self::MlRenderStringOrderExpressionJoin1::MlRenderStringOrderExpressionJoin1Next
+            self::MlSource1TemporaryRenderStringOrderExpressionJoin1::MlSource1TemporaryRenderStringOrderExpressionJoin1Next
         };
-        match ml_s1 {
-            self::MlRenderStringOrderExpressionJoin1::MlRenderStringOrderExpressionJoin1Next => {
-                let ml_s2 = if operation == "unicodeCodeUnitLessThanOrEqual" {
-                    if target == "JavaScript" {
-                        self::MlRenderStringOrderExpressionJoin2::MlRenderStringOrderExpressionJoin2Return(format!("(({}) <= ({}))", left.to_owned(), right.to_owned()))
-                    } else if target == "Rust" {
-                        self::MlRenderStringOrderExpressionJoin2::MlRenderStringOrderExpressionJoin2Return(format!("<crate::ml_string::Text as std::cmp::PartialOrd>::le({}, {})", left.to_owned(), right.to_owned()))
+        match source_ml_source2_s1 {
+            self::MlSource1TemporaryRenderStringOrderExpressionJoin1::MlSource1TemporaryRenderStringOrderExpressionJoin1Next => {
+                {
+                    let source_ml_source2_s2 = if operation == "unicodeCodeUnitLessThanOrEqual" {
+                        if target == "JavaScript" {
+                            self::MlSource1TemporaryRenderStringOrderExpressionJoin2::MlSource1TemporaryRenderStringOrderExpressionJoin2Return(format!("(({}) <= ({}))", left.to_owned(), right.to_owned()))
+                        } else if target == "Rust" {
+                                self::MlSource1TemporaryRenderStringOrderExpressionJoin2::MlSource1TemporaryRenderStringOrderExpressionJoin2Return(format!("<crate::ml_string::Text as std::cmp::PartialOrd>::le({}, {})", left.to_owned(), right.to_owned()))
+                            } else {
+                                self::MlSource1TemporaryRenderStringOrderExpressionJoin2::MlSource1TemporaryRenderStringOrderExpressionJoin2Next
+                            }
                     } else {
-                        self::MlRenderStringOrderExpressionJoin2::MlRenderStringOrderExpressionJoin2Next
-                    }
-                } else {
-                    self::MlRenderStringOrderExpressionJoin2::MlRenderStringOrderExpressionJoin2Next
-                };
-                match ml_s2 {
-                        self::MlRenderStringOrderExpressionJoin2::MlRenderStringOrderExpressionJoin2Next => {
+                        self::MlSource1TemporaryRenderStringOrderExpressionJoin2::MlSource1TemporaryRenderStringOrderExpressionJoin2Next
+                    };
+                    match source_ml_source2_s2 {
+                        self::MlSource1TemporaryRenderStringOrderExpressionJoin2::MlSource1TemporaryRenderStringOrderExpressionJoin2Next => {
                             {
-                                let ml_s3 = if operation == "unicodeCodeUnitGreaterThan" {
+                                let source_ml_source2_s3 = if operation == "unicodeCodeUnitGreaterThan" {
                                     if target == "JavaScript" {
-                                        self::MlRenderStringOrderExpressionJoin3::MlRenderStringOrderExpressionJoin3Return(format!("(({}) > ({}))", left.to_owned(), right.to_owned()))
+                                        self::MlSource1TemporaryRenderStringOrderExpressionJoin3::MlSource1TemporaryRenderStringOrderExpressionJoin3Return(format!("(({}) > ({}))", left.to_owned(), right.to_owned()))
                                     } else if target == "Rust" {
-                                            self::MlRenderStringOrderExpressionJoin3::MlRenderStringOrderExpressionJoin3Return(format!("<crate::ml_string::Text as std::cmp::PartialOrd>::gt({}, {})", left.to_owned(), right.to_owned()))
+                                            self::MlSource1TemporaryRenderStringOrderExpressionJoin3::MlSource1TemporaryRenderStringOrderExpressionJoin3Return(format!("<crate::ml_string::Text as std::cmp::PartialOrd>::gt({}, {})", left.to_owned(), right.to_owned()))
                                         } else {
-                                            self::MlRenderStringOrderExpressionJoin3::MlRenderStringOrderExpressionJoin3Next
+                                            self::MlSource1TemporaryRenderStringOrderExpressionJoin3::MlSource1TemporaryRenderStringOrderExpressionJoin3Next
                                         }
                                 } else {
-                                    self::MlRenderStringOrderExpressionJoin3::MlRenderStringOrderExpressionJoin3Next
+                                    self::MlSource1TemporaryRenderStringOrderExpressionJoin3::MlSource1TemporaryRenderStringOrderExpressionJoin3Next
                                 };
-                                match ml_s3 {
-                                    self::MlRenderStringOrderExpressionJoin3::MlRenderStringOrderExpressionJoin3Next => {
+                                match source_ml_source2_s3 {
+                                    self::MlSource1TemporaryRenderStringOrderExpressionJoin3::MlSource1TemporaryRenderStringOrderExpressionJoin3Next => {
                                         {
-                                            let ml_s4 = if operation == "unicodeCodeUnitGreaterThanOrEqual" {
+                                            let source_ml_source2_s4 = if operation == "unicodeCodeUnitGreaterThanOrEqual" {
                                                 if target == "JavaScript" {
-                                                    self::MlRenderStringOrderExpressionJoin4::MlRenderStringOrderExpressionJoin4Return(format!("(({}) >= ({}))", left.to_owned(), right.to_owned()))
+                                                    self::MlSource1TemporaryRenderStringOrderExpressionJoin4::MlSource1TemporaryRenderStringOrderExpressionJoin4Return(format!("(({}) >= ({}))", left.to_owned(), right.to_owned()))
                                                 } else if target == "Rust" {
-                                                        self::MlRenderStringOrderExpressionJoin4::MlRenderStringOrderExpressionJoin4Return(format!("<crate::ml_string::Text as std::cmp::PartialOrd>::ge({}, {})", left.to_owned(), right.to_owned()))
+                                                        self::MlSource1TemporaryRenderStringOrderExpressionJoin4::MlSource1TemporaryRenderStringOrderExpressionJoin4Return(format!("<crate::ml_string::Text as std::cmp::PartialOrd>::ge({}, {})", left.to_owned(), right.to_owned()))
                                                     } else {
-                                                        self::MlRenderStringOrderExpressionJoin4::MlRenderStringOrderExpressionJoin4Next
+                                                        self::MlSource1TemporaryRenderStringOrderExpressionJoin4::MlSource1TemporaryRenderStringOrderExpressionJoin4Next
                                                     }
                                             } else {
-                                                self::MlRenderStringOrderExpressionJoin4::MlRenderStringOrderExpressionJoin4Next
+                                                self::MlSource1TemporaryRenderStringOrderExpressionJoin4::MlSource1TemporaryRenderStringOrderExpressionJoin4Next
                                             };
-                                            match ml_s4 {
-                                                self::MlRenderStringOrderExpressionJoin4::MlRenderStringOrderExpressionJoin4Next => {
+                                            match source_ml_source2_s4 {
+                                                self::MlSource1TemporaryRenderStringOrderExpressionJoin4::MlSource1TemporaryRenderStringOrderExpressionJoin4Next => {
                                                     String::new()
                                                 }
-                                                self::MlRenderStringOrderExpressionJoin4::MlRenderStringOrderExpressionJoin4Return(ml_result4) => {
-                                                    ml_result4
+                                                self::MlSource1TemporaryRenderStringOrderExpressionJoin4::MlSource1TemporaryRenderStringOrderExpressionJoin4Return(source_ml_source1_temporary_result4) => {
+                                                    source_ml_source1_temporary_result4
                                                 }
                                             }
                                         }
                                     }
-                                    self::MlRenderStringOrderExpressionJoin3::MlRenderStringOrderExpressionJoin3Return(ml_result4_2) => {
-                                        ml_result4_2
+                                    self::MlSource1TemporaryRenderStringOrderExpressionJoin3::MlSource1TemporaryRenderStringOrderExpressionJoin3Return(source_ml_source1_temporary_result4_2) => {
+                                        source_ml_source1_temporary_result4_2
                                     }
                                 }
                             }
                         }
-                        self::MlRenderStringOrderExpressionJoin2::MlRenderStringOrderExpressionJoin2Return(ml_result4_3) => {
-                            ml_result4_3
+                        self::MlSource1TemporaryRenderStringOrderExpressionJoin2::MlSource1TemporaryRenderStringOrderExpressionJoin2Return(source_ml_source1_temporary_result4_3) => {
+                            source_ml_source1_temporary_result4_3
                         }
                     }
+                }
             }
-            self::MlRenderStringOrderExpressionJoin1::MlRenderStringOrderExpressionJoin1Return(
-                ml_result4_4,
-            ) => ml_result4_4,
+            self::MlSource1TemporaryRenderStringOrderExpressionJoin1::MlSource1TemporaryRenderStringOrderExpressionJoin1Return(source_ml_source1_temporary_result4_4) => {
+                source_ml_source1_temporary_result4_4
+            }
         }
     }
 }
@@ -140,25 +134,25 @@ pub fn read_string_order_refusal(target: &str, operation: &str) -> String {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlRenderStringOrderExpressionJoin4 {
-    MlRenderStringOrderExpressionJoin4Next,
-    MlRenderStringOrderExpressionJoin4Return(String),
+pub enum MlSource1TemporaryRenderStringOrderExpressionJoin4 {
+    MlSource1TemporaryRenderStringOrderExpressionJoin4Next,
+    MlSource1TemporaryRenderStringOrderExpressionJoin4Return(String),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlRenderStringOrderExpressionJoin3 {
-    MlRenderStringOrderExpressionJoin3Next,
-    MlRenderStringOrderExpressionJoin3Return(String),
+pub enum MlSource1TemporaryRenderStringOrderExpressionJoin3 {
+    MlSource1TemporaryRenderStringOrderExpressionJoin3Next,
+    MlSource1TemporaryRenderStringOrderExpressionJoin3Return(String),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlRenderStringOrderExpressionJoin2 {
-    MlRenderStringOrderExpressionJoin2Next,
-    MlRenderStringOrderExpressionJoin2Return(String),
+pub enum MlSource1TemporaryRenderStringOrderExpressionJoin2 {
+    MlSource1TemporaryRenderStringOrderExpressionJoin2Next,
+    MlSource1TemporaryRenderStringOrderExpressionJoin2Return(String),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlRenderStringOrderExpressionJoin1 {
-    MlRenderStringOrderExpressionJoin1Next,
-    MlRenderStringOrderExpressionJoin1Return(String),
+pub enum MlSource1TemporaryRenderStringOrderExpressionJoin1 {
+    MlSource1TemporaryRenderStringOrderExpressionJoin1Next,
+    MlSource1TemporaryRenderStringOrderExpressionJoin1Return(String),
 }

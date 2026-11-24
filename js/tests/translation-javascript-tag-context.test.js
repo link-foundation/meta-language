@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
@@ -20,6 +21,41 @@ const convert = "/** @param {number} n @returns {Output} */function convert(n){c
 const expected = '[{"$":"malformed","at":1,"end":2},{"$":"nonScalar","at":3,"end":7},{"$":"value","code":65}]';
 const observe = (source, expression = '[convert(0),convert(1),convert(2)]') =>
   runInNewContext(source + '\nJSON.stringify(' + expression + ');', {}, { timeout: 1000 });
+
+test('own-field layout selects one constructor and a switch capture may share a tag name', () => {
+  const source = `
+/** @typedef {{ $: 'symbol', identity: bigint }} SymbolValue */
+/** @typedef {{ $: 'shared', symbol: SymbolValue }} Pending */
+/** @typedef {{ $: 'shared', other: number }} Other */
+/** @returns {SymbolValue} */ function makeSymbol() { return { $: 'symbol', identity: 42n }; }
+/** @param {Pending} pending @returns {bigint} */ function readIdentity(pending) {
+  switch (pending.$) {
+    case 'shared': { const { symbol } = pending; return symbol.identity; }
+  }
+}
+/** @returns {bigint} */ function identity() {
+  const pending = { $: 'shared', symbol: makeSymbol() };
+  return readIdentity(pending);
+}`;
+  const checked = checkProgram(parseJavaScript(source));
+  assert.equal(observe(emitJavaScript(checked).text, 'identity().toString()'), '"42"');
+});
+
+test('declared fields carry exact constructor owners through nested literals and accesses', () => {
+  const source = readFileSync(new URL('../../experiments/javascript-tag-context/declared-field-owners.js', import.meta.url), 'utf8');
+  const run = script => {
+    const output = [];
+    runInNewContext(script, { console: { log: value => output.push(value) } }, { timeout: 1000 });
+    return output;
+  };
+  const original = run(source);
+  assert.deepEqual(original, [7, -1, true, false, true, true]);
+  const checked = checkProgram(parseJavaScript(source));
+  const packet = encodeTypedProgramLinks(checked);
+  const replayed = recheckLinkedTypedProgram(decodeTypedProgramLinks(LinkNetwork.fromLino(packet.network.toLino()), packet.root), { wholeProgram: true });
+  assert.deepEqual(run(emitJavaScript(replayed).text), original);
+  assert.equal(emitRust(replayed).text, emitRust(checked).text);
+});
 
 function refusal(source) {
   let caught;

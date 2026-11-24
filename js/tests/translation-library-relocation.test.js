@@ -23,6 +23,13 @@ test('already correct declaration relocation keeps its original compact receipt'
   assert.deepEqual(readPortableLibraryRelocation(source).actions,[{op:'replace',field:'source',from:'crate::values',to:'self::values'}]);
 });
 
+test('relocation reads original UTF-16 offsets for each qualified path',()=>{
+  const source='pub mod values {}\npub fn f() { let text = "𐐀 crate::values"; crate::values::first(); crate :: values::second(); }';
+  const result=readPortableLibraryRelocation(source);
+  assert.deepEqual(result.edits.map(edit=>edit.start),[source.indexOf('crate::values::first'),source.indexOf('crate :: values')]);
+  assert.equal(result.source,'pub mod values {}\npub fn f() { let text = "𐐀 crate::values"; self::values::first(); self :: values::second(); }');
+});
+
 test('source-producing native libraries retain JavaScript crate-qualified array operation text',()=>{
   for(const [file,expected] of [['collection_construction_rules/part_1.rs','crate::ml_array::{}('],
     ['array_from_rules/part_1.rs','crate::ml_array::optional_at(']]){

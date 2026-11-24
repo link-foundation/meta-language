@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {restoreSharedArrayNativeFrontendSource} from '../scripts/shared-array-native-frontend-history.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -103,19 +104,30 @@ fn main(){}`;
   assert.deepEqual(evaluate(emitJavaScript(checkProgram(parseRust(collision))).text, 'selected', values), [true, false, false, false, false, false, false]);
 });
 
-test('general patterns guards unknown owners and unrelated macros remain explicit refusals', () => {
-  const patterns = ['', '_', 'binding', '"a" if true', '"a" | _', '"a"..="z"', '("a")', 'Some("a")', '"a", "b"', '"a" || "b"', '"a" |'];
-  for (const pattern of patterns) assert.throws(() => checkProgram(parseRust('fn selected(value:&str)->bool{matches!(value,' + pattern + ')}fn main(){}')),
-    /Rust literal matches!|expected/u, pattern);
+// Rust >=1.90.0 <1.100.0, edition 2024. The standard macro accepts a pattern
+// plus an optional guard. Exact preceding assertions are archived in the new
+// rust-pattern-matches fixture; all original source inputs retain coverage.
+test('standard pattern macro admits valid patterns and retains malformed/source-owner refusals', () => {
+  for(const [pattern,expected] of [['_',[true,true]],['binding',[true,true]],['"a" if true',[true,false]],['"a" | _',[true,true]],['("a")',[true,false]]]){
+    const source='fn selected(value:&str)->bool{matches!(value,'+pattern+')}fn main(){}';
+    const checked=checkProgram(parseRust(source));
+    assert.deepEqual(evaluate(emitJavaScript(checked).text,'selected',['a','b']),expected,source);
+  }
+  for(const [pattern,kind] of [['','unsupported'],['"a"..="z"','syntax'],['Some("a")','type'],['"a", "b"','syntax'],['"a" || "b"','syntax'],['"a" |','syntax']]){
+    assert.throws(()=>checkProgram(parseRust('fn selected(value:&str)->bool{matches!(value,'+pattern+')}fn main(){}')),error=>error.kind===kind,pattern);
+  }
+  for(const source of [
+    'fn selected(value:&&str)->bool{matches!(value,"a")}fn main(){}',
+    'enum str{Value} mod nested{fn str()->bool{true}fn selected()->bool{matches!("a","a")}}fn main(){}',
+  ])assert.doesNotThrow(()=>checkProgram(parseRust(source)),source);
+  const stringPatternError='Rust string pattern: a literal pattern requires its proven immutable borrowed str source owner';
   for (const source of [
     'fn selected(value:String)->bool{matches!(value,"a")}fn main(){}',
     'fn selected(value:bool)->bool{matches!(value,"a")}fn main(){}',
-    'fn selected(value:&&str)->bool{matches!(value,"a")}fn main(){}',
     'enum str{Value} fn selected(value:&str)->bool{matches!(value,"a")}fn main(){}',
-    'enum str{Value} mod nested{fn str()->bool{true}fn selected()->bool{matches!("a","a")}}fn main(){}',
-    'fn selected(value:&str)->bool{other!(value,"a")}fn main(){}',
-    'macro_rules! matches {()=>{true}} fn selected(value:&str)->bool{matches!(value,"a")}fn main(){}',
-  ]) assert.throws(() => checkProgram(parseRust(source)), /outside|Rust literal matches!|unsupported|expected|macro/u, source);
+  ])assert.throws(()=>checkProgram(parseRust(source)),error=>error.kind==='unsupported'&&error.reason===stringPatternError,source);
+  assert.throws(()=>checkProgram(parseRust('fn selected(value:&str)->bool{other!(value,"a")}fn main(){}')),error=>error.kind==='unsupported'&&error.reason==='other!: outside the portable core');
+  assert.throws(()=>checkProgram(parseRust('macro_rules! matches {()=>{true}} fn selected(value:&str)->bool{matches!(value,"a")}fn main(){}')),/outside|Rust literal matches!|unsupported|expected|macro/u);
   assert.throws(() => parseRust('const fn selected(value:&str)->bool{matches!(value,"a")}fn main(){}'), /expected/u, 'this batch does not erase existing const qualification boundaries');
 });
 
@@ -173,7 +185,9 @@ test('certified complete native hosts replay offline and refuse damaged predeces
   assert.equal(archive.additions.length, 2);
   assert.equal(files.length, 4);
   assert.deepEqual(verifyRustLiteralMatchHosts(archive), files);
-  for (const row of files) assert.equal(readFileSync(new URL(row.path, root), 'utf8'), row.source);
+  // This control owns the original literal-match source; actual successors
+  // retain separate complete Git membership and current semantic tests.
+  for (const row of files) assert.equal(restoreSharedArrayNativeFrontendSource(readFileSync(new URL(row.path, root), 'utf8'),row.path), row.source);
   const damage = mutate => {
     const changed = structuredClone(archive);
     mutate(changed);
@@ -198,7 +212,7 @@ test('literal matches preserves actual macro alias ownership in every module whi
     'mod nested{use crate::foreign::matches;fn selected(value:&str)->bool{matches!(value,"a")}}fn main(){}',
     'mod nested{fn selected(value:&str)->bool{matches!(value,"a")}use crate::foreign::other as matches;}fn main(){}',
   ];
-  for (const source of examples) assert.throws(() => checkProgram(parseRust(source)), /Rust literal matches!/u, source);
+  for (const source of examples) assert.throws(() => checkProgram(parseRust(source)), error=>error.reason==='Rust pattern matches!: the actual standard macro needs its ordinary source interpretation', source);
   const source = 'fn matches(_value:&str)->bool{false}fn selected(value:&str)->bool{matches!(value,"a")}fn main(){}';
   const checked = checkProgram(parseRust(source));
   assert.deepEqual(evaluate(emitJavaScript(checked).text, 'selected', ['a', 'b']), [true, false]);

@@ -178,3 +178,77 @@ export function planJavaScriptArrayBindingNames(kinds, values, start) {
   }
   return [-1];
 }
+
+/** Current defaults inspect only undefined; arbitrary represented present values survive.
+ * @param {string} language @param {string} kind @param {string} absence @returns {string} */
+export function readJavaScriptBindingDefaultForm(language,kind,absence){
+ if(language!=='JavaScript')return 'refuse-language';
+ if(kind==='var'||kind==='literal')return 'defer';
+ return kind==='option'&&absence!=='null'?'select':'identity';
+}
+/** @param {string} left @param {string} rightKind @param {string} right @returns {string} */
+export function readJavaScriptBindingDefaultResultAbsence(left,rightKind,right){
+ const nullValue=left==='null'||left==='both'||rightKind==='option'&&(right==='null'||right==='both');
+ const undefinedValue=rightKind==='unit'||rightKind==='option'&&(right==='undefined'||right==='both');
+ return nullValue?(undefinedValue?'both':'null'):undefinedValue?'undefined':'';
+}
+/** @param {string} absence @returns {number} */
+export function readJavaScriptBindingDefaultAbsenceCode(absence){return absence==='null'?1:absence==='undefined'?2:absence==='both'?3:0;}
+/** @param {number} code @returns {string} */
+export function readJavaScriptBindingDefaultAbsenceName(code){return code===1?'null':code===2?'undefined':code===3?'both':'';}
+/** Retain actual term endpoints. The first two cells select output absence/base;
+ * remaining pairs constrain actual present domains. No replacement type graphs.
+ * @param {string[]} texts @param {number[]} starts @param {number[]} counts
+ * @param {string[]} labels @param {number[]} targets @param {number} value
+ * @param {number} fallback @returns {number[]} */
+export function planJavaScriptBindingDefaultInference(texts,starts,counts,labels,targets,value,fallback){
+ const kind=readArrayBindingFactField(starts,counts,labels,targets,value,'kind');
+ if(kind<0)return [-1];
+ if(readRequiredTextFact(texts,kind)==='var')return [];
+ const left=readJavaScriptBindingDefaultTerm(texts,starts,counts,labels,targets,value);
+ const right=readJavaScriptBindingDefaultTerm(texts,starts,counts,labels,targets,fallback);
+ const element=readRequiredNumberFact(left,0),other=readRequiredNumberFact(right,0);
+ if(element<0||other<0)return [-1];
+ const code=readRequiredNumberFact(left,1),rightCode=readRequiredNumberFact(right,1);
+ if(code===0)return [0,value];
+ if(code===1)return [1,element];
+ const firstKind=readArrayBindingFactField(starts,counts,labels,targets,element,'kind');
+ const otherKind=readArrayBindingFactField(starts,counts,labels,targets,other,'kind');
+ if(firstKind<0||otherKind<0)return [-1];
+ const firstUnit=readRequiredTextFact(texts,firstKind)==='unit',secondUnit=readRequiredTextFact(texts,otherKind)==='unit';
+ const output=readJavaScriptBindingDefaultAbsenceCode(readJavaScriptBindingDefaultResultAbsence(
+  readJavaScriptBindingDefaultAbsenceName(code),rightCode===0?readRequiredTextFact(texts,otherKind):'option',readJavaScriptBindingDefaultAbsenceName(rightCode)));
+ const base=firstUnit?other:element;
+ return firstUnit||secondUnit?[output,base]:[output,base,element,other];
+}
+/** Collapse actual inferred optional wrappers while retaining their original base.
+ * @param {string[]} texts @param {number[]} starts @param {number[]} counts
+ * @param {string[]} labels @param {number[]} targets @param {number} value
+ * @returns {number[]} */
+function readJavaScriptBindingDefaultTerm(texts,starts,counts,labels,targets,value){
+ let node=value,absence='';
+ let kind=readArrayBindingFactField(starts,counts,labels,targets,node,'kind');
+ while(kind>=0&&readRequiredTextFact(texts,kind)==='option'){
+  const field=readArrayBindingFactField(starts,counts,labels,targets,node,'absence');
+  const current=field<0?'both':readRequiredTextFact(texts,field);
+  absence=absence===''||absence===current?current:'both';
+  node=readArrayBindingFactField(starts,counts,labels,targets,node,'element');
+  kind=readArrayBindingFactField(starts,counts,labels,targets,node,'kind');
+ }
+ return kind<0?[-1,0]:[node,readJavaScriptBindingDefaultAbsenceCode(absence)];
+}
+/** The lift preserves actual absence tags; a Unit present domain is only undefined.
+ * @param {string} kind @param {string} element @param {string} absence
+ * @param {boolean} dropUndefined @returns {string} */
+export function readJavaScriptBindingDefaultLiftForm(kind,element,absence,dropUndefined){
+ if(kind==='unit')return 'undefined';
+ if(kind!=='option')return 'present';
+ if(element!=='unit')return 'optional';
+ return dropUndefined?'null':absence==='both'?'absences':absence;
+}
+/** @param {string} absence @param {boolean} dropUndefined @returns {string[]} */
+export function readJavaScriptBindingDefaultLiftAbsences(absence,dropUndefined){
+ if(absence==='null')return ['null'];
+ if(absence==='undefined')return dropUndefined?[]:['undefined'];
+ return dropUndefined?['null']:['null','undefined'];
+}

@@ -231,3 +231,75 @@ fn assert_success(output: &std::process::Output) {
         String::from_utf8_lossy(&output.stderr)
     );
 }
+
+#[test]
+fn translation_cli_transports_the_selected_rust_source_snapshot() {
+    let directory = unique_temp_path("translation-source-snapshot");
+    fs::create_dir(&directory).unwrap();
+    let source = "pub fn result()->bool{u8::try_from(256u16).unwrap()==0u8}";
+    let path = directory.join("source.rs");
+    fs::write(&path, source).unwrap();
+    for version in ["1.90.0", "1.96.0", "1.97.0", "1.99.0"] {
+        let options = meta_language::SelfTranslationOptions {
+            semantic_translation: true,
+            rust_source_version: Some(version.to_owned()),
+            ..meta_language::SelfTranslationOptions::default()
+        };
+        let expected =
+            meta_language::self_translate_with(source, "Rust", "JavaScript", &options).unwrap();
+        let actual = Command::new(env!("CARGO_BIN_EXE_meta-language"))
+            .args([
+                "translate",
+                "--to",
+                "JavaScript",
+                "--semantic",
+                "--rust-source-version",
+                version,
+            ])
+            .arg(&path)
+            .output()
+            .unwrap();
+        assert!(
+            actual.status.success(),
+            "{}",
+            String::from_utf8_lossy(&actual.stderr)
+        );
+        assert_eq!(actual.stdout, expected.code.as_bytes());
+    }
+    for arguments in [
+        vec!["--rust-source-version"],
+        vec!["--rust-source-version", "--semantic"],
+        vec![
+            "--rust-source-version",
+            "1.90.0",
+            "--rust-source-version",
+            "1.99.0",
+        ],
+    ] {
+        let actual = Command::new(env!("CARGO_BIN_EXE_meta-language"))
+            .args(["translate", "--to", "JavaScript"])
+            .arg(&path)
+            .args(arguments)
+            .output()
+            .unwrap();
+        assert_eq!(actual.status.code(), Some(2));
+        assert!(actual.stdout.is_empty());
+    }
+    for version in ["1.89.0", "1.100.0", "1.99.0-beta.1"] {
+        let actual = Command::new(env!("CARGO_BIN_EXE_meta-language"))
+            .args([
+                "translate",
+                "--to",
+                "JavaScript",
+                "--rust-source-version",
+                version,
+            ])
+            .arg(&path)
+            .output()
+            .unwrap();
+        assert_eq!(actual.status.code(), Some(1));
+        assert!(actual.stdout.is_empty());
+        assert!(String::from_utf8_lossy(&actual.stderr).contains("Rust source version"));
+    }
+    fs::remove_dir_all(directory).unwrap();
+}

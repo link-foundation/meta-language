@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {rustSourceSignatureFixture} from '../scripts/generate-rust-source-signature-fixtures.mjs';
-import {parseRust} from '../src/translation/rust.js';
+import {parseRust, parseRustWithSourceTypeOwners} from '../src/translation/rust.js';
 import {RustSourceOrigins} from '../src/translation/rust-source-origins.js';
 import {RUST_SOURCE_SIGNATURE_POLICY} from '../src/translation/rust-source-signatures.js';
 import {checkProgram} from '../src/translation/check.js';
@@ -111,6 +111,21 @@ test('source signature capture refuses effect-threaded header replacement instea
  assert.equal(checked.items[0].sourceSignature.parameters.length,1);
  assert.throws(()=>threadOutput(checked),/effect threading changes the captured source header/u);
  assert.doesNotThrow(()=>threadOutput(checkProgram(parseRust(source))),'legacy output rewriting is preserved');
+});
+
+test('pure targets thread effects with separate ordinary retained header positions', () => {
+ const source = 'fn keep(value:bool)->bool{if value{true}else{panic!("message")}}fn main(){}';
+ const original = checkProgram(parseRustWithSourceTypeOwners(source));
+ const signature = original.declarations.get('keep').sourceSignature;
+ assert.equal(signature.parameters.length, 1);
+ for (const target of ['Lean', 'Rocq']) {
+  const lowered = threadOutput(original, target).declarations.get('keep');
+  assert.equal(lowered.params.length, 2);
+  assert.equal(lowered.params[1].type.kind, 'output');
+  assert.equal(lowered.ret.kind, 'data');
+  assert.equal(Object.hasOwn(lowered, 'sourceSignature'), false);
+  assert.equal(original.declarations.get('keep').sourceSignature, signature);
+ }
 });
 
 

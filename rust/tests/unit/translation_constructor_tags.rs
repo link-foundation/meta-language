@@ -8,6 +8,33 @@ use std::process::Command;
 
 use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 
+#[test]
+fn constructor_field_layout_and_switch_captures_use_declared_names() {
+    let source = r#"
+/** @typedef {{ $: 'symbol', identity: bigint }} SymbolValue */
+/** @typedef {{ $: 'shared', symbol: SymbolValue }} Pending */
+/** @typedef {{ $: 'shared', other: number }} Other */
+/** @returns {SymbolValue} */ function makeSymbol() { return { $: 'symbol', identity: 42n }; }
+/** @param {Pending} pending @returns {bigint} */ function readIdentity(pending) {
+  switch (pending.$) {
+    case 'shared': { const { symbol } = pending; return symbol.identity; }
+  }
+}
+/** @returns {bigint} */ function identity() {
+  const pending = { $: 'shared', symbol: makeSymbol() };
+  return readIdentity(pending);
+}"#;
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let javascript = emit_javascript(&checked).unwrap();
+    let output = Command::new("node")
+        .arg("-e")
+        .arg(format!("{}\nconsole.log(identity().toString());", javascript.text))
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{:?}", output.stderr);
+    assert_eq!(output.stdout, b"42\n");
+}
+
 fn rename_tag(value: &mut Value, tag: &str) {
     match value {
         Value::Array(children) => children.iter_mut().for_each(|child| rename_tag(child, tag)),
@@ -233,6 +260,113 @@ console.log(JSON.stringify({surface,javascript,rust,archives,observations:[obser
         ]));
     assert!(output.ok, "{}", output.stderr);
     serde_json::from_str(&output.stdout).unwrap()
+}
+
+#[test]
+fn absent_constructor_arm_retains_the_payload_of_an_optional_lookup() {
+    let source = r#"
+        /** @typedef {{$:'indexed', index:number} | {$:'absent'}} Selection */
+        /** @param {Selection} input @param {string[]} values @returns {string} */
+        function select(input, values) {
+          const selected = input.$ === 'indexed' ? values[input.index] : undefined;
+          return selected ?? 'missing';
+        }
+        console.log(select({$:'indexed', index:0}, ['found']));
+        console.log(select({$:'indexed', index:1}, ['found']));
+        console.log(select({$:'absent'}, ['found']));
+    "#;
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&program).unwrap();
+    for text in [source, emitted.text.as_str()] {
+        let result = run(Command::new("node").args(["--input-type=module", "-e", text]));
+        assert!(result.ok, "{}", result.stderr);
+        assert_eq!(result.stdout, "found\nmissing\nmissing\n");
+    }
+}
+
+#[test]
+fn compound_nominal_guards_and_literal_branches_retain_their_types() {
+    let source = r#"
+        /** @typedef {{ $: 'count', payload: number } | { $: 'text', payload: string } | { $: 'other' }} Value */
+        /** @typedef {{ $: 'entry', current: Value, extra?: number }} Entry */
+        /** @param {Entry} entry @returns {number} */
+        function read(entry) {
+          if (entry.current.$ !== 'count' || entry.extra === undefined) return -1;
+          return entry.current.payload + entry.extra;
+        }
+        /** @param {boolean} skip @param {Entry[]} entries @returns {number} */
+        function select(skip, entries) {
+          const available = skip ? [] : entries;
+          const next = skip ? undefined : available[0];
+          return next === undefined ? -2 : read(next);
+        }
+        /** @typedef {{ $: 'request', constructor?: number }} Request */
+        /** @param {Request} request @returns {number} */
+        function readConstructor(request) {
+          const selected = Object.hasOwn(request, 'constructor') ? request.constructor : undefined;
+          return selected ?? -3;
+        }
+        console.log(select(false, [{ $: 'entry', current: { $: 'count', payload: 4 }, extra: 3 }]));
+        console.log(select(false, [{ $: 'entry', current: { $: 'text', payload: 'four' }, extra: 3 }]));
+        console.log(select(false, [{ $: 'entry', current: { $: 'count', payload: 4 } }]));
+        console.log(select(true, []));
+        console.log(readConstructor({ $: 'request', constructor: 0 }));
+        console.log(readConstructor({ $: 'request' }));
+    "#;
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&program).unwrap();
+    for text in [source, emitted.text.as_str()] {
+        let result = run(Command::new("node").args(["--input-type=module", "-e", text]));
+        assert!(result.ok, "{}", result.stderr);
+        assert_eq!(result.stdout, "7\n-1\n-1\n-2\n0\n-3\n");
+    }
+}
+
+#[test]
+fn optional_tagged_fields_keep_own_presence_through_execution_and_typed_archives() {
+    use meta_language::translation::emit_rust::emit_rust;
+    use meta_language::{
+        BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
+        encode_link_network_binary, encode_typed_program_links,
+    };
+    let source =
+        include_str!("../../../parity/fixtures/translation-optional-constructor-fields.js");
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let javascript = emit_javascript(&program).unwrap().text;
+    let native = emit_rust(&program).unwrap().text;
+    let expected = "false 0\ntrue 0\ntrue 7\ntrue 7\ntrue 0\n";
+    for text in [source, &javascript] {
+        let result = run(Command::new("node").args(["--input-type=module", "-e", text]));
+        assert!(result.ok, "{}", result.stderr);
+        assert_eq!(result.stdout, expected);
+    }
+    let packet = encode_typed_program_links(&program).unwrap();
+    let binary_options = BinaryLinksOptions::default();
+    let bytes = encode_link_network_binary(&packet.network, binary_options).unwrap();
+    for network in [
+        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(&bytes, binary_options).unwrap(),
+    ] {
+        let restored = decode_typed_program_links(&network, packet.root).unwrap();
+        assert_eq!(restored, program);
+        assert_eq!(emit_javascript(&restored).unwrap().text, javascript);
+        assert_eq!(emit_rust(&restored).unwrap().text, native);
+    }
+    let directory = TemporaryDirectory::new("optional-constructor-fields");
+    let file = directory.0.join("program.rs");
+    let executable = directory
+        .0
+        .join(format!("program{}", std::env::consts::EXE_SUFFIX));
+    std::fs::write(&file, native).unwrap();
+    let compiled = run(Command::new("rustc")
+        .arg("--edition=2024")
+        .arg(&file)
+        .arg("-o")
+        .arg(&executable));
+    assert!(compiled.ok, "{}", compiled.stderr);
+    let actual = run(&mut Command::new(&executable));
+    assert!(actual.ok, "{}", actual.stderr);
+    assert_eq!(actual.stdout, expected);
 }
 
 #[test]
@@ -643,5 +777,155 @@ fn speculative_tag_headers_preserve_ambiguity_and_ordinary_declaration_error_pre
             tag_receiver_refusal(&source),
             serde_json::json!({"kind":kind,"reason":reason,"span":{"start":types.len(),"end":types.len()+maker.find("*/").unwrap()+2}})
         );
+    }
+}
+
+#[test]
+fn declared_fields_carry_exact_constructor_owners_through_literals_and_accesses() {
+    use meta_language::translation::emit_rust::emit_rust;
+
+    let source =
+        include_str!("../../../experiments/javascript-tag-context/declared-field-owners.js");
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&checked).unwrap();
+    let expected = "7\n-1\ntrue\nfalse\ntrue\ntrue\n";
+    for script in [source, emitted.text.as_str()] {
+        let output = run(Command::new("node").args(["--input-type=module", "-e", script]));
+        assert!(output.ok, "{}", output.stderr);
+        assert_eq!(output.stdout, expected);
+    }
+    let directory = TemporaryDirectory::new("declared-tag-field-owners");
+    let file = directory.0.join("program.rs");
+    let executable = directory
+        .0
+        .join(format!("program{}", std::env::consts::EXE_SUFFIX));
+    std::fs::write(&file, emit_rust(&checked).unwrap().text).unwrap();
+    let compiled = run(Command::new("rustc")
+        .arg("--edition=2024")
+        .arg(&file)
+        .arg("-o")
+        .arg(&executable));
+    assert!(compiled.ok, "{}", compiled.stderr);
+    let output = run(&mut Command::new(&executable));
+    assert!(output.ok, "{}", output.stderr);
+    assert_eq!(output.stdout, expected);
+}
+
+#[test]
+fn named_union_alternatives_keep_their_fields_and_declared_tag_owner() {
+    let source =
+        include_str!("../../../parity/fixtures/translation-named-constructor-alternatives.js");
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&checked).unwrap();
+    for script in [source, emitted.text.as_str()] {
+        let output = Command::new("node")
+            .args(["--input-type=module", "-e", script])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(output.stdout, b"9\n7\n2\n0\n");
+    }
+    for (replacement, diagnostic) in [
+        ("Sample | { $: 'sample' }", "duplicate tag sample"),
+        (
+            "Unknown | { $: 'empty' }",
+            "Unknown needs its declared constructor layout",
+        ),
+    ] {
+        let error =
+            parse_javascript(&source.replace("Sample | { $: 'empty' }", replacement)).unwrap_err();
+        assert!(error.to_string().contains(diagnostic), "{error}");
+    }
+}
+
+#[test]
+fn finite_conditional_tags_preserve_branch_and_property_evaluation_order() {
+    let source =
+        include_str!("../../../parity/fixtures/translation-conditional-constructor-tags.js");
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&checked).unwrap();
+    for script in [source, emitted.text.as_str()] {
+        let output = Command::new("node")
+            .args(["--input-type=module", "-e", script])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            output.stdout,
+            b"1\n0\n9\nfirst\n1\n1\n2\n9\nsecond\n1\n2\n3\n9\nthird\n"
+        );
+    }
+    let error =
+        parse_javascript(&source.replace("'third' : 'second'", "'third' : option")).unwrap_err();
+    assert!(
+        error.to_string().contains("finite conditional expression"),
+        "{error}"
+    );
+}
+
+#[test]
+fn conditional_tag_tests_select_constructor_fields_before_evaluating_a_branch() {
+    let source =
+        include_str!("../../../parity/fixtures/translation-conditional-constructor-fields.js");
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&checked).unwrap();
+    for script in [source, emitted.text.as_str()] {
+        let output = Command::new("node")
+            .args(["--input-type=module", "-e", script])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(output.stdout, b"7\n7\nflag\n1\n1\n-1\n-1\n");
+    }
+}
+
+#[test]
+fn literal_constructor_spreads_preserve_nested_branch_effects_and_field_presence() {
+    use meta_language::translation::emit_rust::emit_rust;
+
+    let source =
+        include_str!("../../../parity/fixtures/translation-literal-constructor-spreads.js");
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&checked).unwrap();
+    let expected = "1\n0\n2\n4\n9\ntrue\nfalse\n1\n4\n4\n9\nfalse\ntrue\n";
+    for script in [source, emitted.text.as_str()] {
+        let output = run(Command::new("node").args(["--input-type=module", "-e", script]));
+        assert!(output.ok, "{}", output.stderr);
+        assert_eq!(output.stdout, expected);
+    }
+    let directory = TemporaryDirectory::new("literal-constructor-spreads");
+    let file = directory.0.join("program.rs");
+    let executable = directory
+        .0
+        .join(format!("program{}", std::env::consts::EXE_SUFFIX));
+    std::fs::write(&file, emit_rust(&checked).unwrap().text).unwrap();
+    let compiled = run(Command::new("rustc")
+        .arg("--edition=2024")
+        .arg(&file)
+        .arg("-o")
+        .arg(&executable));
+    assert!(compiled.ok, "{}", compiled.stderr);
+    let output = run(&mut Command::new(&executable));
+    assert!(output.ok, "{}", output.stderr);
+    assert_eq!(output.stdout, expected);
+    for (replacement, diagnostic) in [
+        ("{ before: observeNumber(2) }", "duplicate field before"),
+        ("option", "projection from literal records"),
+    ] {
+        let error = parse_javascript(&source.replace("{ first: observeNumber(2) }", replacement))
+            .unwrap_err();
+        assert!(error.to_string().contains(diagnostic), "{error}");
     }
 }

@@ -18,6 +18,13 @@ struct Capture<'a> {
     references: Vec<Vec<String>>,
 }
 
+/// Inspect actual checked declaration ownership using the publication validator.
+/// Mutated or incomplete metadata is refused; this does not certify execution.
+#[must_use]
+pub fn accept_declaration_owned_emission(item: &CheckedItem, names: &[String]) -> bool {
+    read_capture(item, names).is_some()
+}
+
 fn append_text(values: &mut Vec<f64>, text: &str) -> Option<()> {
     values.push(source_number(text.encode_utf16().count())?);
     values.extend(text.encode_utf16().map(f64::from));
@@ -158,13 +165,13 @@ fn target_id(targets: &mut Vec<String>, value: &str) -> Option<f64> {
     if value.is_empty() {
         return None;
     }
-    let index = match targets.iter().position(|target| target == value) {
-        Some(index) => index,
-        None => {
+    let index = targets
+        .iter()
+        .position(|target| target == value)
+        .unwrap_or_else(|| {
             targets.push(value.to_owned());
             targets.len() - 1
-        }
-    };
+        });
     source_number(index)
 }
 
@@ -612,6 +619,7 @@ impl super::Binder<'_, '_> {
                     module_directory: Some(self.module_directory.to_vec()),
                 },
                 utf16_strings: self.utf16_strings,
+                reference_semantics: self.reference_semantics,
                 module_binding_scope: Some(Self::module_binding_scope(state)),
             };
             let capture = super::super::emission::check_and_emit_item_with_ownership(
@@ -690,6 +698,7 @@ impl super::Binder<'_, '_> {
                     preludes: whole.emitted.preludes.clone(),
                     status: "translated",
                     reason: None,
+                    diagnostic: None,
                     signatures: whole
                         .signatures
                         .iter()
@@ -700,55 +709,5 @@ impl super::Binder<'_, '_> {
             ));
         }
         (staged.len() == members.len()).then_some(staged)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::read_capture;
-    use crate::self_translation::Context;
-    use crate::self_translation::emission::check_and_emit_item_with_ownership;
-    use crate::translation::javascript::ModuleContext;
-    use std::collections::HashMap;
-
-    #[test]
-    fn actual_external_target_metadata_rejects_target_only_mutation() {
-        let provider = check_and_emit_item_with_ownership(
-            "/** @returns {number} */ export function externalSeed(){return 0;}",
-            "JavaScript",
-            "Rust",
-            &Context::default(),
-            &HashMap::new(),
-        )
-        .expect("the complete external provider checks and emits")
-        .expect("the provider is a real checked declaration");
-        let context = Context {
-            module: ModuleContext {
-                externals: provider.signatures,
-                ..ModuleContext::default()
-            },
-            ..Context::default()
-        };
-        let mut captured = check_and_emit_item_with_ownership(
-            "function first(value){return value+externalSeed();}",
-            "JavaScript",
-            "Rust",
-            &context,
-            &HashMap::new(),
-        )
-        .expect("the complete caller checks and emits")
-        .expect("the caller is a real checked declaration");
-        let names = vec!["first".to_owned()];
-        assert!(read_capture(&captured, &names).is_some());
-        let metadata = captured
-            .definition_ownership
-            .as_mut()
-            .expect("normal ownership emission retains actual external targets");
-        assert_eq!(metadata.external_targets.len(), 1);
-        assert_eq!(metadata.external_targets[0].source, "externalSeed");
-        assert_eq!(metadata.external_targets[0].kind, "fn");
-        assert_eq!(metadata.external_targets[0].target, "external_seed");
-        metadata.external_targets[0].target.push_str("changed");
-        assert!(read_capture(&captured, &names).is_none());
     }
 }

@@ -113,11 +113,31 @@ test('callable aborts happen only at invocation and keep the formal target oblig
   }
 });
 
+test('standalone formal functions retain local alias mutation without changing the public signature', () => {
+  const source = readFileSync(new URL('../../parity/fixtures/translation-corpus/standalone-reference-store.mjs', import.meta.url), 'utf8');
+  assert.deepEqual(observe(source.replace('export function', 'function')
+    + '\nconsole.log(localAliasMutation(true));console.log(localAliasMutation(false));'),
+  {lines: ['true', 'false'], message: ''});
+  const packet = createTypedProgramLinks(source, 'JavaScript');
+  for (const [target, declaration] of [['Lean', /def localAliasMutation \(replacement : Bool\) : Bool/u],
+    ['Rocq', /Definition localAliasMutation \(replacement : bool\) : bool/u]]) {
+    const emitted = emitTypedProgramLinks(packet.network, packet.root, target);
+    assert.match(emitted.code, declaration);
+    for (const binary of [false, true]) {
+      assert.deepEqual(emitTypedProgramLinks(reload(packet, binary), packet.root, target), emitted);
+    }
+  }
+  const escaping = createTypedProgramLinks('export function escaped(){const values = [false];values.fill(true);return values;}', 'JavaScript');
+  for (const target of ['Lean', 'Rocq']) {
+    assert.throws(() => emitTypedProgramLinks(escaping.network, escaping.root, target), /shared reference state/u);
+  }
+});
+
 test('the complete callable emission source translates without host callbacks or native semantic replacements', () => {
   assert.deepEqual(readProjectData(new URL('../src/translation/data/callable-emission-rules.lino', import.meta.url)), callableEmissionRulesPolicy());
   const source = readCallableEmissionSourceModule(readFileSync(new URL('../src/translation/callable-emission-rules.js', import.meta.url), 'utf8'));
   const emitted = emitRust(checkProgram(parseJavaScript(source, {referenceSemantics: false})), { arrayConsumption: true });
-  for (const name of ['plan_callable_capture_bindings', 'accept_callable_creation_effect_traversal', 'require_callable_output_effect', 'read_callable_eager_effects', 'read_callable_effectful_declarations', 'plan_callable_output_obligations', 'read_callable_output_target_refusal']) assert.ok(emitted.definitions.some(definition => definition.includes('pub fn ' + name + '(')), name);
+  for (const name of ['plan_callable_capture_bindings', 'accept_callable_creation_effect_traversal', 'require_callable_output_effect', 'read_callable_eager_effects', 'read_callable_effectful_declarations', 'plan_callable_output_obligations', 'read_callable_output_target_refusal', 'accept_formal_reference_store_lowering']) assert.ok(emitted.definitions.some(definition => definition.includes('pub fn ' + name + '(')), name);
   const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
   const raw = [header, ...emitted.preludes, ...emitted.definitions].join('\n\n');
   const loans = readPortableSourceParameterStyles(raw);

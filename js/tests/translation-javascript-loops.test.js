@@ -77,7 +77,7 @@ test('mutable bindings JavaScript could not run as translated are rejected', () 
     ['function f(n) { for (let i = 0n; i < n; i++) { g = i; } return n; }', 'assignment of g: only local variables declared with let, and parameters, are assignable at 47..51'],
   ];
   for (const [source, message] of cases) {
-    if (source === 'function f(n) { let x; x = n; return x; }' || source === 'function f(n) { while (n > 0n) { if (n === 3n) return n; n--; } }') {
+    if (source === 'function f(n) { let ml_x = n; return ml_x; }' || source === 'function f(n) { let x; x = n; return x; }' || source === 'function f(n) { while (n > 0n) { if (n === 3n) return n; n--; } }') {
       const observed = (text) => {
         const output = [];
         runInNewContext(text, { console: { log: (...values) => output.push(format(...values)) } });

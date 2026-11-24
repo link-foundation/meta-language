@@ -126,7 +126,17 @@ impl RustEmitter<'_> {
                     self.preludes.insert(Prelude::Optional);
                 }
                 let (binder, present) = if let Node::OptionalField { index, .. } = &expr.node {
-                    ("ml_record", format!("ml_record.{index}"))
+                    (
+                        "ml_record",
+                        format!(
+                            "{}.{index}",
+                            if matches!(element(&object.ty), Type::Record { ordered: true, .. }) {
+                                "ml_record.0"
+                            } else {
+                                "ml_record"
+                            }
+                        ),
+                    )
                 } else {
                     let source = Expr::var("ml_value", element(&object.ty).clone());
                     let length = Expr::new(

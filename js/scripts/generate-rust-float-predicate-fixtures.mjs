@@ -16,6 +16,7 @@ const javascript='/** @param {number} x */ function describe(x){return String(Nu
 const positives=[
  ['all-binary64-classes',definitions+' fn main(){'+values.map(value=>'println!("{}",describe('+value+'));').join('')+'}',javascript+values.map(value=>'console.log(describe('+value+'));').join(''),classification],
  ['explicit-f64-literal','fn test()->bool{1.0f64.is_finite()} fn main(){println!("{}",test());}','function test(){return Number.isFinite(1);}console.log(test());',['true']],
+ ['concrete-binary64-peer','fn test()->bool{(1.0+2.0f64).is_finite()} fn main(){println!("{}",test());}','function test(){return Number.isFinite(1+2);}console.log(test());',['true']],
  ['typed-negative-zero','fn test()->bool{let value:f64=-0.0;value.is_finite()} fn main(){println!("{}",test());}','function test(){const value=-0;return Number.isFinite(value);}console.log(test());',['true']],
  ['receiver-call-once','fn provider()->f64{1.0/0.0} fn test()->bool{provider().is_infinite()} fn main(){println!("{}",test());}','function provider(){return 1/0;}function test(){return Math.abs(provider())===Infinity;}console.log(test());',['true']],
  ['qualified-function-origin','mod values{pub fn test(value:f64)->bool{value.is_finite()}} fn main(){println!("{}",values::test(1.0));}','/** @param {number} value */function test(value){return Number.isFinite(value);}console.log(test(1));',['true']],
@@ -33,6 +34,7 @@ const negatives=[
  ['aliased-custom-primitive','enum Value{V} use crate::Value as f64; fn test(value:f64)->bool{value.is_finite()}'],
  ['module-shadowed-primitive','mod f64{} fn test(value:f64)->bool{value.is_infinite()}'],
  ['unproven-float-literal','fn test()->bool{1.0.is_nan()}'],
+ ['unproven-float-expression','fn test()->bool{(1.0+2.0).is_nan()}'],
  ['unproven-float-binding','fn test()->bool{let value=1.0;value.is_finite()}'],
  ['borrowed-receiver-without-dereference','fn test(value:&f64)->bool{value.is_nan()}'],
  ['nan-wrong-arity','fn test(value:f64)->bool{value.is_nan(1.0)}'],

@@ -1,0 +1,1 @@
+Draft source ownership tracking for ordinary Rust vector bindings, owned calls, immediate iterators, shared loans, indexed places, branch joins and scope exits. Shared JavaScript policies generate Rust and paired Links source assets. Independent original-source controls remain deferred during full requirements drafting.

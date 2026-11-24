@@ -1,0 +1,1 @@
+Draft CST-owned Rust literal masking in both adapters, protecting raw/byte/C prefixes and keeping lifetime apostrophes from concealing later bindings. Add deferred original/rename and native CI controls.

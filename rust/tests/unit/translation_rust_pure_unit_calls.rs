@@ -196,7 +196,7 @@ fn five_actual_complete_javascript_definition_sets_replay_three_times() {
             parse_rust(full)
                 .unwrap_err()
                 .reason
-                .contains("function without a result: ml_main")
+                .contains("std::env::args")
         );
         assert!(
             parse_rust_with_pure_unit_call_model(full, model)
@@ -251,13 +251,81 @@ fn all_sixty_source_refusals_preserve_the_shared_diagnostics_and_spans() {
         .is_err()
     );
     assert!(parse_rust_with_pure_unit_call_model("fn main(){}", "unknown").is_err());
-    assert!(
-        parse_rust("fn noop(){}fn main(){}")
-            .unwrap_err()
-            .reason
-            .contains("function without a result: noop")
+    let corrections = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-unit-values.lino"
+    ))
+    .unwrap();
+    assert_eq!(
+        corrections["correctedAssertions"][0]["previousAssertion"],
+        "parseRust throws function without a result: noop returns (); only value-returning functions are portable"
     );
-    assert!(parse_rust("fn noop()->(){()}fn main(){noop();}").is_err());
+    assert_eq!(
+        corrections["correctedAssertions"][0]["previousSpan"],
+        json!({"start":0,"end":9})
+    );
+    assert_eq!(
+        corrections["correctedAssertions"][1]["previousAssertion"],
+        "parseRust throws main statement: main may only print, bind and assert"
+    );
+    for row in corrections["correctedAssertions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .take(2)
+    {
+        let program = check_program(&parse_rust(row["source"].as_str().unwrap()).unwrap()).unwrap();
+        let noop = program
+            .declarations
+            .iter()
+            .find_map(|entry| match entry {
+                Decl::Fn(function) if function.name == "noop" => Some(function),
+                _ => None,
+            })
+            .unwrap();
+        assert_eq!(noop.ret, meta_language::translation::types::Type::Unit);
+        assert!(program.source_pure_unit_calls.is_none());
+        let actual = program
+            .main
+            .as_ref()
+            .unwrap()
+            .effects
+            .iter()
+            .filter_map(|effect| match effect {
+                Effect::Let { value, .. } => match &value.node {
+                    Node::Call { func, .. } => Some(func.clone()),
+                    _ => None,
+                },
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(serde_json::to_value(actual).unwrap(), row["calls"]);
+        let packet = encode_typed_program_links(&program).unwrap();
+        for network in [
+            &packet.network,
+            &LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        ] {
+            assert_eq!(
+                execute_javascript(
+                    &emit_typed_program_links(network, packet.root, "JavaScript")
+                        .unwrap()
+                        .code
+                ),
+                ""
+            );
+        }
+    }
+    for source in corrections["mainSources"].as_array().unwrap() {
+        let program = check_program(&parse_rust(source.as_str().unwrap()).unwrap()).unwrap();
+        let packet = encode_typed_program_links(&program).unwrap();
+        assert_eq!(
+            execute_javascript(
+                &emit_typed_program_links(&packet.network, packet.root, "JavaScript")
+                    .unwrap()
+                    .code
+            ),
+            ""
+        );
+    }
     for entry in data[1]["javaScriptInvalid"].as_array().unwrap() {
         assert!(
             create_typed_program_links(entry["source"].as_str().unwrap(), "JavaScript").is_err()

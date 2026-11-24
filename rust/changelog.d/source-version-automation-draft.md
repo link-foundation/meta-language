@@ -1,0 +1,1 @@
+Draft --rust-source-version in translation and tracked-source authoring commands, and native project worklist transport for per-module source snapshots. Keep mixed-language inventory contexts distinct.

@@ -1,0 +1,7 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {readProjectData,writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const root=new URL('../../',import.meta.url),path=new URL('parity/language-features.lino',root),value=readProjectData(path),id='retained-textual-rust-source-interface',common=['parity/fixtures/rust-textual-source-interface.lino','experiments/rust-records/textual-source-interface.mjs'];
+const row={id,required:true,javascript:{status:'implemented',evidence:['js/src/translation/rust-textual-source-interface-rules.js','js/src/translation/rust-scalar-source-interface.js','js/src/translation/emit-rust.js','js/src/typed-program-links-validation.js','js/tests/translation-rust-textual-source-interface.test.js',...common]},rust:{status:'implemented',evidence:['rust/src/translation/rust_textual_source_interface_rules.rs','rust/src/translation/scalar_source_interface.rs','rust/src/translation/emit_rust.rs','rust/src/translation/source_header_emission.rs','rust/src/typed_program_links.rs','rust/tests/unit/translation_rust_textual_source_interface.rs',...common]}};
+const index=value.features.findIndex(row=>row.id===id);if(index<0)value.features.push(row);else value.features[index]=row;writeProjectData(path,value);
+const module=new URL('rust/tests/unit/mod.rs',root),source=readFileSync(module,'utf8'),declaration='mod translation_rust_textual_source_interface;';if(!source.includes(declaration))writeFileSync(module,source+'\n'+declaration+'\n');

@@ -1,7 +1,9 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::ml_plan_array_from_callback_constraints_loop2;
-use super::ml_plan_array_from_map_callback_loop3;
+use super::MlSource1TemporaryReadArrayFromFieldLoop1Result;
+use super::source_ml_source1_temporary_plan_array_from_callback_constraints_loop2;
+use super::source_ml_source1_temporary_plan_array_from_map_callback_loop3;
+use super::source_ml_source1_temporary_read_array_from_field_loop1;
 
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
@@ -120,34 +122,87 @@ pub mod ml_array {
     }
 }
 
+pub mod ml_source_exception {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct SourceException {
+        pub class_name: String,
+        pub message_units: Vec<u16>,
+        pub message_present: bool,
+    }
+    impl SourceException {
+        #[must_use]
+        pub fn raise(self) -> ! {
+            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
+        }
+        #[must_use]
+        pub fn from_text(class_name: &str, message: &str) -> Self {
+            Self {
+                class_name: class_name.to_owned(),
+                message_units: message.encode_utf16().collect(),
+                message_present: true,
+            }
+        }
+    }
+    impl std::fmt::Display for SourceException {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.message_units))
+        }
+    }
+    impl std::error::Error for SourceException {}
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_number_fact() -> f64 {
-    panic!("{}", "missing required Number fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Number fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_text_fact() -> String {
-    panic!("{}", "missing required text fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required text fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_boolean_fact() -> bool {
-    panic!("{}", "missing required Boolean fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Boolean fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Number fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required Number fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_number_fact)
     }
@@ -156,13 +211,16 @@ pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required text fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required text fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_text_fact)
     }
@@ -171,13 +229,16 @@ pub fn read_required_text_fact(values: &[String], index: f64) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Boolean fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required Boolean fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_boolean_fact)
     }
@@ -416,15 +477,16 @@ pub fn read_array_from_field(
                 {
                     let at = start;
                     {
-                        let ml_s1 = self::ml_read_array_from_field_loop1(
-                            labels, targets, field, start, count, at,
-                        );
-                        match ml_s1 {
-                            self::MlReadArrayFromFieldLoop1Result::MlReadArrayFromFieldLoop1Done => {
+                        let source_ml_source2_s1 =
+                            self::source_ml_source1_temporary_read_array_from_field_loop1(
+                                labels, targets, field, start, count, at,
+                            );
+                        match source_ml_source2_s1 {
+                            self::MlSource1TemporaryReadArrayFromFieldLoop1Result::MlSource1TemporaryReadArrayFromFieldLoop1Done => {
                                 -1f64
                             }
-                            self::MlReadArrayFromFieldLoop1Result::MlReadArrayFromFieldLoop1Return(ml_result1) => {
-                                ml_result1
+                            self::MlSource1TemporaryReadArrayFromFieldLoop1Result::MlSource1TemporaryReadArrayFromFieldLoop1Return(source_ml_source1_temporary_result1) => {
+                                source_ml_source1_temporary_result1
                             }
                         }
                     }
@@ -565,13 +627,21 @@ pub fn plan_array_from_inference_inputs(
     args: f64,
     expected: f64,
 ) -> Vec<f64> {
-    self::ml_array::append(
-        self::plan_array_from_expected_element(texts, starts, counts, labels, targets, expected),
-        vec![
-            self::read_array_from_element(starts, counts, targets, args, 0f64),
-            self::read_array_from_element(starts, counts, targets, args, 1f64),
-        ],
-    )
+    {
+        let source_ml_source2_concat_value2 = self::plan_array_from_expected_element(
+            texts, starts, counts, labels, targets, expected,
+        );
+        {
+            let source_ml_source2_concat_value3 = vec![
+                self::read_array_from_element(starts, counts, targets, args, 0f64),
+                self::read_array_from_element(starts, counts, targets, args, 1f64),
+            ];
+            self::ml_array::append(
+                self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value2),
+                source_ml_source2_concat_value3,
+            )
+        }
+    }
 }
 
 /// Execute the checked shared source algorithm.
@@ -620,27 +690,24 @@ pub fn plan_array_from_callback_constraints(
                         {
                             let index = 0f64;
                             {
-                                let pairs_2 = self::ml_plan_array_from_callback_constraints_loop2(
-                                    starts,
-                                    counts,
-                                    targets,
-                                    params,
-                                    declared_params,
-                                    count,
-                                    pairs,
-                                    index,
-                                );
+                                let pairs_2 = self::source_ml_source1_temporary_plan_array_from_callback_constraints_loop2(starts, counts, targets, params, declared_params, count, pairs, index);
                                 {
-                                    let (ml_append_right, ml_append_left) = (
-                                        vec![
+                                    let source_ml_source2_concat_value4 = pairs_2;
+                                    {
+                                        let source_ml_source2_concat_value5 = vec![
                                             self::read_array_from_field(
                                                 starts, counts, labels, targets, declared, "ret",
                                             ),
                                             ret,
-                                        ],
-                                        pairs_2,
-                                    );
-                                    self::ml_array::append(ml_append_left, ml_append_right)
+                                        ];
+                                        self::ml_array::append(
+                                            self::ml_array::append(
+                                                Vec::<f64>::new(),
+                                                source_ml_source2_concat_value4,
+                                            ),
+                                            source_ml_source2_concat_value5,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -689,7 +756,7 @@ pub fn plan_array_from_map_callback(
                         {
                             let index = 0f64;
                             {
-                                self::ml_plan_array_from_map_callback_loop3(
+                                self::source_ml_source1_temporary_plan_array_from_map_callback_loop3(
                                     starts, counts, targets, params, declared, count, plan, index,
                                 )
                             }
@@ -714,165 +781,5 @@ pub fn read_array_from_map_callback_error(status: f64, parameters_equal: bool) -
         String::from(".map() callback parameters differ")
     } else {
         String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn render_array_from_mapping(
-    target: &str,
-    object: &str,
-    callback: &str,
-    parameter_count: f64,
-    suffix: &str,
-) -> String {
-    if target == "JavaScript" {
-        format!("({}).map({})", object.to_owned(), callback.to_owned())
-    } else if target == "Rust" {
-        {
-            let values = format!("ml_values{}", suffix.to_owned());
-            {
-                let fn_ = format!("ml_callback{}", suffix.to_owned());
-                {
-                    let index = format!("ml_index{}", suffix.to_owned());
-                    {
-                        let value = format!("ml_value{}", suffix.to_owned());
-                        {
-                            let available = vec![
-                                value.clone(),
-                                format!("({index} as f64)"),
-                                format!("{values}.clone()"),
-                            ];
-                            {
-                                let call = format!(
-                                    "{fn_}({})",
-                                    (self::ml_array::slice(&available, 0f64, parameter_count))
-                                        .join((String::from(", ")).as_str())
-                                );
-                                {
-                                    let head = format!(
-                                        "let {values} = {}; let {fn_} = {};",
-                                        object.to_owned(),
-                                        callback.to_owned()
-                                    );
-                                    format!(
-                                        "{{ {head} {values}.iter().cloned().enumerate().map(|({index}, {value})| {call}).collect::<Vec<_>>() }}"
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    } else if target == "Lean" {
-        {
-            let available_2 = vec![
-                String::from("ml_pair.1"),
-                String::from("(Float.ofNat ml_pair.2)"),
-                String::from("ml_values"),
-            ];
-            {
-                let call_2 = {
-                    let ml_library_condition_2 = {
-                        let ml_value = parameter_count;
-                        ml_value != 0f64 && !ml_value.is_nan()
-                    };
-                    if ml_library_condition_2 {
-                        format!(
-                            "(ml_callback {})",
-                            (self::ml_array::slice(&available_2, 0f64, parameter_count))
-                                .join((String::from(" ")).as_str())
-                        )
-                    } else {
-                        String::from("ml_callback")
-                    }
-                };
-                {
-                    let head_2 = format!(
-                        "(let ml_values := {}; let ml_callback := {}; ",
-                        object.to_owned(),
-                        callback.to_owned()
-                    );
-                    format!(
-                        "{head_2} (ml_values.toList.zipIdx.map (fun ml_pair => {call_2})).toArray)"
-                    )
-                }
-            }
-        }
-    } else if target == "Rocq" {
-        {
-            let available_3 = vec![
-                String::from("(fst ml_pair)"),
-                String::from("(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (snd ml_pair))))"),
-                String::from("ml_values"),
-            ];
-            {
-                let call_3 = {
-                    let ml_library_condition_1 = {
-                        let ml_value = parameter_count;
-                        ml_value != 0f64 && !ml_value.is_nan()
-                    };
-                    if ml_library_condition_1 {
-                        format!(
-                            "(ml_callback {})",
-                            (self::ml_array::slice(&available_3, 0f64, parameter_count))
-                                .join((String::from(" ")).as_str())
-                        )
-                    } else {
-                        String::from("ml_callback")
-                    }
-                };
-                {
-                    let head_3 = format!(
-                        "(let ml_values := {} in let ml_callback := {} in ",
-                        object.to_owned(),
-                        callback.to_owned()
-                    );
-                    format!(
-                        "{head_3} List.map (fun ml_pair => {call_3}) (List.combine ml_values (List.seq 0 (List.length ml_values))))"
-                    )
-                }
-            }
-        }
-    } else {
-        String::new()
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadArrayFromFieldLoop1Result {
-    MlReadArrayFromFieldLoop1Done,
-    MlReadArrayFromFieldLoop1Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_array_from_field_loop1(
-    labels: &[String],
-    targets: &[f64],
-    field: &str,
-    mut start: f64,
-    mut count: f64,
-    mut at: f64,
-) -> self::MlReadArrayFromFieldLoop1Result {
-    loop {
-        return if at < (start + count) {
-            if (self::read_required_text_fact(labels, at)) == field {
-                self::MlReadArrayFromFieldLoop1Result::MlReadArrayFromFieldLoop1Return(
-                    self::read_required_number_fact(targets, at),
-                )
-            } else {
-                {
-                    let at_2 = at + 1f64;
-                    {
-                        at = at_2;
-                        continue;
-                    }
-                }
-            }
-        } else {
-            self::MlReadArrayFromFieldLoop1Result::MlReadArrayFromFieldLoop1Done
-        };
     }
 }

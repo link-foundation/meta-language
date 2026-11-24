@@ -1,10 +1,12 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::MlAcceptLinkNetworkBinaryUnicodeLoop3Result;
-use super::MlReadLinkNetworkBinaryIntegerLoop1Result;
-use super::ml_accept_link_network_binary_unicode_loop3;
-use super::ml_link_network_binary_integer_byte_loop2;
-use super::ml_read_link_network_binary_integer_loop1;
+use super::MlTemporaryAcceptLinkNetworkBinaryUnicodeLoop3Result;
+use super::MlTemporaryHasOrderedLinkNetworkIdentityLoop4Result;
+use super::MlTemporaryReadLinkNetworkBinaryIntegerLoop1Result;
+use super::source_ml_temporary_accept_link_network_binary_unicode_loop3;
+use super::source_ml_temporary_has_ordered_link_network_identity_loop4;
+use super::source_ml_temporary_link_network_binary_integer_byte_loop2;
+use super::source_ml_temporary_read_link_network_binary_integer_loop1;
 
 /// JavaScript's Number operations that Rust's f64 does not share.
 pub mod ml_number {
@@ -668,15 +670,16 @@ pub fn read_link_network_binary_integer(
                     {
                         let index = 0f64;
                         {
-                            let ml_s1 = self::ml_read_link_network_binary_integer_loop1(
-                                input, cursor, width, value_2, factor, index,
-                            );
-                            match ml_s1 {
-                                self::MlReadLinkNetworkBinaryIntegerLoop1Result::MlReadLinkNetworkBinaryIntegerLoop1Done(value_3) => {
+                            let source_ml_source1_s1 =
+                                self::source_ml_temporary_read_link_network_binary_integer_loop1(
+                                    input, cursor, width, value_2, factor, index,
+                                );
+                            match source_ml_source1_s1 {
+                                self::MlTemporaryReadLinkNetworkBinaryIntegerLoop1Result::MlTemporaryReadLinkNetworkBinaryIntegerLoop1Done(value_3) => {
                                     value_3
                                 }
-                                self::MlReadLinkNetworkBinaryIntegerLoop1Result::MlReadLinkNetworkBinaryIntegerLoop1Return(ml_result1) => {
-                                    ml_result1
+                                self::MlTemporaryReadLinkNetworkBinaryIntegerLoop1Result::MlTemporaryReadLinkNetworkBinaryIntegerLoop1Return(source_ml_temporary_result1) => {
+                                    source_ml_temporary_result1
                                 }
                             }
                         }
@@ -702,7 +705,8 @@ pub fn link_network_binary_integer_byte(value: f64, index: f64) -> f64 {
     {
         let at = 0f64;
         {
-            let value_2 = self::ml_link_network_binary_integer_byte_loop2(value, index, at);
+            let value_2 =
+                self::source_ml_temporary_link_network_binary_integer_byte_loop2(value, index, at);
             (value_2 % 256f64)
         }
     }
@@ -714,13 +718,14 @@ pub fn accept_link_network_binary_unicode(units: &[f64]) -> bool {
     {
         let index = 0f64;
         {
-            let ml_s2 = self::ml_accept_link_network_binary_unicode_loop3(units, index);
-            match ml_s2 {
-                self::MlAcceptLinkNetworkBinaryUnicodeLoop3Result::MlAcceptLinkNetworkBinaryUnicodeLoop3Done => {
+            let source_ml_source1_s2 =
+                self::source_ml_temporary_accept_link_network_binary_unicode_loop3(units, index);
+            match source_ml_source1_s2 {
+                self::MlTemporaryAcceptLinkNetworkBinaryUnicodeLoop3Result::MlTemporaryAcceptLinkNetworkBinaryUnicodeLoop3Done => {
                     true
                 }
-                self::MlAcceptLinkNetworkBinaryUnicodeLoop3Result::MlAcceptLinkNetworkBinaryUnicodeLoop3Return(ml_result3) => {
-                    ml_result3
+                self::MlTemporaryAcceptLinkNetworkBinaryUnicodeLoop3Result::MlTemporaryAcceptLinkNetworkBinaryUnicodeLoop3Return(source_ml_temporary_result3) => {
+                    source_ml_temporary_result3
                 }
             }
         }
@@ -777,5 +782,30 @@ pub fn render_link_network_binary_field(value: f64, binary: bool) -> self::ml_st
         (self::render_link_network_binary_hexadecimal_digit((value / 16f64).floor())).concat(
             &self::render_link_network_binary_hexadecimal_digit(value % 16f64),
         )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn has_ordered_link_network_identity(identities: &[f64], target: f64) -> bool {
+    {
+        let lower = 0f64;
+        {
+            let upper = identities.len() as f64;
+            {
+                let source_ml_source1_s3 =
+                    self::source_ml_temporary_has_ordered_link_network_identity_loop4(
+                        identities, target, lower, upper,
+                    );
+                match source_ml_source1_s3 {
+                    self::MlTemporaryHasOrderedLinkNetworkIdentityLoop4Result::MlTemporaryHasOrderedLinkNetworkIdentityLoop4Done => {
+                        false
+                    }
+                    self::MlTemporaryHasOrderedLinkNetworkIdentityLoop4Result::MlTemporaryHasOrderedLinkNetworkIdentityLoop4Return(source_ml_temporary_result4) => {
+                        source_ml_temporary_result4
+                    }
+                }
+            }
+        }
     }
 }

@@ -16,6 +16,35 @@ import {DecoratorSet} from '../src/decorators.js';
 import {applyRecordedFamilyLibraryStyles} from '../scripts/recorded-family-library-style.mjs';
 import {formatProductRuleSource} from '../scripts/product-rule-style-corrections.mjs';
 
+test('a generated function borrows its own parameters when a helper shares its name', () => {
+  const nativeHelper = 'mod helper {\n    fn read(value: f64) -> f64 { value }\n}';
+  const declaration = 'pub fn read(value: Vec<f64>) -> Vec<f64> { value }';
+  const styled = readPortableSourceParameterStyles(nativeHelper + '\n' + declaration);
+  assert.equal(styled.source, nativeHelper + '\npub fn read(value: &[f64]) -> Vec<f64> { value.to_vec() }');
+  assert.deepEqual(styled.actions.map(action => action.from), [declaration]);
+  const linted = readPortableSourceLintStyles(styled.source).source;
+  assert.ok(linted.includes(nativeHelper));
+  assert.ok(linted.includes('#[must_use]\npub fn read('));
+});
+
+test('borrowed call arguments keep their positions after a generic shared tuple', () => {
+  const receiver = 'std::rc::Rc<std::cell::RefCell<(std::rc::Rc<dyn Fn(String) -> String>, (), std::rc::Rc<std::cell::RefCell<Vec<String>>>)>>';
+  const source = `pub fn lookup(receiver: ${receiver}, name: String) -> String { name }
+pub fn relay(receiver: ${receiver}, name: String) -> String { self::lookup(receiver.clone(), name.clone()) }`;
+  const styled = readPortableSourceParameterStyles(source);
+  assert.equal(styled.source, `pub fn lookup(receiver: ${receiver}, name: &str) -> String { name.to_owned() }
+pub fn relay(receiver: ${receiver}, name: &str) -> String { self::lookup(receiver.clone(), name) }`);
+});
+
+test('identical generated blocks at distinct module owners receive one replayable lint action', () => {
+  const declaration = 'pub fn decide(value: f64) -> bool { if value != 7f64 { true } else { false } }';
+  const source = `pub mod left {\n${declaration}\n}\npub mod right {\n${declaration}\n}`;
+  const result = readPortableSourceLintStyles(source);
+  assert.equal(result.actions.filter(action => action.from === declaration).length, 1);
+  assert.equal((result.source.match(/#\[must_use\]\npub fn decide/gu) ?? []).length, 2);
+  assert.equal(result.actions.reduce((current, action) => current.split(action.from).join(action.to), source), result.source);
+});
+
 test('actual multi-line lint attributes remain attached to complete partitioned declarations', () => {
   const source = Array.from({length: 18}, (_, index) =>
     '/** @param {number} a @param {number} b @param {number} c @param {number} d @param {number} e @param {number} f @param {number} g @param {number} h @param {number} i @returns {number} */ function column' + index + '(a,b,c,d,e,f,g,h,i){return a+b+c+d+e+f+g+h+i;}').join('\n');
@@ -165,7 +194,15 @@ test('actual UTF16 text columns borrow vectors while preserving isolated surroga
   const source = readFileSync(new URL('../src/translation/fact-column-rules.js', import.meta.url), 'utf8')
     + '/** @param {string[]} values @param {number} index @returns {string} */ function selected(values,index){return readRequiredTextFact(values,index);}'
     + '/** @returns {string} */ function isolated(){return "\\ud800";}';
-  assert.throws(() => parseJavaScript(source, {referenceSemantics: false}), /unicode escape \\ud800 is not a scalar value/u, 'the original literal input retains the existing lexer refusal');
+  // ECMAScript 2025 StringLiteral SV corrects the preceding
+  // /unicode escape \\ud800 is not a scalar value/u refusal, retaining its input.
+  const [major,minor]=process.versions.node.split('.').map(Number);
+  assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node);
+  const literalProgram=checkProgram(parseJavaScript(source,{referenceSemantics:false}));
+  const literalContext={};
+  runInNewContext(emitJavaScript(literalProgram).text,literalContext,{timeout:1000});
+  assert.equal(literalContext.isolated().charCodeAt(0),0xd800);
+  assert.ok(emitRust(literalProgram,{arrayConsumption:true}).text.includes('ml_string::Text'));
   const valid = source.replace('"\\ud800"', '"😀".slice(0,1)');
   const checked = checkProgram(parseJavaScript(valid, {referenceSemantics: false}));
   const raw = emitRust(checked, { arrayConsumption: true }).definitions.join('\n\n').replaceAll('crate::ml_string::Text', 'self::ml_string::Text');
@@ -243,6 +280,22 @@ test('complete sibling placement imports only actual sibling declarations', () =
   const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], {input: selected, encoding: 'utf8'});
   assert.equal(formatted.status, 0, formatted.stderr);
   assert.equal(formatted.stdout, selected, 'new sibling imports already follow the active 2024 formatter');
+});
+
+test('large inline generated modules split recursively while complete bodies and size gates remain',()=>{
+ const functions=Array.from({length:24},(_,index)=>'    pub fn item'+index+'() -> bool {\n        '+(index?'self::item'+(index-1)+'()':'true')+'\n    }\n').join('');
+ const source='pub mod runtime {\n'+functions+'}\npub fn selected() -> bool {\n    self::runtime::item23()\n}\n';
+ const files=partitionPortableRustLibrary(source,{directory:'nested_controls',maximumLines:12});
+ assert.ok(files.some(file=>file.path==='nested_controls/runtime.rs'));
+ assert.ok(files.some(file=>file.path?.startsWith('nested_controls/runtime/part_')));
+ const all=files.map(file=>file.source).join('\n');
+ for(let index=0;index<24;index+=1)assert.equal([...all.matchAll(new RegExp('pub fn item'+index+'\\(','gu'))].length,1);
+ assert.ok(all.includes('#[path = "runtime.rs"]\npub mod runtime;'));
+ assert.ok(files.every(file=>file.source.split('\n').length<1000));
+ const largeBody='\n'+Array.from({length:20},()=> '    let value = true;').join('\n')+'\n    true\n}\n';
+ assert.throws(()=>partitionPortableRustLibrary('pub fn first() -> bool {'+largeBody+'pub fn second() -> bool {'+largeBody,{directory:'unsplit_body',maximumLines:12}),
+  /12-line limit[\s\S]*first\(\)[\s\S]*second\(\)/u);
+ assert.throws(()=>partitionPortableRustLibrary('pub mod runtime {\n'+functions+'    pub fn parent() -> bool { super::value() }\n}\n',{directory:'parent_path',maximumLines:12}));
 });
 
 test('complete mechanical library expressions preserve opaque macros and lazy refusal paths', () => {

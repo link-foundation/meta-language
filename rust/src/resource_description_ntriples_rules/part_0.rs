@@ -128,13 +128,14 @@ pub fn accept_resource_description_unicode(units: &[f64]) -> bool {
     {
         let index = 0f64;
         {
-            let ml_s1 = super::ml_accept_resource_description_unicode_loop1(units, index);
-            match ml_s1 {
-                super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Done => {
+            let source_ml_source1_s1 =
+                crate::source_ml_temporary_accept_resource_description_unicode_loop1(units, index);
+            match source_ml_source1_s1.clone() {
+                crate::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Result::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Done => {
                     true
                 }
-                super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Return(ml_result1) => {
-                    ml_result1
+                crate::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Result::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Return(source_ml_temporary_result1) => {
+                    source_ml_temporary_result1
                 }
             }
         }
@@ -270,19 +271,20 @@ pub fn decode_resource_description_scalar_escape(units: &[f64], start: f64, widt
             {
                 let index = start;
                 {
-                    let ml_s2 = super::ml_decode_resource_description_scalar_escape_loop2(
-                        units, start, width, value, index,
-                    );
-                    match ml_s2 {
-                        super::MlDecodeResourceDescriptionScalarEscapeLoop2Result::MlDecodeResourceDescriptionScalarEscapeLoop2Done(value_2) => {
-                            if ((value_2 > (1_114_111f64)) || ((55296f64..=57343f64).contains(&value_2))) {
+                    let source_ml_source1_s2 =
+                        crate::source_ml_temporary_decode_resource_description_scalar_escape_loop2(
+                            units, start, width, value, index,
+                        );
+                    match source_ml_source1_s2.clone() {
+                        crate::MlTemporaryDecodeResourceDescriptionScalarEscapeLoop2Result::MlTemporaryDecodeResourceDescriptionScalarEscapeLoop2Done(value_2) => {
+                            if ((value_2 > (1_114_111f64)) || ((value_2 >= (55296f64)) && (value_2 <= (57343f64)))) {
                                 (-1f64)
                             } else {
                                 value_2
                             }
                         }
-                        super::MlDecodeResourceDescriptionScalarEscapeLoop2Result::MlDecodeResourceDescriptionScalarEscapeLoop2Return(ml_result2) => {
-                            ml_result2
+                        crate::MlTemporaryDecodeResourceDescriptionScalarEscapeLoop2Result::MlTemporaryDecodeResourceDescriptionScalarEscapeLoop2Return(source_ml_temporary_result2) => {
+                            source_ml_temporary_result2
                         }
                     }
                 }
@@ -385,64 +387,64 @@ pub fn read_resource_description_n_triples_token(units: &[f64], start: f64) -> V
                         7f64
                     };
                     {
-                        let index_2 = super::ml_read_resource_description_n_triples_token_loop3(
-                            units, index, kind,
-                        );
+                        let index_2 = crate::source_ml_temporary_read_resource_description_n_triples_token_loop3(units, index, kind);
                         vec![kind, index_2, 0f64]
                     }
                 }
-            } else if (code == (35f64)) {
-                {
-                    let ml_s3 =
-                        super::ml_read_resource_description_n_triples_token_loop4(units, index);
-                    match ml_s3 {
-                            super::MlReadResourceDescriptionNTriplesTokenLoop4Result::MlReadResourceDescriptionNTriplesTokenLoop4Done(index_3) => {
+            } else {
+                if (code == (35f64)) {
+                    {
+                        let source_ml_source1_s3 = crate::source_ml_temporary_read_resource_description_n_triples_token_loop4(units, index);
+                        match source_ml_source1_s3.clone() {
+                            crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop4Result::MlTemporaryReadResourceDescriptionNTriplesTokenLoop4Done(index_3) => {
                                 vec![8f64, index_3, 0f64]
                             }
-                            super::MlReadResourceDescriptionNTriplesTokenLoop4Result::MlReadResourceDescriptionNTriplesTokenLoop4Return(ml_result4) => {
-                                ml_result4
+                            crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop4Result::MlTemporaryReadResourceDescriptionNTriplesTokenLoop4Return(source_ml_temporary_result4) => {
+                                source_ml_temporary_result4.clone()
                             }
                         }
-                }
-            } else if (code == (46f64)) {
-                vec![5f64, (index + 1f64), 0f64]
-            } else if ((code == (94f64))
-                && ((super::resource_description_unit(units, index + 1f64)) == (94f64)))
-            {
-                vec![6f64, (index + 2f64), 0f64]
-            } else if (code == (64f64)) {
-                {
-                    let index_4 = (index + 1f64);
-                    {
-                        let ml_s4 = super::ml_read_resource_description_n_triples_token_loop5(
-                            units, index_4, code,
-                        );
-                        match ml_s4 {
-                                            super::MlReadResourceDescriptionNTriplesTokenLoop5Result::MlReadResourceDescriptionNTriplesTokenLoop5Done(index_5, code_2) => {
-                                                if (index_5 == (start + 1f64)) {
+                    }
+                } else {
+                    if (code == (46f64)) {
+                        vec![5f64, (index + 1f64), 0f64]
+                    } else {
+                        if ((code == (94f64))
+                            && ((super::resource_description_unit(units, (index + 1f64)))
+                                == (94f64)))
+                        {
+                            vec![6f64, (index + 2f64), 0f64]
+                        } else {
+                            if (code == (64f64)) {
+                                {
+                                    let index_4 = (index + 1f64);
+                                    {
+                                        let source_ml_source1_s4 = crate::source_ml_temporary_read_resource_description_n_triples_token_loop5(units, index_4, code);
+                                        match source_ml_source1_s4.clone() {
+                                            crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop5Result::MlTemporaryReadResourceDescriptionNTriplesTokenLoop5Done(index_5, code_2) => {
+                                                if (index_5 == ((start + 1f64))) {
                                                     vec![0f64, start, 2f64]
                                                 } else {
                                                     vec![4f64, index_5, 0f64]
                                                 }
                                             }
                                         }
-                    }
-                }
-            } else if ((code == (95f64))
-                && ((super::resource_description_unit(units, index + 1f64)) == (58f64)))
-            {
-                {
-                    let index_6 = (index + 2f64);
-                    {
-                        let beginning = index_6;
-                        {
-                            let ml_s5 = super::ml_read_resource_description_n_triples_token_loop6(
-                                units, index_6, beginning,
-                            );
-                            match ml_s5 {
-                                                    super::MlReadResourceDescriptionNTriplesTokenLoop6Result::MlReadResourceDescriptionNTriplesTokenLoop6Done(index_7) => {
+                                    }
+                                }
+                            } else {
+                                if ((code == (95f64))
+                                    && ((super::resource_description_unit(units, (index + 1f64)))
+                                        == (58f64)))
+                                {
+                                    {
+                                        let index_6 = (index + 2f64);
+                                        {
+                                            let beginning = index_6;
+                                            {
+                                                let source_ml_source1_s5 = crate::source_ml_temporary_read_resource_description_n_triples_token_loop6(units, index_6, beginning);
+                                                match source_ml_source1_s5.clone() {
+                                                    crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop6Result::MlTemporaryReadResourceDescriptionNTriplesTokenLoop6Done(index_7) => {
                                                         {
-                                                            let index_8 = super::ml_read_resource_description_n_triples_token_loop7(units, index_7, beginning);
+                                                            let index_8 = crate::source_ml_temporary_read_resource_description_n_triples_token_loop7(units, index_7, beginning);
                                                             if (index_8 == beginning) {
                                                                 vec![0f64, start, 3f64]
                                                             } else {
@@ -450,50 +452,61 @@ pub fn read_resource_description_n_triples_token(units: &[f64], start: f64) -> V
                                                             }
                                                         }
                                                     }
-                                                    super::MlReadResourceDescriptionNTriplesTokenLoop6Result::MlReadResourceDescriptionNTriplesTokenLoop6Return(ml_result7) => {
-                                                        ml_result7
+                                                    crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop6Result::MlTemporaryReadResourceDescriptionNTriplesTokenLoop6Return(source_ml_temporary_result7) => {
+                                                        source_ml_temporary_result7.clone()
                                                     }
                                                 }
-                        }
-                    }
-                }
-            } else if ((code == (60f64)) || (code == (34f64))) {
-                {
-                    let kind_2 = if (code == (60f64)) { 1f64 } else { 3f64 };
-                    {
-                        let close = if (code == (60f64)) { 62f64 } else { 34f64 };
-                        {
-                            let index_9 = (index + 1f64);
-                            {
-                                let ml_s6 =
-                                    super::ml_read_resource_description_n_triples_token_loop8(
-                                        units, index_9, kind_2, close,
-                                    );
-                                match ml_s6 {
-                                                            super::MlReadResourceDescriptionNTriplesTokenLoop8Result::MlReadResourceDescriptionNTriplesTokenLoop8Done(index_10) => {
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    if ((code == (60f64)) || (code == (34f64))) {
+                                        {
+                                            let kind_2 =
+                                                if (code == (60f64)) { 1f64 } else { 3f64 };
+                                            {
+                                                let close =
+                                                    if (code == (60f64)) { 62f64 } else { 34f64 };
+                                                {
+                                                    let index_9 = (index + 1f64);
+                                                    {
+                                                        let source_ml_source1_s6 = crate::source_ml_temporary_read_resource_description_n_triples_token_loop8(units, index_9, kind_2, close);
+                                                        match source_ml_source1_s6.clone() {
+                                                            crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop8Result::MlTemporaryReadResourceDescriptionNTriplesTokenLoop8Done(index_10) => {
                                                                 vec![0f64, start, 7f64]
                                                             }
-                                                            super::MlReadResourceDescriptionNTriplesTokenLoop8Result::MlReadResourceDescriptionNTriplesTokenLoop8Return(ml_result8) => {
-                                                                ml_result8
+                                                            crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop8Result::MlTemporaryReadResourceDescriptionNTriplesTokenLoop8Return(source_ml_temporary_result8) => {
+                                                                source_ml_temporary_result8.clone()
                                                             }
                                                         }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        {
+                                            let scalar =
+                                                super::read_resource_description_n_triples_scalar(
+                                                    units, index, 0f64,
+                                                );
+                                            vec![
+                                                0f64,
+                                                index,
+                                                if ((super::resource_description_unit(
+                                                    &scalar, 2f64,
+                                                )) == (0f64))
+                                                {
+                                                    8f64
+                                                } else {
+                                                    1f64
+                                                },
+                                            ]
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            } else {
-                {
-                    let scalar =
-                        super::read_resource_description_n_triples_scalar(units, index, 0f64);
-                    vec![
-                        0f64,
-                        index,
-                        if ((super::resource_description_unit(&scalar, 2f64)) == (0f64)) {
-                            8f64
-                        } else {
-                            1f64
-                        },
-                    ]
                 }
             }
         }
@@ -515,17 +528,15 @@ pub fn read_resource_description_n_triples_canonical_escape(code: f64) -> f64 {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptResourceDescriptionUnicodeLoop1Result {
-    MlAcceptResourceDescriptionUnicodeLoop1Done,
-    MlAcceptResourceDescriptionUnicodeLoop1Return(bool),
+pub enum MlTemporaryAcceptResourceDescriptionUnicodeLoop1Result {
+    MlTemporaryAcceptResourceDescriptionUnicodeLoop1Done,
+    MlTemporaryAcceptResourceDescriptionUnicodeLoop1Return(bool),
 }
 
-/// Execute the checked shared resource-description algorithm.
-#[must_use]
-pub fn ml_accept_resource_description_unicode_loop1(
+pub fn source_ml_temporary_accept_resource_description_unicode_loop1(
     units: &[f64],
     mut index: f64,
-) -> super::MlAcceptResourceDescriptionUnicodeLoop1Result {
+) -> crate::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Result {
     loop {
         return if (index < (units.len() as f64)) {
             {
@@ -533,144 +544,139 @@ pub fn ml_accept_resource_description_unicode_loop1(
                 if ((!(super::ml_math::is_safe_integer(unit)) || (unit < (0f64)))
                     || (unit > (65535f64)))
                 {
-                    super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Return(false)
-                } else if ((55296f64..=56319f64).contains(&unit)) {
-                    {
-                        let index_2 = (index + 1f64);
-                        if (((index_2 >= (units.len() as f64))
-                            || ((super::resource_description_unit(units, index_2)) < (56320f64)))
-                            || ((super::resource_description_unit(units, index_2)) > (57343f64)))
-                        {
-                            super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Return(false)
-                        } else {
-                            {
-                                let index_3 = (index_2 + 1f64);
-                                {
-                                    index = index_3;
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                } else if ((56320f64..=57343f64).contains(&unit)) {
-                    super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Return(false)
+                    crate::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Result::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Return(false)
                 } else {
-                    {
-                        let index_4 = (index + 1f64);
+                    if ((unit >= (55296f64)) && (unit <= (56319f64))) {
                         {
-                            index = index_4;
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlDecodeResourceDescriptionScalarEscapeLoop2Result {
-    MlDecodeResourceDescriptionScalarEscapeLoop2Done(f64),
-    MlDecodeResourceDescriptionScalarEscapeLoop2Return(f64),
-}
-
-/// Execute the checked shared resource-description algorithm.
-#[must_use]
-pub fn ml_decode_resource_description_scalar_escape_loop2(
-    units: &[f64],
-    mut start: f64,
-    mut width: f64,
-    mut value: f64,
-    mut index: f64,
-) -> super::MlDecodeResourceDescriptionScalarEscapeLoop2Result {
-    loop {
-        return if (index < (start + width)) {
-            {
-                let code = super::resource_description_unit(units, index);
-                {
-                    if (super::resource_description_hexadecimal(code)) {
-                        {
-                            let code_3 = if (code >= (97f64)) {
-                                { (code - 32f64) }
-                            } else {
-                                code
-                            };
+                            let index_2 = (index + 1f64);
+                            if (((index_2 >= (units.len() as f64))
+                                || ((super::resource_description_unit(units, index_2))
+                                    < (56320f64)))
+                                || ((super::resource_description_unit(units, index_2))
+                                    > (57343f64)))
                             {
-                                let value_2 = ({
-                                    let separately_rounded_product = value * 16f64;
-                                    separately_rounded_product
-                                        + if (code_3 >= (65f64)) {
-                                            (code_3 - 55f64)
-                                        } else {
-                                            (code_3 - 48f64)
-                                        }
-                                });
+                                crate::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Result::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Return(false)
+                            } else {
                                 {
-                                    let index_2 = (index + 1f64);
+                                    let index_3 = (index_2 + 1f64);
                                     {
-                                        (value, index) = (value_2, index_2);
+                                        index = index_3;
                                         continue;
                                     }
                                 }
                             }
                         }
-                    }
-                    {
-                        super::MlDecodeResourceDescriptionScalarEscapeLoop2Result::MlDecodeResourceDescriptionScalarEscapeLoop2Return(-1f64)
+                    } else {
+                        if ((unit >= (56320f64)) && (unit <= (57343f64))) {
+                            crate::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Result::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Return(false)
+                        } else {
+                            {
+                                let index_4 = (index + 1f64);
+                                {
+                                    index = index_4;
+                                    continue;
+                                }
+                            }
+                        }
                     }
                 }
             }
         } else {
-            super::MlDecodeResourceDescriptionScalarEscapeLoop2Result::MlDecodeResourceDescriptionScalarEscapeLoop2Done(value)
-        };
-    }
-}
-
-/// Execute the checked shared resource-description algorithm.
-#[must_use]
-pub fn ml_read_resource_description_n_triples_token_loop3(
-    units: &[f64],
-    mut index: f64,
-    mut kind: f64,
-) -> f64 {
-    loop {
-        return {
-            if ((index < (units.len() as f64))
-                && if (kind == (9f64)) {
-                    (((super::resource_description_unit(units, index)) == (32f64))
-                        || ((super::resource_description_unit(units, index)) == (9f64)))
-                } else {
-                    (((super::resource_description_unit(units, index)) == (10f64))
-                        || ((super::resource_description_unit(units, index)) == (13f64)))
-                })
-            {
-                {
-                    let index_2 = (index + 1f64);
-                    {
-                        index = index_2;
-                        continue;
-                    }
-                }
-            }
-            { index }
+            crate::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Result::MlTemporaryAcceptResourceDescriptionUnicodeLoop1Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadResourceDescriptionNTriplesTokenLoop4Result {
-    MlReadResourceDescriptionNTriplesTokenLoop4Done(f64),
-    MlReadResourceDescriptionNTriplesTokenLoop4Return(Vec<f64>),
+pub enum MlTemporaryDecodeResourceDescriptionScalarEscapeLoop2Result {
+    MlTemporaryDecodeResourceDescriptionScalarEscapeLoop2Done(f64),
+    MlTemporaryDecodeResourceDescriptionScalarEscapeLoop2Return(f64),
 }
 
-/// Execute the checked shared resource-description algorithm.
-#[must_use]
-pub fn ml_read_resource_description_n_triples_token_loop4(
+pub fn source_ml_temporary_decode_resource_description_scalar_escape_loop2(
+    units: &[f64],
+    mut start: f64,
+    mut width: f64,
+    mut value: f64,
+    mut index: f64,
+) -> crate::MlTemporaryDecodeResourceDescriptionScalarEscapeLoop2Result {
+    loop {
+        return if (index < (start + width)) {
+            {
+                let code = super::resource_description_unit(units, index);
+                if !(super::resource_description_hexadecimal(code)) {
+                    crate::MlTemporaryDecodeResourceDescriptionScalarEscapeLoop2Result::MlTemporaryDecodeResourceDescriptionScalarEscapeLoop2Return((-1f64))
+                } else {
+                    {
+                        let code_3 = if (code >= (97f64)) {
+                            {
+                                let code_2 = (code - 32f64);
+                                code_2
+                            }
+                        } else {
+                            code
+                        };
+                        {
+                            let value_2 = ((value * 16f64)
+                                + if (code_3 >= (65f64)) {
+                                    (code_3 - 55f64)
+                                } else {
+                                    (code_3 - 48f64)
+                                });
+                            {
+                                let index_2 = (index + 1f64);
+                                {
+                                    (value, index) = (value_2, index_2);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            crate::MlTemporaryDecodeResourceDescriptionScalarEscapeLoop2Result::MlTemporaryDecodeResourceDescriptionScalarEscapeLoop2Done(value)
+        };
+    }
+}
+
+pub fn source_ml_temporary_read_resource_description_n_triples_token_loop3(
     units: &[f64],
     mut index: f64,
-) -> super::MlReadResourceDescriptionNTriplesTokenLoop4Result {
+    mut kind: f64,
+) -> f64 {
+    loop {
+        return if ((index < (units.len() as f64))
+            && if (kind == (9f64)) {
+                (((super::resource_description_unit(units, index)) == (32f64))
+                    || ((super::resource_description_unit(units, index)) == (9f64)))
+            } else {
+                (((super::resource_description_unit(units, index)) == (10f64))
+                    || ((super::resource_description_unit(units, index)) == (13f64)))
+            }) {
+            {
+                let index_2 = (index + 1f64);
+                {
+                    index = index_2;
+                    continue;
+                }
+            }
+        } else {
+            index
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryReadResourceDescriptionNTriplesTokenLoop4Result {
+    MlTemporaryReadResourceDescriptionNTriplesTokenLoop4Done(f64),
+    MlTemporaryReadResourceDescriptionNTriplesTokenLoop4Return(Vec<f64>),
+}
+
+pub fn source_ml_temporary_read_resource_description_n_triples_token_loop4(
+    units: &[f64],
+    mut index: f64,
+) -> crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop4Result {
     loop {
         return if (((index < (units.len() as f64))
             && ((super::resource_description_unit(units, index)) != (10f64)))
@@ -678,95 +684,84 @@ pub fn ml_read_resource_description_n_triples_token_loop4(
         {
             {
                 let scalar = super::read_resource_description_n_triples_scalar(units, index, 0f64);
-                {
-                    if (super::resource_description_unit(&scalar, 2f64)) == (0f64) {
-                        {
-                            let index_2 = (index + super::resource_description_unit(&scalar, 0f64));
-                            {
-                                index = index_2;
-                                continue;
-                            }
-                        }
-                    }
+                if ((super::resource_description_unit(&scalar, 2f64)) != (0f64)) {
+                    crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop4Result::MlTemporaryReadResourceDescriptionNTriplesTokenLoop4Return(vec![0f64, index, 1f64])
+                } else {
                     {
-                        super::MlReadResourceDescriptionNTriplesTokenLoop4Result::MlReadResourceDescriptionNTriplesTokenLoop4Return(vec![0f64, index, 1f64])
+                        let index_2 = (index + super::resource_description_unit(&scalar, 0f64));
+                        {
+                            index = index_2;
+                            continue;
+                        }
                     }
                 }
             }
         } else {
-            super::MlReadResourceDescriptionNTriplesTokenLoop4Result::MlReadResourceDescriptionNTriplesTokenLoop4Done(index)
+            crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop4Result::MlTemporaryReadResourceDescriptionNTriplesTokenLoop4Done(index)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadResourceDescriptionNTriplesTokenLoop5Result {
-    MlReadResourceDescriptionNTriplesTokenLoop5Done(f64, f64),
+pub enum MlTemporaryReadResourceDescriptionNTriplesTokenLoop5Result {
+    MlTemporaryReadResourceDescriptionNTriplesTokenLoop5Done(f64, f64),
 }
 
-/// Execute the checked shared resource-description algorithm.
-#[must_use]
-pub fn ml_read_resource_description_n_triples_token_loop5(
+pub fn source_ml_temporary_read_resource_description_n_triples_token_loop5(
     units: &[f64],
     mut index: f64,
     mut code: f64,
-) -> super::MlReadResourceDescriptionNTriplesTokenLoop5Result {
+) -> crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop5Result {
     loop {
         return if (index < (units.len() as f64)) {
             {
                 let code_2 = super::resource_description_unit(units, index);
+                if !(((((code_2 >= (65f64)) && (code_2 <= (90f64)))
+                    || ((code_2 >= (97f64)) && (code_2 <= (122f64))))
+                    || ((code_2 >= (48f64)) && (code_2 <= (57f64))))
+                    || (code_2 == (45f64)))
                 {
-                    if (((((65f64..=90f64).contains(&code_2))
-                        || ((97f64..=122f64).contains(&code_2)))
-                        || ((48f64..=57f64).contains(&code_2)))
-                        || (code_2 == (45f64)))
+                    crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop5Result::MlTemporaryReadResourceDescriptionNTriplesTokenLoop5Done(index, code_2)
+                } else {
                     {
+                        let index_2 = (index + 1f64);
                         {
-                            let index_2 = (index + 1f64);
-                            {
-                                (index, code) = (index_2, code_2);
-                                continue;
-                            }
+                            (index, code) = (index_2, code_2);
+                            continue;
                         }
-                    }
-                    {
-                        super::MlReadResourceDescriptionNTriplesTokenLoop5Result::MlReadResourceDescriptionNTriplesTokenLoop5Done(index, code_2)
                     }
                 }
             }
         } else {
-            super::MlReadResourceDescriptionNTriplesTokenLoop5Result::MlReadResourceDescriptionNTriplesTokenLoop5Done(index, code)
+            crate::MlTemporaryReadResourceDescriptionNTriplesTokenLoop5Result::MlTemporaryReadResourceDescriptionNTriplesTokenLoop5Done(index, code)
         };
     }
 }
 
-/// Execute the checked shared resource-description algorithm.
-#[must_use]
-pub fn ml_read_resource_description_n_triples_token_loop7(
+pub fn source_ml_temporary_read_resource_description_n_triples_token_loop7(
     units: &[f64],
     mut index: f64,
     mut beginning: f64,
 ) -> f64 {
     loop {
-        return {
-            if ((index > beginning)
-                && ((super::resource_description_unit(units, index - 1f64)) == (46f64)))
+        return if ((index > beginning)
+            && ((super::resource_description_unit(units, (index - 1f64))) == (46f64)))
+        {
             {
+                let index_2 = (index - 1f64);
                 {
-                    let index_2 = (index - 1f64);
-                    {
-                        index = index_2;
-                        continue;
-                    }
+                    index = index_2;
+                    continue;
                 }
             }
-            { index }
+        } else {
+            index
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadResourceDescriptionNTriplesTokenLoop6Result {
-    MlReadResourceDescriptionNTriplesTokenLoop6Done(f64),
-    MlReadResourceDescriptionNTriplesTokenLoop6Return(Vec<f64>),
+pub enum MlTemporaryReadResourceDescriptionNTriplesTokenLoop6Result {
+    MlTemporaryReadResourceDescriptionNTriplesTokenLoop6Done(f64),
+    MlTemporaryReadResourceDescriptionNTriplesTokenLoop6Return(Vec<f64>),
 }

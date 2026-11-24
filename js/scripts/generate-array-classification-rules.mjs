@@ -7,7 +7,7 @@ import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {writeRecordRuleLibrary} from './record-rule-library.mjs';
 import {tokenize} from '../src/translation/lexer.js';
 const root=new URL('../../',import.meta.url),sourcePath='js/src/translation/array-classification-rules.js';
-const decisions=['readJavaScriptArrayClassification','readJavaScriptArrayClassificationPlan'];
+const decisions=['readJavaScriptArrayClassification','readJavaScriptArrayClassificationPlan','readJavaScriptArrayClassificationBuiltinOperation'];
 const digest=value=>createHash('sha256').update(value).digest('hex');
 // Normative independently authored inputs/expectations. These are declarations,
 // never observations; JavaScript and native CI execute every retained input.
@@ -25,9 +25,13 @@ cases.push(
   {name:'array argument effects remain ordered before and after an empty result',source:`/** @returns {number[]} */function operand(){console.log('operand');return [];}console.log('before');console.log(Array.isArray(operand()));console.log('after');`,expected:'before\noperand\ntrue\nafter\n'},
 );
 const throwing=[{name:'argument failure cannot disappear behind static classification',source:`/** @returns {number[]} */function fail(){throw new Error('kept array predicate failure');}function probe(){return Array.isArray(fail());}console.log(probe());`,errorName:'Error',message:'kept array predicate failure'}];
-const refusals=[
-  {name:'zero arguments remain outside the selected exact-one profile',source:'console.log(Array.isArray());',expected:'false\n'},
+const arityCases=[
+  {name:'omitting the operand classifies undefined as false',source:'console.log(Array.isArray());',expected:'false\n'},
   {name:'extra arguments retain an independent observable oracle',source:"function second(){console.log('second');return 2;}console.log(Array.isArray([1],second()));",expected:'second\ntrue\n'},
+  {name:'the first product classifies after the extra operand is evaluated',source:"function second(){console.log('second');return 2;}console.log(Array.isArray(Object.freeze([1,true]),second()));",expected:'second\ntrue\n'},
+];
+const refusals=[
+  {name:'spread requires a complete argument iterator model',source:'console.log(Array.isArray(...[[1]]));',expected:'true\n'},
   {name:'an unresolved array and number union keeps both actual results',source:'/** @param {boolean} flag */function value(flag){return flag?[1]:3;}function probe(flag){return Array.isArray(value(flag));}console.log(probe(true));console.log(probe(false));',expected:'true\nfalse\n'},
   {name:'a source proxy cannot be classified using its target type',source:'const value=new Proxy([1],{});console.log(Array.isArray(value));',expected:'true\n'},
   {name:'actual parameter shadows the intrinsic Array owner',source:'function probe(Array){return Array.isArray([1]);}console.log(probe(0));',errorName:'TypeError'},
@@ -45,11 +49,11 @@ export function arrayClassificationRulesPolicy(){
   assert.doesNotMatch(source,/^\s*import\b/mu,'the complete policy is a closed source module');
   assert.deepEqual([...source.matchAll(/^export function (\w+)\(/gmu)].map(match=>match[1]),decisions);
   return{schemaVersion:1,model:'actual JavaScript array classification with optional presence 1',sourcePath,source,
-    bytes:Buffer.byteLength(source),sourceSha256:digest(source),decisions,cases,throwing,refusals,decisionVectors,
+    bytes:Buffer.byteLength(source),sourceSha256:digest(source),decisions,cases,arityCases,throwing,refusals,decisionVectors,
     sourceClosure:{source,bytes:Buffer.byteLength(source),sourceSha256:digest(source),inputs:[{path:sourcePath,source,bytes:Buffer.byteLength(source),sourceSha256:digest(source)}]},
     assertionVersions:{Node:'>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0'},
-    admission:'The actual unshadowed Array owner and exactly one source argument are required. Array and represented tuple values classify true. A flat optional array or tuple uses the existing checked Truthy operation on a single bound value, so present empty arrays are true and both nullish absence cases are false. Closed represented non-array types classify false. Unknown, unresolved named, union, proxy and nested-option domains refuse.',
-    evaluation:'The existing checked Let evaluates the actual argument exactly once even when classification is statically false or true. The optional presence branch reads only that bound variable. Structural walkers retain the original operand for inference, binding, effect and provenance traversal.',
+    admission:'The actual unshadowed Array owner is required. Array and represented tuple values classify true. A flat optional array or tuple uses the existing checked Truthy operation on a single bound value, so present empty arrays are true and both nullish absence cases are false. Omission and closed represented non-array values classify false. Spread arguments and unknown, unresolved named, union, proxy and nested-option domains refuse.',
+    evaluation:'The existing checked Let evaluates each supplied argument exactly once in source order even when classification is statically false or true. Classification uses the first evaluated value. The optional presence branch reads only that bound variable. Structural walkers retain actual operands for inference, binding, effect and provenance traversal.',
     representation:'Reference-qualified arrays retain the array kind and are classified without cloning their payload. Cell values classify false because the existing JavaScript cell renderer produces an object with a value field; normal source binding reads are unwrapped before classification. Optional presence uses the actual null/undefined policy carried by the checked value.',
     boundary:'This is a closed checked-value profile. It admits neither arbitrary external Proxies nor revocation/inherited-property tricks. Actual source owner capture, normal shared generation and byte-identical archive replays establish no native execution until CI runs.'};
 }

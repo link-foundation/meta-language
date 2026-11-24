@@ -7,6 +7,7 @@ import {generateOwnCodebaseRawSourceDescriptors} from '../scripts/generate-own-c
 import {readOwnCodebaseRawDescriptorPacket,readOwnCodebaseRawDescriptorPolicy,deriveOwnCodebaseRawDescriptorSource,verifyOwnCodebaseRawDescriptorPacket,restoreOwnCodebaseRawDescriptorEdge,restoreOwnCodebaseRawDescriptorText,restoreOwnCodebaseRawDescriptorData} from '../scripts/own-codebase-raw-source-descriptors.mjs';
 import {restoreCompleteDeclarationReceipt} from '../scripts/complete-declaration-receipts.mjs';
 import {restoreCurrentOwnCodebaseRawSource,restoreCurrentOwnCodebaseRawData} from '../scripts/current-own-codebase-raw-source-descriptors.mjs';
+import {restoreTypedSourceDescriptorHostSource} from '../scripts/typed-source-descriptor-host-history.mjs';
 const root=new URL('../../',import.meta.url);
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 
@@ -17,7 +18,7 @@ test('current frontend provenance keeps every original artifact source archive a
   assert.deepEqual(packet.edge.source.checkedPrevious,{revision:packet.revision,...policy.sourceOwner.predecessor});
   const source=deriveOwnCodebaseRawDescriptorSource(policy.sourceOwner,packet.sourceOwner.sourceText);
   assert.equal(source,restoreCurrentOwnCodebaseRawSource(readFileSync(new URL(policy.sourceFile,root),'utf8'),policy.sourceFile));assert.deepEqual(pin(source),policy.sourceOwner.current);
-  for(const [index,row]of packet.adapters.entries())assert.equal(deriveOwnCodebaseRawDescriptorSource(policy.adapters[index],row.sourceText),readFileSync(new URL(row.file,root),'utf8'));
+  for(const [index,row]of packet.adapters.entries())assert.equal(deriveOwnCodebaseRawDescriptorSource(policy.adapters[index],row.sourceText),restoreTypedSourceDescriptorHostSource(readFileSync(new URL(row.file,root),'utf8'),row.file));
   const artifact=readProjectData(new URL(packet.artifact.file,root)),register=readProjectData(new URL(packet.register.file,root));
   const before=serializeProjectData(artifact,packet.artifact.file),restored=restoreOwnCodebaseRawDescriptorEdge(artifact,'raw consuming',register);
   assert.equal(serializeProjectData(restored.artifact,packet.artifact.file),packet.artifact.sourceText);

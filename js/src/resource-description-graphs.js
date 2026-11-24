@@ -1,9 +1,10 @@
 // A bounded RDF 1.1 abstract graph boundary, not a concrete-syntax parser or an
 // OWL reasoner. Every term, statement, occurrence and equality witness is a link.
 import { LinkNetwork } from './network.js';
+import { acceptResourceDescriptionIdentifierText } from './resource-description-identifiers.js';
 import { LinkId, LinkMetadata, LinkType } from './primitives.js';
 import { readRuntimeProjectData } from './project-data-loader.js';
-import { acceptResourceDescriptionUnicode, acceptResourceDescriptionIdentifier, acceptResourceDescriptionLanguage, sameResourceDescriptionTerm } from './resource-description-rules.js';
+import { acceptResourceDescriptionUnicode, acceptResourceDescriptionLanguage, sameResourceDescriptionTerm } from './resource-description-rules.js';
 
 export const RESOURCE_DESCRIPTION_SCHEMA = Object.freeze(readRuntimeProjectData(new URL('./data/resource-description-schema.lino', import.meta.url)));
 const schema = RESOURCE_DESCRIPTION_SCHEMA;
@@ -23,7 +24,7 @@ function text(value, context) {
 }
 function identifier(value) {
   text(value, 'an identifier');
-  if (!acceptResourceDescriptionIdentifier(units(value))) failure('an absolute identifier is malformed or uses an unsupported bracketed address');
+  if (!acceptResourceDescriptionIdentifierText(value)) failure('an absolute identifier is malformed or uses an unsupported bracketed address');
   return value;
 }
 function normalizeTerm(input, sourceIdentifier) {

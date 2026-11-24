@@ -8,6 +8,8 @@ import { verifyGlobalConceptCorrespondence } from './global-concept-rules.js';
 import { acceptFormalRelationEdgeIdentity, acceptFormalRelationIdentity, acceptFormalRelationLabelIdentity } from './formal-relation-rules.js';
 import { readSharedNumericFunctionModel, readSharedBooleanFunctionModel, readBooleanFunctionDeclarationValueModel, createSharedNumericFunctionMeaning, SHARED_NUMERIC_FUNCTION_MODEL, SHARED_BOOLEAN_FUNCTION_MODEL, BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL } from './shared-numeric-function-model.js';
 import { acceptBooleanDeclarationValueSelector } from './boolean-declaration-value-rules.js';
+import {expandTypedProgramRecordShapes} from './typed-program-record-shapes.js';
+import {TYPED_PROGRAM_LINKS_SCHEMA} from './typed-program-links.js';
 
 const LANGUAGE = 'meta-language formal definition';
 const SCHEMA = '1';
@@ -173,7 +175,7 @@ function bindingExclusions(network, body, exclusions, bindings) {
 }
 
 function checked(value) {
-  const { network, root } = archive(value);
+  const original=archive(value),root=original.root;let network=original.network;
   const wrapper = network.link(root);
   if (!wrapper || wrapper.metadata().language !== LANGUAGE || wrapper.metadata().term !== ROOT || wrapper.metadata().definition !== SCHEMA || wrapper.references().length !== 2) throw new TypeError('unsupported or missing formal definition basis');
   const [body, basis] = wrapper.references();
@@ -186,6 +188,7 @@ function checked(value) {
   const exclusions = new Set([`${key(root)}:provenance`]);
   let meaning = network;
   if (model === 'checked typed program' || model === SHARED_NUMERIC_FUNCTION_MODEL || model === SHARED_BOOLEAN_FUNCTION_MODEL || model === BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL) {
+    network=expandTypedProgramRecordShapes(network,body,TYPED_PROGRAM_LINKS_SCHEMA.language,TYPED_PROGRAM_LINKS_SCHEMA.containers.record).network;meaning=network;
     decodeTypedProgramLinks(network, body);
     // Both emitters interpret this exact checked model. An unsupported IR
     // construct is an unknown formal basis, even if its host data is alike.

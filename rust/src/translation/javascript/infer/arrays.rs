@@ -2,17 +2,20 @@
 
 use super::{HashMap, SEffect, SExpr, SItem, SNode, SProgram, SProp, SPropNode, Type};
 use crate::translation::surface::SurfaceBindingTypeAnnotation;
+struct FilledExpressions<'a>{types:&'a mut HashMap<*const SExpr,Type>,copies:&'a HashMap<*const SExpr,Type>,remapped:Vec<(*const SExpr,*const SExpr)>}
+impl FilledExpressions<'_>{fn get(&self,node:&*const SExpr)->Option<&Type>{self.types.get(node)}}
 
 /// Writes the inferred element types of the array literals with no element of their own back.
 pub(super) fn fill_arrays(
     program: &mut SProgram,
     arrays: &HashMap<*const SExpr, Type>,
-    solved: &HashMap<*const SExpr, Type>,
-) {
+    solved: &mut HashMap<*const SExpr, Type>,
+    copies: &HashMap<*const SExpr, Type>,
+) -> Vec<(*const SExpr,*const SExpr)> {
     fn walk_items(
         items: &mut [SItem],
         arrays: &HashMap<*const SExpr, Type>,
-        solved: &HashMap<*const SExpr, Type>,
+        solved: &mut FilledExpressions<'_>,
     ) {
         for item in items {
             match item {
@@ -32,7 +35,7 @@ pub(super) fn fill_arrays(
     fn walk_prop(
         prop: &mut SProp,
         arrays: &HashMap<*const SExpr, Type>,
-        solved: &HashMap<*const SExpr, Type>,
+        solved: &mut FilledExpressions<'_>,
     ) {
         match &mut prop.node {
             SPropNode::Eq(comparison)
@@ -51,7 +54,7 @@ pub(super) fn fill_arrays(
                 walk_prop(right, arrays, solved);
             }
             SPropNode::Not { arg } | SPropNode::Forall { body: arg, .. } => {
-                walk_prop(arg, arrays, solved)
+                walk_prop(arg, arrays, solved);
             }
             SPropNode::Bool { expr: value } => walk(value, arrays, solved),
         }
@@ -59,8 +62,9 @@ pub(super) fn fill_arrays(
     fn walk(
         node: &mut SExpr,
         arrays: &HashMap<*const SExpr, Type>,
-        solved: &HashMap<*const SExpr, Type>,
+        solved: &mut FilledExpressions<'_>,
     ) {
+        let copy=solved.copies.get(&std::ptr::from_ref::<SExpr>(node)).cloned();
         if let SNode::Let {
             ty: retained,
             value,
@@ -201,6 +205,7 @@ pub(super) fn fill_arrays(
                 search: right,
                 ..
             }
+            | SNode::ReferenceIdentity { left, right, .. }
             | SNode::Binary { left, right, .. }
             | SNode::Let {
                 value: left,
@@ -271,14 +276,17 @@ pub(super) fn fill_arrays(
             }
             _ => {}
         }
+        if let Some(snapshot)=copy{let remapped=super::collections::normalize_collection_copy_input(node,&snapshot,solved.types);solved.remapped.push(remapped);}
     }
+    let mut filled=FilledExpressions{types:solved,copies,remapped:Vec::new()};let solved=&mut filled;
     walk_items(&mut program.items, arrays, solved);
     for effect in program.main.iter_mut().flat_map(|main| &mut main.effects) {
         match effect {
             SEffect::Print { expr: value, .. } | SEffect::Let { value, .. } => {
-                walk(value, arrays, solved)
+                walk(value, arrays, solved);
             }
             SEffect::Assert { prop: value, .. } => walk_prop(value, arrays, solved),
         }
     }
+    std::mem::take(&mut solved.remapped)
 }

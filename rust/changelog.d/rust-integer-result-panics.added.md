@@ -1,0 +1,1 @@
+Draft primitive integer TryFrom unwrap and computed expect using shared exact range plans and evaluated panic effects. Bound std Debug-message controls to Rust1.97–1.99, preserve input/message order and distinguish negative/positive overflow; keep earlier-version selection as an explicit remaining requirement.

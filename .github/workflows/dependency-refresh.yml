@@ -95,9 +95,23 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git switch --create "$BRANCH"
-          git commit --all --message "chore(deps): scheduled dependency refresh ($(date -u +%F))"
-          git push --force origin "$BRANCH"
+          branch_ref="refs/heads/$BRANCH"
+          previous="$(git ls-remote --refs origin "$branch_ref")"
+          parents=(-p HEAD)
+          if [ -n "$previous" ]; then
+            git fetch --no-tags --depth=1 origin "$branch_ref"
+            previous_head="$(git rev-parse FETCH_HEAD)"
+            if [ "$previous_head" != "$(git rev-parse HEAD)" ]; then
+              parents+=(-p "$previous_head")
+            fi
+          fi
+          # The audit was generated from main. Keep its exact refreshed tree
+          # while retaining the prior automation commit in the branch history.
+          git add --update
+          refresh_tree="$(git write-tree)"
+          refresh_commit="$(git commit-tree "$refresh_tree" "${parents[@]}" \
+            -m "chore(deps): scheduled dependency refresh ($(date -u +%F))")"
+          git push origin "$refresh_commit:$branch_ref"
           body="$RUNNER_TEMP/dependency-refresh-pr.md"
           cat > "$body" <<EOF
           Lockfile updates within the declared ranges and the refreshed dependency audit in docs/dependency-audit.md.

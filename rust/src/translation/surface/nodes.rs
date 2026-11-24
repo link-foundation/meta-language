@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    BinaryOp, ConstructorPrototypeDefinition, Flavor, Rounding, SArrayItem, SCase, SExpr,
+    BinaryOp, ConstructorPrototypeDefinition, Flavor, Rounding, SArrayItem, SCase, SExpr, SProp,
     SRecordEntry, SRow, ShowStyle, SurfaceBindingTypeAnnotation, SurfaceRawMetadata, UnaryOp,
     binding_type_annotation, is_false, ordered_fields, raw_metadata,
 };
@@ -43,6 +43,8 @@ pub enum SNode {
     BooleanValue {
         arg: Box<SExpr>,
     },
+    /// Exact value of an existing proposition; finite quantifiers are checked.
+    PropositionValue { prop: Box<SProp> },
     /// Internal reconstruction of the represented JavaScript numeric conversion.
     NumberValue {
         arg: Box<SExpr>,
@@ -126,6 +128,8 @@ pub enum SNode {
         ty: Option<Type>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         prototype_definition: Option<ConstructorPrototypeDefinition>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        property_order: Option<Box<SExpr>>,
     },
     TypeOf {
         arg: Box<SExpr>,
@@ -136,6 +140,14 @@ pub enum SNode {
     Unary {
         op: UnaryOp,
         arg: Box<SExpr>,
+    },
+    /// Explicit source pointer identity; ordinary Rust Binary remains value syntax.
+    ReferenceIdentity {
+        op: BinaryOp,
+        left: Box<SExpr>,
+        right: Box<SExpr>,
+        #[serde(flatten)]
+        extra: std::collections::BTreeMap<String, serde_json::Value>,
     },
     Binary {
         op: BinaryOp,
@@ -337,6 +349,7 @@ impl SNode {
             Self::None { .. } => "none",
             Self::Some { .. } => "some",
             Self::BooleanValue { .. } => "booleanValue",
+            Self::PropositionValue { .. } => "propositionValue",
             Self::NumberValue { .. } => "numberValue",
             Self::ReferencePayload { .. } => "referencePayload",
             Self::FlattenOption { .. } => "flattenOption",
@@ -358,6 +371,7 @@ impl SNode {
             Self::ArrayIsArray { .. } => "arrayIsArray",
             Self::Unary { .. } => "unary",
             Self::Binary { .. } => "binary",
+            Self::ReferenceIdentity { .. } => "referenceIdentity",
             Self::If { .. } => "if",
             Self::Let { .. } => "let",
             Self::Match { .. } => "match",

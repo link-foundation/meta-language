@@ -317,6 +317,8 @@ impl<'a> LeanParser<'a> {
         let mut main = None;
         self.items(&mut main, &mut items, &[])?;
         Ok(SProgram {
+            source_class_owners: None,
+        source_class_methods:Vec::new(),
             reference_semantics: None,
             language: Language::Lean,
             items,
@@ -451,6 +453,7 @@ impl<'a> LeanParser<'a> {
             let mut fields = Vec::new();
             while self.cursor.is("(") {
                 fields.extend(self.binder_group()?.into_iter().map(|(name, ty)| SField {
+                    optional: false,
                     name: Some(name),
                     ty,
                     rocq_type: None,
@@ -472,6 +475,7 @@ impl<'a> LeanParser<'a> {
                     ));
                 }
                 fields.extend(types.into_iter().map(|ty| SField {
+                    optional: false,
                     name: None,
                     ty,
                     rocq_type: None,
@@ -495,7 +499,10 @@ impl<'a> LeanParser<'a> {
             ctors,
             span: Some(self.span_to_next(&start)),
             generated: false,
+            source_standard_collection_library_owner: None,
+            source_standard_collection_carrier: None,
             source_unit_clone_derivation: None,
+            source_field_signatures: None,
         })
     }
 
@@ -625,6 +632,11 @@ impl<'a> LeanParser<'a> {
             let body = self.with_bound(0, Self::expr)?;
             self.end_decl(&start, "termination_by")?;
             return Ok(Definition::Fn(Box::new(SFn {
+                source_state_transform: None,
+                source_vector_mutation: None,
+                source_fn_mut_specialization: None,
+                source_finite_record_loop_helper:false,
+                source_finite_record_loop_witness:None,
                 semantic_ret: None,
                 name,
                 params,
@@ -640,6 +652,7 @@ impl<'a> LeanParser<'a> {
                 body,
                 span: Some(self.span_to_next(&start)),
                 generated: false,
+                source_standard_collection_library_owner: None,
                 source_pure_unit: None,
             })));
         }
@@ -663,6 +676,11 @@ impl<'a> LeanParser<'a> {
         );
         self.end_decl(&start, "termination_by")?;
         Ok(Definition::Fn(Box::new(SFn {
+            source_state_transform: None,
+            source_vector_mutation: None,
+            source_fn_mut_specialization: None,
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             semantic_ret: None,
             name,
             params: params.into_iter().chain(extra).collect(),
@@ -678,6 +696,7 @@ impl<'a> LeanParser<'a> {
             body,
             span: Some(self.span_to_next(&start)),
             generated: false,
+            source_standard_collection_library_owner: None,
             source_pure_unit: None,
         })))
     }

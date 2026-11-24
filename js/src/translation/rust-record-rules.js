@@ -1,0 +1,152 @@
+// Field-order and binding rules for nominal source records encoded by the
+// existing owned datatype/constructor algebra, retaining actual source names.
+
+/** @param {string[]} declared @param {string[]} supplied @returns {number[]} */
+export function planRustRecordFields(declared, supplied) {
+  for (let index = 0; index < declared.length; index += 1) {
+    const name = declared[index] ?? '';
+    if (declared.indexOf(name) !== index) return [-1, index];
+  }
+  for (let index = 0; index < supplied.length; index += 1) {
+    const name = supplied[index] ?? '';
+    if (supplied.indexOf(name) !== index) return [-2, index];
+    if (!declared.includes(name)) return [-3, index];
+  }
+  const result = [];
+  for (let index = 0; index < declared.length; index += 1) {
+    const position = supplied.indexOf(declared[index] ?? '');
+    if (position < 0) return [-4, index];
+    result.push(position);
+  }
+  return result;
+}
+/** @param {string[]} declared @param {string} field @returns {number} */
+export function readRustRecordFieldPosition(declared, field) { return declared.indexOf(field); }
+/** @param {string[]} declared @param {string[]} supplied @param {boolean} rest @returns {number[]} */
+export function planRustRecordPatternFields(declared, supplied, rest) {
+  const checked = planRustRecordFields(declared, supplied);
+  const code = checked[0] ?? 0;
+  if (code < 0 && !(code === -4 && rest)) return checked;
+  const result = [0];
+  for (let index = 0; index < declared.length; index += 1) {
+    result.push(supplied.indexOf(declared[index] ?? ''));
+  }
+  return result;
+}
+/** @param {string[]} declared @param {string[]} supplied @returns {number[]} */
+export function planRustRecordUpdateFields(declared, supplied) {
+  return planRustRecordPatternFields(declared, supplied, true);
+}
+/** @param {boolean} structure @param {boolean} known @param {string} actual @param {string} expected @param {number} wrappers @param {boolean} diverging @returns {boolean} */
+export function acceptRustRecordUpdateOwner(structure, known, actual, expected, wrappers, diverging) {
+  return structure && (diverging || known && actual === expected && wrappers === 0);
+}
+/** @param {string} kind @param {boolean} known @param {number} variants @param {number} arity @param {number} fields @returns {boolean} */
+export function acceptRustIrrefutablePatternNode(kind, known, variants, arity, fields) {
+  if (kind === 'wild' || kind === 'bind' || kind === 'tuple') return true;
+  return kind === 'ctor' && known && variants === 1 && arity === fields;
+}
+/** @param {number} width @param {number} count @param {number} rest @returns {number[]} */
+export function planTuplePatternFields(width, count, rest) {
+  if (!Number.isSafeInteger(width) || !Number.isSafeInteger(count) || !Number.isSafeInteger(rest)
+      || width < 0 || count < 0 || rest < -1 || rest > count || count > width || rest < 0 && count !== width) return [-1];
+  const result = [0];
+  for (let index = 0; index < width; index += 1) {
+    if (rest < 0 || index < rest) result.push(index);
+    else if (index < width - count + rest) result.push(-1);
+    else result.push(index - width + count);
+  }
+  return result;
+}
+/** @param {string[]} kinds @param {string[]} spellings @returns {string} */
+export function readRustLetElseInitializerError(kinds, spellings) {
+  if (kinds.length !== spellings.length) return 'initializer token columns have different lengths';
+  let depth = 0;
+  for (let index = 0; index < spellings.length; index += 1) {
+    if (kinds[index] !== 'punct') continue;
+    const spelling = spellings[index] ?? '';
+    if (depth === 0 && (spelling === '&&' || spelling === '||')) return 'a lazy Boolean initializer must be parenthesized';
+    if (spelling === '(' || spelling === '[' || spelling === '{') depth += 1;
+    else if (spelling === ')' || spelling === ']' || spelling === '}') {
+      if (depth === 0) return 'initializer delimiters are unbalanced';
+      depth -= 1;
+      if (depth === 0 && spelling === '}' && index === spellings.length - 1) return 'a block-ending initializer must be parenthesized';
+    }
+  }
+  return depth === 0 ? '' : 'initializer delimiters are unbalanced';
+}
+/** @param {string[]} reserved @param {number} count @returns {string[]} */
+export function readRustRecordBindingNames(reserved, count) {
+  const names = [];
+  let suffix = 0;
+  while (names.length < count) {
+    const name = 'ml_record_value' + suffix;
+    suffix += 1;
+    if (!reserved.includes(name)) names.push(name);
+  }
+  return names;
+}
+/** @param {string} name @param {boolean} collision @param {string[]} reserved @returns {string} */
+export function readRustRecordConstructorName(name, collision, reserved) {
+  if (!collision) return name;
+  let candidate = 'Value';
+  let suffix = 2;
+  while (reserved.includes(candidate)) { candidate = 'Value' + suffix; suffix += 1; }
+  return candidate;
+}
+/** @param {string} name @returns {boolean} */
+export function acceptRustRecordSourceName(name) {
+  return !['bool','char','str','String','Vec','Box','f32','f64','usize','isize',
+    'u8','i8','u16','i16','u32','i32','u64','i64','u128','i128','std','core','alloc'].includes(name);
+}
+
+/** @param {string} name @returns {boolean} */
+export function acceptRustKeywordName(name) {
+  return ['_','as','async','await','break','const','continue','crate','dyn','else','enum','extern','false','fn','for','if','impl','in','let','loop','match','mod','move','mut','pub','ref','return','self','Self','static','struct','super','trait','true','type','unsafe','use','where','while','abstract','become','box','do','final','gen','macro','override','priv','try','typeof','unsized','virtual','yield'].includes(name);
+}
+/** @param {string} name @returns {boolean} */
+export function acceptRustRawIdentifierName(name) {
+  if (name.length === 0 || ['_','crate','self','Self','super'].includes(name)) return false;
+  for (let index = 0; index < name.length; index += 1) {
+    const code = name.charCodeAt(index);
+    if (!(code === 95 || code >= 65 && code <= 90 || code >= 97 && code <= 122
+        || index > 0 && code >= 48 && code <= 57)) return false;
+  }
+  return true;
+}
+/** @param {string} name @param {string} raw @returns {boolean} */
+export function acceptRustSourceKeywordToken(name, raw) {
+  return !raw.startsWith('r#') || !acceptRustKeywordName(name);
+}
+/** @param {string} name @returns {string} */
+export function readRustRawIdentifierError(name) {
+  return acceptRustRawIdentifierName(name) ? '' : 'invalid Rust raw identifier r#' + name;
+}
+/** @param {string} name @returns {string} */
+export function renderRustConstructorFieldName(name) { return acceptRustKeywordName(name) ? 'r#' + name : name; }
+/** @param {string} language @param {string[]} names @returns {boolean} */
+export function acceptRustNamedConstructorFields(language, names) {
+  if (language !== 'Rust' || names.length === 0) return false;
+  for (const name of names) if (!acceptRustRawIdentifierName(name)) return false;
+  return true;
+}
+/** @param {string} language @param {string} head @param {string[]} names @param {string[]} values @returns {string} */
+export function renderRustConstructorFields(language, head, names, values) {
+  if (values.length === 0) return head;
+  if (!acceptRustNamedConstructorFields(language, names)) return head + '(' + values.join(', ') + ')';
+  const fields = [];
+  for (let index = 0; index < values.length; index += 1) fields.push(renderRustConstructorFieldName(names[index] ?? '') + ': ' + (values[index] ?? ''));
+  return head + ' { ' + fields.join(', ') + ' }';
+}
+/** Ordinary function calls never acquire named constructor fields from the
+ * shape of their return type. Keep the actual ordered argument expressions.
+ * @param {string} head @param {string[]} values @returns {string} */
+export function renderRustFunctionCall(head, values) {
+  return head + '(' + values.join(', ') + ')';
+}
+/** @param {boolean} named @returns {string} */
+export function renderRustDataFieldEncoding(named) {
+  return named
+    ? 'a data type is an enum whose constructors retain named or positional fields; data-typed fields are boxed, and values are compared structurally'
+    : 'a data type is an enum with one tuple variant per constructor; data-typed fields are boxed, and values are compared structurally';
+}

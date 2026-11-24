@@ -1,33 +1,81 @@
 //! Expression precedence, immutable reads, primary values and qualified paths.
 
+mod array_index;
+mod array_lookup_options;
+mod array_lookups;
 mod ascii_text_predicates;
-mod control;
+mod byte_ascii;
+mod byte_strings;
+mod checked_integer;
+pub(super) mod control;
+mod integer_bits;
+mod integer_float_plan;
+mod integer_magnitudes;
+mod iterator_arithmetic;
+mod iterator_pipelines;
+mod iterator_reductions;
+mod primitive_associated_calls;
+mod primitive_default;
+mod primitive_from;
+mod primitive_function_values;
+mod primitive_integer_constants;
+mod primitive_selections;
+mod primitive_try_from;
 mod read_only_queries;
+mod scalar_vector_copy;
+mod standard_owned_calls;
+pub(super) mod standard_string_views;
+mod string_addition;
+mod string_byte_views;
+mod usize_index_expressions;
+mod wrapping_shifts;
 
 use super::array_rules::{accept_rust_source_array_element, accept_rust_source_array_owner};
 use super::cast_syntax_rules::{accept_rust_cast_following_token, read_rust_cast_syntax_message};
-use super::indirection_rules::accept_rust_source_box_owner;
 use super::{
     Alias, BOOL, BinaryOp, FLOAT, Flavor, Options, Result, RustParser, SArrayItem, SExpr, SNode,
     SPattern, SPatternNode, SRow, STRING, SourceOrigin, Span, Token, TokenKind, TranslationError,
-    Type, UnaryOp, additive_op, binary, comparison_op, describe, format, is_if_or_match, joined,
+    Type, UnaryOp, additive_op, binary, comparison_op, describe, is_if_or_match, joined,
     method_call, multiplicative_op, operator, pattern_value, rust_fixed_type, rust_macro_message,
     span, type_error, unsupported,
 };
 use crate::translation::rust_character_rules::read_rust_character_expression_type;
 use crate::translation::source_diagnostic_attributes::token_kind;
 
+pub(in super::super) fn source_completion_kind(node: &SExpr) -> String {
+    let operation = if let SNode::Math { op, .. } = &node.node {
+        op.as_str()
+    } else {
+        ""
+    };
+    crate::translation::rust_panic_value_rules::read_rust_panic_completion_kind(
+        node.node.kind(),
+        operation,
+    )
+}
+
 impl RustParser {
     pub(super) fn expr(&mut self, path: &[String], options: Options) -> Result<SExpr> {
-        self.or(path, options)
+        let mut value = if let Some(value) = self.read_owned_record_effect_assignment(path)? {
+            value
+        } else {
+            self.or(path, options)?
+        };
+        self.origins.record_expression_type(&value, path)?;
+        self.note_borrowed_expression_source_position(&mut value, path)?;
+        Ok(value)
     }
 
     pub(super) fn or(&mut self, path: &[String], options: Options) -> Result<SExpr> {
         let mut left = self.and(path, options)?;
         while self.cursor.is("||") {
             let token = self.cursor.advance();
-            let right = self.and(path, Options::default())?;
+            let before = self.begin_owned_record_short_circuit();
+            let right = self.and(path, Options::default());
+            self.end_owned_record_short_circuit(before);
+            let right = right?;
             left = binary(BinaryOp::Or, left, right, &token);
+            self.origins.pointer_integer_expression(&left, path)?;
         }
         Ok(left)
     }
@@ -36,14 +84,18 @@ impl RustParser {
         let mut left = self.comparison(path, options)?;
         while self.cursor.is("&&") {
             let token = self.cursor.advance();
-            let right = self.comparison(path, Options::default())?;
+            let before = self.begin_owned_record_short_circuit();
+            let right = self.comparison(path, Options::default());
+            self.end_owned_record_short_circuit(before);
+            let right = right?;
             left = binary(BinaryOp::And, left, right, &token);
+            self.origins.pointer_integer_expression(&left, path)?;
         }
         Ok(left)
     }
 
     pub(super) fn comparison(&mut self, path: &[String], options: Options) -> Result<SExpr> {
-        let left = self.additive(path, options)?;
+        let left = self.primitive_bitwise(path, options, 0)?;
         let token = self.peek();
         let c = &self.cursor;
         let shift = (token.value == "<" || token.value == ">")
@@ -69,14 +121,102 @@ impl RustParser {
             && let Some(op) = comparison_op(&token.value)
         {
             self.cursor.advance();
-            let right = self.additive(path, Options::default())?;
+            let right = self.primitive_bitwise(path, Options::default(), 0)?;
+            self.guard_borrowed_vector_observation(
+                &left,
+                path,
+                "comparison",
+                joined(left.span, right.span, &token),
+            )?;
+            self.guard_borrowed_vector_observation(
+                &right,
+                path,
+                "comparison",
+                joined(left.span, right.span, &token),
+            )?;
+            self.refuse_callable_observation(&left, path, joined(left.span, right.span, &token))?;
+            self.refuse_callable_observation(&right, path, joined(left.span, right.span, &token))?;
+            self.refuse_shared_value_observation(
+                &left,
+                Some(&right),
+                path,
+                joined(left.span, right.span, &token),
+            )?;
             let after = self.cursor.peek();
             if after.kind == TokenKind::Punct && comparison_op(&after.value).is_some() {
                 return Err(Self::fail("comparison operators cannot be chained", after));
             }
-            return Ok(binary(op, left, right, &token));
+            if let Some(result) = self.standard_collection_comparison(
+                &left,
+                &right,
+                op,
+                false,
+                path,
+                joined(left.span, right.span, &token),
+            )? {
+                return Ok(result);
+            }
+            self.refuse_collection_observation(&left, path, "comparison", false)?;
+            self.refuse_collection_observation(&right, path, "comparison", false)?;
+            let result = binary(op, left, right, &token);
+            self.origins.pointer_integer_expression(&result, path)?;
+            return Ok(result);
         }
         Ok(left)
+    }
+
+    fn primitive_bitwise(&mut self, path: &[String], options: Options, level: u8) -> Result<SExpr> {
+        if level == 3 {
+            return self.shift(path, options);
+        }
+        let mut left = self.primitive_bitwise(path, options, level + 1)?;
+        loop {
+            let token = self.peek();
+            if token.kind != TokenKind::Punct || !crate::translation::rust_primitive_bitwise_rules::accept_rust_primitive_bitwise_precedence(&token.value, f64::from(level)) {
+                return Ok(left);
+            }
+            if options.statement && is_if_or_match(&left) {
+                return Ok(left);
+            }
+            self.cursor.advance();
+            let right = self.primitive_bitwise(path, Options::default(), level + 1)?;
+            let range = joined(left.span, right.span, &token);
+            left = SExpr::new(SNode::Math {
+                op: crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_operation(&token.value),
+                name: "Rust primitive bitwise operation".to_owned(),
+                args: vec![SArrayItem::new(left, false), SArrayItem::new(right, false)],
+            }, range);
+        }
+    }
+
+    fn shift(&mut self, path: &[String], options: Options) -> Result<SExpr> {
+        let mut left = self.additive(path, options)?;
+        loop {
+            let token = self.peek();
+            if !(token.value == "<" || token.value == ">")
+                || !self.cursor.is_at(&token.value, 1)
+                || self.cursor.peek_at(1).start != token.end
+            {
+                return Ok(left);
+            }
+            if options.statement && is_if_or_match(&left) {
+                return Ok(left);
+            }
+            self.cursor.advance();
+            self.cursor.advance();
+            let right = self.additive(path, Options::default())?;
+            let range = joined(left.span, right.span, &token);
+            left = SExpr::new(
+                SNode::Math {
+                    op: crate::translation::rust_shift_rules::read_rust_shift_source_operation(
+                        &token.value.repeat(2),
+                    ),
+                    name: "Rust primitive shift".to_owned(),
+                    args: vec![SArrayItem::new(left, false), SArrayItem::new(right, false)],
+                },
+                range,
+            );
+        }
     }
 
     pub(super) fn additive(&mut self, path: &[String], options: Options) -> Result<SExpr> {
@@ -91,7 +231,11 @@ impl RustParser {
             }
             self.cursor.advance();
             let right = self.multiplicative(path, Options::default())?;
-            left = binary(op, left, right, &token);
+            let addition = binary(op, left, right, &token);
+            left = self
+                .read_string_addition(&addition, path)?
+                .unwrap_or(addition);
+            self.origins.pointer_integer_expression(&left, path)?;
             self.scalar_loop_arithmetic(&left, path);
         }
     }
@@ -109,6 +253,7 @@ impl RustParser {
             self.cursor.advance();
             let right = self.cast(path, Options::default())?;
             left = binary(op, left, right, &token);
+            self.origins.pointer_integer_expression(&left, path)?;
             self.scalar_loop_arithmetic(&left, path);
         }
     }
@@ -118,8 +263,10 @@ impl RustParser {
         let mut value = self.unary(path, options)?;
         while self.cursor.is("as") {
             let token = self.cursor.advance();
+            self.refuse_callable_observation(&value, path, span(&token, self.cursor.peek()))?;
             let parenthesized_type = self.cursor.is("(");
             let to = self.parse_type()?;
+            let target_owner = self.origins.current_type.source_owner.clone();
             if !self.origins.collecting && !self.origins.current_type.wrappers.is_empty() {
                 return Err(unsupported(
                     "source cast",
@@ -138,6 +285,11 @@ impl RustParser {
                 },
                 range,
             );
+            let mut origin = self.origins.origin(&value, path);
+            if origin.proven {
+                origin.source_owner = target_owner;
+                self.origins.mark(&value, origin);
+            }
         }
         Ok(value)
     }
@@ -167,7 +319,12 @@ impl RustParser {
                     },
                     span(&token, self.cursor.peek()),
                 );
-                if op == UnaryOp::Neg && self.accept_float_receiver_origin(&origin, 0) {
+                if op == UnaryOp::Neg
+                    && (self.accept_float_receiver_origin(&origin, 0)
+                        || origin.proven
+                            && matches!(origin.ty, Some(Type::Fixed { signed: true, .. }))
+                            && origin.wrappers.is_empty())
+                {
                     self.origins.mark(&result, origin);
                 }
                 return Ok(result);
@@ -193,9 +350,10 @@ impl RustParser {
             }
             let arg = self.unary(path, Options::default())?;
             if token.value == "&&" {
-                self.origins.wrap(&arg, path, "reference");
+                self.origins.wrap(&arg, path, "reference")?;
             }
-            self.origins.wrap(&arg, path, "reference");
+            self.origins.wrap(&arg, path, "reference")?;
+            self.shared_array_borrow(&arg, path)?;
             return Ok(arg);
         }
         if self.cursor.eat("*").is_some() {
@@ -248,8 +406,14 @@ impl RustParser {
         }
         let source_owner = vec!["f64".to_owned()];
         let owner = self.resolve(&source_owner, &origin.path);
-        let shadowed = self.origins.lookup(&source_owner, &origin.path).is_some()
-            || self.origins.lookup(&owner, &origin.path).is_some();
+        let shadowed = self
+            .origins
+            .lookup_type_owner(&source_owner, &origin.path)
+            .is_some()
+            || self
+                .origins
+                .lookup_type_owner(&owner, &origin.path)
+                .is_some();
         super::float_predicate_rules::accept_rust_float_predicate_receiver(
             origin.ty.as_ref().map_or("", Type::kind),
             origin.float_source_model.unwrap_or(""),
@@ -259,747 +423,6 @@ impl RustParser {
             &arguments_count.to_string(),
         )
     }
-
-    pub(super) fn postfix(&mut self, path: &[String], options: Options) -> Result<SExpr> {
-        let mut value = self.primary(path, options)?;
-        loop {
-            let token = self.peek();
-            if self.cursor.is(".") {
-                self.cursor.advance();
-                if self.cursor.is_kind(TokenKind::Number) {
-                    let field = self.product_index_token()?;
-                    let index = field.raw.parse::<usize>().map_err(|_| {
-                        unsupported(
-                            "tuple index",
-                            "the positional index exceeds the exact supported integer range",
-                            Some(field.span()),
-                        )
-                    })?;
-                    if index as u64 > 9_007_199_254_740_991 {
-                        return Err(unsupported(
-                            "tuple index",
-                            "the positional index exceeds the exact supported integer range",
-                            Some(field.span()),
-                        ));
-                    }
-                    let range = Some(super::Span::new(
-                        value.span.map_or(token.start, |range| range.start),
-                        field.end,
-                    ));
-                    value = SExpr::new(
-                        SNode::TupleIndex {
-                            object: Box::new(value),
-                            index,
-                        },
-                        range,
-                    );
-                    self.origins.product_projection(&value, path, range)?;
-                    continue;
-                }
-                let method = self.cursor.identifier(Some("method"))?;
-                if let Some(ascii) = self.read_ascii_text_predicate(&value, &method, path)? {
-                    value = ascii;
-                    continue;
-                }
-                if !self.cursor.is("(") {
-                    return Err(unsupported(
-                        "field access",
-                        &format!("field {} is outside the portable core", method.value),
-                        span(&token, &method),
-                    ));
-                }
-                self.cursor.advance();
-                let args = self.call_arguments(path)?;
-                self.cursor.expect(")", Some(&method.value))?;
-                self.require_type_namespace_body_method(
-                    &value,
-                    &method.value,
-                    span(&token, self.cursor.peek()),
-                )?;
-                let mut origin = self.origins.origin(&value, path);
-                let method_name = method.value.as_str();
-                if let Some(copy) = self.read_owned_local_copy(
-                    &value,
-                    &method,
-                    args.len(),
-                    &origin,
-                    span(&token, self.cursor.peek()),
-                )? {
-                    value = copy;
-                    continue;
-                }
-                let float_operation =
-                    super::float_predicate_rules::accept_rust_float_operation_method(method_name);
-                if float_operation
-                    || super::float_predicate_rules::accept_rust_float_predicate_method(method_name)
-                {
-                    let range = span(&token, self.cursor.peek());
-                    if !args.is_empty() {
-                        return Err(type_error(
-                            format!(
-                                "{} expects 0 arguments but got {}",
-                                method.value,
-                                args.len()
-                            ),
-                            range,
-                        ));
-                    }
-                    if !self.origins.collecting
-                        && !self.accept_float_receiver_origin(&origin, args.len())
-                    {
-                        return Err(unsupported(
-                            if float_operation {
-                                "Rust binary64 operation"
-                            } else {
-                                "Rust binary64 predicate"
-                            },
-                            "the receiver needs a proven direct unshadowed primitive f64 source type",
-                            range,
-                        ));
-                    }
-                    if float_operation {
-                        value = super::float_predicates::operation_expression(
-                            method_name,
-                            &value,
-                            range,
-                        )?;
-                        // Preserve the admitted receiver's actual source owner/model;
-                        // an inferred FLOAT alone cannot establish this evidence.
-                        origin.ty = Some(FLOAT);
-                        self.origins.mark(&value, origin);
-                    } else {
-                        value = super::float_predicates::expression(method_name, &value, range)?;
-                        self.origins
-                            .mark(&value, SourceOrigin::with_type(BOOL, path, Vec::new()));
-                    }
-                    continue;
-                }
-                if method_name == "is_empty"
-                    && let Some(query) = self.read_string_empty_query(
-                        &value,
-                        args.len(),
-                        path,
-                        span(&token, self.cursor.peek()),
-                    )?
-                {
-                    value = query;
-                    continue;
-                }
-                if ["len", "is_empty"].contains(&method_name) {
-                    value = self.array_read(
-                        value,
-                        &method,
-                        args.len(),
-                        path,
-                        span(&token, self.cursor.peek()),
-                    )?;
-                    continue;
-                }
-                if ["clone", "to_owned"].contains(&method_name)
-                    && origin.array_source_model.is_some()
-                {
-                    return Err(unsupported(
-                        "Rust array clone",
-                        "array cloning needs a separate source allocation and ownership proof",
-                        span(&token, self.cursor.peek()),
-                    ));
-                }
-                if ["div_euclid", "rem_euclid"].contains(&method_name)
-                    && let Some(argument) = args.first()
-                {
-                    self.origins.direct(argument, path, argument.span)?;
-                }
-                if ["clone", "to_owned"].contains(&method_name)
-                    && origin
-                        .wrappers
-                        .first()
-                        .is_some_and(|layer| layer == "reference")
-                {
-                    origin.wrappers.remove(0);
-                }
-                if method_name == "to_owned" && origin.ty == Some(STRING) {
-                    origin.text_source_model = Some("owned string");
-                }
-                if method_name == "as_str" {
-                    if origin.array_source_model.is_some() {
-                        return Err(unsupported(
-                            "method as_str",
-                            "outside the portable core",
-                            span(&token, self.cursor.peek()),
-                        ));
-                    }
-                    origin.ty = Some(STRING);
-                    origin.text_source_model = Some("string slice");
-                    origin.path = path.to_vec();
-                    origin.wrappers = vec!["reference".to_owned()];
-                }
-                value = method_call(value, &method, args, span(&token, self.cursor.peek()))?;
-                if ["div_euclid", "rem_euclid"].contains(&method_name) {
-                    origin.wrappers.clear();
-                }
-                if ["clone", "to_owned", "as_str", "div_euclid", "rem_euclid"]
-                    .contains(&method_name)
-                {
-                    self.origins.mark(&value, origin);
-                }
-                continue;
-            }
-            if self.cursor.is("?") {
-                return Err(unsupported(
-                    "? operator",
-                    "Result and Option are outside the portable core",
-                    span(&token, &token),
-                ));
-            }
-            if self.cursor.is("[") {
-                return Err(unsupported(
-                    "indexing",
-                    "collections are outside the portable core",
-                    span(&token, &token),
-                ));
-            }
-            return Ok(value);
-        }
-    }
-
-    /// In postfix context `0.1` is two positional fields, with exact spans.
-    fn product_index_token(&mut self) -> Result<Token> {
-        use super::product_rules::accept_rust_tuple_index_spelling;
-
-        let token = self.peek();
-        if let Some((first, second)) = token.raw.split_once('.')
-            && accept_rust_tuple_index_spelling(first)
-            && accept_rust_tuple_index_spelling(second)
-        {
-            let middle = token.start + first.len();
-            let mut first_token = token.clone();
-            first.clone_into(&mut first_token.value);
-            first.clone_into(&mut first_token.raw);
-            first_token.suffix.clear();
-            first_token.floating = false;
-            first_token.end = middle;
-            let mut separator = token.clone();
-            separator.kind = TokenKind::Punct;
-            ".".clone_into(&mut separator.value);
-            ".".clone_into(&mut separator.raw);
-            separator.suffix.clear();
-            separator.floating = false;
-            separator.start = middle;
-            separator.end = middle + 1;
-            let mut second_token = token.clone();
-            second.clone_into(&mut second_token.value);
-            second.clone_into(&mut second_token.raw);
-            second_token.suffix.clear();
-            second_token.floating = false;
-            second_token.start = middle + 1;
-            self.cursor.tokens.splice(
-                self.cursor.index..=self.cursor.index,
-                [first_token, separator, second_token],
-            );
-        }
-        let field = self.cursor.advance();
-        if !accept_rust_tuple_index_spelling(&field.raw) {
-            return Err(unsupported(
-                "tuple index spelling",
-                "Rust tuple indices are decimal digits without leading zeros, separators or suffixes",
-                Some(field.span()),
-            ));
-        }
-        Ok(field)
-    }
-
-    fn array_read(
-        &mut self,
-        receiver: SExpr,
-        method: &Token,
-        count: usize,
-        path: &[String],
-        range: Option<Span>,
-    ) -> Result<SExpr> {
-        let origin = self.origins.origin(&receiver, path);
-        if origin.array_source_model.is_none() {
-            return Err(unsupported(
-                &format!("method {}", method.value),
-                "outside the portable core",
-                range,
-            ));
-        }
-        if count != 0 {
-            return Err(type_error(
-                format!("{} expects 0 arguments but got {count}", method.value),
-                range,
-            ));
-        }
-        if !origin.proven || !matches!(origin.ty, Some(Type::Array { .. })) {
-            return Err(unsupported(
-                "Rust array read",
-                "read-only length needs a proven vector or immutable slice source",
-                range,
-            ));
-        }
-        let length = SExpr::new(
-            SNode::Length {
-                object: Box::new(receiver),
-                integer: false,
-            },
-            range,
-        );
-        let result = if method.value == "len" {
-            if !self.cursor.is("as") || !self.cursor.is_at("f64", 1) {
-                return Err(unsupported(
-                    "Rust array length",
-                    "the selected Number length model requires an explicit as f64 conversion",
-                    range,
-                ));
-            }
-            self.cursor.advance();
-            self.cursor.advance();
-            self.require_cast_following_token(false)?;
-            length
-        } else {
-            let zero = SExpr::new(
-                SNode::Num {
-                    value: "0".to_owned(),
-                    ty: Some(FLOAT),
-                    negative: false,
-                    unit: false,
-                },
-                range,
-            );
-            SExpr::new(
-                SNode::Binary {
-                    op: BinaryOp::Eq,
-                    left: Box::new(length),
-                    right: Box::new(zero),
-                    rounding: None,
-                },
-                range,
-            )
-        };
-        self.origins.mark(
-            &result,
-            SourceOrigin::with_type(
-                if method.value == "len" { FLOAT } else { BOOL },
-                path,
-                Vec::new(),
-            ),
-        );
-        Ok(result)
-    }
-
-    /// Comma-separated expressions up to (not including) the closing `)`.
-    pub(super) fn call_arguments(&mut self, path: &[String]) -> Result<Vec<SExpr>> {
-        let mut args = Vec::new();
-        while !self.cursor.is(")") {
-            args.push(self.expr(path, Options::default())?);
-            if self.cursor.eat(",").is_none() {
-                break;
-            }
-        }
-        Ok(args)
-    }
-
-    #[allow(clippy::too_many_lines)] // one branch per primary form, as in rust.js
-    pub(super) fn primary(&mut self, path: &[String], options: Options) -> Result<SExpr> {
-        let token = self.peek();
-        if token.kind == TokenKind::Number {
-            self.cursor.advance();
-            let ty = if token.suffix == "f64" || (token.suffix.is_empty() && token.floating) {
-                Some(super::FLOAT)
-            } else if token.suffix.is_empty() {
-                None
-            } else {
-                let Some(fixed) = rust_fixed_type(&token.suffix) else {
-                    return Err(unsupported(
-                        &format!("literal suffix {}", token.suffix),
-                        "portable numeric literals are integers and IEEE-754 binary64 values",
-                        span(&token, &token),
-                    ));
-                };
-                Some(fixed)
-            };
-            let result = SExpr::new(
-                SNode::Num {
-                    value: token.value.clone(),
-                    ty,
-                    negative: false,
-                    unit: false,
-                },
-                span(&token, &token),
-            );
-            if token.suffix == "f64" {
-                self.origins
-                    .mark(&result, SourceOrigin::with_type(FLOAT, path, Vec::new()));
-            }
-            return Ok(result);
-        }
-        if token.kind == TokenKind::String {
-            self.cursor.advance();
-            let result = SExpr::new(
-                SNode::Str {
-                    value: token.value.clone(),
-                },
-                span(&token, &token),
-            );
-            let mut origin = SourceOrigin::with_type(STRING, path, vec!["reference".to_owned()]);
-            origin.text_source_model = Some("string slice");
-            origin.source_owner = Some(crate::translation::source_signatures::SourceOwner {
-                kind: "primitive".to_owned(),
-                path: vec!["str".to_owned()],
-                arguments: Vec::new(),
-            });
-            self.origins.mark(&result, origin);
-            return Ok(result);
-        }
-        if token.kind == TokenKind::Macro {
-            self.cursor.advance();
-            return self.expression_macro(&token, path);
-        }
-        let character_type = read_rust_character_expression_type(token_kind(&token));
-        if !character_type.is_empty() {
-            let ty = rust_fixed_type(&character_type).ok_or_else(|| {
-                unsupported(
-                    &format!("character literal type {character_type}"),
-                    "a character expression needs its represented fixed type",
-                    span(&token, &token),
-                )
-            })?;
-            self.cursor.advance();
-            return Ok(SExpr::new(
-                SNode::Num {
-                    value: token.value.clone(),
-                    ty: Some(ty),
-                    negative: false,
-                    unit: false,
-                },
-                span(&token, &token),
-            ));
-        }
-        let c = &self.cursor;
-        if matches!(token.kind, TokenKind::Character | TokenKind::ByteCharacter) || c.is("'") {
-            return Err(unsupported(
-                "character literal",
-                "characters are outside the portable core",
-                span(&token, &token),
-            ));
-        }
-        if c.is("(") {
-            self.cursor.advance();
-            if self.cursor.eat(")").is_some() {
-                return Ok(SExpr::new(SNode::Unit, span(&token, &token)));
-            }
-            let inner = self.expr(path, Options::default())?;
-            if self.cursor.is("..=") {
-                return self.read_inclusive_range_query(&token, path, inner);
-            }
-            if self.cursor.eat(",").is_some() {
-                let mut items = vec![inner];
-                while !self.cursor.is(")") {
-                    items.push(self.expr(path, Options::default())?);
-                    if self.cursor.eat(",").is_none() {
-                        break;
-                    }
-                }
-                let close = self.cursor.expect(")", Some("tuple expression"))?;
-                let range = Some(super::Span::new(token.start, close.end));
-                let result = SExpr::new(
-                    SNode::Tuple {
-                        items,
-                        frozen: self.local_value_state_model.is_empty(),
-                        product_model: self
-                            .local_value_state_model
-                            .is_empty()
-                            .then(|| "immutable value product".to_owned()),
-                    },
-                    range,
-                );
-                self.origins.product(&result, path, range)?;
-                return Ok(result);
-            }
-            self.cursor.expect(")", Some("parenthesised expression"))?;
-            return Ok(inner);
-        }
-        if c.is("{") {
-            let mut block = self.block(path)?;
-            block.block = true;
-            return Ok(block);
-        }
-        if c.is("if") {
-            return self.if_expr(path);
-        }
-        if c.is("match") {
-            return self.match_expr(path);
-        }
-        if c.is("|") || c.is("||") || c.is("move") {
-            return Err(unsupported(
-                "closure",
-                "higher-order values are outside the portable core",
-                span(&token, &token),
-            ));
-        }
-        if c.is("true") || c.is("false") {
-            self.cursor.advance();
-            return Ok(SExpr::new(
-                SNode::Bool {
-                    value: token.value == "true",
-                },
-                span(&token, &token),
-            ));
-        }
-        if ["unsafe", "loop", "while", "for", "return", "break"]
-            .iter()
-            .any(|keyword| c.is(keyword))
-        {
-            return Err(unsupported(
-                &format!("{} expression", token.value),
-                "outside the portable core",
-                span(&token, &token),
-            ));
-        }
-        if token.kind == TokenKind::Identifier {
-            return self.path_expression(&token, path, options);
-        }
-        Err(Self::fail("expected an expression", self.cursor.peek()))
-    }
-
-    /// A name, a call of a function or constructor, or a conversion (`u64::from(x)`).
-    pub(super) fn path_expression(
-        &mut self,
-        token: &Token,
-        path: &[String],
-        options: Options,
-    ) -> Result<SExpr> {
-        let segments = self.path_segments("expression")?;
-        let name = segments.join("::");
-        let resolved = self.resolve(&segments, path);
-        if !self.primitive_owner_model.is_empty()
-            && segments.len() > 1
-            && super::float_predicate_rules::accept_rust_float_constant_name(
-                segments.last().unwrap(),
-            )
-            && let Some(owner) =
-                self.read_standard_primitive_position(&segments[..segments.len() - 1], path)?
-        {
-            let range = Some(Span::new(
-                token.start,
-                self.cursor.tokens[self.cursor.index - 1].end,
-            ));
-            if self.cursor.is("(") || self.origins.scope.contains_key(&segments[0]) {
-                return Err(unsupported(
-                    "Rust primitive constant owner",
-                    "an associated constant needs its actual unshadowed type path and value syntax",
-                    range,
-                ));
-            }
-            let name = segments.last().unwrap();
-            let result = super::float_predicates::constant_expression(name, range)?;
-            self.primitive_constant_sites
-                .push(serde_json::json!({"owner":owner,"name":name,"span":range}));
-            let mut origin = SourceOrigin::with_type(FLOAT, path, Vec::new());
-            origin.source_owner = Some(crate::translation::source_signatures::SourceOwner {
-                kind: "primitive".to_owned(),
-                path: vec!["f64".to_owned()],
-                arguments: Vec::new(),
-            });
-            origin.primitive_owner_position = Some(owner);
-            self.origins.mark(&result, origin);
-            return Ok(result);
-        }
-        if segments.len() == 2
-            && segments[0] == "f64"
-            && super::float_predicate_rules::accept_rust_float_constant_name(&segments[1])
-        {
-            let range = Some(Span::new(
-                token.start,
-                self.cursor.tokens[self.cursor.index - 1].end,
-            ));
-            let source_owner = vec!["f64".to_owned()];
-            let owner = self.resolve(&source_owner, path);
-            let shadowed = self.origins.lookup(&source_owner, path).is_some()
-                || self.origins.lookup(&owner, path).is_some();
-            if !super::float_predicate_rules::accept_rust_float_constant_owner(
-                &owner.join("::"),
-                shadowed,
-            ) || self.cursor.is("(")
-            {
-                return Err(unsupported(
-                    "Rust binary64 constant",
-                    "associated constants require the exact unshadowed primitive f64 owner and value syntax",
-                    range,
-                ));
-            }
-            let result = super::float_predicates::constant_expression(&segments[1], range)?;
-            self.origins
-                .mark(&result, SourceOrigin::with_type(FLOAT, path, Vec::new()));
-            return Ok(result);
-        }
-        if self.cursor.is("::")
-            && self.cursor.is_at("<", 1)
-            && (accept_rust_source_array_owner(&name, false)
-                || accept_rust_source_array_owner(&resolved.join("::"), false))
-        {
-            self.origins.vector_owner(
-                &segments,
-                &resolved,
-                path,
-                span(token, self.cursor.peek()),
-            )?;
-            self.cursor.advance();
-            self.cursor.advance();
-            let element_token = self.peek();
-            let element = self.parse_type()?;
-            self.array_element(token, &element_token)?;
-            self.cursor.expect(">", Some("Vec constructor"))?;
-            self.cursor.expect("::", Some("Vec constructor"))?;
-            self.cursor.expect("new", Some("Vec constructor"))?;
-            self.cursor.expect("(", Some("Vec constructor"))?;
-            self.cursor.expect(")", Some("Vec constructor"))?;
-            let result = SExpr::new(
-                SNode::Array {
-                    items: Vec::new(),
-                    element: Some(element.clone()),
-                },
-                span(token, self.cursor.peek()),
-            );
-            self.origins.mark(
-                &result,
-                SourceOrigin::with_type(
-                    Type::Array {
-                        element: Box::new(element),
-                        reference: false,
-                    },
-                    path,
-                    Vec::new(),
-                ),
-            );
-            return Ok(result);
-        }
-        let c = &self.cursor;
-        if c.is("::") && c.is_at("<", 1) {
-            return Err(unsupported(
-                "turbofish",
-                "generic functions are outside the portable core",
-                span(token, c.peek()),
-            ));
-        }
-        let last_is_upper = segments
-            .last()
-            .and_then(|segment| segment.chars().next())
-            .is_some_and(|first| first.is_ascii_uppercase());
-        if c.is("{") && last_is_upper && !options.no_struct {
-            return Err(unsupported(
-                "struct literal",
-                "named fields are outside the Rust frontend",
-                span(token, c.peek()),
-            ));
-        }
-        if !c.is("(") {
-            return Ok(SExpr::new(
-                SNode::Name {
-                    path: self.resolve(&segments, path),
-                },
-                span(token, token),
-            ));
-        }
-        self.cursor.advance();
-        let mut args = self.call_arguments(path)?;
-        self.cursor.expect(")", Some("call"))?;
-        let range = span(token, self.cursor.peek());
-        if let Some(empty) =
-            self.read_empty_string_constructor(&segments, args.len(), path, range)?
-        {
-            return Ok(empty);
-        }
-        let owner = &segments[..segments.len() - 1];
-        let resolved_owner = if owner.is_empty() {
-            Vec::new()
-        } else {
-            self.resolve(owner, path)
-        };
-        if segments.last().is_some_and(|segment| segment == "new")
-            && (accept_rust_source_box_owner(&owner.join("::"), false)
-                || accept_rust_source_box_owner(&resolved_owner.join("::"), false))
-        {
-            if !self.local_value_state_model.is_empty()
-                && !super::owned_local_state_rules::accept_rust_owned_local_source_operation(
-                    "box construction",
-                )
-            {
-                return Err(unsupported(
-                    "Rust owned local state",
-                    "Box allocation requires a separate source ownership interpretation",
-                    range,
-                ));
-            }
-            if args.len() != 1 {
-                return Err(type_error("Box::new expects 1 argument", range));
-            }
-            self.origins
-                .box_owner(owner, &resolved_owner, path, range)?;
-            let result = args.remove(0);
-            self.origins.wrap(&result, path, "box");
-            return Ok(result);
-        }
-        if name == "String::from" {
-            self.require_type_namespace_body_constructor(&name, range)?;
-            if args.len() != 1 {
-                return Err(type_error("String::from expects 1 argument", range));
-            }
-            let result = SExpr::new(
-                SNode::ToString {
-                    arg: Box::new(args.remove(0)),
-                },
-                range,
-            );
-            self.origins.conversion(&result, path);
-            if !self.local_value_state_model.is_empty() {
-                self.local_value_constructors.insert(
-                    range.expect("a parsed constructor has a range"),
-                    Span::new(token.start, self.cursor.tokens[self.cursor.index - 1].end),
-                );
-            }
-            return Ok(result);
-        }
-        let fixed = rust_fixed_type(&segments[0]);
-        if segments.len() == 2
-            && segments[1] == "from"
-            && let Some(to) = fixed.clone()
-        {
-            self.require_type_namespace_body_constructor(&name, range)?;
-            if args.len() != 1 {
-                return Err(type_error(format!("{name} expects 1 argument"), range));
-            }
-            return Ok(SExpr::new(
-                SNode::Cast {
-                    arg: Box::new(args.remove(0)),
-                    to,
-                    from: None,
-                    flavor: Flavor::Exact,
-                },
-                range,
-            ));
-        }
-        if segments.len() == 2 && fixed.is_some() {
-            return Err(unsupported(&name, "outside the portable core", range));
-        }
-        if ["std", "core", "alloc"].contains(&segments[0].as_str()) {
-            return Err(unsupported(
-                &name,
-                "the standard library is outside the portable core",
-                range,
-            ));
-        }
-        let callee = self.resolve(&segments, path);
-        self.origins.call(&callee, &args, path, range)?;
-        if args.is_empty() {
-            return Ok(SExpr::new(SNode::Name { path: callee }, range));
-        }
-        Ok(SExpr::new(
-            SNode::App {
-                func: Box::new(SExpr::new(SNode::Name { path: callee }, span(token, token))),
-                args,
-            },
-            range,
-        ))
-    }
 }
+
+include!("expression_selection.rs");

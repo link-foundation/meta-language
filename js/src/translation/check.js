@@ -1,7 +1,67 @@
+import {checkRustBorrowedVectorSourceRegions} from './rust-borrowed-source-regions.js';
+import {checkRustOwnedVectorSourceFold} from './rust-source-loop-folds.js';
+import {checkRustFiniteLoopStateTransform} from './rust-source-state-transforms.js';
+import {checkRustSourcePlaceTransform} from './rust-source-place-transforms.js';
+import {checkRustVectorMutationInterface,checkRustVectorMutationBody} from './rust-vector-mutation-interfaces.js';
+import {checkRustRecordPlace} from './rust-record-place-regions.js';
+import {checkRustFallibleIteratorInterface,checkRustFallibleIteratorBody} from './rust-fallible-iterator-interfaces.js';
+import {readRustIntegerPatternOwners,normaliseRustIntegerRangePattern,compileRustIntegerRangeRows} from './rust-integer-ranges.js';
+import {checkPropositionValue} from './proposition-values.js';
+import {validateFiniteRecordLoopHelpers} from './finite-record-loop-helpers.js';
+import {checkRustSourceExpressionPosition} from './rust-source-expression-positions.js';
+import {parseJavaScript} from './javascript.js';
+import {readCapturedSourceLibraryOwnerDirectory, readSourceLibraryDeclarationOwnership} from './source-library-closure.js';
+import {withSourceOwnerContainers} from './owned-program-containers.js';
+import {acceptCollectionCopyArrayFromSnapshot} from './collection-copy-rules.js';
+import {checkCollectionCopySnapshotCallbacks} from './collection-copies.js';
+import {checkDisjointCollectionIterations} from './disjoint-collection-iterations.js';
+import {readDisjointCollectionIterationSourceOperation,readDisjointCollectionSpreadSourceOperation} from './disjoint-collection-iteration-rules.js';
+import {checkClosedCollectionIteration} from './source-collection-iterations.js';
+import {constructStandardCollectionItems} from './collection-items.js';
+import {checkClosedClassMethodCall,validateClosedClassMethodDefinitions} from './javascript-class-methods.js';
+import {checkJavaScriptClassOwners} from './javascript-class-owners.js';
+import {projectPatternAliasRow} from './pattern-aliases.js';
+import {acceptLinkedRustPanicValue,readRustPanicValueArgumentError} from './rust-panic-value-rules.js';
+import {readRustSourceNumericPatternTypeError,readRustSourceNumericPatternNegationError,readRustSourceNumericPatternInference,readRustSourceNumericPatternInferenceError,readRustSourceIntegerPatternContextError} from './rust-numeric-pattern-rules.js';
+import {readRustSourceBytePatternTypeError} from './rust-byte-pattern-rules.js';
+import {readTypeQueryEvaluationPlan} from './type-query-evaluation-rules.js';
+import {checkRustDataTypeFieldSignatures,checkRustDataTypeFieldSignatureContainers,checkRustDataTypeFieldSignatureProgramContainers} from './rust-data-type-field-signatures.js';
+import {acceptLinkedStringArrayCopySort} from './string-array-sort-rules.js';
+import {captureCallableConstantApplicationHead} from './callable-constants.js';
+import {checkJavaScriptOptionalChain,constructJavaScriptOptionalPresence} from './javascript-optional-chains.js';
+import {checkJavaScriptOwnProperty} from './javascript-own-properties.js';
+import {prepareJavaScriptRecordOrderProfile} from './javascript-record-order-profile.js';
+import {checkJavaScriptObjectEnumeration} from './javascript-object-enumeration.js';
+import {checkRecordOrderOperation,checkOrderedRecordOrderRead} from './record-order-operations.js';
+import {checkJavaScriptNominalSpread,forgetJavaScriptNominalSpreadGuard,hasJavaScriptGuardedOwnField,readJavaScriptGuardedConstructors,readJavaScriptOptionalGuardBranch,projectJavaScriptGuardedOptional} from './javascript-nominal-spreads.js';
+import {acceptJavaScriptProjectedTypedAbsence,readJavaScriptGuardedOptionalProjectionOperation} from './javascript-nominal-spread-rules.js';
+import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
+import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScriptNullishIndex} from './javascript-nullish-fields.js';
+import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
+import {checkJavaScriptDataField} from './javascript-data-fields.js';
+import {constructJavaScriptOwnedConstructorField,isJavaScriptOptionalConstructorFieldType,javaScriptConstructorFieldValueType} from './javascript-constructor-presence.js';
+import {requireJavaScriptSliceReferenceCopy} from './javascript-nullish-field-rules.js';
+import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
+import {forgetJavaScriptOwnPropertyGuard,readJavaScriptOwnPropertyBranchEnvironments,checkJavaScriptGuardedRecordIndex,createJavaScriptOwnKeyCallbackEnvironment,installJavaScriptOwnKeyCallbackBindings} from './javascript-guarded-record-indices.js';
+import {checkJavaScriptOptionalCall} from './javascript-optional-calls.js';
+import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
 import {captureRustRuntimeShell,checkRustRuntimeShellContainers} from './rust-runtime-shell.js';
 import { acceptOptionalAnnotationTypes } from './optional-inference.js';
 import {checkRustPureUnitCalls} from './rust-pure-unit-calls.js';
 import {checkRustEmptyOptionProof} from './rust-empty-options.js';
+import {acceptConditionalChainOperation} from './conditional-chain-rules.js';
+import {checkConditionalChainValue} from './conditional-chain-values.js';
+import {requiresSequentialParameterDefaults,checkSequentialParameterCall} from './sequential-parameter-defaults.js';
+import {completeOptionalCallableArguments,constructOptionalCallbackBridge,mayOmitTypedCallableParameter} from './optional-callables.js';
+import {acceptBodyEntryOptionalParameter} from './optional-callable-rules.js';
+import {checkJavaScriptAbsentRecordProperty} from './absent-record-properties.js';
+import {requireJavaScriptAbsenceOnlyValue} from './absence-only-rules.js';
+import {checkJavaScriptExcessCallableArguments,checkJavaScriptExcessNamedArguments} from './excess-arguments.js';
+import {convertJavaScriptAbsenceOnlyValue} from './absence-conversions.js';
+import {checkNamedCallableDefaultReference} from './named-default-callables.js';
+import {widenJavaScriptOptionalPolicy} from './optional-policies.js';
+import {acceptRustExactArrayLengthResult} from './rust-array-length-rules.js';
+import {acceptRustStringByteLengthOperation,readRustStringByteLengthArgumentError} from './rust-string-byte-length-rules.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
 // the portable-core program the emitters consume: every expression carries
@@ -9,27 +69,68 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // target can never silently substitute its own (for example, Lean's Euclidean
 // `Int` division for JavaScript's truncating BigInt division).
 
-import { typeError, unsupported } from './diagnostics.js';
+import { TranslationError, typeError, unsupported } from './diagnostics.js';
+import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
+import {coerceAbruptResult} from './abrupt-results.js';
+import {checkJavaScriptSourceException,checkJavaScriptSourceExceptionValue} from './source-exceptions.js';
+import {acceptLinkedJavaScriptBigIntegerResult} from './big-integer-conversion-rules.js';
+import {checkJavaScriptBigIntegerBuiltin,checkJavaScriptBigIntegerResult,materializeJavaScriptBigIntegerDivision,checkJavaScriptExponentiation} from './javascript-big-integer-conversion.js';
+import {materializeJavaScriptNumericFailure} from './javascript-numeric-failures.js';
+import {materializeJavaScriptPrimitiveComparison,checkJavaScriptLooseComparison,checkJavaScriptSameValue} from './javascript-comparisons.js';
+import {acceptJavaScriptSameValueOperation,acceptJavaScriptLooseEqualityOperation} from './javascript-comparison-rules.js';
+import {acceptLinkedJavaScriptStringUnitConstruction,acceptJavaScriptStringUnits} from './javascript-string-unit-rules.js';
+import {acceptLinkedJavaScriptStringConstruction} from './string-construction-rules.js';
+import {checkJavaScriptStringConstruction,checkJavaScriptStringConstructionValue} from './javascript-string-construction.js';
+import {readJavaScriptNumberConversionResult,readJavaScriptPrimitiveNumberOperand,readJavaScriptMathematicalConversionForm} from './string-number-rules.js';
+import {checkJavaScriptNumberBuiltin,materializeJavaScriptNumberConversion,checkJavaScriptMathematicalArguments} from './javascript-number-conversion.js';
+import { captureArraySourceOperands, wrapArraySourceOperands } from './array-source-operands.js';
+import { readSourceIdentifierSupply, collectSourceIdentifierTexts } from './source-identifiers.js';
+import { renderSourceGeneratedIdentifier } from './source-identifier-rules.js';
+import { planTuplePatternFields } from './rust-record-rules.js';
+import { checkJavaScriptSourcePropertyCall } from './javascript-property-calls.js';
+import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
+import { readBigIntegerBitwiseOperation, readBigIntegerBitwiseArity, readPrimitiveBitwiseDomain } from './big-integer-bitwise-rules.js';
+import { readRustPrimitiveBitwiseArity, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
+import { checkRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
+import { readRustShiftCheckedOperation } from './rust-shift-rules.js';
+import { checkRustShift } from './rust-shifts.js';
+import { readFixedIntegerCastFlavor } from './fixed-integer-cast-rules.js';
+import { acceptSemanticBranchContextReordering } from './semantic-input-rules.js';
+import { checkReferenceMethod } from './reference-methods.js';
+import { checkRecordFieldWrite, checkSourceRecordFieldWrite } from './record-writes.js';
+import { checkArrayStateMethod } from './array-state-methods.js';
+import { readCollectionAccessArgumentCount } from './collection-access-rules.js';
 import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';
+import {readRustSharedArrayHandleComparisonProjection} from './rust-shared-array-handle-rules.js';
 import { checkCollectionConstruction } from './collection-construction.js';
 import { readJavaScriptArrayClassificationPlan } from './array-classification-rules.js';
-import { readArrayIterableForm, readReferenceMutationDiagnostic, selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
+import { selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
 import { readArrayFromArgumentError, readArrayFromMapCallbackError, readArrayFromReceiverError } from './array-from-rules.js';
 import { readArrayFromExpectedElement, readArrayFromIterableType, readArrayFromMapCallback } from './array-from.js';
 import { readArrayCallbackResultForm, readArrayCallbackSignatureError, readArrayCallbackParameterRole,
   readArrayCallbackArgumentCountError, readArrayCallbackCheckedResultContext,
   readArrayCallbackResultError, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';
-import { acceptJavaScriptArrayRestReceiver, readJavaScriptArrayDefaultOperation } from './array-binding-rules.js';
+import { acceptJavaScriptArrayRestReceiver } from './array-binding-rules.js';
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
+import {checkJavaScriptBindingDefault} from './javascript-binding-defaults.js';
+import {checkJavaScriptBooleanBuiltin,checkJavaScriptArrayBuiltin} from './javascript-boolean-conversion.js';
+import {checkJavaScriptPrimitiveTextBuiltin} from './javascript-string-search.js';
 import { createStringCodeUnitTemplateExpression } from './string-code-unit-template.js';
 import { requirePartialCallableResultInference } from './partial-callable-rules.js';
 import { constructCallableFunctionType, readCallableCellElement, readCallableParameterTypes, readCallableLambdaInference } from './callable-source.js';
 import { acceptCallableFunctionReference, readCallableApplicationError, readCallableCellError, requireCallableComputedApplication } from './callable-source-rules.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
+import {checkRustExclusiveSourceSignature} from './rust-exclusive-source-signatures.js';
+import {checkRustFnMutSourceSpecialization} from './rust-fnmut-source-signatures.js';
+import {checkRustSourceVectorSort} from './rust-source-vector-sort.js';
+import {checkRustSourceVectorPrimitiveSort} from './rust-source-vector-primitive-sort.js';
+import {checkRustSourceStateTransition} from './rust-source-state-transitions.js';
+import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwner,checkRustStandardCollectionObservation,checkRustStandardCollectionPacketOwner} from './rust-standard-collection-signatures.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './rust-type-namespace.js';
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof,checkRustOwnedLocalStateContainers} from './rust-owned-local-state.js';
 import {checkRustConstFunctionProof,checkRustConstFunctionContainers} from './rust-const-functions.js';
+import {refuseCallableDataObservation} from './callable-data.js';
 import {checkRustDiagnosticAttributePlacement} from './rust-diagnostic-attributes.js';
 import { acceptRustNumericLiteralNegation } from './rust-character-rules.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult, acceptJavaScriptOptionalTupleContext } from './frontend-rules.js';
@@ -41,7 +142,7 @@ import { acceptTupleIndex, readNumberDisplayRefusal, readScalarCellOperation, re
 import { checkRustScalarLoopProof } from './rust-scalar-loops.js';
 import { acceptOptionalAbsence, mergeOptionalAbsence } from './structured-type-rules.js';
 import { acceptOptionalLiteralAbsence, acceptOptionalPrimitiveKind, readOptionalLogicalOperation, readOptionalComparisonOperation, readOptionalBooleanOperation, readOptionalCoercionOperation, readOptionalFieldOperation, readOptionalNumberOperation, requireOptionalCoalescing, requireOptionalFlattening } from './optional-value-rules.js';
-import { readRecordValueOrder, readRecordProjectionError, readRecordFieldPosition, readRecordFieldOrder, readRecordMethodError } from './record-value-rules.js';
+import { readRecordValueOrder, readRecordProjectionError, readRecordFieldPosition, readRecordFieldOrder, readRecordFieldInsertionOrder, readRecordMethodError } from './record-value-rules.js';
 import { readPrimitiveCopySliceForm, readPrimitiveMethodMinimumArguments, readPrimitiveMethodMaximumArguments,
   readPrimitiveMethodArgumentCount, readPrimitiveMethodCheckedArgumentKind, readPrimitiveMethodDefaultForm,
   readPrimitiveMethodDefaultValue, readPrimitiveMethodCheckedResultForm, readPrimitiveMethodArgumentObligation,
@@ -50,7 +151,7 @@ import { acceptProgramTupleProductModel, acceptProgramExpressionOperation } from
 import {readStringOrderOperation} from './string-order-rules.js';
 import {readNumberPredicateArgumentForm} from './number-predicate-rules.js';
 import {
-  BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, immutableProductType, isFloat, isNatural, isNumeric, sameType, tuple, typeKey,
+  BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, rustFixedType, immutableProductType, isFloat, isNatural, isNumeric, sameType, tuple, typeKey,
 } from './types.js';
 
 const COMPARISONS = new Set(['eq', 'ne', 'lt', 'le', 'gt', 'ge']);
@@ -64,11 +165,27 @@ const PRODUCT_VALUES = Symbol('known immutable product values');
 /** Natural numeral patterns above this unfold to equality tests rather than successor chains. */
 const NAT_PATTERN_UNFOLD = 16n;
 
+// Conservative structural bottom classification. Unknown forms use the
+// existing checker order; this predicate never invents an operand type.
+function needsBranchResultContext(node, depth = 0) {
+  if (!node || depth > 256) return false;
+  if (node.k === 'abort') return true;
+  if (node.k === 'let' || node.k === 'print' || node.k === 'cellWrite') return needsBranchResultContext(node.body, depth + 1);
+  if (node.k === 'if') return needsBranchResultContext(node.then, depth + 1) && needsBranchResultContext(node.else, depth + 1);
+  return false;
+}
+
+// Field-place validation needs the actual projection over its actual owner,
+// including inside a case that already knows that owner's constructor.
+function retainRecordPlaceMatch(checker,expression){let node=expression,depth=0;while(node?.k==='let'){if(++depth>256)throw typeError('record place projection wrappers exceed their source depth budget');node=node.body;}if(node?.k==='match1')(checker.recordPlaceMatches??=new WeakSet()).add(node);}
+
 // The Math and Number functions whose value is a boolean.
 const PREDICATES = new Set(['isInteger', 'isSafeInteger', 'isFinite', 'isNaN']);
 
 /** Binds a local, forgetting constructor facts the new binding shadows. */
-function bindLocal(env, name, type, immutableProduct = false) {
+export function bindLocal(env, name, type, immutableProduct = false) {
+  forgetJavaScriptOwnPropertyGuard(env,name);
+  forgetJavaScriptNominalSpreadGuard(env,name);
   env.set(name, type);
   const products = env.get(PRODUCT_VALUES);
   if (immutableProduct || products?.has(name)) {
@@ -101,14 +218,49 @@ function immutableProductValue(value, bindings = new Map()) {
   }
 }
 
-export function checkProgram(surface) {
-  const sourceProofSelected=checkRustConstFunctionContainers(surface);
-  if(sourceProofSelected)checkRustDiagnosticAttributePlacement(surface);
-  checkRustRuntimeShellContainers(surface);
-  checkRustTypeNamespaceRecordShapes(surface);
-  checkRustOwnedLocalStateContainers(surface);
-  const checker = new Checker(surface.language, surface.externals ?? [], Boolean(surface.referenceSemantics));
-  return checker.program(surface);
+export function checkProgram(surface) { return checkSurfaceProgram(surface, false); }
+
+/** Check actual source modules against one common declaration catalog. */
+export function checkSourceLibraryProgram(closure, {referenceSemantics, reportDeclarationErrors = false} = {}) {
+  const directory = readCapturedSourceLibraryOwnerDirectory(closure);
+  const reportReferenceSelection = reportDeclarationErrors ? (name, cells, span) => {
+    const owner = directory.inputs.find(input => input.closureRange.start <= span?.start
+      && span?.start < input.closureRange.end);
+    console.error('source reference cells', JSON.stringify({name, cells, span, path: owner?.path}));
+  } : undefined;
+  const surface = parseJavaScript(directory.source, {referenceSemantics, reportReferenceSelection});
+  if (surface.main?.effects?.length || surface.imports?.length || surface.externals?.length) {
+    throw typeError('source owner checking requires all declarations and no unresolved module inputs');
+  }
+  const program = checkSurfaceProgram(surface, false, directory, reportDeclarationErrors);
+  const owners = readSourceLibraryDeclarationOwnership(directory, program);
+  return { program, owners };
+}
+
+// Internal graph boundary: terms already carry normalized primitive operations.
+// All core type/arity/ownership/proof checks still run; source-call desugaring
+// must not run again and change the represented operation or fresh bindings.
+export function checkProjectedProgram(surface, directory) { return checkSurfaceProgram(surface, true, directory); }
+
+function checkSurfaceProgram(surface, checkedProjection, directory, reportDeclarationErrors = false) {
+  const initialCheck = () => checkRustDataTypeFieldSignatureProgramContainers(surface);
+  if (directory) withSourceOwnerContainers(surface, directory, initialCheck);
+  else initialCheck();
+  const orderProfile=prepareJavaScriptRecordOrderProfile(surface);
+  surface=orderProfile.surface;
+  const checkContainers = () => {
+    const sourceProofSelected=checkRustConstFunctionContainers(surface);
+    if(sourceProofSelected)checkRustDiagnosticAttributePlacement(surface);
+    checkRustRuntimeShellContainers(surface);
+    checkRustTypeNamespaceRecordShapes(surface);
+    checkRustOwnedLocalStateContainers(surface);
+  };
+  if (directory) withSourceOwnerContainers(surface, directory, checkContainers);
+  else checkContainers();
+  const checker = new Checker(surface.language, surface.externals ?? [], Boolean(surface.referenceSemantics), checkedProjection);
+  checker.orderedRecordSource=orderProfile.selected;
+  checker.retainConstructorFallback = Boolean(directory);
+  return checker.program(surface, directory, reportDeclarationErrors);
 }
 
 // The linked checked-IR boundary reuses the source checker's pattern rules.
@@ -149,40 +301,59 @@ function externalEntry(external) {
 }
 
 class Checker {
-  constructor(language, externals, referenceSemantics = false) {
+  constructor(language, externals, referenceSemantics = false, checkedProjection = false) {
+    this.checkedProjection = checkedProjection;
     this.language = language;
     this.referenceSemantics = referenceSemantics;
     this.items = new Map();
     this.externals = new Map(externals.map((external) => [external.name, externalEntry(external)]));
     this.fresh = 0;
+    this.closedCollectionIterationMarkers=[];
+    this.sourceClassMethods=[];
+    this.sourceClassOwners=undefined;
+    this.generatedPrefix = 'ml_';
     this.modules = new Map([['', { path: [], names: new Map(), modules: new Map() }]]);
   }
 
-  program(surface) {
+  program(surface, directory, reportDeclarationErrors) {
+    this.generatedPrefix = readSourceIdentifierSupply(collectSourceIdentifierTexts(surface));
     this.declare(surface.items, []);
-    const items = this.checkItems(surface.items, []);
+    this.sourceClassMethods=surface.sourceClassMethods??[];
+    this.sourceClassOwners=Object.hasOwn(surface,'sourceClassOwners')?surface.sourceClassOwners:undefined;
+    validateClosedClassMethodDefinitions(this,this.sourceClassMethods);
+    const items = this.checkItems(surface.items, [], reportDeclarationErrors);
     const main = surface.main ? this.checkMain(surface.main) : null;
     const program = {
       schemaVersion: 1,
       sourceLanguage: this.language,
-      items,
+      items:[...items,...(this.rustSourceVectorSortLibraries??[])],
       main,
       declarations: this.items,
     };
     if (surface.imports) program.imports = surface.imports;
     if (surface.externals) program.externals = surface.externals;
+    if(Object.hasOwn(surface,'sourceClassOwners'))program.sourceClassOwners=surface.sourceClassOwners;
     if(Object.hasOwn(surface,'sourcePureUnitCalls'))program.sourcePureUnitCalls=surface.sourcePureUnitCalls;
     if (this.referenceSemantics) program.referenceSemantics = true;
     for (const entry of this.items.values()) {
       if (entry.k === 'fn') entry.body = reuseSuccessors(entry.body, new Map());
     }
     analyseRecursion(program);
-    checkRustPrimitiveOwnerProof(program);
-    checkRustConstFunctionProof(program);
-    checkRustEmptyOptionProof(program);
-    validateRustTypeNamespace(program);
-    checkRustPureUnitCalls(program);
-    checkRustOwnedLocalStateProof(program);
+    validateFiniteRecordLoopHelpers(surface,program,this.checkedProjection);
+    const checkSourceProofs = () => {
+      checkRustPrimitiveOwnerProof(program);
+      checkRustConstFunctionProof(program);
+      checkRustEmptyOptionProof(program);
+      validateRustTypeNamespace(program);
+      checkRustPureUnitCalls(program);
+      checkRustOwnedLocalStateProof(program);
+    };
+    if (directory) withSourceOwnerContainers(program, directory, checkSourceProofs);
+    else checkSourceProofs();
+    checkRustBorrowedVectorSourceRegions(program);
+    checkDisjointCollectionIterations(program,this.closedCollectionIterationMarkers);
+    checkCollectionCopySnapshotCallbacks(program);
+    checkJavaScriptClassOwners(program, reportDeclarationErrors);
     if(Object.hasOwn(surface,'sourceRuntimeShell'))captureRustRuntimeShell(program,surface.sourceRuntimeShell);
     return program;
   }
@@ -195,7 +366,7 @@ class Checker {
         throw typeError(`duplicate declaration ${fullName}`, item.span);
       }
       if (item.sourceLoop !== undefined) checkRustScalarLoopProof(item, this.language, fullName);
-      if (/^ml_/u.test(item.name) && !item.generated && item.sourceLoop === undefined) {
+      if (this.language !== 'JavaScript' && /^ml_/u.test(item.name) && !item.generated && item.sourceLoop === undefined) {
         throw unsupported('reserved identifier', `${item.name} uses the translator's reserved ml_ prefix`, item.span);
       }
       if (item.k === 'module') {
@@ -224,18 +395,42 @@ class Checker {
     }
   }
 
-  checkItems(items, path) {
+  checkItems(items, path, reportDeclarationErrors) {
+    const declarationErrors = [];
+    let failedDeclarations = 0;
     // Data layouts and signatures are resolved program-wide before any body,
     // so declarations may refer to each other in any order.
     this.walk(items, path, (item, itemPath, entry) => {
       if (item.k !== 'data') return;
       entry.ctors = item.ctors.map((ctor) => ({
         name: ctor.name,
-        fields: ctor.fields.map((field, index) => ({
-          name: field.name ?? `field${index}`,
-          type: this.resolveType(field.type, itemPath, item.span),
-        })),
+        fields: ctor.fields.map((field, index) => {
+          const type = this.resolveType(field.type, itemPath, item.span);
+          if (field.optional !== undefined && (field.optional !== true || !isJavaScriptOptionalConstructorFieldType(type))) {
+            throw typeError('an optional constructor field requires its complete own-property presence carrier', item.span);
+          }
+          return { name: field.name ?? `field${index}`, type, ...(field.optional && { optional: true }) };
+        }),
       }));
+      if('sourceFieldSignatures' in item){
+        checkRustDataTypeFieldSignatureContainers(item);
+        const retained=item.sourceFieldSignatures;
+        if(retained&&Array.isArray(retained.ctors))entry.sourceFieldSignatures={...retained,ctors:retained.ctors.map(ctor=>{
+          if(!ctor||typeof ctor!=='object'||Array.isArray(ctor)||!Array.isArray(ctor.fields))return ctor;
+          return {...ctor,fields:ctor.fields.map(field=>{
+            if(!field||typeof field!=='object'||Array.isArray(field)||!field.type||typeof field.type!=='object')return field;
+            return {...field,type:this.resolveType(field.type,itemPath,item.span)};
+          })};
+        })};
+      }
+    });
+    this.walk(items,path,(item,itemPath,entry)=>{
+      if(item.k!=='data')return;
+      if(item.sourceStandardCollectionLibraryOwner!==undefined)entry.sourceStandardCollectionLibraryOwner=checkRustStandardCollectionLibraryOwner(entry,this.language);
+      if(item.sourceStandardCollectionCarrier!==undefined)entry.sourceStandardCollectionCarrier=checkRustStandardCollectionCarrier(entry,this.language,value=>this.resolveType(value,itemPath,item.span),name=>this.items.get(name));
+    });
+    this.walk(items,path,(item,itemPath,entry)=>{
+      if(item.k==='data'&&'sourceFieldSignatures' in item){checkRustDataTypeFieldSignatureContainers(item);entry.sourceFieldSignatures=checkRustDataTypeFieldSignatures(entry.sourceFieldSignatures,entry.ctors,this.language,entry.fullName,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));}
     });
     this.walk(items, path, (item, itemPath, entry) => {
       if (item.k !== 'fn') return;
@@ -251,12 +446,29 @@ class Checker {
         entry.annotatedRet = this.resolveType(item.ret, itemPath, item.span);
         if (!acceptOptionalAnnotationTypes(entry.ret, entry.annotatedRet)) throw typeError('the semantic return type must retain the annotated value types', item.span);
       }
-      if (item.sourceSignature !== undefined) entry.sourceSignature = checkRustSourceSignature(item.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, this.language, value => this.resolveType(value, itemPath, item.span));
+      if (item.sourceSignature !== undefined) entry.sourceSignature = checkRustSourceSignature(item.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, this.language, value => this.resolveType(value, itemPath, item.span),type=>this.items.get(type.name));
+      if(item.sourceExclusiveSignature!==undefined){if(item.sourceSignature!==undefined)throw typeError('exclusive and immutable Rust source signatures require their separate interfaces',item.span);entry.sourceExclusiveSignature=checkRustExclusiveSourceSignature(item.sourceExclusiveSignature,entry.params.map(parameter=>parameter.type),entry.ret,this.language,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));}
+      if(item.sourceFnMutSpecialization!==undefined){if(item.sourceSignature!==undefined||item.sourceExclusiveSignature!==undefined)throw typeError('a source FnMut specialization retains its own actual generic/callback ABI',item.span);entry.sourceFnMutSpecialization=checkRustFnMutSourceSpecialization(item.sourceFnMutSpecialization,entry.params.map(parameter=>parameter.type),entry.ret,this.language,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));}
+      if(item.sourceStateTransform!==undefined)entry.sourceStateTransform=checkRustFiniteLoopStateTransform(item.sourceStateTransform,entry,this.language,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));
+      if(item.sourceVectorMutation!==undefined)entry.sourceVectorMutation=checkRustVectorMutationInterface(item.sourceVectorMutation,entry,this.language,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));
+      if(item.sourceFallibleIterator!==undefined)entry.sourceFallibleIterator=checkRustFallibleIteratorInterface(item.sourceFallibleIterator,entry,this.language,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));
     });
     this.walk(items, path, (item, itemPath, entry) => {
       if (item.k === 'fn') {
         const env = new Map(entry.params.map((param) => [param.name, param.type]));
-        entry.body = coerce(this.expr(item.body, env, itemPath, entry.ret), entry.ret, this.language, item.span);
+        try {
+          entry.body = coerce(this.expr(item.body, env, itemPath, entry.ret), entry.ret, this.language, item.span);
+        } catch (error) {
+          if (!reportDeclarationErrors || !(error instanceof TranslationError)) throw error;
+          failedDeclarations++;
+          if (declarationErrors.length < 192) {
+            declarationErrors.push(new TranslationError(error.kind, `${entry.fullName}: ${error.reason}`, error.span ?? item.span, error.details));
+          }
+          return;
+        }
+        if(entry.sourceVectorMutation)checkRustVectorMutationBody(entry,entry.sourceVectorMutation);
+        if(entry.sourceFallibleIterator)checkRustFallibleIteratorBody(entry,entry.sourceFallibleIterator);
+        if(item.sourceStandardCollectionLibraryOwner!==undefined)entry.sourceStandardCollectionLibraryOwner=checkRustStandardCollectionLibraryOwner(entry,this.language);
         if(item.sourcePrimitiveOwners!==undefined)entry.sourcePrimitiveOwners=prepareRustPrimitiveOwnerProof(item.sourcePrimitiveOwners,entry.body);
         if(item.sourceLocalState!==undefined)entry.sourceLocalState=prepareRustOwnedLocalStateProof(item.sourceLocalState,entry.body);
         if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, this.language);
@@ -278,6 +490,12 @@ class Checker {
         throw typeError(`unknown item ${item.k}`, item.span);
       }
     });
+    if (failedDeclarations) {
+      throw new AggregateError(declarationErrors, `Failed to check ${failedDeclarations} source declaration bodies (showing ${declarationErrors.length})`);
+    }
+    this.walk(items,path,(item,_path,entry)=>{
+      if(item.k==='data'&&entry.sourceStandardCollectionCarrier)checkRustStandardCollectionPacketOwner(entry,this.language,name=>this.items.get(name));
+    });
     const build = (list, listPath) => list.map((item) => (item.k === 'module'
       ? { k: 'module', name: item.name, fullName: [...listPath, item.name].join('.'), items: build(item.items, [...listPath, item.name]), span: item.span }
       : this.items.get([...listPath, item.name].join('.'))));
@@ -297,7 +515,17 @@ class Checker {
     if (type.kind === 'option' || type.kind === 'set' || type.kind === 'cell') return { ...type, element: this.resolveType(type.element, path, span) };
     if (type.kind === 'tuple') return { ...type, elements: type.elements.map((element) => this.resolveType(element, path, span)) };
     if (type.kind === 'union') return { ...type, alternatives: type.alternatives.map(alternative => this.resolveType(alternative, path, span)) };
-    if (type.kind === 'record') return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.resolveType(field.type, path, span) })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0) };
+    if (type.kind === 'record') {
+      if(type.ordered!==undefined&&typeof type.ordered!=='boolean')throw typeError('record ordered facet must be a boolean',span);
+      const fields = type.fields.map(field => {
+        const storage = this.resolveType(field.type, path, span);
+        if (field.optional !== undefined && (field.optional !== true || !isJavaScriptOptionalConstructorFieldType(storage))) {
+          throw typeError('an optional record field needs its actual presence carrier', span);
+        }
+        return { ...field, type: storage };
+      });
+      return { ...type, fields: fields.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0) };
+    }
     if (type.kind === 'map') return { ...type, key: this.resolveType(type.key, path, span), value: this.resolveType(type.value, path, span) };
     if (type.kind === 'function') return { ...type, params: type.params.map((param) => this.resolveType(param.type ?? param, path, span)), ret: this.resolveType(type.ret, path, span) };
     if (type.kind !== 'named') return type;
@@ -379,6 +607,8 @@ class Checker {
 
   show(expr, env, path, style) {
     const value = this.expr(expr, env, path, undefined);
+    checkRustStandardCollectionObservation(value.type,name=>this.items.get(name),'display',expr.span);
+    refuseCallableDataObservation(value.type,this.items,'display',expr.span,this.sourceClassOwners);
     const displayRefusal = readNumberDisplayRefusal(this.language, value.type.kind);
     if (displayRefusal) throw unsupported('Rust Float display', displayRefusal, expr.span);
     const bigint = value.type.kind === 'int' || value.type.kind === 'nat';
@@ -417,6 +647,7 @@ class Checker {
     switch (prop.p) {
       case 'forall': {
         const binders = prop.binders.map((binder) => ({ name: binder.name, type: this.resolveType(binder.type, path, prop.span) }));
+        for(const binder of binders)refuseCallableDataObservation(binder.type,this.items,'proof',prop.span,this.sourceClassOwners);
         if (binders.some((binder) => isFloat(binder.type))) {
           throw unsupported('quantification over Numbers', 'a theorem quantifies over integers, naturals, booleans, strings or data', prop.span);
         }
@@ -435,6 +666,7 @@ class Checker {
       default: {
         if (!COMPARISONS.has(prop.p)) throw typeError(`unknown proposition ${prop.p}`, prop.span);
         const [left, right] = this.operands(prop.left, prop.right, env, path, prop.span);
+        refuseCallableDataObservation(left.type,this.items,'comparison',prop.span,this.sourceClassOwners);
         if (left.type.kind === 'tuple') throw unsupported('comparison of tuples', 'tuple value equality and JavaScript reference identity need an explicit operational comparison model; compare positional elements', prop.span);
         if (prop.p !== 'eq' && prop.p !== 'ne' && !isOrdered(left.type)) {
           throw typeError(`ordering on ${typeKey(left.type)}`, prop.span);
@@ -481,6 +713,7 @@ class Checker {
       }
     }
     const expression = payload ? node[payload] : node;
+    if(node.sourceRecordPlace)retainRecordPlaceMatch(this,expression);
     if (expression.prototypeDefinition) throw unsupported('object prototype definition',
       'an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes', expression.prototypeDefinition.span);
     // Control flow passes its expected result type to every branch. Literal
@@ -494,6 +727,11 @@ class Checker {
       result = { k: 'referenceAllocate', value: result, type: { ...result.type, reference: true } };
     }
     if ((node.span || (payload && expression.span)) && !result.span) result.span = node.span || expression.span;
+    if(Object.hasOwn(node,'sourcePosition'))result.sourcePosition=checkRustSourceExpressionPosition(node.sourcePosition,result.type,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
+    if(Object.hasOwn(node,'sourceStateTransition'))result.sourceStateTransition=checkRustSourceStateTransition(node.sourceStateTransition,result.type,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
+    if(Object.hasOwn(node,'sourceLoopFold'))result.sourceLoopFold=checkRustOwnedVectorSourceFold(node.sourceLoopFold,result,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
+    if(Object.hasOwn(node,'sourcePlaceTransform'))result.sourcePlaceTransform=checkRustSourcePlaceTransform(node.sourcePlaceTransform,result,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name),name=>this.items.get(name));
+    if(Object.hasOwn(node,'sourceRecordPlace'))result.sourceRecordPlace=checkRustRecordPlace(node.sourceRecordPlace,result,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
     return result;
   }
 
@@ -511,12 +749,7 @@ class Checker {
       }
       case 'arrayBindingDefault': {
         checkJavaScriptArrayBindingWrapper(node);
-        const left = this.expr(node.value, env, path, undefined);
-        const operation = readJavaScriptArrayDefaultOperation(this.language, left.type.kind, left.type.absence ?? '', left.type.element?.kind ?? '', true);
-        if (operation !== 'coalesce') throw unsupported('array binding default', 'the selected default needs an undefined-only primitive element read', node.span);
-        const right = this.expr(node.fallback, env, path, left.type.element);
-        if (readJavaScriptArrayDefaultOperation(this.language, left.type.kind, left.type.absence, left.type.element.kind, sameType(left.type.element, right.type)) !== 'coalesce') throw typeError('array binding default and present element need exactly the same type', node.span);
-        return { k: 'coalesce', left, right, type: left.type.element };
+        return checkJavaScriptBindingDefault(this,node,env,path);
       }
       case 'num': {
         // A JavaScript Number literal: its canonical text, `String(value)`, with the sign applied.
@@ -545,38 +778,34 @@ class Checker {
         return expected?.kind === 'option' && this.language === 'JavaScript' ? { k: 'none', absence: 'undefined', type: expected } : { k: 'unit', type: UNIT };
       case 'name': {
         if (node.path.length === 1 && env.has(node.path[0])) {
-          return { k: 'var', name: node.path[0], type: env.get(node.path[0]) };
+          const value={ k: 'var', name: node.path[0], type: env.get(node.path[0]) };
+          return this.language==='JavaScript'&&!this.checkedProjection?projectJavaScriptGuardedOptional(node,value,env):value;
         }
         const declaration = this.lookup(node.path, path, node.span);
         if (acceptCallableFunctionReference(node.k, expected?.kind ?? '', declaration?.k ?? '')) {
-          return { k: 'functionRef', fn: declaration.fullName, type: constructCallableFunctionType(declaration.params, declaration.ret) };
+          return checkNamedCallableDefaultReference(this,declaration,node.span)??{ k: 'functionRef', fn: declaration.fullName, type: constructCallableFunctionType(declaration.params, declaration.ret) };
         }
         return this.application(node, [], env, path, expected, node.span);
       }
       case 'functionValue': {
         const declaration = this.lookup(node.path, path, node.span);
         if (!acceptCallableFunctionReference(node.k, '', declaration?.k ?? '')) throw typeError(`unknown function ${node.path.join('.')}`, node.span);
-        return { k: 'functionRef', fn: declaration.fullName, type: constructCallableFunctionType(declaration.params, declaration.ret) };
+        return checkNamedCallableDefaultReference(this,declaration,node.span)??{ k: 'functionRef', fn: declaration.fullName, type: constructCallableFunctionType(declaration.params, declaration.ret) };
       }
       case 'dotCtor':
       case 'app':
-        return this.application(node.k === 'app' ? node.fn : node, node.args ?? [], env, path, expected, node.span);
+        return this.application(node.k === 'app' ? captureCallableConstantApplicationHead(this,node.fn,env,path,node.span) : node, node.args ?? [], env, path, expected, node.span);
       case 'field': {
         const value = this.referenceValue(this.expr(node.object, env, path, undefined));
-        if (value.type.kind === 'record') {
-          const field = value.type.fields.find((field) => field.name === node.field);
-          if (!field) throw typeError(`record has no field ${node.field}`, node.span);
-          return { k: 'recordField', object: value, field: node.field, index: value.type.fields.indexOf(field), type: field.type };
-        }
-        if (node.field === 'size' && ['map', 'set'].includes(value.type.kind)) return { k: 'collectionSize', object: value, type: FLOAT };
-        if (node.field === 'length') {
-          const object = value;
-          if (object.type.kind === 'array' || object.type.kind === 'string') return { k: 'length', array: object, type: FLOAT };
-        }
-        throw unsupported('field access', `field ${node.field} is only portable inside a constructor match`, node.span);
+        if(value.type.kind==='data'&&this.items.get(value.type.name)?.sourceStandardCollectionCarrier)checkRustStandardCollectionObservation(value.type,name=>this.items.get(name),'field projection',node.span);
+        const guarded=checkJavaScriptNullishField(this,node,value,env,path,expected);
+        if(guarded)return guarded;
+        const guard=readJavaScriptGuardedConstructors(node.object,env),own=hasJavaScriptGuardedOwnField(node,env);
+        const field=checkJavaScriptDataField(this,value,node.field,node.span,false,{guard,own})??checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span,this.checkedProjection);
+        return this.language==='JavaScript'&&!this.checkedProjection?projectJavaScriptGuardedOptional(node,field,env):field;
       }
       case 'length': {
-        const object = this.expr(node.object, env, path, undefined);
+        const object = this.referenceValue(this.expr(node.object, env, path, undefined));
         if (object.type.kind !== 'array') throw typeError(`length of ${typeKey(object.type)}`, node.span);
         return { k: 'length', array: object, type: node.integer ? INT : FLOAT };
       }
@@ -615,9 +844,13 @@ class Checker {
       }
       case 'copySlice': {
         const object = this.expr(node.object, env, path, undefined);
+        const source={...node,k:'method',op:'slice',args:[]};
+        const nullable=this.checkedProjection?null:checkJavaScriptNullishAccess(this,source,object,env,path,expected);
+        if(nullable)return nullable;
+        if(requireJavaScriptSliceReferenceCopy(this.language,object.type.kind,object.type.reference===true))return this.method(source,env,path,expected,object);
         const form = readPrimitiveCopySliceForm(object.type.kind);
         if (form === 'identity') return object;
-        if (form === 'method') return this.method({ ...node, k: 'method', op: 'slice', args: [] }, env, path, expected);
+        if (form === 'method') return this.method({ ...node, k: 'method', op: 'slice', args: [] }, env, path, expected, object);
         throw unsupported('method call .slice()', 'this value has no string or array slice method', node.span);
       }
       case 'record':
@@ -644,14 +877,15 @@ class Checker {
         return { k: 'cellWrite', cell, value, body, referenceOperation: referenceOperation(readScalarCellOperation(node.k)).id, type: body.type };
       }
       case 'referenceWrite':
-        throw unsupported(readReferenceMutationDiagnostic('feature'), readReferenceMutationDiagnostic('reason'), node.span);
+        return checkSourceRecordFieldWrite(this, node, env, path);
       case 'set':
       case 'map':
         return checkCollectionConstruction(this, node, env, path, expected);
       case 'arrayFrom': {
         const argumentError = readArrayFromArgumentError(node.args.length);
         if (argumentError) throw typeError(argumentError, node.span);
-        const object = this.expr(node.args[0], env, path, undefined);
+        let object = this.expr(node.args[0], env, path, undefined);
+        if(acceptCollectionCopyArrayFromSnapshot(object.type.kind,object.type.reference===true))object=this.referenceValue(object);
         const selection = readArrayFromIterableType(object.type);
         if (!selection) throw unsupported('Array.from', readArrayFromReceiverError(object.type.kind), node.span);
         let result;
@@ -659,18 +893,14 @@ class Checker {
         else if (selection.form === 1) result = { k: 'stringPoints', object, type: array(selection.element) };
         else result = { k: 'collectionItems', object, op: selection.form === 2 ? 'values' : 'entries', type: array(selection.element) };
         if (!node.args[1]) return result;
-        const callback = this.expr(node.args[1], env, path, { kind: 'function', params: [result.type.element, FLOAT], ret: readArrayFromExpectedElement(expected).element });
+        const callbackEnv=this.language==='JavaScript'&&!this.checkedProjection?createJavaScriptOwnKeyCallbackEnvironment(node.args[0],node.args[1],'map',env):env;
+        const params=[result.type.element,FLOAT];
+        const callback = constructOptionalCallbackBridge(this,this.expr(node.args[1], callbackEnv, path, { kind: 'function', params, ret: readArrayFromExpectedElement(expected).element }),params,node.span);
         return { k: 'method', object: result, op: 'map', args: [callback], type: array(callback.type.ret) };
       }
       case 'forOfIterable': {
         const object = this.expr(node.object, env, path, undefined);
-        const form = readArrayIterableForm(object.type.kind, object.type.reference === true);
-        if (form === 'array') return object;
-        if (form === 'string') return { k: 'stringPoints', object, type: array(STRING) };
-        if (form === 'mutable') throw unsupported('mutable collection iteration', 'live collection iteration needs ordered entries and tombstones rather than a snapshot', node.span);
-        if (form === 'set') return { k: 'collectionItems', object, op: 'values', type: array(object.type.element) };
-        if (form === 'map') return { k: 'collectionItems', object, op: 'entries', type: array({ kind: 'tuple', elements: [object.type.key, object.type.value] }) };
-        throw unsupported('for-of iterator', 'this value needs an operational iterator representation', node.span);
+        return checkJavaScriptIterableValue(object,node.span);
       }
       case 'arrayIsArray': {
         const value = this.expr(node.arg, env, path, undefined);
@@ -688,17 +918,23 @@ class Checker {
           const type = declared ? this.resolveType(selected, path, param.span) : selected;
           if (!type) throw typeError(`cannot infer callback parameter ${param.name}`, param.span ?? node.span);
           bindLocal(inner, param.name, type);
+          if(acceptBodyEntryOptionalParameter(param.optional===true,param.default?.k??'',param.default?.absence??'')){const source={...param};delete source.optional;return {...source,type};}
           return { ...param, type };
         });
+        installJavaScriptOwnKeyCallbackBindings(node,params,inner);
         const result = callable.declaredRet ? this.resolveType(callable.ret, path, node.span) : callable.ret;
         let body = this.expr(node.body, inner, path, result);
         if (result) body = coerce(body, result, this.language, node.span);
         return { k: 'lambda', params, body, type: constructCallableFunctionType(params, body.type) };
       }
-      case 'method':
-        return this.method(node, env, path, expected);
+      case 'method': {
+        const callbackEnv=this.language==='JavaScript'&&!this.checkedProjection?createJavaScriptOwnKeyCallbackEnvironment(node.object,node.args[0],node.op,env):env;
+        return (this.checkedProjection ? null : checkJavaScriptSourcePropertyCall(this,node,callbackEnv,path,expected))??this.method(node, callbackEnv, path, expected);
+      }
       case 'booleanValue':
         return this.booleanValue(this.expr(node.arg, env, path, undefined), node.span);
+      case 'propositionValue':
+        return checkPropositionValue(this,node,env,path);
       case 'numberValue':
         return coerce(this.numberValue(this.expr(node.arg, env, path, undefined), node.span), FLOAT, this.language, node.span);
       case 'none':
@@ -719,6 +955,10 @@ class Checker {
       }
       case 'coalesce': {
         const left = node.left.k === 'index' ? this.expr({ ...node.left, optional: true }, env, path, undefined) : this.expr(node.left, env, path, undefined);
+        if(!this.checkedProjection&&requireJavaScriptAbsenceOnlyValue(this.language,left.type.kind,left.type.element?.kind??'')){
+          const body=this.expr(node.right,env,path,expected);
+          return {k:'let',name:this.freshName('ml_nullish_fallback_operand'),value:left,body,type:body.type};
+        }
         if (!requireOptionalCoalescing(left.type.kind)) return left;
         const right = coerce(this.expr(node.right, env, path, left.type.element), left.type.element, this.language, node.span);
         return { k: 'coalesce', left, right, type: left.type.element };
@@ -738,9 +978,18 @@ class Checker {
         return { k: 'stringPoints', object, type: array(STRING) };
       }
       case 'math':
-        return this.math(node, env, path);
+        return this.math(node, env, path, expected);
       case 'index': {
         const object = this.referenceValue(this.expr(node.object, env, path, undefined));
+        const nullable=this.checkedProjection?null:checkJavaScriptNullishIndex(this,node,object,env,path,expected);
+        if(nullable)return nullable;
+        if(this.language==='JavaScript'&&!this.checkedProjection){
+          const literal=readJavaScriptLiteralIndexSource(node,object.type.kind);
+          if(literal?.k==='field')return checkJavaScriptAbsentRecordProperty(this,object,literal.field,node.span,expected)??checkJavaScriptNamedProperty(object,literal.field,node.span);
+          if(literal)node=literal;
+          if(object.type.kind==='string')return checkJavaScriptStringIndex(this,node,object,env,path);
+        }
+        if(this.language==='JavaScript'&&!this.checkedProjection){const guarded=checkJavaScriptGuardedRecordIndex(this,node,object,env,path,expected);if(guarded)return guarded;}
         if (object.type.kind === 'tuple' && node.index.k === 'num') {
           const index = readTuplePosition(Number(node.index.value) * (node.index.negative ? -1 : 1));
           if (!acceptTupleIndex(index, object.type.elements.length)) throw typeError('tuple index out of range', node.span);
@@ -754,8 +1003,15 @@ class Checker {
         if (!isFloat(index.type) && index.type.kind !== 'int' && index.type.kind !== 'nat') {
           throw typeError(`array index of type ${typeKey(index.type)}; an index is a Number or a BigInt`, node.index.span ?? node.span);
         }
-        if (selectOptionalArrayRead(this.language, node.optional === true, node.provenInBounds === true, expected?.kind === 'option' && sameType(expected.element, object.type.element))) return flattenOption({ k: 'optionalIndex', array: object, index, type: { kind: 'option', element: object.type.element, absence: 'undefined' } });
-        return { k: 'index', array: object, index, type: object.type.element, ...(node.provenInBounds && { provenInBounds: true }) };
+        const captured = captureArraySourceOperands(this, object, index, env);
+        const optional = this.checkedProjection ? node.optional === true : selectOptionalArrayRead(
+          this.language, node.optional === true, node.provenInBounds === true,
+          expected?.kind === 'option' && sameType(expected.element, object.type.element));
+        const access = optional
+          ? { k: 'optionalIndex', array: captured.array, index: captured.index, type: { kind: 'option', element: object.type.element, absence: 'undefined' } }
+          : { k: 'index', array: captured.array, index: captured.index, type: object.type.element, ...(node.provenInBounds && { provenInBounds: true }) };
+        const result = optional && !this.checkedProjection ? flattenOption(access) : access;
+        return wrapArraySourceOperands(result, captured.bindings);
       }
       case 'typeOf': {
         const arg = this.expr(node.arg, env, path, undefined);
@@ -764,16 +1020,21 @@ class Checker {
           if (!present) throw unsupported(`typeof ${typeKey(arg.type)}`, 'type queries require a known JavaScript value type', node.span);
           return { k: 'optionalTypeOf', arg, present, type: STRING };
         }
-        if (!acceptTypeQueryOperand(node.arg.k)) throw unsupported('typeof operand', 'type queries currently require a bound value or literal; evaluating other operands must retain their effects and exceptions', node.span);
         const constantReference = arg.k === 'call' && this.externals.get(arg.fn)?.k === 'const';
-        if (!acceptCheckedTypeQueryOperand(arg.k, constantReference)) throw unsupported('typeof operand', 'type queries currently require a bound value or literal; evaluating other operands must retain their effects and exceptions', node.span);
-        const value = readTypeQueryResult(arg.type.kind);
-        if (!value) throw unsupported(`typeof ${typeKey(arg.type)}`, 'type queries require a known JavaScript value type', node.span);
-        return literal(STRING, value);
+        let value = readTypeQueryResult(arg.type.kind);
+        const plan = readTypeQueryEvaluationPlan(this.language === 'JavaScript', Boolean(value),
+          acceptTypeQueryOperand(node.arg.k), acceptCheckedTypeQueryOperand(arg.k, constantReference), arg.type.kind === 'unit');
+        if (plan === 3) value = 'undefined';
+        if (plan === 0) throw unsupported(`typeof ${typeKey(arg.type)}`, 'type queries require a known JavaScript value type', node.span);
+        const body = literal(STRING, value);
+        return plan === 1 ? body : { k: 'let', name: this.freshName('ml_type_query_operand'), value: arg, body, type: STRING };
       }
       case 'unary': {
         if (node.op === 'not') {
-          return { k: 'unary', op: 'not', arg: this.booleanValue(this.expr(node.arg, env, path, undefined), node.span), type: BOOL };
+          const arg = this.expr(node.arg, env, path, this.language === 'Rust' ? expected : undefined);
+          if (this.language === 'Rust' && arg.type.kind === 'fixed') return {
+            k: 'math', op: readRustPrimitiveBitwiseOperation('!'), args: [arg], type: arg.type };
+          return { k: 'unary', op: 'not', arg: this.booleanValue(arg, node.span), type: BOOL };
         }
         if (node.op === 'neg') {
           if (node.arg.k === 'num') {
@@ -800,16 +1061,64 @@ class Checker {
         }
         throw typeError(`unknown unary ${node.op}`, node.span);
       }
+      case 'referenceIdentity': {
+        const descriptors = Object.getOwnPropertyDescriptors(node);
+        const prototype = Object.getPrototypeOf(node);
+        if ((prototype !== Object.prototype && prototype !== null)
+          || ['k', 'op', 'left', 'right'].some(field => !Object.hasOwn(descriptors, field))
+          || Reflect.ownKeys(descriptors).some(field => typeof field !== 'string'
+            || !['k', 'op', 'left', 'right', 'span'].includes(field)
+            || !descriptors[field].enumerable || !Object.hasOwn(descriptors[field], 'value'))) {
+          throw typeError('explicit reference identity needs its closed owned operands');
+        }
+        const [left, right] = this.operands(node.left, node.right, env, path, node.span);
+        if (!this.referenceSemantics
+          || readRustSharedArrayHandleComparisonProjection(this.language, node.op, left.type.kind, left.type.reference === true) !== 'referenceIdentity'
+          || !acceptReferenceIdentityComparison(node.op, left.type.kind, right.type.kind,
+            left.type.reference === true, right.type.reference === true, sameType(left.type, right.type))) {
+          throw unsupported('explicit Rust array identity', 'only the owned array reference domain admits this operation', node.span);
+        }
+        return { k: 'binary', op: node.op, left, right, type: BOOL, domain: left.type };
+      }
       case 'binary':
         return this.binary(node, env, path, expected, allowLiteral);
       case 'if': {
         const cond = this.booleanValue(this.expr(node.cond, env, path, undefined), node.span);
-        let then = this.expr(node.then, env, path, expected, allowLiteral);
-        let otherwise = this.expr(node.else, env, path, expected ?? (then.type.kind === 'literal' ? undefined : then.type), allowLiteral);
-        if (then.type.kind === 'literal' && otherwise.type.kind !== 'literal') then = this.expr(node.then, env, path, otherwise.type);
+        const ownEnv=this.language==='JavaScript'?readJavaScriptOwnPropertyBranchEnvironments(node.cond,env):{then:env,else:env};
+        const branchesEnv=this.language==='JavaScript'?{then:readJavaScriptOptionalGuardBranch(this,node.cond,ownEnv.then,true),else:readJavaScriptOptionalGuardBranch(this,node.cond,ownEnv.else,false)}:ownEnv;
+        const firstAbsence=this.language==='JavaScript'&&(node.then.k==='none'||node.then.k==='unit');
+        const secondAbsence=this.language==='JavaScript'&&(node.else.k==='none'||node.else.k==='unit');
+        if(!expected&&(firstAbsence||secondAbsence)){
+          const then=this.expr(node.then,branchesEnv.then,path,undefined),otherwise=this.expr(node.else,branchesEnv.else,path,undefined);
+          const absence=value=>value.k==='unit'?'undefined':value.absence;
+          const value=firstAbsence?otherwise:then;
+          const owner=value.type.kind==='option'?value.type.element:value.type;
+          let policy=firstAbsence?absence(then):absence(otherwise);
+          if(firstAbsence&&secondAbsence)policy=mergeOptionalAbsence(policy,absence(otherwise));
+          else if(value.type.kind==='option')policy=mergeOptionalAbsence(policy,value.type.absence);
+          const type={kind:'option',element:owner,absence:policy};
+          return {k:'if',cond,then:coerce(then,type,this.language,node.span),else:coerce(otherwise,type,this.language,node.span),type};
+        }
+        const emptyArray=node=>node.k==='array'&&node.items.length===0;
+        if(this.language==='JavaScript'&&!expected&&emptyArray(node.then)&&!emptyArray(node.else)){
+          const otherwise=this.expr(node.else,branchesEnv.else,path,undefined,allowLiteral);
+          const then=this.expr(node.then,branchesEnv.then,path,otherwise.type,allowLiteral);
+          const branches=unifyBranches(then,otherwise,expected,this.language,node.span);
+          return {k:'if',cond,then:branches[0],else:branches[1],type:branches[0].type};
+        }
+        if (acceptSemanticBranchContextReordering(expected != null, needsBranchResultContext(node.then), needsBranchResultContext(node.else))) {
+          let otherwise = this.expr(node.else, branchesEnv.else, path, undefined, allowLiteral);
+          if (otherwise.type.kind === 'literal') otherwise = this.expr(node.else, branchesEnv.else, path, this.defaultNumber());
+          const then = this.expr(node.then, branchesEnv.then, path, otherwise.type, allowLiteral);
+          const branches = unifyBranches(then, otherwise, expected, this.language, node.span);
+          return { k: 'if', cond, then: branches[0], else: branches[1], type: branches[0].type };
+        }
+        let then = this.expr(node.then, branchesEnv.then, path, expected, allowLiteral);
+        let otherwise = this.expr(node.else, branchesEnv.else, path, expected ?? (then.type.kind === 'literal' ? undefined : then.type), allowLiteral);
+        if (then.type.kind === 'literal' && otherwise.type.kind !== 'literal') then = this.expr(node.then, branchesEnv.then, path, otherwise.type);
         if (then.type.kind === 'literal') {
-          then = this.expr(node.then, env, path, this.defaultNumber());
-          otherwise = this.expr(node.else, env, path, then.type);
+          then = this.expr(node.then, branchesEnv.then, path, this.defaultNumber());
+          otherwise = this.expr(node.else, branchesEnv.else, path, then.type);
         }
         [then, otherwise] = unifyBranches(then, otherwise, expected, this.language, node.span);
         return { k: 'if', cond, then, else: otherwise, type: then.type };
@@ -823,8 +1132,20 @@ class Checker {
         const body = this.expr(node.body, inner, path, expected, allowLiteral);
         return { k: 'let', name: node.name, value, body, type: body.type };
       }
-      case 'match':
-        return this.expr(this.compileMatch(node, env, path), env, path, expected, allowLiteral);
+      case 'match': {
+        let checkedTagReceiver;
+        if (this.language === 'JavaScript' && node.tagTest && node.scrutinees.length === 1) {
+          const source = node.scrutinees[0];
+          const receiver = this.expr(source, env, path, undefined);
+          if (receiver.type.kind === 'option') {
+            const member = { k: 'field', object: source, field: '$', span: node.span };
+            return checkJavaScriptNullishAccess(this, member, receiver, env, path, expected, (present, scope) =>
+              this.expr({ ...node, tagTest: undefined, scrutinees: [present] }, scope, path, expected));
+          }
+          checkedTagReceiver = receiver;
+        }
+        const compiled=this.compileMatch(node,env,path,checkedTagReceiver);if(node.sourceRecordPlace)retainRecordPlaceMatch(this,compiled);return this.expr(compiled,env,path,expected,allowLiteral);
+      }
       case 'match1':
         return this.match(node, env, path, expected, allowLiteral);
       case 'stringTest': {
@@ -846,6 +1167,8 @@ class Checker {
       }
       case 'toString': {
         const arg = this.expr(node.arg, env, path, undefined);
+        checkRustStandardCollectionObservation(arg.type,name=>this.items.get(name),'display',node.span);
+        refuseCallableDataObservation(arg.type,this.items,'display',node.span,this.sourceClassOwners);
         if (arg.type.kind === 'string') return arg;
         if (arg.type.kind === 'array') throw arrayText(node.span);
         if (arg.type.kind === 'option' && primitiveKey(arg.type.element)) return { k: 'optionalText', arg, console: false, type: STRING };
@@ -859,7 +1182,7 @@ class Checker {
       case 'cast': {
         const to = this.resolveType(node.to, path, node.span);
         const arg = this.expr(node.arg, env, path, node.from);
-        return castTo(arg, to, node.flavor, node.span);
+        return castTo(arg, to, node.flavor, node.span, this.language);
       }
       case 'print': {
         const text = this.show(node.expr, env, path, node.style);
@@ -883,8 +1206,11 @@ class Checker {
    * ever mutated.
    */
   recordLiteral(node, env, path, expected) {
+    const nominal=checkJavaScriptNominalSpread(this,node,env,path,expected);if(nominal)return nominal;
+    if(!expected&&node.type?.kind==='record'&&(node.type.ordered===true||node.type.sourceClassOwner!==undefined||node.type.fields.some(field=>field.optional)))expected=this.resolveType(node.type,path,node.span);
     const entries = [];
     const bindings = [];
+    const orderChunks=[];
     const units = name => Array.from({ length: name.length }, (_, index) => name.charCodeAt(index));
     const expectedNames = expected?.kind === 'record' ? expected.fields.map(field => units(field.name)) : [];
     if (Object.hasOwn(node, 'recordProjection')) {
@@ -903,34 +1229,113 @@ class Checker {
         const value = this.expr(entry.value, env, path, want);
         entries.push({ name: entry.name, value });
       }
-      return { k: 'record', entries, type: { kind: 'record', fields: entries.map(entry => ({ name: entry.name, type: entry.value.type })) } };
+      const ordered=node.propertyOrder!==undefined;
+      if(node.type?.kind==='record'&&Boolean(node.type.ordered)!==ordered)throw typeError(node.type.ordered?'an ordered record projection needs its actual own-field order':'a structural record projection cannot contain an own-field order',node.span);
+      if(expected?.kind==='record'&&Boolean(expected.ordered)!==ordered)throw typeError(expected.ordered?'an ordered record projection needs its actual own-field order':'a structural record projection cannot contain an own-field order',node.span);
+      const order=ordered?coerce(this.referenceValue(this.expr(node.propertyOrder,env,path,array(FLOAT))),array(FLOAT),this.language,node.span):null;
+      return { k: 'record', entries, ...(ordered?{order}:{}), type: { kind: 'record', fields: entries.map(entry => ({ name: entry.name, type: entry.value.type, ...(expected?.fields?.find(field => field.name === entry.name)?.optional ? { optional: true } : {}) })),...(ordered?{ordered:true}:{}),...(expected?.sourceClassOwner!==undefined?{sourceClassOwner:expected.sourceClassOwner}:{}) } };
     }
     const evaluationOrder = readRecordValueOrder(node.entries.length, false);
     if (evaluationOrder[0] < 0) throw typeError('record entries need an exact ordered input length', node.span);
     for (const index of evaluationOrder) {
       const entry = node.entries[index];
       if (entry.spread) {
-        const value = this.expr(entry.value, env, path, undefined);
+        const value = this.referenceValue(this.expr(entry.value, env, path, undefined));
         if (value.type.kind !== 'record') throw typeError('record spread needs a record value', node.span);
         const name = this.freshName('ml_spread');
         bindings.push({ name, value });
         const object = { k: 'var', name, type: value.type };
-        for (const [index, field] of value.type.fields.entries()) entries.push({ name: field.name, value: { k: 'recordField', object, field: field.name, index, type: field.type } });
+        orderChunks.push({object});
+        for (const [index, field] of value.type.fields.entries()) {
+          const name=this.freshName('ml_spread_field');
+          bindings.push({name,value:{k:'recordField',object,field:field.name,index,type:field.type}});
+          const value = {k:'var',name,type:field.type};
+          entries.push({name:field.name,value,...(field.optional?{optional:true,possiblyAbsent:true}:{})});
+        }
       } else {
+        orderChunks.push({name:entry.name});
         const position = readRecordFieldPosition(expectedNames, units(entry.name));
-        const want = position < 0 ? undefined : expected.fields[position].type;
-        const value = this.expr(entry.value, env, path, want);
+        const field = position < 0 ? undefined : expected.fields[position];
+        const want = field && javaScriptConstructorFieldValueType(field);
+        let value = this.expr(entry.value, env, path, want);
+        if (want) value = coerce(value, want, this.language, entry.value.span ?? node.span);
+        if (field?.optional) value = constructJavaScriptOwnedConstructorField(
+          value, field.type);
         const name = this.freshName('ml_field');
         bindings.push({ name, value });
-        entries.push({ name: entry.name, value: { k: 'var', name, type: value.type } });
+        entries.push({ name: entry.name, value: { k: 'var', name, type: value.type }, ...(field?.optional ? { optional: true } : {}) });
       }
     }
     // Overwritten fields still evaluate: bind every entry before selecting the final values.
     const fieldOrder = readRecordFieldOrder(entries.map(entry => units(entry.name)));
     if (fieldOrder[0] < 0) throw typeError('record fields contain an invalid UTF16 name', node.span);
-    const selected = fieldOrder.map(index => entries[index]);
-    const type = { kind: 'record', fields: selected.map((entry) => ({ name: entry.name, type: entry.value.type })) };
-    let body = { k: 'record', entries: selected, type };
+    const selected = fieldOrder.map(index => {
+      const current = entries[index];
+      if (!current.possiblyAbsent) return current;
+      // An absent spread entry leaves an earlier own field in place. Explicit
+      // undefined occupies the inner value coordinate and still overwrites.
+      for (let previous = index - 1; previous >= 0; previous--) {
+        const earlier = entries[previous];
+        if (earlier.name !== current.name) continue;
+        const readType = javaScriptConstructorFieldValueType({ type: current.value.type, optional: true });
+        const right = earlier.optional ? earlier.value : constructJavaScriptOwnedConstructorField(
+          coerce(earlier.value, readType, this.language, node.span), current.value.type);
+        if (!sameType(right.type, current.value.type)) throw typeError('optional spread field storage differs: '+current.name,node.span);
+        const type = current.value.type;
+        const name = this.freshName('ml_optional_spread_field');
+        const chosen = { k: 'var', name, type };
+        const condition = constructJavaScriptOptionalPresence(chosen, type.element, node.span);
+        const body = { k: 'if', cond: condition, then: chosen, else: right, type };
+        current.value = { k: 'let', name, value: current.value, body, type };
+        if (!earlier.possiblyAbsent) break;
+      }
+      return current;
+    });
+    if (expected?.kind === 'record') for (const field of expected.fields) {
+      if (!field.optional) continue;
+      const current = selected.find(entry => entry.name === field.name);
+      if (!current) {
+        selected.push({ name: field.name, value: { k: 'none', absence: 'undefined', type: field.type }, optional: true });
+      } else if (!current.optional) {
+        const value = coerce(current.value, javaScriptConstructorFieldValueType(field), this.language, node.span);
+        current.value = constructJavaScriptOwnedConstructorField(value, field.type);
+        current.optional = true;
+      }
+    }
+    if (selected.some(entry => entry.optional)) {
+      selected.sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0);
+    }
+    const ordered=node.propertyOrder!==undefined||expected?.ordered===true||this.orderedRecordSource===true;
+    let order;
+    const optionalOrder = selected.some(entry => entry.optional);
+    if(node.propertyOrder!==undefined)order=coerce(this.referenceValue(this.expr(node.propertyOrder,env,path,array(FLOAT))),array(FLOAT),this.language,node.span);
+    else if(ordered){
+      if(node.entries.some(entry=>entry.spread)){
+        const target=constructRecordPropertyNameRows(selected);
+        const chunks=orderChunks.map(chunk=>{
+          if(chunk.object){
+            if(chunk.object.type.open||chunk.object.type.ordered!==true)throw unsupported('ordered record spread','the actual source own-field order must be retained and rebased',node.span);
+            const source=constructRecordPropertyNameRows(chunk.object.type.fields);
+            const actual={k:'method',op:'readJavaScriptRecordPropertyOrder',object:chunk.object,args:[],type:array(FLOAT)};
+            const operation=chunk.object.type.fields.some(field=>field.optional)
+              ? 'rebaseJavaScriptPresentRecordPropertyOrder' : 'rebaseJavaScriptRecordPropertyOrder';
+            return {k:'math',op:operation,args:[target,source,actual],type:array(FLOAT)};
+          }
+          const index=selected.findIndex(field=>field.name===chunk.name);
+          if(index<0)throw typeError('an ordered record needs every actual own field',node.span);
+          return {k:'array',items:[{k:'lit',value:String(index),type:FLOAT}],type:array(FLOAT)};
+        });
+        const operation=optionalOrder?'mergeJavaScriptPresentRecordPropertyOrder':'mergeJavaScriptRecordPropertyOrder';
+        order={k:'math',op:operation,args:[target,{k:'array',items:chunks,type:array(array(FLOAT))}],type:array(FLOAT)};
+      }else{
+        const insertion=readRecordFieldInsertionOrder(entries.map(entry=>units(entry.name)));
+        const positions=insertion.map(index=>selected.findIndex(field=>field.name===entries[index].name));
+        if(positions.some(index=>index<0))throw typeError('an ordered record needs every actual own field',node.span);
+        order={k:'array',items:positions.map(index=>({k:'lit',value:String(index),type:FLOAT})),type:array(FLOAT)};
+      }
+    }
+    const type = { kind: 'record', fields: selected.map(({ name, value, optional }) => ({ name, type: value.type, ...(optional ? { optional: true } : {}) })),...(ordered?{ordered:true}:{}),...(expected?.sourceClassOwner!==undefined?{sourceClassOwner:expected.sourceClassOwner}:{}) };
+    let body = { k: 'record', entries: selected.map(({ name, value }) => ({ name, value })), ...(ordered?{order}:{}), type };
     for (const index of readRecordValueOrder(bindings.length, true)) {
       const binding = bindings[index];
       body = { k: 'let', name: binding.name, value: binding.value, body, type };
@@ -963,6 +1368,11 @@ class Checker {
           type, this.language, argument.span ?? node.span));
       }
     }
+    return this.materializePrimitiveMethod(node, object, values, path);
+  }
+
+  materializePrimitiveMethod(node, object, values, path) {
+    const receiver = object.type.kind;
     const lowering = readPrimitiveMethodLoweringForm(receiver, node.op);
     if (lowering === 'relative-element-template') {
       const result = { kind: 'option', element: object.type.element, absence: 'undefined' };
@@ -992,8 +1402,27 @@ class Checker {
     return { k: 'method', object, op: node.op, args: values, type, span: node.span };
   }
 
-  method(node, env, path, expected) {
-    const object = this.referenceValue(this.expr(node.object, env, path, undefined));
+  method(node, env, path, expected, preparedReceiver) {
+    const receiver = preparedReceiver??this.expr(node.object, env, path, undefined);
+    const prototype=checkClosedClassMethodCall(this,node,receiver,env,path,expected);if(prototype)return prototype;
+    if(node.op==='toSorted'&&receiver.type.kind==='array'){
+      // The closed array cell contains a dense value. Copying sort reads it
+      // once, then the enclosing source context allocates the independent result.
+      const snapshot = this.referenceValue(receiver);
+      if(!acceptLinkedStringArrayCopySort('method',node.op,snapshot.type.kind,snapshot.type.element.kind,snapshot.type.reference===true,node.args.length))throw unsupported('array copying sort','the default copying sort needs a dense primitive string array and no comparator or extra arguments',node.span);
+      return {k:'method',object:snapshot,op:node.op,args:[],type:snapshot.type,span:node.span};
+    }
+    const nullable=this.checkedProjection?null:checkJavaScriptNullishAccess(this,node,receiver,env,path,expected);
+    if(nullable)return nullable;
+    const recordWrite = checkRecordFieldWrite(this, node, receiver, env, path);
+    if (recordWrite) return recordWrite;
+    const arrayStateMethod = checkArrayStateMethod(this, node, receiver, env, path);
+    if (arrayStateMethod) return arrayStateMethod;
+    const referenceMethod = checkReferenceMethod(this, node, receiver, env, path);
+    if (referenceMethod) return flattenOption(referenceMethod);
+    const object = this.referenceValue(receiver);
+    const ownOrder=checkOrderedRecordOrderRead(node,object);
+    if(ownOrder)return ownOrder;
     const args = node.args;
     const count = (minimum, maximum = minimum) => {
       if (args.length < minimum || args.length > maximum) throw unsupported(`method call .${node.op}()`, `.${node.op}() expects ${minimum === maximum ? minimum : `${minimum} to ${maximum}`} arguments`, node.span);
@@ -1002,21 +1431,24 @@ class Checker {
     const number = (index, fallback) => checked(index, FLOAT, literal(FLOAT, fallback));
     if (object.type.kind === 'record') {
       const field = object.type.fields.find((field) => field.name === node.op);
-      const error = readRecordMethodError(field?.type.kind ?? '', node.op, field?.type.params?.length ?? 0, args.length);
+      if(field?.type.kind==='function'){
+        const fn={k:'recordField',object,field:node.op,index:object.type.fields.indexOf(field),type:field.type};
+        const excess=checkJavaScriptExcessCallableArguments(this,fn,args,env,path,node.span);if(excess)return excess;
+      }
+      const callArgs=field?.type.kind==='function'?completeOptionalCallableArguments(this.language,field.type.params,args,node.span):args;
+      const error = readRecordMethodError(field?.type.kind ?? '', node.op, field?.type.params?.length ?? 0, callArgs.length);
       if (error) throw typeError(error, node.span);
-      return { k: 'apply', fn: { k: 'recordField', object, field: node.op, index: object.type.fields.indexOf(field), type: field.type }, args: args.map((arg, index) => checked(index, field.type.params[index])), type: field.type.ret };
+      return { k: 'apply', fn: { k: 'recordField', object, field: node.op, index: object.type.fields.indexOf(field), type: field.type }, args: callArgs.map((arg, index) => coerce(this.expr(arg,env,path,field.type.params[index]),field.type.params[index],this.language,arg.span??node.span)), type: field.type.ret };
     }
     if (object.type.kind === 'set' || object.type.kind === 'map') {
       const key = object.type.kind === 'set' ? object.type.element : object.type.key;
       if (node.op === 'has' || (node.op === 'get' && object.type.kind === 'map')) {
-        count(1);
+        count(readCollectionAccessArgumentCount(node.op));
         return flattenOption({ k: 'collectionRead', object, op: node.op, key: checked(0, key), type: node.op === 'has' ? BOOL : { kind: 'option', element: object.type.value, absence: 'undefined' } });
       }
       if (['keys', 'values', 'entries'].includes(node.op)) {
-        count(0);
-        const value = object.type.kind === 'map' ? object.type.value : key;
-        const element = node.op === 'keys' ? key : node.op === 'values' ? value : { kind: 'tuple', elements: [key, value] };
-        return { k: 'collectionItems', object, op: node.op, type: array(element) };
+        count(readCollectionAccessArgumentCount(node.op));
+        return constructStandardCollectionItems(object,node.op);
       }
       throw unsupported(`mutable collection .${node.op}()`, 'mutation requires shared reference identities and cells so aliases observe every change', node.span);
     }
@@ -1026,7 +1458,7 @@ class Checker {
     if (object.type.kind === 'array') {
       const element = object.type.element;
       const callback = (index, params, ret) => {
-        const value = this.expr(args[index], env, path, { kind: 'function', params, ret });
+        const value = constructOptionalCallbackBridge(this,this.expr(args[index], env, path, { kind: 'function', params, ret }),params,node.span);
         const kindError = readArrayCallbackSignatureError(node.op, value.type.kind, 0, params.length, true, true, '');
         if (kindError) throw typeError(kindError, node.span);
         const parametersMatch = value.type.params.length > params.length
@@ -1045,7 +1477,7 @@ class Checker {
       if (node.op === 'map') {
         count(1);
         const params = [element, FLOAT, object.type];
-        const fn = this.expr(args[0], env, path, { kind: 'function', params, ret: undefined });
+        const fn = constructOptionalCallbackBridge(this,this.expr(args[0], env, path, { kind: 'function', params, ret: undefined }),params,node.span);
         const selection = readArrayFromMapCallback(fn.type, params);
         const error = readArrayFromMapCallbackError(selection.status, selection.pairs.every(([left, right]) => sameType(left, right)));
         if (error) throw typeError(error, node.span);
@@ -1095,6 +1527,7 @@ class Checker {
     for (const item of node.items) {
       const want = element && item.spread ? array(element) : element;
       let value = this.expr(item.value, env, path, want);
+      if (item.spread) value = this.referenceValue(value);
       if (item.spread && value.type.kind !== 'array') {
         throw unsupported(`spread of ${typeKey(value.type)}`, 'only arrays are spread into an array literal', item.value.span ?? node.span);
       }
@@ -1115,6 +1548,9 @@ class Checker {
     }
     if (!element) throw unsupported('empty array of an unknown type', 'nothing fixes the type of the elements of this empty array; declare it with JSDoc', node.span);
     if (!parts.length) return { k: 'array', items: [], type: array(element) };
+    if (parts.length === 1 && node.items.length === 1 && node.items[0].spread) {
+      return { k: 'append', left: { k: 'array', items: [], type: array(element) }, right: parts[0], type: array(element) };
+    }
     return parts.reduce((left, right) => ({ k: 'append', left, right, type: array(element) }));
   }
 
@@ -1123,7 +1559,98 @@ class Checker {
    * arguments are Numbers, which none of them converts, and a spread
    * argument makes `max` and `min` a fold over one array.
    */
-  math(node, env, path) {
+  math(node, env, path, expected) {
+    if (this.checkedProjection && node.op === 'readOrderedRecordSnapshot') {
+      const operand = node.args.length === 1 && !node.args[0].spread ? this.expr(node.args[0].value, env, path, undefined) : null;
+      if (operand?.type.kind !== 'record' || !operand.type.reference || !operand.type.ordered || operand.type.open)
+        throw typeError('an ordered record snapshot requires its actual shared closed record', node.span);
+      return this.referenceValue(operand);
+    }
+    if (this.checkedProjection && this.language === 'JavaScript' && node.op === readJavaScriptGuardedOptionalProjectionOperation()) {
+      const source = node.args.length === 1 && !node.args[0].spread ? node.args[0].value : null;
+      const value = source && this.expr(source, env, path, undefined);
+      const operand = value && projectJavaScriptGuardedOptional(source, value, env);
+      if (operand === value) throw typeError('a checked optional extraction needs its actual dominating absence guards', node.span);
+      return operand;
+    }
+    if (this.checkedProjection && ['strictEqual:false', 'strictEqual:true'].includes(node.op)) {
+      if (node.args.length !== 2 || node.args.some(argument => argument.spread)) throw typeError('checked strict equality requires two actual operands', node.span);
+      let [left, right] = node.args.map(argument => this.expr(argument.value, env, path, undefined));
+      if (this.language === 'JavaScript' && (node.name === 'left' || node.name === 'right')) {
+        const literal = node.name === 'left' ? left : right;
+        const peer = node.name === 'left' ? right : left;
+        if (peer.k === 'none' || !acceptJavaScriptProjectedTypedAbsence(literal.k, peer.type.kind, literal.absence ?? '', peer.type.absence ?? '', true)) {
+          throw typeError('checked strict equality needs an absence in its actual optional operand domain', node.span);
+        }
+        const typed = { ...literal, type: peer.type };
+        if (node.name === 'left') left = typed;
+        else right = typed;
+      }
+      const a = left.type.kind === 'option' ? left.type.element : left.type;
+      const b = right.type.kind === 'option' ? right.type.element : right.type;
+      const mode = readOptionalComparisonOperation(this.language, left.type.kind, right.type.kind, 'eq', sameType(a, b), primitiveKey(a));
+      if (!(primitiveKey(a) && primitiveKey(b)) && mode !== 'strict' && left.k !== 'none' && right.k !== 'none') {
+        throw typeError('checked strict equality requires portable primitive operands or an actual absence', node.span);
+      }
+      return { k: 'strictEqual', left, right, negate: node.op === 'strictEqual:true', type: BOOL };
+    }
+    const sourceVectorSort=checkRustSourceVectorSort(this,node,env,path,expected);if(sourceVectorSort)return sourceVectorSort;
+    const sourceVectorPrimitiveSort=checkRustSourceVectorPrimitiveSort(this,node,env,path,expected);if(sourceVectorPrimitiveSort)return sourceVectorPrimitiveSort;
+    if(node.op===readDisjointCollectionIterationSourceOperation()||node.op===readDisjointCollectionSpreadSourceOperation())return checkClosedCollectionIteration(this,node,env,path,expected);
+    if(acceptRustStringByteLengthOperation('math',node.op)){
+      const value=node.args.length===1&&!node.args[0].spread?this.expr(node.args[0].value,env,path,STRING):null;
+      const error=readRustStringByteLengthArgumentError(this.language,false,node.args.length,node.args.some(arg=>arg.spread),value?.type.kind??'');if(error)throw typeError(error,node.span);
+      return {k:'math',op:node.op,args:[value],type:{kind:'fixed',bits:64,signed:false}};
+    }
+    if(acceptConditionalChainOperation(node.op))return checkConditionalChainValue(this,node,env,path,expected);
+    if(node.op===readJavaScriptRecursiveBindingIterableOperation())return checkJavaScriptRecursiveBindingIterable(this,node,env,path);
+    if(node.op===readJavaScriptObjectRestOperation())return checkJavaScriptObjectRest(this,node,env,path);
+    if(node.op===readJavaScriptRecordFormalDefaultOperation())return checkJavaScriptRecordFormalDefault(this,node,env,path);
+    if(node.op===readJavaScriptArrayFormalIterableOperation())return checkJavaScriptArrayFormalIterable(this,node,env,path);
+    const enumeration=checkJavaScriptObjectEnumeration(this,node,env,path,expected);
+    if(enumeration)return enumeration;
+    const order=checkRecordOrderOperation(this,node,env,path,expected);
+    if(order)return order;
+    if(node.op==='testJavaScriptOwnedProperty')return checkJavaScriptOwnProperty(this,node,env,path);
+    if(node.op===readJavaScriptOptionalChainOperation())return checkJavaScriptOptionalChain(this,node,env,path);
+    if(node.op===readJavaScriptOptionalCallOperation())return checkJavaScriptOptionalCall(this,node,env,path);
+    if(node.op==='testJavaScriptArrayValue')return checkJavaScriptArrayBuiltin(this,node,env,path);
+    if(node.op==='convertJavaScriptBooleanValue')return checkJavaScriptBooleanBuiltin(this,node,env,path);
+    if(node.op==='convertJavaScriptPrimitiveText')return checkJavaScriptPrimitiveTextBuiltin(this,node,env,path);
+    if(node.op==='constructJavaScriptStringFromCharacterCodes'||node.op==='constructJavaScriptStringFromCodePoints')return checkJavaScriptStringConstruction(this,node,env,path);
+    if(acceptLinkedJavaScriptStringConstruction('math',node.op))return checkJavaScriptStringConstructionValue(this,node,env,path);
+    if(acceptLinkedJavaScriptStringUnitConstruction('math',node.op)){
+      if(this.language!=='JavaScript'||node.args.length!==1||node.args[0].spread)throw typeError('a JavaScript UTF16 literal needs one owned unit column',node.span);
+      const operand=node.args[0].value;
+      const payload=operand.k==='referencePayload'?operand:{k:'referencePayload',value:operand};
+      const units=this.expr(payload,env,path,array(FLOAT));
+      if(units.k!=='array'||units.items.some(item=>item.k!=='lit'||item.type.kind!=='float')||!acceptJavaScriptStringUnits(units.items.map(item=>Number(item.value))))throw typeError('a JavaScript UTF16 literal needs explicit checked integral code units',node.span);
+      return{k:'math',op:node.op,args:[units],type:STRING};
+    }
+    if(node.op==='convertJavaScriptBigInteger')return checkJavaScriptBigIntegerBuiltin(this,node,env,path);
+    if(acceptJavaScriptSameValueOperation(node.op))return checkJavaScriptSameValue(this,node,env,path);
+    if(acceptJavaScriptLooseEqualityOperation(node.op))return checkJavaScriptLooseComparison(this,node,env,path);
+    if(node.op==='exponentiateJavaScriptNumericValue')return checkJavaScriptExponentiation(this,node,env,path,expected);
+    if(acceptLinkedJavaScriptBigIntegerResult('math',node.op))return checkJavaScriptBigIntegerResult(this,node,env,path);
+    if(acceptLinkedRustPanicValue('math',node.op)){const value=node.args.length===1&&!node.args[0].spread?this.expr(node.args[0].value,env,path,STRING):null,error=readRustPanicValueArgumentError(this.language,node.args.length,node.args.some(item=>item.spread),value?.type.kind??'');if(error)throw typeError(error,node.span);return{k:'math',op:node.op,args:[value],type:expected??UNIT};}
+    if(readJavaScriptExceptionConstructorClass(node.op))return checkJavaScriptSourceException(this,node,env,path,expected);
+    if(acceptLinkedJavaScriptSourceException('math',node.op))return checkJavaScriptSourceExceptionValue(this,node,env,path,expected);
+    if(readJavaScriptNumberConversionResult(node.op))return checkJavaScriptNumberBuiltin(this,node,env,path);
+    if (readRustShiftCheckedOperation(node.op)) return checkRustShift(this,node,env,path,expected);
+    if (readRustPrimitiveBitwiseArity(node.op)) return checkRustPrimitiveBitwise(this, node, env, path, expected);
+    const numberArity=readJavaScriptNumberBitwiseArity(node.op);
+    const bitwiseArity=numberArity || readBigIntegerBitwiseArity(node.op);
+    if(bitwiseArity){
+      if(node.args.length!==bitwiseArity||node.args.some(item=>item.spread))throw typeError('a Number bitwise operation requires its exact unspread operands',node.span);
+      const args=node.args.map(({value})=>this.numberValue(this.expr(value,env,path,undefined),value.span??node.span));
+      const failure=materializeJavaScriptNumericFailure(this,node.op,args,expected);
+      if(failure)return failure;
+      const domain=readPrimitiveBitwiseDomain(args.map(argument=>argument.type.kind));
+      const operation=domain==='BigInt'?readBigIntegerBitwiseOperation(node.op):'';
+      if(operation) return{k:'math',op:operation,args:args.map(argument=>coerce(argument,INT,this.language,node.span)),type:INT};
+      if(domain==='Number'&&numberArity) return{k:'math',op:node.op,args,type:FLOAT};
+      throw unsupported('primitive bitwise operand','the actual operands need one complete Number or BigInt domain; implicit coercions and unsigned BigInt shifts retain their own obligations',node.span);
+    }
     const type = PREDICATES.has(node.op) ? BOOL : FLOAT;
     const variadic = node.op === 'max' || node.op === 'min';
     if (variadic && node.args.some((item) => item.spread)) {
@@ -1150,6 +1677,8 @@ class Checker {
       }
       return body;
     }
+    const mathematical=readJavaScriptMathematicalConversionForm(this.language,node.op);
+    if(mathematical)return checkJavaScriptMathematicalArguments(this,node,env,path,mathematical);
     if (!variadic && node.args.length !== 1) {
       throw unsupported(`${node.name} with ${node.args.length} arguments`, `${node.name} takes one Number`, node.span);
     }
@@ -1172,7 +1701,13 @@ class Checker {
     const { op } = node;
     if (op === 'and' || op === 'or') {
       const left = this.expr(node.left, env, path, undefined);
-      const right = this.expr(node.right, env, path, undefined);
+      const outcome=op==='and';
+      let rightEnv=env;
+      if(this.language==='JavaScript'){
+        const branches=readJavaScriptOwnPropertyBranchEnvironments(node.left,env);
+        rightEnv=readJavaScriptOptionalGuardBranch(this,node.left,outcome?branches.then:branches.else,outcome);
+      }
+      const right = this.expr(node.right, rightEnv, path, undefined);
       const operation = readOptionalLogicalOperation(this.language, left.type.kind, right.type.kind,
         left.type.kind === 'option' && sameType(left.type.element, right.type), right.type.kind === 'option' && sameType(right.type.element, left.type), sameType(left.type, right.type), op);
       if (operation === 'boolean') return { k: 'binary', op, left, right, type: BOOL };
@@ -1201,18 +1736,26 @@ class Checker {
         let right = this.expr(node.right, env, path, undefined, true);
         if (left.type.kind === 'literal') left = this.expr(node.left, env, path, this.defaultNumber());
         if (right.type.kind === 'literal') right = this.expr(node.right, env, path, this.defaultNumber());
+        refuseCallableDataObservation(left.type,this.items,'comparison',node.span,this.sourceClassOwners);refuseCallableDataObservation(right.type,this.items,'comparison',node.span,this.sourceClassOwners);
+        const comparison=materializeJavaScriptPrimitiveComparison(this,op,left,right);
+        if(comparison)return comparison;
         if (left.type.kind === 'option' || right.type.kind === 'option') {
           const a = left.type.kind === 'option' ? left.type.element : left.type;
           const b = right.type.kind === 'option' ? right.type.element : right.type;
           const operation = readOptionalComparisonOperation(this.language, left.type.kind, right.type.kind, op, sameType(a, b), primitiveKey(a));
           if (operation === 'object-error') throw unsupported('nullable object equality', 'equality of these values requires shared reference identities', node.span);
           if (operation === 'strict') return { k: 'strictEqual', left, right, negate: op === 'ne', type: BOOL };
+          if([left,right].some(value=>value.type.kind==='option'&&value.type.element.kind==='string'))throw unsupported('nullable arithmetic operand',
+            'nullable string ordering needs its lexical present-value branch before numeric conversion',node.span);
           left = this.numberValue(left, node.span); right = this.numberValue(right, node.span);
           [left, right] = unify(left, right, this.language, node.span);
           return { k: 'binary', op, left, right, type: BOOL, domain: left.type };
         }
       }
       const [left, right] = this.operands(node.left, node.right, env, path, node.span);
+      checkRustStandardCollectionObservation(left.type,name=>this.items.get(name),'comparison',node.span);
+      checkRustStandardCollectionObservation(right.type,name=>this.items.get(name),'comparison',node.span);
+      refuseCallableDataObservation(left.type,this.items,'comparison',node.span,this.sourceClassOwners);
       if (this.language === 'JavaScript' && acceptReferenceIdentityComparison(op, left.type.kind, right.type.kind, left.type.reference === true, right.type.reference === true, sameType(left.type, right.type))) {
         return {k: 'binary', op, left, right, type: BOOL, domain: left.type};
       }
@@ -1285,13 +1828,19 @@ class Checker {
       left = widen(left);
       right = widen(right);
     }
+    const failure=materializeJavaScriptNumericFailure(this,op,[left,right],expected);
+    if(failure)return failure;
     [left, right] = unify(left, right, this.language, node.span);
     if (!isOrdered(left.type)) throw typeError(`arithmetic on ${typeKey(left.type)}`, node.span);
+    const division=materializeJavaScriptBigIntegerDivision(this,op,left,right);
+    if(division)return division;
     const semantics = arithmeticSemantics(this.language, op, left.type, node);
     return { k: 'binary', op, left, right, type: left.type, domain: left.type, ...semantics };
   }
 
   numberValue(value, span) {
+    const primitive=readJavaScriptPrimitiveNumberOperand(this.language,value.type.kind,value.type.element?.kind??'');
+    if(primitive)return materializeJavaScriptNumberConversion(this,value,primitive);
     const operation = readOptionalNumberOperation(this.language, value.type.kind, value.type.element?.kind ?? '');
     if (operation === 'identity') return value;
     if (operation === 'unsupported') throw unsupported('nullable arithmetic operand', 'this operand needs its source numeric coercion and error behavior represented', span);
@@ -1312,6 +1861,8 @@ class Checker {
   application(head, args, env, path, expected, span) {
     if (requireCallableComputedApplication(head.k, head.path?.length ?? 0, head.path?.length === 1 ? env.get(head.path[0])?.kind ?? '' : '')) {
       const fn = this.expr(head, env, path, undefined);
+      const excess=checkJavaScriptExcessCallableArguments(this,fn,args,env,path,span);if(excess)return excess;
+      if(fn.type.kind==='function')args=completeOptionalCallableArguments(this.language,fn.type.params,args,span);
       const error = readCallableApplicationError(fn.type.kind, fn.type.params?.length ?? 0, args.length);
       if (error) throw typeError(error, span);
       return { k: 'apply', fn, args: args.map((arg, index) => coerce(this.expr(arg, env, path, fn.type.params[index]), fn.type.params[index], this.language, span)), type: fn.type.ret };
@@ -1342,9 +1893,17 @@ class Checker {
     }
     if (entry.k !== 'fn') throw typeError(`${head.path.join('.')} is not a function`, span);
     if (!entry.params) throw typeError(`${entry.fullName} is used before its signature is known`, span);
+    // A projected core Call already contains initialized, guarded arguments.
+    // Retained source defaults are provenance, not another invocation stage.
+    if(this.checkedProjection){
+      const error=readCallableApplicationError('function',entry.params.length,args.length);if(error)throw typeError(error,span);
+      return {k:'call',fn:entry.fullName,args:args.map((arg,index)=>coerce(this.expr(arg,env,path,entry.params[index].type),entry.params[index].type,this.language,arg.span??span)),type:entry.ret};
+    }
+    const excess=checkJavaScriptExcessNamedArguments(this,entry,args,env,path,span);if(excess)return excess;
+    if(this.language==='JavaScript'&&requiresSequentialParameterDefaults(entry.params))return checkSequentialParameterCall(this,entry,args,env,path,span);
     const provided = args.length;
     // A call that leaves out trailing parameters with defaults passes the defaults.
-    if (args.length < entry.params.length && acceptArgumentCount(entry.params.map((param) => Boolean(param.default || param.optional)), args.length)) {
+    if (args.length < entry.params.length && acceptArgumentCount(entry.params.map((param) => mayOmitTypedCallableParameter(this.language,param)), args.length)) {
       args = [...args, ...entry.params.slice(args.length).map((param) => ({ ...(param.default ?? { k: 'none', absence: 'undefined' }), closedDefault: true }))];
     }
     if (args.length !== entry.params.length) {
@@ -1444,25 +2003,50 @@ class Checker {
   }
 
   ctorObject(node, env, path, expected) {
-    const candidates = [];
+    const owner = this.language === 'JavaScript' && expected?.kind === 'option' ? expected.element : expected;
+    const names = Object.keys(node.fields);
+    const acceptsFields = ctor => ctor.fields.every(field => field.optional || Object.hasOwn(node.fields, field.name))
+      && names.every(name => ctor.fields.some(field => field.name === name));
+    let candidates = [];
     for (const entry of this.items.values()) {
       if (entry.k !== 'data' || !entry.ctors) continue;
-      if (expected && expected.kind === 'data' && entry.fullName !== expected.name) continue;
+      if (owner?.kind === 'data' && entry.fullName !== owner.name) continue;
       const ctor = entry.ctors.find((candidate) => candidate.name === node.tag);
       if (ctor) candidates.push([entry, ctor]);
+    }
+    if (candidates.length > 1) {
+      const matching = candidates.filter(([, ctor]) => acceptsFields(ctor));
+      if (matching.length > 0) candidates = matching;
     }
     if (candidates.length !== 1) {
       throw typeError(candidates.length === 0 ? `no data type has tag ${node.tag}` : `tag ${node.tag} is ambiguous`, node.span);
     }
     const [entry, ctor] = candidates[0];
-    const names = Object.keys(node.fields);
     const expectedNames = ctor.fields.map((field) => field.name);
-    if (names.length !== expectedNames.length || names.some((name) => !expectedNames.includes(name))) {
+    if (!acceptsFields(ctor)) {
       throw typeError(`${node.tag} expects fields ${expectedNames.join(', ')}`, node.span);
     }
-    const value = this.construct(entry, ctor, expectedNames.map((name) => node.fields[name]), env, path, node.span);
     if (Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw typeError('constructor immutability must be Boolean', node.span);
-    return node.frozen ? { ...value, frozen: true } : value;
+    if (!ctor.fields.some(field => field.optional) && names.every((name, index) => name === expectedNames[index])) {
+      const value = this.construct(entry, ctor, expectedNames.map(name => node.fields[name]), env, path, node.span);
+      return node.frozen ? { ...value, frozen: true } : value;
+    }
+    const bindings = names.map(name => {
+      const field = ctor.fields[expectedNames.indexOf(name)], source = node.fields[name];
+      const type = javaScriptConstructorFieldValueType(field);
+      const value = coerce(this.expr(source, env, path, type), type, this.language, source.span ?? node.span);
+      return { field, name: this.freshName('ml_constructor_field'), value };
+    });
+    const args = ctor.fields.map(field => {
+      const binding = bindings.find(binding => binding.field === field);
+      if (!binding) return { k: 'none', absence: 'undefined', type: field.type };
+      const variable = { k: 'var', name: binding.name, type: binding.value.type };
+      if (!field.optional) return variable;
+      return constructJavaScriptOwnedConstructorField(variable, field.type);
+    });
+    const type = data(entry.fullName);
+    const value = { k: 'ctor', data: entry.fullName, ctor: ctor.name, args, type, ...(node.frozen && { frozen: true }) };
+    return bindings.reduceRight((body, binding) => ({ k: 'let', name: binding.name, value: binding.value, body, type }), value);
   }
 
   /**
@@ -1471,10 +2055,14 @@ class Checker {
    * Bind patterns name the constructor fields directly so structural
    * recursion stays visible to the recursion analysis.
    */
-  compileMatch(node, env, path) {
+  compileMatch(node, env, path, checkedTagReceiver) {
     const lets = [];
-    const columns = node.scrutinees.map((scrutinee) => {
-      const checked = this.expr(scrutinee, env, path, undefined);
+    const columns = node.scrutinees.map((source,column) => {
+      const owners=node.rows.flatMap(row=>readRustIntegerPatternOwners(row.patterns[column]));
+      const inferenceError=readRustSourceNumericPatternInferenceError(this.language,source.k,Boolean(source.type),owners);if(inferenceError)throw typeError(inferenceError,source.span??node.span);
+      const inferred=readRustSourceNumericPatternInference(this.language,source.k,Boolean(source.type),owners);
+      const scrutinee=inferred?{...source,type:inferred==='f64'?FLOAT:rustFixedType(inferred)}:source;
+      const checked = column === 0 && checkedTagReceiver ? checkedTagReceiver : this.expr(scrutinee, env, path, undefined);
       if (scrutinee.k === 'name' && scrutinee.path.length === 1 && env.has(scrutinee.path[0])) {
         return { name: scrutinee.path[0], type: checked.type };
       }
@@ -1492,15 +2080,15 @@ class Checker {
 
   freshName(prefix) {
     this.fresh += 1;
-    return `${prefix}${this.fresh}`;
+    return renderSourceGeneratedIdentifier(this.generatedPrefix, prefix, this.fresh);
   }
 
   compileRows(columns, rows, span) {
     if (!rows.length) throw typeError('non-exhaustive match', span);
-    const normalised = rows.map((row) => ({
+    const normalised = rows.map((row) => projectPatternAliasRow({
       ...row,
       patterns: row.patterns.map((pattern, index) => this.normalisePattern(pattern, columns[index].type, span)),
-    }));
+    },columns,span));
     const [first] = normalised;
     const refutable = first.patterns.findIndex((pattern) => pattern.k !== 'wild' && pattern.k !== 'bind');
     if (refutable < 0) {
@@ -1514,11 +2102,31 @@ class Checker {
     }
     const column = columns[refutable];
     const pivot = first.patterns[refutable];
+    if(column.type.kind==='fixed'&&normalised.some(row=>row.patterns[refutable].k==='interval'))return compileRustIntegerRangeRows(this,columns,normalised,refutable,span);
     const rest = (patterns) => patterns.filter((_, index) => index !== refutable);
     const bindColumn = (row) => {
       const pattern = row.patterns[refutable];
       return pattern.k === 'bind' ? [...row.binds, [pattern.name, column.name]] : row.binds;
     };
+    if(pivot.k==='tuple'){
+      const reserved=new Set(columns.map(item=>item.name));
+      const collect=value=>{
+        if(typeof value==='string'){if(value.startsWith('ml_tuple_field'))reserved.add(value);return;}
+        if(value&&typeof value==='object')for(const item of Object.values(value))collect(item);
+      };
+      for(const row of normalised)collect(row);
+      const fields=column.type.elements.map(type=>{
+        let name;do{name=this.freshName('ml_tuple_field');}while(reserved.has(name));
+        reserved.add(name);return{name,type};
+      });
+      const expanded=normalised.map(row=>{
+        const pattern=row.patterns[refutable];
+        return{...row,patterns:[...(pattern.k==='tuple'?pattern.args:fields.map(()=>({k:'wild'}))),...rest(row.patterns)],binds:bindColumn(row)};
+      });
+      let body=this.compileRows([...fields,...columns.filter((_,index)=>index!==refutable)],expanded,span);
+      for(let index=fields.length-1;index>=0;index-=1)body={k:'let',name:fields[index].name,value:{k:'tupleIndex',object:{k:'name',path:[column.name]},index},body,span};
+      return body;
+    }
     // A natural column that also holds successor patterns splits on zero and
     // successor, which decrements its literal patterns.
     const natural = column.type.kind === 'nat' && normalised.some((row) => row.patterns[refutable].k === 'nat');
@@ -1549,7 +2157,24 @@ class Checker {
     const ctors = natural
       ? [{ name: 'zero', fields: [] }, { name: 'succ', fields: [{ type: column.type }] }]
       : this.items.get(column.type.name).ctors;
-    const cases = ctors.map((ctor) => {
+    // For a closed, flat constructor switch, keep the actual default row once.
+    // Earlier rows can only select their own constructors. Their specialized
+    // cases still keep the original default for any nested pattern failure.
+    let fallback, selected = ctors;
+    if (this.retainConstructorFallback && !natural && column.type.kind === 'data' && columns.length === 1) {
+      const index = normalised.findIndex(row => ['wild', 'bind'].includes(row.patterns[refutable].k));
+      if (index > 0) {
+        const explicit = normalised.slice(0, index).map(row => row.patterns[refutable]);
+        if (explicit.every(pattern => pattern.k === 'data')) {
+          const covered = new Set(explicit.map(pattern => pattern.ctor));
+          if (covered.size < ctors.length) {
+            selected = ctors.filter(ctor => covered.has(ctor.name));
+            fallback = normalised[index];
+          }
+        }
+      }
+    }
+    const cases = selected.map((ctor) => {
       const fieldNames = ctor.fields.map((_, fieldIndex) => {
         for (const row of normalised) {
           const pattern = row.patterns[refutable];
@@ -1584,6 +2209,10 @@ class Checker {
         : { k: 'ctor', path: [ctor.name], binds: fieldNames };
       return { pattern: casePattern, body };
     });
+    if (fallback) {
+      const body = this.compileRows([], [{ ...fallback, patterns: [], binds: bindColumn(fallback) }], span);
+      cases.push({pattern: {k: 'wild'}, body});
+    }
     return { k: 'match1', scrutinee: { k: 'name', path: [column.name] }, cases, span };
   }
 
@@ -1591,6 +2220,8 @@ class Checker {
   normalisePattern(pattern, type, span) {
     const natural = type.kind === 'nat';
     switch (pattern.k) {
+      case 'integerRange':return normaliseRustIntegerRangePattern(this,pattern,type,span);
+      case 'alias':return {k:'alias',name:pattern.name,pattern:this.normalisePattern(pattern.pattern,type,pattern.span??span)};
       case 'wild':
       case 'bind':
       case 'nat':
@@ -1612,6 +2243,7 @@ class Checker {
         return { k: 'bind', name: pattern.name };
       }
       case 'numLit': {
+        const contextError=readRustSourceIntegerPatternContextError(this.language,type.kind);if(contextError)throw typeError(contextError,pattern.span??span);
         // A JavaScript `case 0n:` is an `===` test, which the recursion analysis reads as a zero test.
         // Numerals up to NAT_PATTERN_UNFOLD unfold to successor chains; larger
         // ones are equality tests, so a pattern never costs a node per unit.
@@ -1622,8 +2254,23 @@ class Checker {
         }
         return this.literalPattern({ k: 'num', value: pattern.value, negative: pattern.negative }, type, span);
       }
+      case 'typedNumLit':{
+        const error=readRustSourceNumericPatternTypeError(pattern.owner,pattern.type?.kind??'',String(pattern.type?.bits??''),pattern.type?.signed===true)||readRustSourceNumericPatternNegationError(pattern.owner,pattern.negative===true);if(error)throw typeError(error,pattern.span??span);
+        return this.literalPattern({k:'num',value:pattern.value,type:pattern.type,negative:pattern.negative},type,span);
+      }
+      case 'byteLit':{
+        const error=readRustSourceBytePatternTypeError(type.kind,type.bits??0,type.signed===true);if(error)throw typeError(error,pattern.span??span);
+        return this.literalPattern({k:'num',value:pattern.value,type:{kind:'fixed',bits:8,signed:false}},type,span);
+      }
       case 'boolLit':
         return this.literalPattern({ k: 'bool', value: pattern.value }, type, span);
+      case 'tuple':{
+        const width=type.kind==='tuple'?type.elements.length:type.kind==='unit'?0:-1;
+        const plan=planTuplePatternFields(width,pattern.args.length,pattern.rest??-1);
+        if(plan[0]<0)throw typeError('tuple pattern has the wrong type or number of fields',pattern.span??span);
+        if(type.kind==='unit')return{k:'wild'};
+        return{k:'tuple',args:plan.slice(1).map((index,position)=>index<0?{k:'wild'}:this.normalisePattern(pattern.args[index],type.elements[position],span))};
+      }
       case 'strLit':
         return this.literalPattern({ k: 'str', value: pattern.value }, type, span);
       case 'natAdd': {
@@ -1674,7 +2321,11 @@ class Checker {
       ? node.scrutinee.path[0]
       : null;
     const fact = variable && env.get(KNOWN)?.get(variable);
-    if (fact) return this.knownMatch(node, fact, variable, env, path, expected, allowLiteral);
+    // Source optimizations may introduce an enclosing match around already
+    // checked code. Rechecking Links still validates every retained case.
+    if (fact && !this.checkedProjection && !this.recordPlaceMatches?.has(node)) {
+      return this.knownMatch(node, fact, variable, env, path, expected, allowLiteral);
+    }
     const scrutinee = this.expr(node.scrutinee, env, path, undefined);
     const type = scrutinee.type;
     const cases = [];
@@ -1683,6 +2334,7 @@ class Checker {
     // reject valid callbacks or carry a missing return into checked IR.
     const partialCallable = requirePartialCallableResultInference(expected?.kind ?? '', expected?.ret !== undefined);
     let resultType = partialCallable ? undefined : expected;
+    let untypedAbsence;
     const pending = [];
     for (const kase of node.cases) {
       const inner = new Map(env);
@@ -1694,10 +2346,22 @@ class Checker {
     }
     for (const kase of pending) {
       const body = this.expr(kase.body, kase.env, path, partialCallable ? expected : resultType, true);
-      if (body.type.kind !== 'literal' && !resultType) resultType = body.type;
+      if (body.type.kind !== 'literal' && !resultType) {
+        if (this.language === 'JavaScript' && body.k === 'none' && body.type.element.kind === 'unit') {
+          untypedAbsence = untypedAbsence ? mergeOptionalAbsence(untypedAbsence, body.absence) : body.absence;
+        } else if (untypedAbsence) {
+          resultType = body.type.kind === 'option'
+            ? { ...body.type, absence: mergeOptionalAbsence(body.type.absence, untypedAbsence) }
+            : { kind: 'option', element: body.type, absence: untypedAbsence };
+        } else {
+          resultType = body.type;
+        }
+      }
       cases.push({ pattern: kase.pattern, body, surface: kase.body, env: kase.env });
     }
-    if (!resultType) resultType = this.defaultNumber();
+    if (!resultType) resultType = untypedAbsence
+      ? { kind: 'option', element: UNIT, absence: untypedAbsence }
+      : this.defaultNumber();
     const finalCases = cases.map((kase) => {
       let body = kase.body.type.kind === 'literal' ? this.expr(kase.surface, kase.env, path, resultType) : kase.body;
       body = coerce(body, resultType, this.language, kase.surface.span ?? node.span);
@@ -1895,8 +2559,8 @@ function unify(left, right, language, span) {
 
 function unifyBranches(then, otherwise, expected, language, span) {
   if (sameType(then.type, otherwise.type)) return [then, otherwise];
-  if (then.k === 'abort') return [{ ...then, type: otherwise.type }, otherwise];
-  if (otherwise.k === 'abort') return [then, { ...otherwise, type: then.type }];
+  const first=coerceAbruptResult(then,otherwise.type);if(first)return [first,otherwise];
+  const second=coerceAbruptResult(otherwise,then.type);if(second)return [then,second];
   if (expected) return [coerce(then, expected, language, span), coerce(otherwise, expected, language, span)];
   return unify(then, otherwise, language, span);
 }
@@ -1905,7 +2569,11 @@ function unifyBranches(then, otherwise, expected, language, span) {
 export function coerce(value, type, language, span, flavor = undefined) {
   if (value.type.kind === 'literal') throw typeError('untyped literal', span);
   if (sameType(value.type, type)) return value;
-  if (value.k === 'abort') return { ...value, type };
+  const abrupt=coerceAbruptResult(value,type);if(abrupt)return abrupt;
+  if (language === 'JavaScript' && value.type.kind === 'record' && type.kind === 'record') {
+    const converted = widenJavaScriptRecordPresence(value, type, span);
+    if (converted) return converted;
+  }
   const optional = readOptionalCoercionOperation(language, type.kind, value.type.kind, value.k,
     type.kind === 'option' && acceptOptionalAbsence(type.absence, value.absence),
     type.kind === 'option' && acceptOptionalAbsence(type.absence, 'undefined'),
@@ -1917,6 +2585,8 @@ export function coerce(value, type, language, span, flavor = undefined) {
     return optional === 'unit' ? absent : { k: 'let', name: 'ml_discarded_unit', value, body: absent, type };
   }
   if (optional === 'some') return { k: 'some', value, type };
+  const absenceOnly=convertJavaScriptAbsenceOnlyValue(value,type,language);if(absenceOnly)return absenceOnly;
+  const widened=widenJavaScriptOptionalPolicy(value,type,language,span);if(widened)return widened;
   if (language === 'JavaScript' && value.type.kind === 'nat' && type.kind === 'int') {
     return castTo(value, INT, 'exact', span);
   }
@@ -1926,9 +2596,52 @@ export function coerce(value, type, language, span, flavor = undefined) {
   throw typeError(`expected ${typeKey(type)} but found ${typeKey(value.type)}`, span);
 }
 
-function castTo(arg, to, flavor, span) {
+function widenJavaScriptRecordPresence(value, type, span) {
+  const source = value.type;
+  if (source.reference || type.reference || source.open || type.open || Boolean(source.ordered) !== Boolean(type.ordered)
+    || source.sourceClassOwner !== undefined || type.sourceClassOwner !== undefined
+    || !type.fields.some(field => field.optional)) return null;
+  const from = new Map(source.fields.map(field => [field.name, field]));
+  const to = new Map(type.fields.map(field => [field.name, field]));
+  if (source.fields.some(field => !to.has(field.name))
+    || type.fields.some(field => !field.optional && !from.has(field.name))) return null;
+  const name = 'ml_record_presence_source';
+  const owner = { k: 'var', name, type: source };
+  const entries = [];
+  for (const field of type.fields) {
+    const original = from.get(field.name);
+    if (!original) {
+      entries.push({ name: field.name, value: { k: 'none', absence: 'undefined', type: field.type } });
+      continue;
+    }
+    const read = readJavaScriptOwnedRecordField(owner, original, true);
+    if (Boolean(field.optional) === Boolean(original.optional) && sameType(field.type, original.type)) {
+      entries.push({ name: field.name, value: read });
+    } else if (field.optional && !original.optional) {
+      const payload = coerce(read, javaScriptConstructorFieldValueType(field), 'JavaScript', span);
+      entries.push({ name: field.name, value: constructJavaScriptOwnedConstructorField(payload, field.type) });
+    } else return null;
+  }
+  const body = { k: 'record', entries, type };
+  if (type.ordered) {
+    const positions = array(FLOAT);
+    const op = source.fields.some(field => field.optional)
+      ? 'rebaseJavaScriptPresentRecordPropertyOrder' : 'rebaseJavaScriptRecordPropertyOrder';
+    const actual = { k:'method', op:'readJavaScriptRecordPropertyOrder', object:owner, args:[], type:positions };
+    body.order = { k:'math', op, args:[constructRecordPropertyNameRows(type.fields),constructRecordPropertyNameRows(source.fields),actual], type:positions };
+  }
+  return { k: 'let', name, value, body, type };
+}
+
+function castTo(arg, to, flavor, span, language = '') {
   if (sameType(arg.type, to)) return arg;
   const from = arg.type;
+  if(flavor==='exact'&&from.kind==='int'&&acceptRustExactArrayLengthResult(arg.k,to.kind,to.bits??0,to.signed===true,arg.array?.type.kind??''))return {...arg,type:to};
+  // Rust collection indices enter the portable unbounded natural domain
+  // without truncating a usize value or converting it through Number.
+  if (language === 'Rust' && from.kind === 'fixed' && !from.signed && to.kind === 'nat' && flavor === 'exact') {
+    return { k: 'cast', arg, from, to, flavor, type: to };
+  }
   if (from.kind === 'nat' && to.kind === 'int') return { k: 'cast', arg, from, to, flavor: 'exact', type: to };
   if (from.kind === 'int' && to.kind === 'nat') {
     if (flavor !== 'checked' && flavor !== 'clamp') throw typeError('int to nat conversion needs checked or clamp semantics', span);
@@ -1937,7 +2650,8 @@ function castTo(arg, to, flavor, span) {
   if (from.kind === 'fixed' && to.kind === 'fixed') {
     const source = fixedBounds(from);
     const target = fixedBounds(to);
-    if (source.min >= target.min && source.max <= target.max) return { k: 'cast', arg, from, to, flavor: 'exact', type: to };
+    const selected = readFixedIntegerCastFlavor(language, source.min >= target.min && source.max <= target.max, flavor ?? '');
+    if (selected) return { k: 'cast', arg, from, to, flavor: selected, type: to };
     throw unsupported('narrowing integer cast', `${typeKey(from)} as ${typeKey(to)} wraps in Rust and has no portable encoding yet`, span);
   }
   throw typeError(`cannot convert ${typeKey(from)} to ${typeKey(to)}`, span);
@@ -2005,10 +2719,11 @@ function exposeNaturalCases(entry) {
   for (let index = 0; index < entry.params.length; index += 1) {
     const param = entry.params[index];
     if (!isNatural(param.type)) continue;
+    const prefix = readSourceIdentifierSupply(collectSourceIdentifierTexts(entry));
     let fresh = 0;
     const freshName = () => {
       fresh += 1;
-      return `ml_p${fresh}`;
+      return renderSourceGeneratedIdentifier(prefix, 'p', fresh);
     };
     const body = splitNatural(entry.body, param.name, freshName);
     if (body !== entry.body && decreasesOn(body, entry.fullName, index, param.name, new Set())) {
@@ -2215,3 +2930,12 @@ function decreasesOn(expr, fn, index, name, subterms) {
 }
 
 import {createArrayRelativeElementTemplateExpression} from './array-relative-element-template.js';
+import {checkJavaScriptIterableValue,checkJavaScriptArrayFormalIterable} from './array-formal-iterables.js';
+import {readJavaScriptArrayFormalIterableOperation} from './array-formal-parameter-rules.js';
+
+import {readJavaScriptRecordFormalDefaultOperation} from './javascript-record-parameter-rules.js';
+import {readJavaScriptObjectRestOperation} from './object-rest-rules.js';
+import {checkJavaScriptObjectRest} from './object-rest.js';
+import {readJavaScriptRecursiveBindingIterableOperation} from './recursive-binding-rules.js';
+import {checkJavaScriptRecursiveBindingIterable} from './recursive-binding-iterables.js';
+import {checkJavaScriptRecordFormalDefault} from './record-formal-defaults.js';

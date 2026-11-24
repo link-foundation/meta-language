@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import {runInNewContext} from 'node:vm';
 
 import { translateProgram } from '../src/program-translation.js';
 
@@ -46,9 +47,19 @@ test('inference makes a parameter a Math function reads a Number', () => {
 });
 
 test('the Math and Number forms that are not kept are refused with a reason', () => {
-  assert.equal(refusal('console.log(Math.floor(1n));\n'), 'Math.floor of int; it takes Numbers, and converts or rejects anything else at 23..25');
+  const [major,minor]=process.versions.node.split('.').map(Number);
+  assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+' for the corrected ECMAScript 2025 assertions');
+  // ECMAScript 2025 Math.floor applies ToNumber: BigInt throws at runtime.
+  // Preserve the original input and its obsolete diagnostic in the fixture's
+  // correctedAssertions register; test the actual source behavior as well.
+  const bigIntegerFloor='console.log(Math.floor(1n));\n';
+  assert.equal(refusal(bigIntegerFloor),undefined);
+  assert.throws(()=>runInNewContext(bigIntegerFloor),{name:'TypeError',message:'Cannot convert a BigInt value to a number'});
   assert.equal(refusal('console.log(Math.sin(1));\n'), 'Math.sin: the JavaScript standard library is outside the portable core at 12..23');
-  assert.equal(refusal('console.log(Math.abs(1, 2));\n'), 'Math.abs with 2 arguments: Math.abs takes one Number at 12..26');
+  const extraArgument='console.log(Math.abs(1, 2));\n',lines=[];
+  assert.equal(refusal(extraArgument),undefined);
+  runInNewContext(extraArgument,{console:{log:value=>lines.push(String(value))}});
+  assert.deepEqual(lines,['1']);
   assert.equal(refusal('const xs = [1, 2];\nconsole.log(Math.abs(...xs));\n'), 'spread argument: pass Math.abs its argument at 43..45');
   assert.equal(refusal('const m = Math.max;\n'), 'function value Math.max: functions and namespaces are only portable when a function is called at 10..18');
   assert.equal(refusal('function isNaN(x) {\n  return x;\n}\n'), 'declaration of isNaN: it shadows the JavaScript global isNaN, which the translation reads as the built-in; rename it at 9..14');

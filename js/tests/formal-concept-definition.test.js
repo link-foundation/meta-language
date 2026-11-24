@@ -25,7 +25,10 @@ const output = (code) => {
 test('formal definitions refuse forged structured text conversion and undeclared Rust float display', () => {
   const scalarProgram = () => checkProgram(parseJavaScript('function value(){return String(1)}'));
   const structured = scalarProgram();
-  structured.declarations.get('value').body.arg = { k: 'array',
+  // String's ordinary frontend records the argument evaluation before converting it.
+  const conversion = structured.declarations.get('value').body.body;
+  assert.equal(conversion.k, 'toString');
+  conversion.arg = { k: 'array',
     items: [{ k: 'lit', value: '1', type: { kind: 'float' } }],
     type: { kind: 'array', element: { kind: 'float' } } };
   assert.throws(() => encodeFormalConceptDefinition(structured), /text conversion requires a supported scalar/u);

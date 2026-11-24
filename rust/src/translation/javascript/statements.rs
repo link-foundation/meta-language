@@ -5,7 +5,7 @@ use super::imperative::lower_top_level;
 use super::loops::reserved;
 use super::lowering::statement_span;
 use super::{
-    AssertionKind, CaseTest, Clause, ERRORS, HashSet, JavaScriptParser, Result, SComparison, SData,
+    AssertionKind, CaseTest, Clause, HashSet, JavaScriptParser, Result, SComparison, SData,
     SEffect, SExpr, SNode, SProp, SPropNode, ShowStyle, Span, Stmt, Switch, Token, TokenKind,
     TranslationError, accept_java_script_line_terminator, assertion_kind, has_ctor, node,
     number_literal, prop_of, span, type_error, unsupported,
@@ -61,9 +61,9 @@ impl JavaScriptParser {
             // An async function returning a call of another adopts the Promise
             // it returns, which awaits it.
             let expr = if self.in_async {
-                self.awaited(Self::expr)?
+                self.awaited(Self::sequence)?
             } else {
-                self.expr()?
+                self.sequence()?
             };
             self.cursor.eat(";");
             return Ok(Stmt::Return {
@@ -103,14 +103,6 @@ impl JavaScriptParser {
         if self.cursor.is("break") || self.cursor.is("continue") {
             return self.jump_statement();
         }
-        if self.cursor.is("console") && self.cursor.is_at(".", 1) {
-            let (expr, place) = self.console_call()?;
-            return Ok(Stmt::Print {
-                expr,
-                style: ShowStyle::JsConsole,
-                span: place,
-            });
-        }
         if token.kind == TokenKind::Identifier {
             let statements = ["try", "function", "class", "with", "debugger"];
             if statements.contains(&token.value.as_str()) {
@@ -129,24 +121,56 @@ impl JavaScriptParser {
                 ));
             }
         }
-        if self.starts_assignment() {
-            let statement = self.assignment()?;
-            self.cursor.eat(";");
-            return Ok(statement);
-        }
-        let expr = self.expr()?;
+        let mut statements = self.expression_statements()?;
         self.cursor.eat(";");
-        Ok(Stmt::Expr {
-            expr,
+        if statements.len() == 1 {
+            return Ok(statements.remove(0));
+        }
+        Ok(Stmt::Block {
+            body: statements,
+            inline: true,
             span: self.to_here(&token),
         })
     }
 
-    pub(super) fn const_statement(&mut self) -> Result<Stmt> {
-        self.const_declarations(self.top_level && self.readonly_constants.module)
+    pub(super) fn expression_statements(&mut self) -> Result<Vec<Stmt>> {
+        let mut statements = Vec::new();
+        loop {
+            let start = self.peek();
+            let statement = if self.cursor.is("console") && self.cursor.is_at(".", 1) {
+                let (expr, place) = self.console_call(false)?;
+                Stmt::Print {
+                    expr,
+                    style: ShowStyle::JsConsole,
+                    span: place,
+                }
+            } else if self.starts_record_field_assignment() {
+                self.record_field_assignment()?
+            } else if self.starts_assignment() {
+                self.assignment()?
+            } else {
+                let expr = self.expr()?;
+                Stmt::Expr {
+                    expr,
+                    span: self.to_here(&start),
+                }
+            };
+            statements.push(statement);
+            if self.cursor.eat(",").is_none() {
+                return Ok(statements);
+            }
+        }
     }
 
-    fn const_declarations(&mut self, readonly: bool) -> Result<Stmt> {
+    pub(super) fn const_statement(&mut self) -> Result<Stmt> {
+        self.const_declarations(self.top_level && self.readonly_constants.module, true)
+    }
+
+    pub(super) fn const_declarations(
+        &mut self,
+        readonly: bool,
+        consume_semicolon: bool,
+    ) -> Result<Stmt> {
         let start = self.cursor.advance();
         let mut statements = Vec::new();
         let mut names = HashSet::new();
@@ -174,7 +198,9 @@ impl JavaScriptParser {
                 break;
             }
         }
-        self.cursor.eat(";");
+        if consume_semicolon {
+            self.cursor.eat(";");
+        }
         if statements.len() == 1 {
             return Ok(statements.remove(0));
         }
@@ -187,6 +213,9 @@ impl JavaScriptParser {
 
     fn const_declarator(&mut self, start: &Token, readonly: bool) -> Result<Stmt> {
         if self.cursor.is("{") {
+            return self.destructuring(start);
+        }
+        if self.cursor.is("[") && self.has_advanced_array_binding(self.cursor.index) {
             return self.destructuring(start);
         }
         if self.cursor.is("[") {
@@ -211,6 +240,7 @@ impl JavaScriptParser {
         }
         let name = self.cursor.identifier(Some("const"))?;
         reserved(&name)?;
+        self.lexical.declaration(&name.value, name.span(), 1);
         self.scope.tdz.insert(name.value.clone());
         if self.cursor.eat("=").is_none() {
             return Err(self.fail_here("expected = in const"));
@@ -230,78 +260,11 @@ impl JavaScriptParser {
 
     /// `const { left, value: v } = t;` binds fields of a switch subject.
     pub(super) fn destructuring(&mut self, start: &Token) -> Result<Stmt> {
-        self.cursor.expect("{", Some("destructuring"))?;
-        let mut pairs = Vec::new();
-        while !self.cursor.is("}") {
-            if self.cursor.is("...") {
-                let token = self.peek();
-                return Err(unsupported(
-                    "rest property",
-                    "name every field",
-                    Some(span(&token, &token)),
-                ));
-            }
-            let key = self.cursor.identifier(Some("destructuring"))?;
-            let local = if self.cursor.eat(":").is_some() {
-                self.cursor.identifier(Some("destructuring"))?
-            } else {
-                key.clone()
-            };
-            reserved(&local)?;
-            if self.cursor.is("=") {
-                return Err(unsupported(
-                    "default value",
-                    "every field has a value",
-                    Some(self.to_here(&key)),
-                ));
-            }
-            pairs.push((key.value.clone(), local.value.clone(), span(&key, &local)));
-            if self.cursor.eat(",").is_none() {
-                break;
-            }
-        }
-        self.cursor.expect("}", Some("destructuring"))?;
-        if pairs.is_empty() {
-            return Err(unsupported(
-                "empty object binding",
-                "object destructibility needs a checked representation",
-                Some(self.to_here(start)),
-            ));
-        }
-        self.cursor.expect("=", Some("destructuring"))?;
-        let value = self.expr()?;
-        let whole = self.to_here(start);
-        self.generated_count += 1;
-        let name = format!("ml_binding{}", self.generated_count);
-        let object = node(
-            SNode::Name {
-                path: vec![name.clone()],
-            },
-            whole,
-        );
-        let mut statements = vec![Stmt::Const {
-            name,
-            value,
-            span: whole,
-        }];
-        statements.extend(pairs.iter().map(|(field, name, place)| Stmt::Const {
-            name: name.clone(),
-            value: node(
-                SNode::Field {
-                    object: Box::new(object.clone()),
-                    field: field.clone(),
-                },
-                *place,
-            ),
-            span: whole,
-        }));
-        for (_, name, _) in &pairs {
-            self.declare_local(name, false);
-        }
+        let syntax = self.object_binding_declaration(start, "const")?;
         Ok(Stmt::Block {
-            body: statements,
+            body: syntax.statements,
             inline: true,
-            span: whole,
+            span: syntax.span,
         })
     }
 
@@ -316,7 +279,12 @@ impl JavaScriptParser {
                 Some(span(&start, &start)),
             ));
         }
-        if self.cursor.eat("new").is_none() {
+        let constructed = self.cursor.eat("new").is_some();
+        if !constructed
+            && !(self.cursor.peek().kind == TokenKind::Identifier
+                && !crate::translation::source_exception_rules::read_java_script_exception_constructor_operation(&self.cursor.peek().value).is_empty()
+                && self.cursor.is_at("(", 1))
+        {
             return Err(unsupported(
                 "throw of a non-error value",
                 "throw new Error('…'), which aborts the program",
@@ -325,10 +293,14 @@ impl JavaScriptParser {
         }
         let kind = self.cursor.identifier(Some("throw"))?;
         self.lexical.read(&kind, false, kind.span());
-        if !ERRORS.contains(&kind.value.as_str()) {
+        let operation =
+            crate::translation::source_exception_rules::read_java_script_exception_constructor_operation(
+                &kind.value,
+            );
+        if operation.is_empty() {
             return Err(unsupported(
                 &format!("throw new {}", kind.value),
-                "throw an Error, RangeError or TypeError",
+                "the error constructor needs its actual exception definition",
                 Some(span(&kind, &kind)),
             ));
         }
@@ -339,32 +311,49 @@ impl JavaScriptParser {
                 Some(kind.span()),
             ));
         }
-        self.cursor.expect("(", Some("throw"))?;
-        let message = if self.cursor.is(")") {
-            String::new()
-        } else {
-            let token = self.cursor.advance();
-            if token.kind != TokenKind::String {
-                return Err(unsupported(
-                    "computed error message",
-                    "the message of an abort is a string literal",
-                    Some(span(&token, &token)),
-                ));
-            }
-            token.value
-        };
-        self.cursor.expect(")", Some("throw"))?;
+        let args = self.spread_arguments("throw")?;
         self.cursor.eat(";");
+        let place = self.to_here(&start);
+        let legacy = kind.value == "Error"
+            && args.len() == 1
+            && !args[0].spread
+            && matches!(args[0].value.node, SNode::Str { .. });
+        let message = if legacy {
+            args.first()
+                .and_then(|argument| {
+                    if let SNode::Str { value } = &argument.value.node {
+                        Some(value.clone())
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or_default()
+        } else {
+            String::new()
+        };
+        let exception = if legacy {
+            None
+        } else {
+            Some(node(
+                SNode::Math {
+                    op: operation,
+                    name: kind.value.clone(),
+                    args,
+                },
+                place,
+            ))
+        };
         Ok(Stmt::Throw {
             message,
-            span: self.to_here(&start),
+            exception,
+            span: place,
         })
     }
 
     pub(super) fn if_statement(&mut self) -> Result<Stmt> {
         let start = self.cursor.advance();
         self.cursor.expect("(", Some("if"))?;
-        let cond = self.expr()?;
+        let cond = self.sequence()?;
         self.cursor.expect(")", Some("if"))?;
         let then = self.branch()?;
         let otherwise = if self.cursor.eat("else").is_some() {
@@ -395,7 +384,7 @@ impl JavaScriptParser {
     pub(super) fn switch_statement(&mut self) -> Result<Switch> {
         let start = self.cursor.advance();
         self.cursor.expect("(", Some("switch"))?;
-        let discriminant = self.expr()?;
+        let discriminant = self.sequence()?;
         self.cursor.expect(")", Some("switch"))?;
         self.cursor.expect("{", Some("switch"))?;
         let tag_object = match discriminant.node {
@@ -406,17 +395,29 @@ impl JavaScriptParser {
             _ => None,
         };
         let tagged = tag_object.is_some();
-        if let Some(object) = &tag_object
-            && object.simple_name().is_none()
-        {
-            return Err(unsupported(
-                "switch on the tag of an expression",
-                "bind the value with const and switch on its tag",
-                discriminant.span,
-            ));
-        }
+        let clauses =
+            self.with_block_declarations(|parser| parser.switch_clauses(tagged, &start))?;
+        let whole = self.to_here(&start);
+        let (scrutinee, tag) = match tag_object {
+            Some(object) => {
+                let subject = object.simple_name().unwrap_or_default().to_owned();
+                let data = self.switch_data(&object, &clauses, whole)?;
+                (object, Some((subject, data)))
+            }
+            None => (discriminant, None),
+        };
+        Ok(Switch {
+            scrutinee,
+            tag,
+            clauses,
+            span: whole,
+        })
+    }
+
+    fn switch_clauses(&mut self, tagged: bool, start: &Token) -> Result<Vec<Clause>> {
         let mut clauses = Vec::new();
         let mut tests = Vec::new();
+        let mut declaration = None;
         while !self.cursor.is("}") {
             let clause_start = self.peek();
             if self.cursor.eat("default").is_some() {
@@ -436,11 +437,14 @@ impl JavaScriptParser {
             while !self.cursor.is("case") && !self.cursor.is("default") && !self.cursor.is("}") {
                 if self.cursor.is("const") || self.cursor.is("let") {
                     let token = self.peek();
-                    return Err(unsupported(
-                        "declaration in a case clause",
-                        "case clauses share one scope; wrap the case body in braces",
-                        Some(span(&token, &token)),
-                    ));
+                    declaration.get_or_insert_with(|| span(&token, &token));
+                    if !tagged {
+                        return Err(unsupported(
+                            "declaration in a case clause",
+                            "case clauses share one scope; wrap the case body in braces",
+                            declaration,
+                        ));
+                    }
                 }
                 body.push(self.statement()?);
             }
@@ -455,25 +459,18 @@ impl JavaScriptParser {
             clauses.push(Clause {
                 tests,
                 body: Vec::new(),
-                span: self.to_here(&start),
+                span: self.to_here(start),
             });
         }
+        if declaration.is_some() && clauses.len() != 1 {
+            return Err(unsupported(
+                "declaration in a case clause",
+                "case clauses share one scope; wrap the case body in braces",
+                declaration,
+            ));
+        }
         self.cursor.expect("}", Some("switch"))?;
-        let whole = self.to_here(&start);
-        let (scrutinee, tag) = match tag_object {
-            Some(object) => {
-                let subject = object.simple_name().unwrap_or_default().to_owned();
-                let data = self.switch_data(&clauses, whole)?;
-                (object, Some((subject, data)))
-            }
-            None => (discriminant, None),
-        };
-        Ok(Switch {
-            scrutinee,
-            tag,
-            clauses,
-            span: whole,
-        })
+        Ok(clauses)
     }
 
     pub(super) fn case_test(&mut self, tagged: bool) -> Result<CaseTest> {
@@ -487,9 +484,20 @@ impl JavaScriptParser {
                 ));
             }
             self.cursor.advance();
+            self.require_scalar_string_token(&token, "datatype switch tag")?;
             return Ok(CaseTest::Tag {
                 tag: token.value.clone(),
                 span: span(&token, &token),
+            });
+        }
+        let literal = self
+            .cursor
+            .is_at(":", if self.cursor.is("-") { 2 } else { 1 });
+        if !literal {
+            let value = self.sequence()?;
+            return Ok(CaseTest::Value {
+                value: Box::new(value),
+                span: self.to_here(&token),
             });
         }
         let negative = self.cursor.eat("-").is_some();
@@ -532,7 +540,7 @@ impl JavaScriptParser {
             });
         }
         if form == "value" {
-            let value = self.expr()?;
+            let value = self.sequence()?;
             return Ok(CaseTest::Value {
                 value: Box::new(value),
                 span: self.to_here(&token),
@@ -546,7 +554,12 @@ impl JavaScriptParser {
     }
 
     /// The @typedef whose tags a tag switch names.
-    pub(super) fn switch_data(&self, clauses: &[Clause], place: Span) -> Result<SData> {
+    pub(super) fn switch_data(
+        &self,
+        object: &SExpr,
+        clauses: &[Clause],
+        place: Span,
+    ) -> Result<SData> {
         let tags: Vec<&str> = clauses
             .iter()
             .flat_map(|clause| &clause.tests)
@@ -560,9 +573,24 @@ impl JavaScriptParser {
             .iter()
             .filter(|data| tags.iter().all(|tag| has_ctor(data, tag)))
             .collect();
-        match candidates.as_slice() {
-            [data] => Ok((*data).clone()),
-            [] => Err(type_error(
+        let receiver = if candidates.len() > 1 {
+            self.read_tag_receiver_owner(object)
+        } else {
+            String::new()
+        };
+        let owners = candidates
+            .iter()
+            .map(|data| data.name.clone())
+            .collect::<Vec<_>>();
+        let position =
+            crate::translation::javascript_tag_context_rules::read_java_script_tag_owner_position(
+                &owners, &receiver,
+            );
+        match crate::translation::frontend_rules::ml_array::number_index(position)
+            .and_then(|index| candidates.get(index))
+        {
+            Some(data) => Ok((**data).clone()),
+            None if candidates.is_empty() => Err(type_error(
                 format!("no @typedef has tags {}", tags.join(", ")),
                 Some(place),
             )),
@@ -607,7 +635,9 @@ impl JavaScriptParser {
         let variables: Vec<String> = effects
             .iter()
             .filter_map(|effect| match effect {
-                SEffect::Let { name, .. } if !name.starts_with("ml_") => Some(name.clone()),
+                SEffect::Let { name, .. } if !name.starts_with(&self.generated_prefix) => {
+                    Some(name.clone())
+                }
                 _ => None,
             })
             .collect();
@@ -642,7 +672,7 @@ impl JavaScriptParser {
                     Some(span(&token, self.cursor.peek_at(1))),
                 ));
             }
-            let binding = self.const_declarations(self.readonly_constants.module)?;
+            let binding = self.const_declarations(self.readonly_constants.module, true)?;
             if let Stmt::Block {
                 body, inline: true, ..
             } = binding
@@ -705,7 +735,10 @@ impl JavaScriptParser {
         self.cursor.eat(";");
         self.generated_count += 1;
         Ok(vec![SEffect::Let {
-            name: format!("ml_main_ignored{}", self.generated_count),
+            name: format!(
+                "{}temporary_main_ignored{}",
+                self.generated_prefix, self.generated_count
+            ),
             ty: None,
             value,
             constant: false,
@@ -715,7 +748,7 @@ impl JavaScriptParser {
     }
 
     pub(super) fn console_statement(&mut self) -> Result<SEffect> {
-        let (expr, place) = self.console_call()?;
+        let (expr, place) = self.console_call(true)?;
         Ok(SEffect::Print {
             expr,
             style: ShowStyle::JsConsole,
@@ -724,7 +757,7 @@ impl JavaScriptParser {
     }
 
     /// `console.log(expr);`: the printed expression and the statement's span.
-    fn console_call(&mut self) -> Result<(SExpr, Span)> {
+    fn console_call(&mut self, consume_semicolon: bool) -> Result<(SExpr, Span)> {
         let start = self.cursor.advance();
         self.lexical.read(&start, false, start.span());
         if !self.has_standard_builtin_owner(&start) {
@@ -744,7 +777,9 @@ impl JavaScriptParser {
             ));
         }
         let mut args = self.arguments("console.log")?;
-        self.cursor.eat(";");
+        if consume_semicolon {
+            self.cursor.eat(";");
+        }
         let place = self.to_here(&start);
         if args.len() > 1 {
             return Ok((console_format(args)?, place));

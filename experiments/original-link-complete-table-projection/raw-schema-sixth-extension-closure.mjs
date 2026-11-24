@@ -1,4 +1,5 @@
 // Authenticate the complete fifth schema before admitting one new root table.
+import {restoreOrderedRecordOwnedSource} from '../../js/scripts/ordered-record-schema-profile.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
@@ -58,7 +59,7 @@ export function verifyOriginalLinkRawSchemaSixthExtensionClosure(input,currentBy
   assert.deepEqual(Object.keys(authoredSources),[...ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES]);
   assert.deepEqual(sixth.authoring.sourceFiles.map(row=>row.file),[...ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES]);
   for(const row of sixth.authoring.sourceFiles){
-    assert.deepEqual(Object.keys(row),['file','bytes','sha256']);const bytes=authoredSources[row.file];assert.ok(Buffer.isBuffer(bytes));
+    assert.deepEqual(Object.keys(row),['file','bytes','sha256']);const bytes=restoreOrderedRecordOwnedSource(row.file,authoredSources[row.file]);assert.ok(Buffer.isBuffer(bytes));
     assert.equal(row.bytes,bytes.length);assert.equal(row.sha256,sha256(bytes));
   }
   assert.equal(sixth.scope,ORIGINAL_LINK_RAW_SCHEMA_SIXTH_EXTENSION_SCOPE);

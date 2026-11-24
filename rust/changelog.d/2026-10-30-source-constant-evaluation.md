@@ -1,0 +1,1 @@
+Draft bounded scalar Rust source-constant evaluation for literal and range patterns, using isolated declaration scopes, existing type inference and automatically translated shared value rules. Add deferred originals and typed fact controls. General const functions, mutable/aggregate and floating/character evaluation remain requirements.

@@ -182,19 +182,20 @@ pub fn read_embedded_region_ancestor(
         {
             let position = parent;
             {
-                let ml_s1 = self::ml_read_embedded_region_ancestor_loop1(
-                    parents, languages, starts, ends, language, start, end, position,
-                );
-                match ml_s1 {
-                        self::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Done(position_2) => {
+                let source_ml_source1_s1 =
+                    self::source_ml_temporary_read_embedded_region_ancestor_loop1(
+                        parents, languages, starts, ends, language, start, end, position,
+                    );
+                match source_ml_source1_s1 {
+                        self::MlTemporaryReadEmbeddedRegionAncestorLoop1Result::MlTemporaryReadEmbeddedRegionAncestorLoop1Done(position_2) => {
                             if position_2 == -1f64 {
                                 -1f64
                             } else {
                                 -2f64
                             }
                         }
-                        self::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Return(ml_result1) => {
-                            ml_result1
+                        self::MlTemporaryReadEmbeddedRegionAncestorLoop1Result::MlTemporaryReadEmbeddedRegionAncestorLoop1Return(source_ml_temporary_result1) => {
+                            source_ml_temporary_result1
                         }
                     }
             }
@@ -226,8 +227,19 @@ pub fn read_embedded_region_disposition(
     root_spelling_reuse: bool,
 ) -> String {
     if (self::accept_embedded_region_bounds(parent_start, parent_end, start, end)) {
-        if ancestor == -2f64 {
+        if ((ancestor != -1f64) && !(self::accept_embedded_region_limit(ancestor)))
+            || (!(self::accept_embedded_region_limit(parent_language))
+                || !(self::accept_embedded_region_limit(language)))
+        {
             String::from("invalidEmbeddedRegionAncestry")
+        } else if ((((!(self::accept_embedded_region_limit(depth))
+            || !(self::accept_embedded_region_limit(count)))
+            || !(self::accept_embedded_region_limit(bytes)))
+            || !(self::accept_embedded_region_limit(depth_limit)))
+            || !(self::accept_embedded_region_limit(count_limit)))
+            || !(self::accept_embedded_region_limit(byte_limit))
+        {
+            String::from("invalidEmbeddedRegionLimits")
         } else {
             {
                 let same_host = (((parent_language).partial_cmp(&(language))
@@ -244,14 +256,6 @@ pub fn read_embedded_region_disposition(
                             (same_host && (depth == 1f64)) && !root_spelling_reuse;
                         if (ancestor >= 0f64) && !legacy_root_alias {
                             String::from("nonConsumingEmbeddingCycle")
-                        } else if ((((!(self::accept_embedded_region_limit(depth))
-                            || !(self::accept_embedded_region_limit(count)))
-                            || !(self::accept_embedded_region_limit(bytes)))
-                            || !(self::accept_embedded_region_limit(depth_limit)))
-                            || !(self::accept_embedded_region_limit(count_limit)))
-                            || !(self::accept_embedded_region_limit(byte_limit))
-                        {
-                            String::from("invalidEmbeddedRegionLimits")
                         } else if depth > depth_limit {
                             String::from("embeddedRegionDepthLimit")
                         } else if count >= count_limit {
@@ -342,9 +346,9 @@ pub const fn accept_embedded_region_source_coverage(start: f64, covered_until: f
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadEmbeddedRegionAncestorLoop1Result {
-    MlReadEmbeddedRegionAncestorLoop1Done(f64),
-    MlReadEmbeddedRegionAncestorLoop1Return(f64),
+pub enum MlTemporaryReadEmbeddedRegionAncestorLoop1Result {
+    MlTemporaryReadEmbeddedRegionAncestorLoop1Done(f64),
+    MlTemporaryReadEmbeddedRegionAncestorLoop1Return(f64),
 }
 
 /// Execute the checked shared source algorithm.
@@ -354,7 +358,7 @@ pub enum MlReadEmbeddedRegionAncestorLoop1Result {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_read_embedded_region_ancestor_loop1(
+pub fn source_ml_temporary_read_embedded_region_ancestor_loop1(
     parents: &[f64],
     languages: &[f64],
     starts: &[f64],
@@ -363,38 +367,38 @@ pub fn ml_read_embedded_region_ancestor_loop1(
     mut start: f64,
     mut end: f64,
     mut position: f64,
-) -> self::MlReadEmbeddedRegionAncestorLoop1Result {
+) -> self::MlTemporaryReadEmbeddedRegionAncestorLoop1Result {
     loop {
         return if position >= 0f64 {
             if !(self::accept_embedded_region_limit(position))
                 || (position >= (parents.len() as f64))
             {
-                self::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Return(-2f64)
+                self::MlTemporaryReadEmbeddedRegionAncestorLoop1Result::MlTemporaryReadEmbeddedRegionAncestorLoop1Return(-2f64)
             } else {
                 {
                     let previous = (self::ml_array::optional_at(
                         parents,
                         self::ml_array::number_index(position),
                     ))
-                    .unwrap_or(f64::NAN);
+                    .unwrap_or_else(|| f64::NAN);
                     {
                         let selected_language = (self::ml_array::optional_at(
                             languages,
                             self::ml_array::number_index(position),
                         ))
-                        .unwrap_or(f64::NAN);
+                        .unwrap_or_else(|| f64::NAN);
                         {
                             let selected_start = (self::ml_array::optional_at(
                                 starts,
                                 self::ml_array::number_index(position),
                             ))
-                            .unwrap_or(f64::NAN);
+                            .unwrap_or_else(|| f64::NAN);
                             {
                                 let selected_end = (self::ml_array::optional_at(
                                     ends,
                                     self::ml_array::number_index(position),
                                 ))
-                                .unwrap_or(f64::NAN);
+                                .unwrap_or_else(|| f64::NAN);
                                 if ((previous != -1f64)
                                     && (!(self::accept_embedded_region_limit(previous))
                                         || (previous >= position)))
@@ -406,12 +410,12 @@ pub fn ml_read_embedded_region_ancestor_loop1(
                                             selected_end,
                                         )))
                                 {
-                                    self::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Return(-2f64)
+                                    self::MlTemporaryReadEmbeddedRegionAncestorLoop1Result::MlTemporaryReadEmbeddedRegionAncestorLoop1Return(-2f64)
                                 } else if ((selected_language == language)
                                     && (selected_start == start))
                                     && (selected_end == end)
                                 {
-                                    self::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Return(position)
+                                    self::MlTemporaryReadEmbeddedRegionAncestorLoop1Result::MlTemporaryReadEmbeddedRegionAncestorLoop1Return(position)
                                 } else {
                                     {
                                         let position_2 = previous;
@@ -427,9 +431,7 @@ pub fn ml_read_embedded_region_ancestor_loop1(
                 }
             }
         } else {
-            self::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Done(
-                position,
-            )
+            self::MlTemporaryReadEmbeddedRegionAncestorLoop1Result::MlTemporaryReadEmbeddedRegionAncestorLoop1Done(position)
         };
     }
 }

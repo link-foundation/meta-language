@@ -1,6 +1,8 @@
 import {readRuntimeProjectData} from './project-data-loader.js';
 import {acceptSourceSpanOffset,acceptSourceSpanInterval} from './source-span-rules.js';
 
+import {readTypedProgramOwnerTraversal} from './typed-program-source-owners.js';
+
 export const SOURCE_SPAN_POLICY=readRuntimeProjectData(new URL('./translation/data/source-span.lino',import.meta.url));
 
 /** Adapt a represented source span to the shared numerical decisions. */
@@ -18,18 +20,20 @@ export function acceptSourceSpanRecord(value) {
 }
 
 /** Inspect named source-span data without invoking accessors or iterator overrides. */
-export function validateSourceSpans(root) {
+export function validateSourceSpans(root, sourceOwners) {
   const visited=new WeakSet(),pending=[[root,0]];
   const main=root&&typeof root==='object'?Object.getOwnPropertyDescriptor(root,'main'):undefined;
   const legacyMain=main&&Object.hasOwn(main,'value')?main.value:undefined;
-  let visits=0;
+  const traversal = readTypedProgramOwnerTraversal(root, sourceOwners,
+    'the linked program exceeds its source-span resource limit');
   while(pending.length){
-    const [value,depth]=pending.pop();
+    const [value,depth,owner]=pending.pop();
     if(!value||typeof value!=='object'||visited.has(value))continue;
-    if(depth>256||++visits>100_000)throw new TypeError('the linked program exceeds its source-span resource limit');
+    if(depth>256)throw new TypeError('the linked program exceeds its source-span resource limit');
+    traversal.visit(owner);
     visited.add(value);
     if(value instanceof Map){
-      for(const [key,child] of Map.prototype.entries.call(value))pending.push([key,depth+1],[child,depth+1]);
+      for(const [key,child] of Map.prototype.entries.call(value))pending.push([key,depth+1,owner],[child,depth+1,traversal.childOwner(value,child,owner)]);
       continue;
     }
     for(const field of Reflect.ownKeys(value)){
@@ -38,7 +42,7 @@ export function validateSourceSpans(root) {
       // check their own complete shape first; false never becomes a span.
       const legacyMainMetadata=value===legacyMain&&descriptor.value===false;
       if(field===SOURCE_SPAN_POLICY.role&&(!Object.hasOwn(descriptor,'value')||descriptor.value!=null&&!legacyMainMetadata&&!acceptSourceSpanRecord(descriptor.value)))throw new TypeError('a linked source span is invalid');
-      if(Object.hasOwn(descriptor,'value'))pending.push([descriptor.value,depth+1]);
+      if(Object.hasOwn(descriptor,'value'))pending.push([descriptor.value,depth+1,traversal.childOwner(value,descriptor.value,owner)]);
     }
   }
 }

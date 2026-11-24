@@ -34,19 +34,23 @@ fn omitted_arguments_receive_defaults_in_every_target() {
 }
 
 #[test]
-fn defaults_refuse_parameter_references_and_required_parameters_after_defaults() {
-    for (source, expected) in [
+fn defaults_admit_parameter_references_and_required_parameters_after_defaults() {
+    super::translation_javascript_object_binding_declarations::require_supported_rust_version();
+    // Complete predecessor assertions and unchanged inputs remain in the shared Links fixture.
+    for (source, invocation) in [
         (
             "function f(a = 1, b) { return b; }",
-            "parameter b after a default",
+            "console.log(f(undefined,7));",
         ),
-        (
-            "function f(a, b = a) { return b; }",
-            "default reading parameter a",
-        ),
+        ("function f(a, b = a) { return b; }", "console.log(f(1));"),
     ] {
-        let error = parse_javascript(source).unwrap_err();
-        assert!(error.message().contains(expected), "{error}");
+        parse_javascript(source).expect("the actual ordinary parameter source is now admitted");
+        let source = format!("{source}{invocation}");
+        for target in ["Rust", "Lean", "Rocq"] {
+            let translated = translate_program(&source, "JavaScript", target)
+                .expect("actual dependent default source translation");
+            assert_eq!(translated.diagnostic(), None, "{source}: {target}");
+        }
     }
 }
 
@@ -109,23 +113,23 @@ fn omitted_arguments_fill_trailing_defaults_and_all_emitters_accept_them() {
 }
 
 #[test]
-fn defaults_reject_parameter_dependencies_and_nondefault_trailing_parameters() {
-    for (source, reason) in [
-        (
-            "function f(a, b = a) { return b; }",
-            "default reading parameter a",
-        ),
+fn defaults_admit_parameter_dependencies_and_nondefault_trailing_parameters() {
+    super::translation_javascript_object_binding_declarations::require_supported_rust_version();
+    // Complete predecessor assertions and unchanged inputs remain in the shared Links fixture.
+    for (source, invocation) in [
         (
             "function f(a = 1, b) { return b; }",
-            "parameter b after a default",
+            "console.log(f(undefined,7));",
         ),
+        ("function f(a, b = a) { return b; }", "console.log(f(1));"),
     ] {
-        assert!(
-            parse_javascript(source)
-                .unwrap_err()
-                .message()
-                .contains(reason)
-        );
+        parse_javascript(source).expect("the actual ordinary parameter source is now admitted");
+        let source = format!("{source}{invocation}");
+        for target in ["Rust", "Lean", "Rocq"] {
+            let translated = translate_program(&source, "JavaScript", target)
+                .expect("actual dependent default source translation");
+            assert_eq!(translated.diagnostic(), None, "{source}: {target}");
+        }
     }
 }
 
@@ -139,14 +143,18 @@ fn unicode_escape_scalars_match_the_javascript_oracle_and_rust_frontend() {
         "😀éé\n"
     );
     parse_rust("fn main() { println!(\"\\u{1f600}\\u{e9}\"); }").unwrap();
-    for source in ["console.log('\\ud83d');", "console.log('\\u{110000}');"] {
-        assert!(
-            parse_javascript(source)
-                .unwrap_err()
-                .message()
-                .contains("scalar values only")
-        );
-    }
+    // ECMAScript 2025 StringLiteral SV retains isolated UTF-16 units and
+    // classifies values above 0x10FFFF as syntax errors. Both original
+    // inputs formerly expected "scalar values only" and remain here.
+    let isolated = "console.log('\\ud83d');";
+    let literal = check_program(&parse_javascript(isolated).unwrap()).unwrap();
+    assert_eq!(
+        javascript_output(&emit_javascript(&literal).unwrap().text),
+        javascript_output(isolated)
+    );
+    let failure = parse_javascript("console.log('\\u{110000}');").unwrap_err();
+    assert_eq!(failure.kind.as_str(), "syntax");
+    assert!(failure.message().contains("malformed unicode escape"));
     assert!(
         parse_javascript("console.log('\\uXYZZ');")
             .unwrap_err()
@@ -387,6 +395,13 @@ fn optional_documentation_names_preserve_types_and_runtime_defaults() {
 
 #[test]
 fn type_queries_preserve_bound_value_names_without_discarding_evaluation() {
+    super::translation_javascript_object_binding_declarations::require_supported_rust_version();
+    let version = javascript_output("console.log(process.versions.node);");
+    let parts = version.trim().split('.').collect::<Vec<_>>();
+    assert!(
+        parts[0] == "22" && parts[1].parse::<u32>().unwrap() >= 15 || parts[0] == "24",
+        "uncovered Node {version}; >=22.15 <23 or >=24 <25"
+    );
     let source = "/** @param {number} value @returns {string} */\nfunction numberType(value) { return typeof value; }\n/** @param {bigint} value @returns {string} */\nfunction integerType(value) { return typeof value; }\n/** @param {string} value @returns {string} */\nfunction stringType(value) { return typeof value; }\n/** @param {boolean} value @returns {string} */\nfunction booleanType(value) { return typeof value; }\n/** @param {number[]} value @returns {string} */\nfunction arrayType(value) { return typeof value; }\nconsole.log('%s', numberType(7), integerType(7n), stringType('ready'), booleanType(false), arrayType([]), typeof 7, typeof 7n, typeof false, typeof 'ready');\n";
     let expected = "number bigint string boolean object number bigint boolean string\n";
     let program = check_program(&parse_javascript(source).unwrap()).unwrap();
@@ -403,23 +418,37 @@ fn type_queries_preserve_bound_value_names_without_discarding_evaluation() {
             None
         );
     }
-    for (source, reason) in [
-        (
-            "function fail() { throw new Error('preserve'); } console.log(typeof fail());",
-            "typeof operand",
-        ),
-        ("console.log(typeof [1]);", "typeof operand"),
-    ] {
+    // Preserve both former refusal originals; explicit evaluation now supplies
+    // the previously missing semantics (ECMAScript 2025, 13.5.3.1).
+    for (index, source) in [
+        "function fail() { throw new Error('preserve'); } console.log(typeof fail());",
+        "console.log(typeof [1]);",
+    ]
+    .into_iter()
+    .enumerate()
+    {
         for target in ["Rust", "Lean", "Rocq"] {
             let translated = translate_program(source, "JavaScript", target).unwrap();
-            let Some(diagnostic) = translated.diagnostic() else {
-                panic!("{target}: expected {reason} rejection for {source}")
-            };
-            assert!(
-                diagnostic.message.contains(reason),
-                "{target}: {source}: {}",
-                diagnostic.message
-            );
+            assert_eq!(translated.diagnostic(), None, "{target}: {source}");
+        }
+        let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+        let emitted = emit_javascript(&program).unwrap().text;
+        for text in [source, emitted.as_str()] {
+            let observed = Command::new("node")
+                .args(["--input-type=module", "-e", text])
+                .output()
+                .unwrap();
+            if index == 0 {
+                assert!(!observed.status.success());
+                assert!(String::from_utf8_lossy(&observed.stderr).contains("Error: preserve"));
+            } else {
+                assert!(
+                    observed.status.success(),
+                    "{}",
+                    String::from_utf8_lossy(&observed.stderr)
+                );
+                assert_eq!(String::from_utf8(observed.stdout).unwrap(), "object\n");
+            }
         }
     }
     let source = "function answer() { return 7; } console.log(typeof answer);";

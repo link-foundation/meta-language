@@ -97,7 +97,8 @@ export function satisfies(version, requirement, syntax) {
       .every((comparator) => holds(version, comparator));
   }
   if (syntax === 'npm') {
-    return requirement.split('||').some((alternative) => {
+    const range = requirement.match(/^npm:(?:@[^/]+\/)?[^@]+@(.+)$/u)?.[1] ?? requirement;
+    return range.split('||').some((alternative) => {
       const hyphen = alternative.match(/^\s*(\S+)\s+-\s+(\S+)\s*$/u);
       const comparators = hyphen
         ? [...parseComparator(`>=${hyphen[1]}`, '='), ...parseComparator(`<=${hyphen[2]}`, '=')]

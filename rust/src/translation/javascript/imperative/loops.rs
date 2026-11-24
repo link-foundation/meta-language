@@ -2,8 +2,8 @@
 use super::{
     Alternative, Ctx, Fall, Give, HashSet, Jump, Lowering, ROOT, Rc, Result, SCtor, SData, SExpr,
     SFn, SItem, SNode, SParam, Site, Stmt, TranslationError, Uses, Var, ctor_row, flat, infinite,
-    internal, let_node, list_exits, loop_parts, named, node, renamed, statement_uses, untyped,
-    visible,
+    internal, let_node, list_exits, loop_parts, lower_tag_if, named, node, renamed, statement_uses,
+    tag_condition, untyped, visible,
 };
 
 impl Lowering {
@@ -128,7 +128,7 @@ impl Lowering {
             let body = (ctx.fall)(self, scope)?;
             rows.push(ctor_row(&data, &done, &variables, body, place));
             if returns {
-                let value = format!("ml_result{}", self.count);
+                let value = format!("{}temporary_result{}", self.prefix, self.count);
                 let returned = format!("{name}_return");
                 ctors.push(SCtor {
                     name: returned.clone(),
@@ -148,7 +148,10 @@ impl Lowering {
                 ctors,
                 span: Some(place),
                 generated: true,
+                source_standard_collection_library_owner: None,
+                source_standard_collection_carrier: None,
                 source_unit_clone_derivation: None,
+                source_field_signatures: None,
             }));
             let call = Rc::clone(&call);
             let site: Site = Box::new(move |_| {
@@ -194,6 +197,9 @@ impl Lowering {
             };
             let cond = renamed(cond, &loop_scope)?;
             let otherwise = finish(lowering)?;
+            if let Some(tag) = tag_condition(&cond) {
+                return lower_tag_if(&tag.clone(), then, otherwise, place);
+            }
             Ok(node(
                 SNode::If {
                     cond: Box::new(cond),
@@ -216,6 +222,9 @@ impl Lowering {
                     };
                     let cond = renamed(cond, &loop_scope)?;
                     let otherwise = finish(lowering)?;
+                    if let Some(tag) = tag_condition(&cond) {
+                        return lower_tag_if(&tag.clone(), then, otherwise, place);
+                    }
                     Ok(node(
                         SNode::If {
                             cond: Box::new(cond),
@@ -240,6 +249,11 @@ impl Lowering {
             test(self, body)?
         };
         self.generated.push(SItem::Fn(SFn {
+            source_state_transform: None,
+            source_vector_mutation: None,
+            source_fn_mut_specialization: None,
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             semantic_ret: None,
             name,
             params: params
@@ -266,6 +280,7 @@ impl Lowering {
             body: fn_body,
             span: Some(place),
             generated: true,
+            source_standard_collection_library_owner: None,
             source_pure_unit: None,
         }));
         call_site(self)

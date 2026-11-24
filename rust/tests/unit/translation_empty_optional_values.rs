@@ -15,6 +15,46 @@ use std::fs;
 use std::process::Command;
 
 #[test]
+fn nominal_optional_guards_preserve_present_values_and_absence() {
+    let fixture = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/javascript-optional-chains.lino"
+    ))
+    .expect("the shared optional chain fixtures");
+    let directory = TemporaryDirectory::new("guarded-optional-result");
+    let source = directory.0.join("guards.rs");
+    let binary = directory.0.join("guards");
+    let mut modules = Vec::new();
+    for row in fixture["cases"].as_array().expect("the actual cases") {
+        let name = row["name"].as_str().expect("the case name");
+        if !name.starts_with("guarded nominal projection") {
+            continue;
+        }
+        let input = row["source"]
+            .as_str()
+            .expect("the original JavaScript source");
+        let program = check_program(&parse_javascript(input).expect(name)).expect(name);
+        let emitted = emit_rust(&program).expect(name);
+        let expected = row["value"].as_str().expect("the expected value");
+        modules.push(format!(
+            "mod guard_{} {{\n{}\n#[test] fn observe() {{ assert_eq!(compute().to_string(), {expected:?}); }}\n}}",
+            modules.len(),
+            emitted.text
+        ));
+    }
+    assert_eq!(modules.len(), 5);
+    fs::write(&source, modules.join("\n")).unwrap();
+    let compiled = run(Command::new("rustc")
+        .args(["--edition=2024", "--test"])
+        .arg(&source)
+        .arg("-o")
+        .arg(&binary));
+    assert!(compiled.ok, "{}", compiled.stderr);
+    let observed = run(&mut Command::new(&binary));
+    assert!(observed.ok, "{}\n{}", observed.stdout, observed.stderr);
+    assert!(observed.stdout.contains("5 passed"), "{}", observed.stdout);
+}
+
+#[test]
 fn the_empty_value_preserves_its_number_element_and_undefined_policy() {
     let surface = parse_javascript("function empty(){return undefined;}").unwrap();
     let program = check_program(&surface).unwrap();

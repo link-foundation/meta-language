@@ -34,7 +34,7 @@ use std::fmt;
 use std::fmt::Write as _;
 use std::sync::Arc;
 
-use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
+use links_notation::{LiNo, ParserConfig, StreamParser, parse_lino_to_links_with_config};
 
 use crate::link_flags::LinkFlags;
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
@@ -74,7 +74,13 @@ impl LinkNetwork {
             self.terms.values().map(|id| id.0).collect();
         let mut output = String::new();
         for link in self.links.values() {
-            encode_link(link, registered.contains(&link.id.0), &mut output);
+            encode_link(
+                link.id,
+                &link.references,
+                &link.metadata,
+                registered.contains(&link.id.0),
+                &mut output,
+            );
             output.push('\n');
         }
         output
@@ -90,64 +96,145 @@ impl LinkNetwork {
         let statements = parse_lino_to_links_with_config(text, &ParserConfig::without_comments())
             .map_err(|error| LinoSerializationError::Parse(error.to_string()))?;
         let mut network = Self::new();
-        for statement in &statements {
-            let LiNo::Link {
-                id: Some(id),
-                values,
-            } = statement
-            else {
-                return Err(LinoSerializationError::Structure(
-                    "top-level statement must be an identified link".to_string(),
-                ));
-            };
-            let link_id = LinkId(parse_u64(id)?);
-            let mut references = Vec::new();
-            let mut meta_values: Option<&Vec<LiNo<String>>> = None;
-            for value in values {
-                match value {
-                    LiNo::Ref(reference) => references.push(LinkId(parse_u64(reference)?)),
-                    LiNo::Link {
-                        id: Some(key),
-                        values: fields,
-                    } if key == "meta" => meta_values = Some(fields),
-                    LiNo::Link { .. } => {
-                        return Err(LinoSerializationError::Structure(
-                            "statement values must be references or a meta sublink".to_string(),
-                        ));
-                    }
-                }
-            }
-            let meta_values = meta_values.ok_or_else(|| {
-                LinoSerializationError::Structure(
-                    "statement is missing its meta sublink".to_string(),
-                )
-            })?;
-            let (metadata, registered) = decode_meta(meta_values)?;
-            if registered && let Some(term) = metadata.term() {
-                network.terms.insert(Arc::from(term), link_id);
-            }
-            network.next_id = network.next_id.max(link_id.0 + 1);
-            network.links.insert(
-                link_id,
-                Arc::new(Link {
-                    id: link_id,
-                    references: Arc::from(references),
-                    metadata,
-                }),
-            );
+        for statement in statements {
+            network.insert_lino_statement(statement, None)?;
         }
         Ok(network)
+    }
+
+    pub(crate) fn from_bounded_lino(
+        text: &str,
+        byte_limit: usize,
+        node_limit: usize,
+        reference_limit: usize,
+    ) -> Result<Self, LinoSerializationError> {
+        if byte_limit == 0 || node_limit == 0 || reference_limit == 0 || text.len() > byte_limit {
+            return Err(LinoSerializationError::Structure(
+                "text needs positive budgets and must fit its byte budget".to_owned(),
+            ));
+        }
+        let parse_error = |error: links_notation::StreamParseError| {
+            LinoSerializationError::Parse(error.to_string())
+        };
+        let mut parser =
+            StreamParser::with_config(ParserConfig::without_comments().with_max_depth(16));
+        parser.set_collect(false);
+        parser
+            .set_max_buffer_size(byte_limit)
+            .map_err(parse_error)?;
+        let mut network = Self::new();
+        let mut remaining = reference_limit;
+        let mut insert = |statements: Vec<LiNo<String>>| {
+            for statement in statements {
+                if network.links.len() >= node_limit {
+                    return Err(LinoSerializationError::Structure(
+                        "node budget exceeded before insertion".to_owned(),
+                    ));
+                }
+                network.insert_lino_statement(statement, Some(&mut remaining))?;
+            }
+            Ok(())
+        };
+        let mut at = 0;
+        while at < text.len() {
+            let mut end = (at + 64 * 1024).min(text.len());
+            while !text.is_char_boundary(end) {
+                end -= 1;
+            }
+            insert(parser.write(&text[at..end]).map_err(parse_error)?)?;
+            at = end;
+        }
+        insert(parser.finish().map_err(parse_error)?)?;
+        for link in network.links() {
+            if link
+                .references()
+                .iter()
+                .any(|reference| network.link(*reference).is_none())
+            {
+                return Err(LinoSerializationError::Structure(
+                    "dangling actual link reference".to_owned(),
+                ));
+            }
+        }
+        Ok(network)
+    }
+
+    fn insert_lino_statement(
+        &mut self,
+        statement: LiNo<String>,
+        remaining: Option<&mut usize>,
+    ) -> Result<(), LinoSerializationError> {
+        let LiNo::Link {
+            id: Some(id),
+            values,
+        } = &statement
+        else {
+            return Err(LinoSerializationError::Structure(
+                "top-level statement must be an identified link".to_string(),
+            ));
+        };
+        let link_id = LinkId(parse_u64(id)?);
+        let mut references = Vec::new();
+        let mut meta_values: Option<&Vec<LiNo<String>>> = None;
+        for value in values {
+            match value {
+                LiNo::Ref(reference) => references.push(LinkId(parse_u64(reference)?)),
+                LiNo::Link {
+                    id: Some(key),
+                    values: fields,
+                } if key == "meta" => meta_values = Some(fields),
+                LiNo::Link { .. } => {
+                    return Err(LinoSerializationError::Structure(
+                        "statement values must be references or a meta sublink".to_string(),
+                    ));
+                }
+            }
+        }
+        let meta_values = meta_values.ok_or_else(|| {
+            LinoSerializationError::Structure("statement is missing its meta sublink".to_string())
+        })?;
+        let (metadata, registered) = decode_meta(meta_values)?;
+        if let Some(remaining) = remaining {
+            if self.link(link_id).is_some() {
+                return Err(LinoSerializationError::Structure(
+                    "duplicate actual link identity".to_owned(),
+                ));
+            }
+            *remaining = remaining.checked_sub(references.len()).ok_or_else(|| {
+                LinoSerializationError::Structure(
+                    "reference budget exceeded before insertion".to_owned(),
+                )
+            })?;
+        }
+        if registered && let Some(term) = metadata.term() {
+            self.terms.insert(Arc::from(term), link_id);
+        }
+        self.observe_identifier(link_id);
+        self.links.insert(
+            link_id,
+            Arc::new(Link {
+                id: link_id,
+                references: Arc::from(references),
+                metadata,
+            }),
+        );
+        Ok(())
     }
 }
 
 /// Writes one `(<id>: <refs> (meta: ...))` statement into `output`.
-fn encode_link(link: &Link, registered: bool, output: &mut String) {
-    write!(output, "({}:", link.id.0).expect("writing to a String never fails");
-    for reference in link.references.iter() {
+pub(crate) fn encode_link(
+    id: LinkId,
+    references: &[LinkId],
+    metadata: &LinkMetadata,
+    registered: bool,
+    output: &mut String,
+) {
+    write!(output, "({}:", id.0).expect("writing to a String never fails");
+    for reference in references {
         write!(output, " {}", reference.0).expect("writing to a String never fails");
     }
     output.push_str(" (meta:");
-    let metadata = &link.metadata;
     if let Some(link_type) = metadata.link_type() {
         write!(output, " (t: {link_type})").expect("writing to a String never fails");
     }

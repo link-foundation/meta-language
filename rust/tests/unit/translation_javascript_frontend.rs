@@ -98,12 +98,15 @@ fn documented_collections_preserve_nested_type_arguments_and_exact_arities() {
         (
             "{items: Map<string, Set<number[]>>}",
             Type::Record {
+                source_class_owner: None,
                 fields: vec![meta_language::translation::types::TypeField {
+                    optional: false,
                     name: "items".to_owned(),
                     ty: nested,
                 }],
                 open: false,
                 reference: false,
+                ordered: false,
             },
         ),
     ] {
@@ -393,6 +396,70 @@ fn uses_that_need_different_types_are_type_errors() {
         (vec![Some(FLOAT)], Some(BOOL))
     );
     preserves_javascript_translation_behavior(&extended, "false\ntrue\ntrue\ntrue\nfalse\nfalse\n");
+}
+
+#[test]
+fn structural_spread_preserves_optional_record_own_membership() {
+    preserves_javascript_translation_behavior(
+        r#"
+/** @typedef {{value?:number}} Shape */
+/** @param {boolean} own @returns {Shape} */
+function make(own) { return own ? {value:undefined} : {}; }
+/** @param {Shape} source @returns {Shape} */
+function copy(source) { return {value:7,...source}; }
+/** @returns {Shape} */
+function widen() { const original={value:3}; return original; }
+const missing=make(false), explicit=make(true);
+const left=copy(missing), right=copy(explicit);
+console.log(!Object.hasOwn(missing,'value') && Object.hasOwn(explicit,'value') &&
+  left.value===7 && Object.hasOwn(right,'value') && (right.value ?? 8)===8 &&
+  Object.hasOwn(widen(),'value') && widen().value===3);
+"#,
+        "true\n",
+    );
+}
+
+#[test]
+fn java_script_tag_reads_dispatch_on_the_present_optional_owner() {
+    preserves_javascript_translation_behavior(
+        r#"
+/** @typedef {{$:'trunk',value:number}|{$:'twig'}} Tree */
+/** @param {Tree|null|undefined} tree @returns {boolean} */
+function read(tree) { return tree.$==='twig'; }
+/** @returns {Tree} */
+function twig() { return {$:'twig'}; }
+/** @returns {Tree} */
+function trunk() { return {$:'trunk',value:3}; }
+console.log(read(twig()));
+console.log(read(trunk()));
+"#,
+        "true\nfalse\n",
+    );
+}
+
+#[test]
+fn short_circuit_guards_exclude_both_absences_before_a_tag_read() {
+    preserves_javascript_translation_behavior(
+        r#"
+/** @typedef {{$:'trunk',value:number}|{$:'twig'}} Tree */
+/** @param {Tree} tree @returns {boolean} */
+function isTwig(tree) { return tree.$==='twig'; }
+/** @param {Tree|null|undefined} tree @returns {boolean} */
+function compute(tree) {
+ if(tree===null || tree===undefined || tree.$!=='twig')return false;
+ return isTwig(tree);
+}
+/** @returns {Tree} */
+function twig() { return {$:'twig'}; }
+/** @returns {Tree} */
+function trunk() { return {$:'trunk',value:3}; }
+console.log(compute(null));
+console.log(compute(undefined));
+console.log(compute(twig()));
+console.log(compute(trunk()));
+"#,
+        "false\nfalse\ntrue\nfalse\n",
+    );
 }
 
 #[test]

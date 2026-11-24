@@ -29,7 +29,16 @@ export const OVERLAY_PROVIDER_APPEND_REVIEW=Object.freeze({
  review:'Reviewed the complete Rust emitter successor against8ef026a395ebbbc415f948777f7f6f7e082a572e: optional nonserialized definition-ownership capture records actual complete emitted blocks/source spans/mapping intervals/targets, and a thin external-target reader uses the actual normal emitter naming path. Default output, complete original function bodies, source mappings and exact decorator actions retain their existing independent tests. Only this complete79595-byte source is admitted by this review; its full source inverse restores every predecessor byte. This is source succession and review, not semantic equivalence, native compilation or execution evidence.',
 });
 export const OVERLAY_PROVIDER_REFERENCE_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-reference-provider-review.lino',import.meta.url)));
-const packetSha256='5657e1cc9cda5c71717c245fe43a562dda8bc7a3811d352603acee5d26be7913';
+export const OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-optional-domain-provider-review.lino',import.meta.url)));
+export const OVERLAY_PROVIDER_SHARED_ARRAY_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-shared-array-provider-review.lino',import.meta.url)));
+export const OVERLAY_PROVIDER_ORDERED_SOURCE_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-ordered-source-provider-review.lino',import.meta.url)));
+export const OVERLAY_PROVIDER_ROOT_IDENTIFIER_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-root-identifier-provider-review.lino',import.meta.url)));
+export function readReviewedOverlayProviderReview(previous){
+  const reviews=[OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW,OVERLAY_PROVIDER_SHARED_ARRAY_REVIEW,OVERLAY_PROVIDER_ORDERED_SOURCE_REVIEW,OVERLAY_PROVIDER_ROOT_IDENTIFIER_REVIEW].filter(row=>row.previous===previous);
+  assert.equal(reviews.length,1,'a source epoch requires exactly one independently reviewed predecessor');
+  return reviews[0];
+}
+const packetSha256='8d2af125d0fb5ac82a14b7ebef8b40fd1c4b997a3e4d61475fe2f260f90077e5';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:hash(value)});
 const exactKeys=(value,keys)=>assert.deepEqual(Object.keys(value).sort(),[...keys].sort());
@@ -43,6 +52,41 @@ export function replayOverlayProviderHost(source){
   assert.equal(inverse,source);return current;
 }
 
+// Historical packets keep their original recipes. The current codec uses an
+// archive-aware return path and passes the linked source-owner context onward.
+export const ROOT_IDENTIFIER_PROVIDER_REVISION='3b9878b524d08f678da62d1eb52b9df8beea4c6c';
+const currentHookReplacements=[
+  ['  return { network, root };', '  if (shapeWriter) shapeWriter.finish(root);'],
+  ['function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, depthLimit = 256 } = {}) {',
+   'function decodeTypedProgramLinksContext(network, root, { nodeLimit, depthLimit = 256, wholeProgram = false } = {}) {'],
+  ['export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {',
+   'export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap(), sourceOwners } = {}) {'],
+  ['export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {',
+   'export function recheckLinkedTypedProgram(program, {wholeProgram=false, sourceOwners}={}) {'],
+];
+
+export function currentOverlayProviderDecorators(original,module,source){
+  const {decorators}=DecoratorSet.fromLino(original);
+  return new DecoratorSet(decorators.map(row=>({...row,actions:row.actions.map((action,index)=>{
+    if(index===0){
+      const current=source.split('\n',1)[0];
+      assert.ok(action.to.endsWith('\n'+action.from),'the import hook must preserve the original first line: '+module);
+      return {...action,from:current,to:action.to.slice(0,-action.from.length)+current};
+    }
+    const hook=currentHookReplacements.find(([from])=>action.from===from);
+    if(!hook)return action;
+    const [previous,current]=hook;
+    assert.equal(source.split(current).length,2,'the current overlay hook must have one exact owner: '+module);
+    let to=action.to.replace(previous,()=>current);
+    if(previous==='  return { network, root };'){
+      to=current+'\n  decodeRustTextCertificateFacet(network, root);';
+    }
+    to=to.replace('{graphPatterns, patternScopes}', '{graphPatterns, patternScopes, sourceOwners}')
+      .replace('{wholeProgram:true}', '{wholeProgram:true,sourceOwners}');
+    return {...action,from:current,to};
+  })}))).toLino();
+}
+
 /** Replay the EXISTING recorded exact-source recipes, retaining every action.
  * The normal model authors independently regenerate these same current rows. */
 export function deriveReviewedOverlayProviderReceipts(packet){
@@ -53,8 +97,10 @@ export function deriveReviewedOverlayProviderReceipts(packet){
     const current=records.map(row=>{
       assert.equal(row.providerRevision,OVERLAY_PROVIDER_PREVIOUS_REVISION);
       const source=sources.get(row.module);assert.equal(typeof source,'string');
-      const decorated=DecoratorSet.fromLino(row.decorators).decorate('translation-rule',{module:row.module,source}).source;
-      return{...row,sourceSha256:hash(source),overlaySha256:hash(decorated),providerRevision:profile.sourceCommit};
+      const decorators=profile.sourceCommit===ROOT_IDENTIFIER_PROVIDER_REVISION
+        ? currentOverlayProviderDecorators(row.decorators,row.module,source) : row.decorators;
+      const decorated=DecoratorSet.fromLino(decorators).decorate('translation-rule',{module:row.module,source}).source;
+      return{...row,decorators,sourceSha256:hash(source),overlaySha256:hash(decorated),providerRevision:profile.sourceCommit};
     });
     const source=serializeProjectData(current,original.file);
     return{file:original.file,...pin(source),source};
@@ -115,9 +161,16 @@ export function verifyReviewedOverlayProviderSuccessionHistory(packet){
   return packet;
 }
 
+function reviewedOverlayProviderHistory(){
+  if(!cached){
+    const file=new URL(OVERLAY_PROVIDER_SUCCESSOR_OUTPUT,root),bytes=readFileSync(file);
+    assert.equal(hash(bytes),packetSha256);
+    cached=verifyReviewedOverlayProviderSuccessionHistory(readProjectData(file));
+  }
+  return cached;
+}
 export function readReviewedOverlayProviderSuccessionHistory(){
-  if(!cached){const bytes=readFileSync(new URL(OVERLAY_PROVIDER_SUCCESSOR_OUTPUT,root));assert.equal(hash(bytes),packetSha256);cached=verifyReviewedOverlayProviderSuccessionHistory(readProjectData(new URL(OVERLAY_PROVIDER_SUCCESSOR_OUTPUT,root)));}
-  return structuredClone(cached);
+  return structuredClone(reviewedOverlayProviderHistory());
 }
 export function verifyCurrentReviewedOverlayProviderSources(packet){
   for(const row of packet.profiles.at(-1).certificates)assert.equal(row.current.source,readFileSync(new URL('js/src/'+row.module,root),'utf8'),
@@ -128,7 +181,10 @@ export function verifyReviewedOverlayProviderSuccession(packet){
   return verifyCurrentReviewedOverlayProviderSources(verifyReviewedOverlayProviderSuccessionHistory(packet));
 }
 export function readReviewedOverlayProviderSuccession(){
-  return verifyCurrentReviewedOverlayProviderSources(readReviewedOverlayProviderSuccessionHistory());
+  return structuredClone(currentReviewedOverlayProviderHistory());
+}
+function currentReviewedOverlayProviderHistory(){
+  return verifyCurrentReviewedOverlayProviderSources(reviewedOverlayProviderHistory());
 }
 
 export function readReviewedOverlayProviderSuccessors(previous){
@@ -168,7 +224,9 @@ export function restoreReviewedOverlayProviderHostSource(source,file){
 /** Only an explicitly historical caller uses this exact checkpoint→8d view. */
 export function restoreReviewedOverlayProviderModuleSource(source,file,sourceCommit=null){
   if(!file.startsWith('js/src/'))return source;
-  const module=file.slice('js/src/'.length),packet=readReviewedOverlayProviderSuccession();
+  // The inverse returns a string. Check all physical owners, sharing only the
+  // private certificate packet instead of cloning it for each module read.
+  const module=file.slice('js/src/'.length),packet=currentReviewedOverlayProviderHistory();
   const target=sourceCommit===null?0:packet.profiles.findIndex(row=>row.sourceCommit===sourceCommit);
   assert.ok(target>=0,'one actual certified source epoch selects the historical view');
   let historical=source;
@@ -188,7 +246,7 @@ export function deriveReviewedOverlayProviderPolicy(packet){
 
 function verifyReviewedOverlayProviderEpoch(packet,index){
   const profile=packet.profiles[index],epoch=profile.epoch;
-  const review=profile.previousSourceCommit===OVERLAY_PROVIDER_APPEND_REVIEW.previous?OVERLAY_PROVIDER_APPEND_REVIEW:OVERLAY_PROVIDER_REFERENCE_REVIEW;
+  const review=readReviewedOverlayProviderReview(profile.previousSourceCommit);
   const reviewed=review.modules??[review];
   exactKeys(epoch,['reviewKind','predecessorPacket','predecessorOutputs']);
   assert.equal(epoch.reviewKind,review.kind);assert.equal(profile.previousSourceCommit,review.previous);

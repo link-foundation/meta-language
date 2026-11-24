@@ -7,6 +7,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readProjectData } from './project-data.mjs';
 import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
+import {restoreSharedArrayNativeFrontendSource} from './shared-array-native-frontend-history.mjs';
 
 const root = new URL('../../', import.meta.url);
 const revision = '897bfc8b2dcc5ec561feffa455ddeb9f95d24335';
@@ -83,15 +84,19 @@ export function generateRustLiteralMatchHosts({ check = false } = {}) {
     assert.equal(source.split(row.declaration).length, 2, row.path + ' retains the registered unit/module path');
   }
   // Validate every destination before the first write; refuse unrelated drift.
+  const protectedSources = new Set();
   for (const row of files) {
     const file = new URL(row.path, root);
-    if (check) assert.equal(readFileSync(file, 'utf8'), row.source, row.path);
+    if (check) assert.equal(restoreSharedArrayNativeFrontendSource(readFileSync(file, 'utf8'),row.path), row.source, row.path);
     else if (existsSync(file)) {
-      const source = readFileSync(file, 'utf8');
+      const physical = readFileSync(file, 'utf8');
+      const source = restoreSharedArrayNativeFrontendSource(physical,row.path);
       assert.ok(source === row.source || source === row.predecessor, 'unknown current source: ' + row.path);
+      if(source!==physical)protectedSources.add(row.path);
     }
   }
   if (!check) for (const row of files) {
+    if(protectedSources.has(row.path))continue;
     const file = fileURLToPath(new URL(row.path, root));
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, row.source);

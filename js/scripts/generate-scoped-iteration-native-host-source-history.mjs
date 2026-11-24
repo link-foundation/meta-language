@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
+import {restoreBorrowedJavaScriptBodySource} from './borrowed-javascript-body-source-history.mjs';
 import {SCOPED_ITERATION_NATIVE_SOURCE,SCOPED_ITERATION_NATIVE_OUTPUT,SCOPED_ITERATION_NATIVE_PREDECESSOR_REVISION,SCOPED_ITERATION_NATIVE_LOOP_SOURCE,pinScopedIterationNativeSource,deriveScopedIterationNativeLoopSource,
   deriveScopedIterationNativeHostSource,verifyScopedIterationNativeHostSourceHistory} from './scoped-iteration-native-host-source-history.mjs';
 const root=new URL('../../',import.meta.url),helper='js/scripts/scoped-iteration-native-host-source-history.mjs';
@@ -16,7 +17,7 @@ export function generateScopedIterationNativeHostSourceHistory({check=false}={})
     return{source,...pinScopedIterationNativeSource(blob),certificate};
   };
   const previous=capture(specification.previousRevision),current=capture(specification.revision);
-  assert.equal(readFileSync(new URL(specification.file,root),'utf8'),current.source,'author refuses an unrecorded live native successor');
+  assert.equal(restoreBorrowedJavaScriptBodySource(readFileSync(new URL(specification.file,root),'utf8'),specification.file),current.source,'author refuses an unrecorded live native successor');
   const declaration={schemaVersion:1,model:'scoped iteration native historical source 1',file:specification.file,
     previousRevision:specification.previousRevision,revision:specification.revision,coordinateUnit:'UTF-16 code units',
     previous,current,edits:deriveScopedIterationNativeHostSource(previous.source,current.source),

@@ -11,6 +11,7 @@
 //! Mirrors `js/src/translation/rust.js`.
 
 use std::collections::{HashMap, HashSet};
+use std::rc::Rc;
 use std::sync::Arc;
 
 use super::aborts::rust_macro_message;
@@ -25,31 +26,92 @@ use super::types::{BOOL, FLOAT, STRING, Type, UNIT, rust_fixed_type};
 use super::{Language, Span};
 
 mod array_rules;
+mod binding_patterns;
+use binding_patterns::ProductBindingPattern;
+mod borrowed_expression_positions;
+mod borrowed_iterator_callbacks;
+mod borrowed_iterators;
+mod borrowed_vectors;
 mod cast_syntax_rules;
 mod completion_rules;
 pub(crate) mod const_function_rules;
 pub(crate) mod const_functions;
+mod copy_closures;
+mod declaration_headers;
 mod diagnostic_attributes;
 pub(crate) mod empty_option_rules;
 mod empty_options;
+mod expression_completions;
+#[path = "rust/expressions/paths.rs"]
+mod expression_paths;
 mod expressions;
 mod float_predicate_rules;
 mod float_predicates;
+mod fn_mut_source_captures;
+mod fn_mut_source_declarations;
+mod fn_mut_source_headers;
+mod fn_mut_source_invocations;
+mod formatting;
+mod function_pointers;
+mod generic_type_aliases;
 pub(super) mod indirection_rules;
+mod inherent;
 mod items;
+pub(super) mod mutable_record_loans;
+mod ordinary_completions;
+mod owned_containers;
 mod owned_local_state;
 pub(crate) mod owned_local_state_rules;
+mod owned_record_effects;
+pub(super) mod owned_record_loops;
+mod owned_record_places;
+mod owned_record_policy;
+mod owned_record_state;
+mod owned_record_updates;
 pub(crate) mod owned_tuple_call_rules;
+mod owned_vector_iteration;
+mod owned_vectors;
 pub(crate) mod primitive_owner_rules;
 pub(crate) mod primitive_owners;
 mod product_rules;
 pub(crate) mod pure_unit_call_rules;
 mod pure_unit_calls;
 mod read_only_query_rules;
+mod records;
 mod scalar_loops;
 mod scalar_parameter_rules;
 mod scalar_parameters;
+mod source_expression_types;
+mod standard_collections;
+mod standard_sum_completions;
+mod standard_sum_metadata;
+mod standard_sum_source;
+pub(crate) use standard_sum_metadata::measure_source_position_metadata;
+mod copy_closure_lifetimes;
+mod nominal_ownership;
+mod owned_standard_sum_callback_selection;
+mod owned_standard_sum_callbacks;
+mod owned_standard_sum_methods;
+mod owned_standard_sum_observers;
+mod owned_standard_sum_predicates;
+mod retained_source_storage;
+mod shared_array_handles;
+mod source_constant_evaluation;
+mod source_constants;
 mod source_origins;
+mod source_type_origins;
+pub(crate) mod source_versions;
+mod standard_default_values;
+mod standard_sum_clones;
+mod standard_sum_combinators;
+mod standard_sum_conversions;
+mod standard_sum_guards;
+mod standard_sum_methods;
+mod standard_sum_nested;
+mod standard_sum_ownership;
+mod standard_sum_predicates;
+mod string_byte_lengths;
+mod type_aliases;
 pub(crate) mod type_namespaces;
 
 use source_origins::{SourceDeclaration, SourceOrigin, SourceOrigins};
@@ -114,11 +176,15 @@ mod source_profiles;
 pub(crate) use source_profiles::parse_rust_with_loop_profiles;
 pub use source_profiles::{
     parse_rust, parse_rust_with_array_result_model, parse_rust_with_completion_model,
-    parse_rust_with_empty_option_source_model, parse_rust_with_primitive_owner_model,
-    parse_rust_with_pure_unit_call_model, parse_rust_with_runtime_shell_model,
-    parse_rust_with_scalar_loop_model, parse_rust_with_source_models,
+    parse_rust_with_empty_option_source_model, parse_rust_with_exclusive_source_model,
+    parse_rust_with_primitive_owner_model, parse_rust_with_pure_unit_call_model,
+    parse_rust_with_runtime_shell_model, parse_rust_with_scalar_loop_model,
+    parse_rust_with_shared_array_handle_source_model,
+    parse_rust_with_shared_array_handle_source_model_and_version, parse_rust_with_source_models,
     parse_rust_with_source_profiles, parse_rust_with_source_signature_model,
-    parse_rust_with_type_namespace_model,
+    parse_rust_with_source_type_owners, parse_rust_with_source_type_owners_and_version,
+    parse_rust_with_source_version, parse_rust_with_source_version_and_signature_model,
+    parse_rust_with_standard_collection_source_model, parse_rust_with_type_namespace_model,
 };
 
 /// Read explicit owned String local state and its exact source interface.
@@ -159,8 +225,42 @@ pub fn parse_rust_with_const_function_model(
     )
 }
 
+/// Read actual Rust declarations with a selected closed FnMut source profile.
+///
+/// # Errors
+/// Refuses unknown models, uncovered source versions and unproved callback state.
+pub fn parse_rust_with_fn_mut_source_model(
+    source: &str,
+    model: &str,
+    exclusive_source_model: &str,
+    source_version: &str,
+) -> Result<SProgram> {
+    if model.is_empty() {
+        return Err(unsupported(
+            "Rust source FnMut function",
+            "select the exact source FnMut specialization profile",
+            None,
+        ));
+    }
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            fn_mut_source: model,
+            exclusive_source: exclusive_source_model,
+            source_version,
+            retain_source_type_owners: true,
+            ..SourceProfiles::default()
+        },
+    )
+}
+
 #[derive(Clone, Copy, Default)]
 struct SourceProfiles<'a> {
+    source_version: &'a str,
+    exclusive_source: &'a str,
+    fn_mut_source: &'a str,
+    retain_source_type_owners: bool,
+    shared_array_handle_source: &'a str,
     const_function: &'a str,
     array_result: &'a str,
     completion: &'a str,
@@ -171,13 +271,41 @@ struct SourceProfiles<'a> {
     type_namespace: &'a str,
     pure_unit_call: &'a str,
     local_value_state: &'a str,
+    standard_collections:
+        Option<&'a Rc<dyn super::rust_standard_collection_carriers::CollectionSourceDeclarations>>,
 }
 
 fn parse_rust_with_selected_profiles(
     source: &str,
-    profiles: SourceProfiles<'_>,
+    mut profiles: SourceProfiles<'_>,
 ) -> Result<SProgram> {
+    if super::rust_borrowed_vector_rules::accept_rust_borrowed_vector_signature_model(
+        profiles.source_signature,
+    ) {
+        profiles.retain_source_type_owners = true;
+    }
+    let source_version_minor = source_versions::minor(profiles.source_version)?;
+    if !profiles.fn_mut_source.is_empty() {
+        use super::rust_exclusive_source_loan_rules::read_rust_exclusive_source_loan_profile;
+        use super::rust_fnmut_source_declaration_rules::read_rust_fn_mut_source_model_error;
+        let error =
+            read_rust_fn_mut_source_model_error(profiles.fn_mut_source, source_version_minor);
+        if !error.is_empty() {
+            return Err(unsupported("Rust source FnMut function", &error, None));
+        }
+        if profiles.exclusive_source != read_rust_exclusive_source_loan_profile() {
+            return Err(unsupported(
+                "Rust source FnMut function",
+                "source FnMut specialization requires the actual exclusive source state profile and covered version",
+                None,
+            ));
+        }
+    }
     let SourceProfiles {
+        source_version: _,
+        exclusive_source: _,
+        fn_mut_source: _,
+        shared_array_handle_source: shared_array_handle_source_model,
         const_function: const_function_model,
         array_result: array_result_model,
         completion: completion_model,
@@ -188,7 +316,51 @@ fn parse_rust_with_selected_profiles(
         type_namespace: type_namespace_model,
         pure_unit_call: pure_unit_call_model,
         local_value_state: local_value_state_model,
+        retain_source_type_owners: _,
+        standard_collections: _,
     } = profiles;
+    if !super::rust_shared_array_handle_rules::accept_rust_shared_array_handle_source_interpretation(
+        shared_array_handle_source_model,
+    ) {
+        return Err(unsupported(
+            "Rust shared array handle source model",
+            "select the legacy model or standard Rust shared array identity handles 1",
+            None,
+        ));
+    }
+    if !shared_array_handle_source_model.is_empty() {
+        if [
+            const_function_model,
+            array_result_model,
+            completion_model,
+            source_signature_model,
+            scalar_loop_model,
+            primitive_owner_model,
+            empty_option_source_model,
+            type_namespace_model,
+            pure_unit_call_model,
+            local_value_state_model,
+        ]
+        .iter()
+        .any(|model| !model.is_empty())
+        {
+            return Err(unsupported(
+                "Rust shared array handle source model",
+                "other source interpretations require independent composition proofs",
+                None,
+            ));
+        }
+        let units = u32::try_from(source.encode_utf16().take(65_537).count()).unwrap_or(u32::MAX);
+        if !super::rust_shared_array_handle_rules::accept_rust_shared_array_handle_source_size(
+            f64::from(units),
+        ) {
+            return Err(unsupported(
+                "Rust shared array handle source",
+                "the profile requires its complete source within 65536 UTF-16 units",
+                None,
+            ));
+        }
+    }
     if !const_function_rules::accept_rust_const_function_model(const_function_model) {
         return Err(unsupported(
             "Rust const function model",
@@ -287,10 +459,37 @@ fn parse_rust_with_selected_profiles(
             None,
         ));
     }
-    if !super::source_signature_rules::accept_rust_source_signature_model(source_signature_model) {
+    if !super::source_signature_rules::accept_rust_source_signature_model(source_signature_model)
+        && !super::rust_borrowed_vector_rules::accept_rust_borrowed_vector_signature_model(
+            source_signature_model,
+        )
+    {
         return Err(unsupported(
             "Rust source signature model",
-            "select the legacy model or Rust source function signature 1",
+            "select the legacy model, Rust source function signature 1, or the explicit borrowed vector signature 3",
+            None,
+        ));
+    }
+    if super::rust_borrowed_vector_rules::accept_rust_borrowed_vector_signature_model(
+        source_signature_model,
+    ) && [
+        completion_model,
+        scalar_loop_model,
+        primitive_owner_model,
+        empty_option_source_model,
+        type_namespace_model,
+        pure_unit_call_model,
+        local_value_state_model,
+        const_function_model,
+        shared_array_handle_source_model,
+        array_result_model,
+    ]
+    .iter()
+    .any(|model| !model.is_empty())
+    {
+        return Err(unsupported(
+            "Rust borrowed vector profile composition",
+            "other source profiles need an independent borrowed element interpretation",
             None,
         ));
     }
@@ -321,7 +520,9 @@ fn parse_rust_with_selected_profiles(
         ));
     }
     let tokens = tokenize(source, Language::Rust)?.tokens;
-    let original_source = (!const_function_model.is_empty()).then(|| Arc::<str>::from(source));
+    let original_source = (!const_function_model.is_empty()
+        || !shared_array_handle_source_model.is_empty())
+    .then(|| Arc::<str>::from(source));
     let mut declarations = RustParser::new(
         tokens.clone(),
         SourceOrigins::new(None, array_result_model),
@@ -329,15 +530,55 @@ fn parse_rust_with_selected_profiles(
         true,
         original_source.clone(),
     );
+    declarations.source_version_minor = source_version_minor;
+    if !profiles.fn_mut_source.is_empty() {
+        declarations.fn_mut_source_declarations = Some(Rc::new(
+            fn_mut_source_declarations::FnMutSourceDeclarations::new(
+                source,
+                Arc::clone(&declarations.source_constant_tokens),
+                source_versions::canonical(profiles.source_version)?,
+            )?,
+        ));
+    }
+    declarations.origins.owned_container_source_enabled =
+        crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_container_source(
+            declarations.ordinary_completion_context(),
+            source_version_minor,
+        );
+    declarations.origins.borrowed_vector_source_enabled =
+        crate::translation::rust_borrowed_vector_rules::accept_rust_borrowed_vector_source(
+            source_signature_model,
+            declarations.ordinary_completion_context(),
+            source_version_minor,
+        );
+    declarations.header_discovery = declarations.ordinary_completion_context();
     declarations.file()?;
+    declarations.origins.nominal_ownership_scope_complete = true;
     let mut origins = std::mem::replace(
         &mut declarations.origins,
         SourceOrigins::new(None, array_result_model),
     );
     origins.resolve_catalog_types(|segments, path| declarations.resolve(segments, path));
+    if declarations.ordinary_completion_context() {
+        origins.finish_nominal_copies()?;
+        origins.finish_nominal_ownership_declarations()?;
+        declarations.origins = origins;
+        declarations.finalize_standard_sum_source_declarations()?;
+        origins = std::mem::replace(
+            &mut declarations.origins,
+            SourceOrigins::new(None, array_result_model),
+        );
+    }
     let mut source_origins = SourceOrigins::new(Some(origins.catalog), array_result_model);
+    source_origins.type_catalog = origins.type_catalog;
+    source_origins.value_catalog = origins.value_catalog;
+    source_origins.standard_collection_owners = origins.standard_collection_owners;
     source_origins.collecting = true;
     source_origins.unit_clone_facts = origins.unit_clone_facts;
+    source_origins.nominal_copy_derivations = origins.nominal_copy_derivations;
+    source_origins.nominal_copy_owners = origins.nominal_copy_owners;
+    source_origins.nominal_ownership_declarations = origins.nominal_ownership_declarations;
+    source_origins.nominal_ownership_scope_complete = origins.nominal_ownership_scope_complete;
     let mut syntax = RustParser::new(
         tokens.clone(),
         source_origins,
@@ -345,12 +586,43 @@ fn parse_rust_with_selected_profiles(
         false,
         original_source.clone(),
     );
+    syntax.source_version_minor = source_version_minor;
+    syntax.inherit_standard_collection_source(declarations.standard_collections);
+    syntax.origins.owned_container_source_enabled =
+        crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_container_source(
+            syntax.ordinary_completion_context(),
+            source_version_minor,
+        );
+    syntax.origins.borrowed_vector_source_enabled =
+        crate::translation::rust_borrowed_vector_rules::accept_rust_borrowed_vector_source(
+            source_signature_model,
+            syntax.ordinary_completion_context(),
+            source_version_minor,
+        );
+    syntax.source_constant_initializers = declarations.source_constant_initializers;
+    syntax.source_constant_functions = declarations.source_constant_functions;
+    syntax.source_constant_tokens = Arc::clone(&declarations.source_constant_tokens);
+    syntax.fn_mut_source_declarations = declarations.fn_mut_source_declarations;
     syntax.aliases = declarations.aliases;
     syntax.primitive_imports = declarations.primitive_imports;
+    syntax.named_records = declarations.named_records;
+    syntax.inherent_methods = declarations.inherent_methods;
     let surface = syntax.file()?;
+    syntax.origins.nominal_ownership_scope_complete = true;
+    if syntax.ordinary_completion_context() {
+        syntax.origins.finish_nominal_copies()?;
+        syntax.origins.finish_nominal_ownership_declarations()?;
+        syntax.finalize_standard_sum_source_declarations()?;
+    }
     // Preserve the existing checker's rejection and syntax-tree contract;
     // every public Rust source pipeline checks this identical Surface again.
-    if super::check::check_program(&surface).is_err() {
+    if super::check::check_program(&surface).is_err()
+        && shared_array_handle_source_model.is_empty()
+        && profiles.standard_collections.is_none()
+        && profiles.exclusive_source.is_empty()
+        && !syntax.origins.standard_sum_source_needs_final_admission
+        && !syntax.origins.borrowed_vector_needs_final_admission
+    {
         return Ok(surface);
     }
     let mut parser = RustParser::new(
@@ -360,10 +632,41 @@ fn parse_rust_with_selected_profiles(
         false,
         original_source,
     );
+    parser.source_version_minor = source_version_minor;
+    parser.inherit_standard_collection_source(syntax.standard_collections);
+    parser.origins.owned_container_source_enabled =
+        crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_container_source(
+            parser.ordinary_completion_context(),
+            source_version_minor,
+        );
+    parser.origins.borrowed_vector_source_enabled =
+        crate::translation::rust_borrowed_vector_rules::accept_rust_borrowed_vector_source(
+            source_signature_model,
+            parser.ordinary_completion_context(),
+            source_version_minor,
+        );
+    parser.origins.type_catalog = syntax.origins.type_catalog;
+    parser.origins.value_catalog = syntax.origins.value_catalog;
+    parser.origins.standard_collection_owners = syntax.origins.standard_collection_owners;
     parser.origins.unit_clone_facts = syntax.origins.unit_clone_facts;
+    parser.origins.nominal_copy_derivations = syntax.origins.nominal_copy_derivations;
+    parser.origins.nominal_copy_owners = syntax.origins.nominal_copy_owners;
+    parser.origins.nominal_ownership_declarations = syntax.origins.nominal_ownership_declarations;
+    parser.origins.nominal_ownership_scope_complete =
+        syntax.origins.nominal_ownership_scope_complete;
+    parser.source_constant_initializers = syntax.source_constant_initializers;
+    parser.source_constant_functions = syntax.source_constant_functions;
+    parser.source_constant_tokens = Arc::clone(&syntax.source_constant_tokens);
+    parser.fn_mut_source_declarations = syntax.fn_mut_source_declarations;
     parser.aliases = syntax.aliases;
     parser.primitive_imports = syntax.primitive_imports;
-    parser.file()
+    parser.named_records = syntax.named_records;
+    parser.inherent_methods = syntax.inherent_methods;
+    let surface = parser.file()?;
+    if profiles.standard_collections.is_some() || !profiles.exclusive_source.is_empty() {
+        super::check::check_program(&surface)?;
+    }
+    Ok(surface)
 }
 
 /// Where a sequence of items ends: at the end of the file or at a module's `}`.
@@ -383,6 +686,7 @@ struct Options {
 }
 
 /// A `name @ pattern` binding, bound around the arm's body.
+#[derive(Clone)]
 struct Alias {
     name: String,
     value: SExpr,
@@ -396,29 +700,30 @@ struct Binding {
     span: Option<Span>,
 }
 
-/// An irrefutable source pattern, lowered to ordinary ordered value bindings.
-enum ProductBindingPattern {
-    Name(Token),
-    Wildcard(Token),
-    Tuple {
-        items: Vec<Self>,
-        span: Option<Span>,
-    },
-    Unit {
-        span: Option<Span>,
-    },
-}
-
-impl ProductBindingPattern {
-    const fn source_span(&self) -> Option<Span> {
-        match self {
-            Self::Name(token) | Self::Wildcard(token) => Some(token.span()),
-            Self::Tuple { span, .. } | Self::Unit { span } => *span,
-        }
-    }
-}
-
 struct RustParser {
+    source_version_minor: f64,
+    exclusive_source_enabled: bool,
+    source_regions_composed: bool,
+    source_region_body_closed: bool,
+    ordered_iteration_head: Option<Vec<standard_collections::OrderedIterationHead>>,
+    retain_source_type_owners: bool,
+    source_type_aliases: type_aliases::SourceTypeAliases,
+    standard_sum_source: standard_sum_source::StandardSumSourceState,
+    standard_sum_try_attempts: Vec<standard_sum_completions::StandardSumTryAttempt>,
+    header_discovery: bool,
+    source_constant_initializers: HashMap<String, source_constant_evaluation::ConstantInitializer>,
+    source_constant_read_stack: HashSet<String>,
+    source_constant_functions: HashMap<String, source_constant_evaluation::ConstantInitializer>,
+    source_constant_tokens: Arc<Vec<Token>>,
+    fn_mut_source_declarations: Option<Rc<fn_mut_source_declarations::FnMutSourceDeclarations>>,
+    fn_mut_source_type_bindings: Vec<(String, SourceOrigin)>,
+    fn_mut_source_opaque_error_scopes: Vec<(usize, usize)>,
+    fn_mut_source_header_read: Option<fn_mut_source_headers::FnMutSourceHeaderRead>,
+    fn_mut_source_capture_read: Option<fn_mut_source_captures::CaptureRead>,
+    fn_mut_source_instances: Vec<fn_mut_source_headers::FnMutSourceInstance>,
+    shared_array_handle_source_model: String,
+    shared_array_state: shared_array_handles::SharedArrayState,
+    standard_collections: Option<standard_collections::StandardCollectionSource>,
     const_function_model: String,
     const_function_keyword: Option<Token>,
     original_source: Option<Arc<str>>,
@@ -430,6 +735,7 @@ struct RustParser {
     crate_declarations: HashSet<String>,
     main: Option<SMain>,
     origins: SourceOrigins,
+    standard_string_borrow: expressions::standard_string_views::StandardStringBorrowContext,
     completion_model: String,
     source_signature_model: String,
     scalar_loop_model: String,
@@ -453,13 +759,35 @@ struct RustParser {
     primitive_imports: Vec<serde_json::Value>,
     scalar_loop_active: bool,
     source_owner_frames: Vec<Vec<super::source_signatures::SourceOwner>>,
+    iterator_item_type_inference_origin: Option<SourceOrigin>,
     reserved_binding_names: HashSet<String>,
+    named_records: HashMap<String, records::NamedRecord>,
+    owned_record_state: owned_record_state::OwnedRecordState,
+    inherent_owner: Option<inherent::InherentOwner>,
+    declaration_self_owner: Option<inherent::InherentOwner>,
+    inherent_methods: HashMap<String, inherent::InherentMethod>,
+    inherent_discovery: bool,
+    has_record_declarations: bool,
+    has_record_constructions: bool,
+    record_pattern_depth: usize,
     next_product_binding: usize,
+    ordinary_completion_declarations: Vec<(Vec<String>, SData)>,
     lifetime_bindings: HashSet<String>,
     lifetime_header: bool,
 }
 
 impl RustParser {
+    fn with_standard_sum_source_context<T>(
+        &mut self,
+        origin: Option<SourceOrigin>,
+        read: impl FnOnce(&mut Self) -> Result<T>,
+    ) -> Result<T> {
+        let previous = std::mem::replace(&mut self.standard_sum_source.expected_origin, origin);
+        let result = read(self);
+        self.standard_sum_source.expected_origin = previous;
+        result
+    }
+
     fn new(
         tokens: Vec<Token>,
         mut origins: SourceOrigins,
@@ -472,8 +800,57 @@ impl RustParser {
             .filter(|token| token.kind == TokenKind::Identifier)
             .map(|token| token.value.clone())
             .collect();
+        let has_record_declarations = tokens
+            .iter()
+            .any(|token| token.kind == TokenKind::Identifier && token.value == "struct");
+        let inherent_discovery = initial_discovery
+            && tokens
+                .iter()
+                .any(|token| token.kind == TokenKind::Identifier && token.value == "impl");
+        let has_record_constructions = has_record_declarations
+            || tokens
+                .iter()
+                .any(|token| token.kind == TokenKind::Identifier && token.value == "enum");
         origins.owned_local_values = !profiles.local_value_state.is_empty();
+        origins.shared_array_handles = !profiles.shared_array_handle_source.is_empty();
+        origins.owned_binding_excluded =
+            !profiles.scalar_loop.is_empty() || !profiles.const_function.is_empty();
+        let source_constant_tokens = Arc::new(tokens.clone());
+        let mut owned_record_state = owned_record_state::OwnedRecordState::default();
+        if profiles.standard_collections.is_some() || !profiles.exclusive_source.is_empty() {
+            owned_record_state.effects = Some(Default::default());
+        }
         Self {
+            source_constant_tokens,
+            fn_mut_source_declarations: None,
+            fn_mut_source_type_bindings: Vec::new(),
+            fn_mut_source_opaque_error_scopes: Vec::new(),
+            fn_mut_source_header_read: None,
+            fn_mut_source_capture_read: None,
+            fn_mut_source_instances: Vec::new(),
+            source_version_minor: 0.0,
+            exclusive_source_enabled: !profiles.exclusive_source.is_empty(),
+            source_regions_composed:
+                super::rust_owned_record_loop_rules::accept_rust_source_region_composition(
+                    profiles.source_signature,
+                    profiles.exclusive_source,
+                    profiles.fn_mut_source,
+                ),
+            source_region_body_closed: false,
+            ordered_iteration_head: None,
+            retain_source_type_owners: profiles.retain_source_type_owners,
+            source_type_aliases: type_aliases::SourceTypeAliases::default(),
+            standard_sum_source: standard_sum_source::StandardSumSourceState::default(),
+            standard_sum_try_attempts: Vec::new(),
+            header_discovery: false,
+            source_constant_initializers: HashMap::new(),
+            source_constant_read_stack: HashSet::new(),
+            source_constant_functions: HashMap::new(),
+            shared_array_handle_source_model: profiles.shared_array_handle_source.to_owned(),
+            shared_array_state: shared_array_handles::SharedArrayState::default(),
+            standard_collections: profiles.standard_collections.map(|library| {
+                standard_collections::StandardCollectionSource::new(Rc::clone(library))
+            }),
             const_function_model: profiles.const_function.to_owned(),
             const_function_keyword: None,
             original_source,
@@ -484,6 +861,7 @@ impl RustParser {
             crate_declarations: HashSet::new(),
             main: None,
             origins,
+            standard_string_borrow: Default::default(),
             completion_model: profiles.completion.to_owned(),
             source_signature_model: if profiles.source_signature.is_empty()
                 && (!profiles.type_namespace.is_empty()
@@ -519,8 +897,19 @@ impl RustParser {
             primitive_imports: Vec::new(),
             scalar_loop_active: false,
             source_owner_frames: Vec::new(),
+            iterator_item_type_inference_origin: None,
             reserved_binding_names,
+            named_records: HashMap::new(),
+            owned_record_state,
+            inherent_owner: None,
+            declaration_self_owner: None,
+            inherent_methods: HashMap::new(),
+            inherent_discovery,
+            has_record_declarations,
+            has_record_constructions,
+            record_pattern_depth: 0,
             next_product_binding: 0,
+            ordinary_completion_declarations: Vec::new(),
             lifetime_bindings: HashSet::new(),
             lifetime_header: false,
         }
@@ -538,396 +927,4 @@ impl RustParser {
     }
 }
 
-/// `format!("{} and {name}", a)`: `{}` takes the next argument, `{name}` a
-/// variable in scope, `{{`/`}}` are braces; every value is rendered with
-/// Display, which for integers is its decimal text.
-fn format(args: Vec<SExpr>, token: &Token) -> Result<SExpr> {
-    let mut args = args.into_iter();
-    let template = args.next();
-    let values: Vec<SExpr> = args.collect();
-    let Some(SExpr {
-        node: SNode::Str { value: source },
-        span: template_span,
-        ..
-    }) = template
-    else {
-        return Err(unsupported(
-            &format!("{}!", token.value),
-            "the format string must be a literal",
-            span(token, token),
-        ));
-    };
-    let chars: Vec<char> = source.chars().collect();
-    let mut pieces: Vec<SExpr> = Vec::new();
-    let mut text = String::new();
-    let mut next = 0;
-    let mut index = 0;
-    while index < chars.len() {
-        let char = chars[index];
-        let following = chars.get(index + 1).copied();
-        if char == '{' && following == Some('{') {
-            text.push('{');
-            index += 2;
-            continue;
-        }
-        if char == '}' && following == Some('}') {
-            text.push('}');
-            index += 2;
-            continue;
-        }
-        if char == '}' {
-            return Err(TranslationError::syntax(
-                "unmatched } in format string",
-                template_span,
-            ));
-        }
-        if char != '{' {
-            text.push(char);
-            index += 1;
-            continue;
-        }
-        let Some(end) = chars[index..]
-            .iter()
-            .position(|&candidate| candidate == '}')
-            .map(|offset| index + offset)
-        else {
-            return Err(TranslationError::syntax(
-                "unclosed { in format string",
-                template_span,
-            ));
-        };
-        let spec: String = chars[index + 1..end].iter().collect();
-        if spec.contains(':') {
-            return Err(unsupported(
-                &format!("format spec {{{spec}}}"),
-                "only plain {} Display formatting is portable",
-                template_span,
-            ));
-        }
-        let value = if spec.is_empty() {
-            let value = values.get(next).cloned();
-            next += 1;
-            value.ok_or_else(|| {
-                TranslationError::syntax("format string has more {} than arguments", template_span)
-            })?
-        } else if spec.bytes().all(|byte| byte.is_ascii_digit()) {
-            // A position too large for an index names no argument either.
-            let position = spec.parse::<usize>().ok();
-            let value = position.and_then(|position| values.get(position).cloned());
-            let (Some(position), Some(value)) = (position, value) else {
-                return Err(TranslationError::syntax(
-                    format!("format argument {spec} is missing"),
-                    template_span,
-                ));
-            };
-            next = next.max(position + 1);
-            value
-        } else if is_identifier(&spec) {
-            SExpr::new(SNode::Name { path: vec![spec] }, template_span)
-        } else {
-            return Err(unsupported(
-                &format!("format argument {{{spec}}}"),
-                "outside the portable core",
-                template_span,
-            ));
-        };
-        if !text.is_empty() {
-            pieces.push(SExpr::new(
-                SNode::Str {
-                    value: std::mem::take(&mut text),
-                },
-                template_span,
-            ));
-        }
-        let value_span = value.span;
-        pieces.push(SExpr::new(
-            SNode::Show {
-                arg: Box::new(value),
-                style: ShowStyle::Rust,
-            },
-            value_span,
-        ));
-        index = end + 1;
-    }
-    if next < values.len() {
-        return Err(TranslationError::syntax(
-            "format string has fewer {} than arguments",
-            template_span,
-        ));
-    }
-    if !text.is_empty() || pieces.is_empty() {
-        pieces.push(SExpr::new(SNode::Str { value: text }, template_span));
-    }
-    let mut pieces = pieces.into_iter();
-    let first = pieces
-        .next()
-        .unwrap_or_else(|| unreachable!("a piece was pushed"));
-    Ok(pieces.fold(first, |left, right| {
-        SExpr::new(
-            SNode::Binary {
-                op: BinaryOp::Concat,
-                left: Box::new(left),
-                right: Box::new(right),
-                rounding: None,
-            },
-            template_span,
-        )
-    }))
-}
-
-/// `/^[A-Za-z_][A-Za-z0-9_]*$/`.
-fn is_identifier(text: &str) -> bool {
-    let mut bytes = text.bytes();
-    bytes
-        .next()
-        .is_some_and(|first| first.is_ascii_alphabetic() || first == b'_')
-        && bytes.all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
-}
-
-fn method_call(
-    receiver: SExpr,
-    method: &Token,
-    args: Vec<SExpr>,
-    range: Option<Span>,
-) -> Result<SExpr> {
-    let expect = |count: usize| {
-        if args.len() == count {
-            Ok(())
-        } else {
-            Err(type_error(
-                format!(
-                    "{} expects {count} arguments but got {}",
-                    method.value,
-                    args.len()
-                ),
-                range,
-            ))
-        }
-    };
-    let mapping =
-        crate::translation::frontend_rules::read_string_map_operation("Rust", &method.value);
-    if !mapping.is_empty() {
-        expect(0)?;
-        return Ok(SExpr::new(
-            SNode::StringMap {
-                op: mapping,
-                object: Box::new(receiver),
-            },
-            range,
-        ));
-    }
-    let operation =
-        crate::translation::frontend_rules::read_string_test_operation("Rust", &method.value);
-    if !operation.is_empty() {
-        expect(1)?;
-        return Ok(SExpr::new(
-            SNode::StringTest {
-                op: operation,
-                object: Box::new(receiver),
-                search: Box::new(args.into_iter().next().expect("one search argument")),
-            },
-            range,
-        ));
-    }
-    match method.value.as_str() {
-        "clone" | "to_owned" | "as_str" => {
-            expect(0)?;
-            Ok(receiver)
-        }
-        "to_string" => {
-            expect(0)?;
-            Ok(SExpr::new(
-                SNode::ToString {
-                    arg: Box::new(receiver),
-                },
-                range,
-            ))
-        }
-        "div_euclid" | "rem_euclid" => {
-            expect(1)?;
-            let op = if method.value == "div_euclid" {
-                BinaryOp::Div
-            } else {
-                BinaryOp::Rem
-            };
-            let right = args
-                .into_iter()
-                .next()
-                .unwrap_or_else(|| unreachable!("one argument"));
-            Ok(SExpr::new(
-                SNode::Binary {
-                    op,
-                    left: Box::new(receiver),
-                    right: Box::new(right),
-                    rounding: Some(Rounding::Euclid),
-                },
-                range,
-            ))
-        }
-        _ => Err(unsupported(
-            &format!("method {}", method.value),
-            "outside the portable core",
-            range,
-        )),
-    }
-}
-
-/// An imported path from the crate root, so it means the same wherever it is used.
-fn absolute(segments: &[String], path: &[String], range: Option<Span>) -> Result<Vec<String>> {
-    let crate_root = || vec!["crate".to_owned()];
-    if segments[0] == "crate" {
-        return Ok(segments.to_vec());
-    }
-    if segments[0] == "self" {
-        let mut result = crate_root();
-        result.extend_from_slice(path);
-        result.extend_from_slice(&segments[1..]);
-        return Ok(result);
-    }
-    let up = segments
-        .iter()
-        .take_while(|segment| *segment == "super")
-        .count();
-    if up > path.len() {
-        return Err(type_error("super beyond crate root", range));
-    }
-    let mut result = crate_root();
-    result.extend_from_slice(&path[..path.len() - up]);
-    result.extend_from_slice(&segments[up..]);
-    Ok(result)
-}
-
-fn prop_of(expr: SExpr) -> SProp {
-    let node = match expr.node {
-        SNode::Binary {
-            op:
-                op @ (BinaryOp::Eq
-                | BinaryOp::Ne
-                | BinaryOp::Lt
-                | BinaryOp::Le
-                | BinaryOp::Gt
-                | BinaryOp::Ge),
-            left,
-            right,
-            ..
-        } => {
-            let comparison = SComparison {
-                left: *left,
-                right: *right,
-                reference: false,
-                same_value: false,
-            };
-            match op {
-                BinaryOp::Eq => SPropNode::Eq(comparison),
-                BinaryOp::Ne => SPropNode::Ne(comparison),
-                BinaryOp::Lt => SPropNode::Lt(comparison),
-                BinaryOp::Le => SPropNode::Le(comparison),
-                BinaryOp::Gt => SPropNode::Gt(comparison),
-                _ => SPropNode::Ge(comparison),
-            }
-        }
-        SNode::Binary {
-            op: BinaryOp::And,
-            left,
-            right,
-            ..
-        } => SPropNode::And {
-            left: Box::new(prop_of(*left)),
-            right: Box::new(prop_of(*right)),
-        },
-        SNode::Binary {
-            op: BinaryOp::Or,
-            left,
-            right,
-            ..
-        } => SPropNode::Or {
-            left: Box::new(prop_of(*left)),
-            right: Box::new(prop_of(*right)),
-        },
-        SNode::Unary {
-            op: UnaryOp::Not,
-            arg,
-        } => SPropNode::Not {
-            arg: Box::new(prop_of(*arg)),
-        },
-        node => SPropNode::Bool {
-            expr: SExpr { node, ..expr },
-        },
-    };
-    SProp { node, span: None }
-}
-
-/// The value a pattern matched, for `name @ p`.
-fn pattern_value(pattern: &SPattern, range: Option<Span>) -> Result<SExpr> {
-    let node = match &pattern.node {
-        SPatternNode::BindOrCtor { name } => SNode::Name {
-            path: vec![name.clone()],
-        },
-        SPatternNode::NumLit { value, negative } => SNode::Num {
-            value: value.clone(),
-            ty: None,
-            negative: *negative,
-            unit: false,
-        },
-        SPatternNode::BoolLit { value, .. } => SNode::Bool { value: *value },
-        SPatternNode::Ctor { path, args } if args.is_empty() => SNode::Name { path: path.clone() },
-        SPatternNode::Ctor { path, args } => SNode::App {
-            func: Box::new(SExpr::new(SNode::Name { path: path.clone() }, range)),
-            args: args
-                .iter()
-                .map(|arg| pattern_value(arg, range))
-                .collect::<Result<_>>()?,
-        },
-        _ => {
-            return Err(unsupported(
-                "@ binding",
-                "the aliased pattern must bind every field",
-                range,
-            ));
-        }
-    };
-    Ok(SExpr::new(node, range))
-}
-
-const fn is_if_or_match(expr: &SExpr) -> bool {
-    matches!(expr.node, SNode::If { .. } | SNode::Match { .. })
-}
-
-fn operator(token: &Token, table: fn(&str) -> Option<BinaryOp>) -> Option<BinaryOp> {
-    if token.kind == TokenKind::Punct {
-        table(&token.value)
-    } else {
-        None
-    }
-}
-
-fn binary(op: BinaryOp, left: SExpr, right: SExpr, token: &Token) -> SExpr {
-    let range = joined(left.span, right.span, token);
-    SExpr::new(
-        SNode::Binary {
-            op,
-            left: Box::new(left),
-            right: Box::new(right),
-            rounding: None,
-        },
-        range,
-    )
-}
-
-#[allow(clippy::unnecessary_wraps)] // nodes and errors take an optional span
-fn joined(left: Option<Span>, right: Option<Span>, token: &Token) -> Option<Span> {
-    Some(Span::new(
-        left.map_or(token.start, |left| left.start),
-        right.map_or(token.end, |right| right.end),
-    ))
-}
-
-#[allow(clippy::unnecessary_wraps)] // nodes and errors take an optional span
-fn span(from: &Token, to: &Token) -> Option<Span> {
-    let to_start = if to.kind == TokenKind::Eof {
-        from.end
-    } else {
-        to.start
-    };
-    Some(Span::new(from.start, from.end.max(to_start)))
-}
+include!("rust_expression_construction.rs");

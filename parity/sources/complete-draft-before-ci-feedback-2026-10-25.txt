@@ -1,0 +1,7 @@
+Capture provenance: direct user messages in the meta-language issue/PR task,
+captured 2026-10-25 in conversation order. The conversation exposes no message
+revision times. The following messages are preserved verbatim.
+
+Continue to fully draft all requirements. You can do commits and do push, so we have some feedback.
+
+Don't address any CI/CD feedback until everything is fully drafted.

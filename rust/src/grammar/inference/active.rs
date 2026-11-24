@@ -11,6 +11,9 @@ use std::error::Error;
 use std::fmt;
 
 use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarParser, GrammarRule};
+use crate::grammar_active_learning_rules::{
+    find_grammar_distinguishing_observation, ml_array::number_index,
+};
 use crate::{LinkNetwork, LinkType, ParseConfiguration, ParserRegistry};
 
 /// Input symbol consumed by the active learner.
@@ -249,6 +252,28 @@ impl fmt::Display for ActiveLearningError {
 
 impl Error for ActiveLearningError {}
 
+/// How an oracle chose its equivalence candidates.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum EquivalenceMethod {
+    /// A caller-supplied equivalence oracle.
+    Oracle,
+    /// Deterministic bounded sampling through an existing membership predicate.
+    BoundedSampling,
+}
+
+/// An observation-table result and the query calls issued by the learner.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ActiveGrammarLearning {
+    /// Last validated hypothesis.
+    pub hypothesis: Dfa,
+    /// Membership calls required to fill the observation table.
+    pub membership_queries: usize,
+    /// Equivalence calls, including the final query without a counterexample.
+    pub equivalence_queries: usize,
+    /// Strategy declared by the oracle.
+    pub equivalence: EquivalenceMethod,
+}
+
 /// Minimally adequate teacher for active regular-language learning.
 pub trait Oracle {
     /// Input alphabet explored by the learner.
@@ -263,6 +288,11 @@ pub trait Oracle {
     /// ignore `config`; approximate oracles use it for bounded deterministic
     /// sampling.
     fn equivalence(&self, hypothesis: &Dfa, config: &ActiveLearningConfig) -> Option<Word>;
+
+    /// Identifies the source of the equivalence decisions.
+    fn equivalence_method(&self) -> EquivalenceMethod {
+        EquivalenceMethod::Oracle
+    }
 }
 
 /// Membership-plus-sampling oracle backed by an in-process predicate.
@@ -300,6 +330,10 @@ where
             self.membership(word)
         })
     }
+
+    fn equivalence_method(&self) -> EquivalenceMethod {
+        EquivalenceMethod::BoundedSampling
+    }
 }
 
 /// Active-learning oracle backed by a runtime [`GrammarParser`].
@@ -333,6 +367,10 @@ impl Oracle for GrammarAcceptorOracle {
         sampled_counterexample(hypothesis, &self.alphabet, config, |word| {
             self.membership(word)
         })
+    }
+
+    fn equivalence_method(&self) -> EquivalenceMethod {
+        EquivalenceMethod::BoundedSampling
     }
 }
 
@@ -399,6 +437,10 @@ impl Oracle for ParserMembershipOracle {
             self.membership(word)
         })
     }
+
+    fn equivalence_method(&self) -> EquivalenceMethod {
+        EquivalenceMethod::BoundedSampling
+    }
 }
 
 /// Default parser acceptance predicate.
@@ -426,6 +468,14 @@ pub fn learn_dfa(
     oracle: &dyn Oracle,
     config: &ActiveLearningConfig,
 ) -> Result<Dfa, ActiveLearningError> {
+    learn_active_grammar_automaton(oracle, config).map(|result| result.hypothesis)
+}
+
+/// Learns a DFA while retaining the actual observation and equivalence counts.
+pub fn learn_active_grammar_automaton(
+    oracle: &dyn Oracle,
+    config: &ActiveLearningConfig,
+) -> Result<ActiveGrammarLearning, ActiveLearningError> {
     validate_config(config)?;
     validate_alphabet(oracle.alphabet())?;
     if config.use_ttt {
@@ -433,7 +483,7 @@ pub fn learn_dfa(
     }
 
     let mut table = ObservationTable::new(oracle);
-    for _ in 0..config.max_iterations {
+    for iteration in 0..config.max_iterations {
         table.close_and_consistent();
         let hypothesis = table.hypothesis()?;
         hypothesis.validate()?;
@@ -441,7 +491,12 @@ pub fn learn_dfa(
         if let Some(counterexample) = oracle.equivalence(&hypothesis, config) {
             table.add_counterexample(&counterexample);
         } else {
-            return Ok(hypothesis);
+            return Ok(ActiveGrammarLearning {
+                hypothesis,
+                membership_queries: table.table.len(),
+                equivalence_queries: iteration + 1,
+                equivalence: oracle.equivalence_method(),
+            });
         }
     }
 
@@ -456,6 +511,15 @@ pub fn learn_grammar(
     config: &ActiveLearningConfig,
 ) -> Result<Grammar, ActiveLearningError> {
     learn_dfa(oracle, config).map(|dfa| dfa.to_grammar())
+}
+
+/// Learns a right-linear grammar and retains its original observation counts.
+pub fn learn_active_grammar(
+    oracle: &dyn Oracle,
+    config: &ActiveLearningConfig,
+) -> Result<(Grammar, ActiveGrammarLearning), ActiveLearningError> {
+    let result = learn_active_grammar_automaton(oracle, config)?;
+    Ok((result.hypothesis.to_grammar(), result))
 }
 
 struct ObservationTable<'oracle> {
@@ -577,17 +641,14 @@ impl<'oracle> ObservationTable<'oracle> {
                 for symbol in self.alphabet.clone() {
                     let left_successor = extend(left, symbol);
                     let right_successor = extend(right, symbol);
-                    if self.row(&left_successor) == self.row(&right_successor) {
-                        continue;
-                    }
-                    for suffix in self.suffixes.clone() {
-                        if self.value(&left_successor, &suffix)
-                            != self.value(&right_successor, &suffix)
-                        {
-                            let mut distinguishing = vec![symbol];
-                            distinguishing.extend(suffix);
-                            return Some(distinguishing);
-                        }
+                    let left_row = self.row(&left_successor);
+                    let right_row = self.row(&right_successor);
+                    if let Some(index) =
+                        number_index(find_grammar_distinguishing_observation(&left_row, &right_row))
+                    {
+                        let mut distinguishing = vec![symbol];
+                        distinguishing.extend(self.suffixes[index].iter().copied());
+                        return Some(distinguishing);
                     }
                 }
             }
@@ -680,6 +741,24 @@ where
     .find(|word| hypothesis.accepts(word) != membership(word))
 }
 
+/// Returns the same ordered finite candidates used by the sampling oracles.
+pub fn sample_active_grammar_words(
+    alphabet: &[Symbol],
+    config: &ActiveLearningConfig,
+) -> Result<Vec<Vec<Symbol>>, ActiveLearningError> {
+    validate_config(config)?;
+    validate_alphabet(alphabet)?;
+    if config.use_ttt {
+        return Err(ActiveLearningError::TttUnavailable);
+    }
+    Ok(sample_words(
+        alphabet,
+        config.max_word_len,
+        config.equivalence_samples,
+        config.seed,
+    ))
+}
+
 fn sample_words(
     alphabet: &[Symbol],
     max_word_len: usize,
@@ -690,18 +769,19 @@ fn sample_words(
         return Vec::new();
     }
 
-    let mut words = Vec::with_capacity(equivalence_samples);
+    let mut words = Vec::new();
     push_unique(&mut words, Vec::new(), equivalence_samples);
 
+    if alphabet.is_empty() || words.len() == equivalence_samples {
+        return words;
+    }
     for length in 1..=max_word_len {
         for symbol in alphabet {
             push_unique(&mut words, vec![*symbol; length], equivalence_samples);
+            if words.len() == equivalence_samples {
+                return words;
+            }
         }
-    }
-
-    if alphabet.is_empty() || words.len() >= equivalence_samples {
-        words.truncate(equivalence_samples);
-        return words;
     }
 
     let mut rng = SplitMix64::new(seed);

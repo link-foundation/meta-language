@@ -1,0 +1,464 @@
+//! Deferred shared controls; do not run until the complete code draft is ready.
+use meta_language::{
+    DynamicMetaLanguage, DynamicMetaLanguageOptions, LinkId, LinkNetwork, MetaLanguageArchiveEntry,
+    MetaLanguageArchiveLimits, create_meta_language_archive, decode_structured_data_links,
+    meta_language_archive_to_binary, meta_language_archive_to_link_cli_store, parse_grammar_links,
+    read_meta_language_archive_binary, read_meta_language_archive_link_cli_store,
+    read_meta_language_archive_network_text, read_meta_language_archive_text,
+    read_refined_regular_grammar_inference_links, read_structural_grammar_inference_links,
+    read_structured_data_lino, render_grammar_links, run_dynamic_language_command,
+};
+use serde_json::Value;
+use std::collections::{BTreeMap, BTreeSet};
+use std::sync::Arc;
+
+#[allow(dead_code)]
+#[path = "unit/issue_195_observations.rs"]
+mod issue_195_observations;
+use issue_195_observations::{Observation, record};
+
+#[test]
+fn link_cli_store_preserves_ordered_cycles_and_disconnected_links() {
+    let limits = MetaLanguageArchiveLimits::default();
+    let [root, target, detached] = [1, 2, 3].map(LinkId::from_u64);
+    let network = Arc::new(
+        read_meta_language_archive_network_text(
+            concat!(
+                "(1: 2 1 2 (meta: (n: 1) (term: %CF%80) (reg: 1)))\n",
+                "(2: 1 (meta: (n: 0)))\n",
+                "(3: (meta: (n: 0)))\n",
+            ),
+            limits,
+        )
+        .unwrap(),
+    );
+    let archive = create_meta_language_archive(
+        &[
+            MetaLanguageArchiveEntry {
+                identifier: "cyclic graph".to_owned(),
+                kind: "ontology".to_owned(),
+                network: Arc::clone(&network),
+                root,
+            },
+            MetaLanguageArchiveEntry {
+                identifier: "selected target".to_owned(),
+                kind: "ontology".to_owned(),
+                network,
+                root: target,
+            },
+        ],
+        limits,
+    )
+    .unwrap();
+    let packet = meta_language_archive_to_link_cli_store(&archive, limits).unwrap();
+    let restored = read_meta_language_archive_link_cli_store(&packet, limits).unwrap();
+    assert_eq!(
+        meta_language_archive_to_binary(&restored.archive, limits).unwrap(),
+        meta_language_archive_to_binary(&archive, limits).unwrap()
+    );
+    assert_eq!(restored.archive.root, archive.root);
+    assert!(Arc::ptr_eq(
+        &restored.entries[0].network,
+        &restored.entries[1].network
+    ));
+    let restored = &restored.entries[0].network;
+    assert_eq!(
+        restored.link(root).unwrap().references(),
+        &[target, root, target]
+    );
+    assert!(restored.link(detached).unwrap().references().is_empty());
+    assert!(
+        read_meta_language_archive_link_cli_store(&packet[..packet.len() - 1], limits).is_err()
+    );
+    assert!(
+        read_meta_language_archive_link_cli_store(
+            &packet,
+            MetaLanguageArchiveLimits {
+                byte_limit: packet.len() - 1,
+                ..limits
+            }
+        )
+        .unwrap_err()
+        .contains("oversized link-cli store")
+    );
+}
+
+fn concrete(entry: &MetaLanguageArchiveEntry) -> Value {
+    let mut network = LinkNetwork::new();
+    let mut pending = vec![entry.root];
+    let mut seen = BTreeSet::new();
+    let mut index = 0;
+    while index < pending.len() {
+        let id = pending[index];
+        index += 1;
+        if !seen.insert(id) {
+            continue;
+        }
+        let link = entry.network.link(id).unwrap();
+        pending.extend_from_slice(link.references());
+    }
+    let coordinates = seen
+        .iter()
+        .enumerate()
+        .map(|(index, id)| (*id, LinkId::from_u64(u64::try_from(index + 1).unwrap())))
+        .collect::<BTreeMap<_, _>>();
+    for id in &seen {
+        let link = entry.network.link(*id).unwrap();
+        network.insert_dynamic_link(
+            &link
+                .references()
+                .iter()
+                .map(|id| coordinates[id])
+                .collect::<Vec<_>>(),
+            link.metadata().clone(),
+        );
+    }
+    decode_structured_data_links(&network, coordinates[&entry.root]).unwrap()
+}
+fn bytes(value: &Value) -> Vec<u8> {
+    match value["type"].as_str().unwrap() {
+        "missing" => Vec::new(),
+        "token" | "error" => {
+            if let Some(text) = value["text"].as_str() {
+                return text.as_bytes().to_vec();
+            }
+            let hex = value["hex"].as_str().unwrap();
+            (0..hex.len())
+                .step_by(2)
+                .map(|index| u8::from_str_radix(&hex[index..index + 2], 16).unwrap())
+                .collect()
+        }
+        _ => value.get("children").and_then(Value::as_array).map_or_else(
+            || bytes(&value["root"]),
+            |children| children.iter().flat_map(bytes).collect(),
+        ),
+    }
+}
+#[test]
+fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
+    let fixture = read_structured_data_lino(include_str!(
+        "../../parity/fixtures/dynamic-language-command.lino"
+    ))
+    .unwrap();
+    let compiler = std::process::Command::new("rustc")
+        .arg("--version")
+        .output()
+        .unwrap();
+    assert!(compiler.status.success());
+    let compiler = String::from_utf8(compiler.stdout).unwrap();
+    let version = compiler.split_whitespace().nth(1).unwrap();
+    let mut parts = version.split('.');
+    assert!(
+        parts.next() == Some("1")
+            && parts
+                .next()
+                .and_then(|minor| minor.parse::<u32>().ok())
+                .is_some_and(|minor| (90..100).contains(&minor)),
+        "uncovered Rust {version}; {}",
+        fixture["versions"]["Rust"]
+    );
+    let mut files = fixture["files"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|file| {
+            (
+                file["path"].as_str().unwrap().to_owned(),
+                file["text"].as_str().unwrap().as_bytes().to_vec(),
+            )
+        })
+        .collect::<BTreeMap<_, _>>();
+    for step in fixture["steps"].as_array().unwrap() {
+        let args = step["args"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_str().unwrap().to_owned())
+            .collect::<Vec<_>>();
+        let checkpoint_bytes =
+            (step["archive"] == true && args[0] == "install").then(|| files[&args[1]].clone());
+        let output = run_dynamic_language_command(
+            &args,
+            |path| {
+                files
+                    .get(path)
+                    .ok_or_else(|| format!("unexpected source read {path}"))
+                    .and_then(|value| {
+                        String::from_utf8(value.clone()).map_err(|error| error.to_string())
+                    })
+            },
+            |path| {
+                files
+                    .get(path)
+                    .cloned()
+                    .ok_or_else(|| format!("unexpected source read {path}"))
+            },
+        );
+        assert_eq!(
+            i64::from(output.exit_code),
+            step["exit"].as_i64().unwrap(),
+            "{}: {}",
+            step["name"],
+            output.stderr
+        );
+        if let Some(error) = step["error"].as_str() {
+            assert!(
+                output.stderr.contains(error),
+                "{}: {}",
+                step["name"],
+                output.stderr
+            );
+        }
+        if step["rejection"] == true {
+            assert!(read_structured_data_lino(&output.stderr).unwrap()["rejection"].is_object());
+        }
+        if let Some(save) = step["save"].as_str() {
+            files.insert(save.to_owned(), output.stdout.clone());
+        }
+        if let Some(paths) = step["remove"].as_array() {
+            for path in paths {
+                assert!(files.remove(path.as_str().unwrap()).is_some());
+            }
+        }
+        if let Some(expected) = step["inventory"].as_array() {
+            let rows =
+                read_structured_data_lino(std::str::from_utf8(&output.stdout).unwrap()).unwrap();
+            assert_eq!(
+                rows.as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|row| row["identifier"].clone())
+                    .collect::<Vec<_>>(),
+                *expected
+            );
+        }
+        if let Some(path) = step["grammar"].as_str() {
+            let actual = parse_grammar_links(std::str::from_utf8(&output.stdout).unwrap()).unwrap();
+            let expected = parse_grammar_links(std::str::from_utf8(&files[path]).unwrap()).unwrap();
+            assert_eq!(
+                render_grammar_links(&actual),
+                render_grammar_links(&expected)
+            );
+        }
+        if step["archive"] == true {
+            let limits = MetaLanguageArchiveLimits::default();
+            let archive = if args.iter().any(|arg| arg == "--link-cli-store") {
+                read_meta_language_archive_link_cli_store(&output.stdout, limits)
+                    .unwrap()
+                    .archive
+            } else if step["binary"] == true {
+                read_meta_language_archive_binary(&output.stdout, limits)
+                    .unwrap()
+                    .archive
+            } else {
+                read_meta_language_archive_text(
+                    std::str::from_utf8(&output.stdout).unwrap(),
+                    limits,
+                )
+                .unwrap()
+                .archive
+            };
+            let session =
+                DynamicMetaLanguage::new(&archive, &DynamicMetaLanguageOptions::default()).unwrap();
+            if let Some(bytes) = checkpoint_bytes {
+                let original = if args.iter().any(|arg| arg == "--input-link-cli-store") {
+                    read_meta_language_archive_link_cli_store(&bytes, limits)
+                } else if args.iter().any(|arg| arg == "--input-binary") {
+                    read_meta_language_archive_binary(&bytes, limits)
+                } else {
+                    read_meta_language_archive_text(std::str::from_utf8(&bytes).unwrap(), limits)
+                }
+                .unwrap()
+                .archive;
+                assert!(
+                    session.entries().iter().any(|entry| {
+                        entry.kind == "grammar inference"
+                            && entry.root == original.root
+                            && entry.network.to_lino() == original.network.to_lino()
+                    }),
+                    "{}",
+                    step["name"]
+                );
+            }
+            if let Some(merge) = step.get("merge") {
+                let result = session
+                    .grammar_merge(merge["result"].as_str().unwrap())
+                    .unwrap()
+                    .unwrap();
+                let sources = merge["sources"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|source| source.as_str().unwrap())
+                    .collect::<Vec<_>>();
+                assert_eq!(result.sources, sources);
+                let mut aliases = session
+                    .sources()
+                    .iter()
+                    .filter(|source| sources.contains(&source.id.as_str()))
+                    .flat_map(|source| {
+                        source
+                            .grammar
+                            .rules()
+                            .iter()
+                            .map(|rule| format!("{}:{}", source.id, rule.name))
+                    })
+                    .collect::<Vec<_>>();
+                let mut retained = result
+                    .source_productions
+                    .into_iter()
+                    .map(|production| production.alias)
+                    .collect::<Vec<_>>();
+                aliases.sort_unstable();
+                retained.sort_unstable();
+                assert_eq!(retained, aliases);
+                assert_eq!(
+                    session
+                        .entries()
+                        .iter()
+                        .find(
+                            |entry| Some(entry.identifier.as_str()) == merge["checkpoint"].as_str()
+                        )
+                        .map(|entry| entry.kind.as_str()),
+                    Some("grammar inference")
+                );
+            }
+            for (field, identifier) in [
+                ("oracle", "grammar inference:oracle-refined"),
+                ("scannerOracle", "grammar inference:scanner-oracle-refined"),
+            ] {
+                let Some(observations) = step.get(field) else {
+                    continue;
+                };
+                let checkpoint = session
+                    .entries()
+                    .iter()
+                    .find(|entry| entry.identifier == identifier)
+                    .unwrap();
+                let result = read_refined_regular_grammar_inference_links(
+                    &checkpoint.network,
+                    checkpoint.root,
+                )
+                .unwrap();
+                assert_eq!(
+                    serde_json::to_value(result.oracle_observations).unwrap(),
+                    *observations
+                );
+            }
+            if let Some(observations) = step.get("structuralOracle") {
+                let checkpoint = session
+                    .entries()
+                    .iter()
+                    .find(|entry| entry.identifier == "grammar inference:recursive-oracle-refined")
+                    .unwrap();
+                let result =
+                    read_structural_grammar_inference_links(&checkpoint.network, checkpoint.root)
+                        .unwrap();
+                assert_eq!(
+                    serde_json::to_value(result.oracle_observations).unwrap(),
+                    *observations
+                );
+            }
+            if let Some(name) = step["concrete"].as_str() {
+                let entry = session
+                    .entries()
+                    .iter()
+                    .find(|entry| entry.identifier == name)
+                    .unwrap();
+                assert_eq!(entry.kind, "concrete syntax");
+                let value = concrete(entry);
+                assert_eq!(value["projection"], "concrete syntax");
+                assert_eq!(
+                    bytes(&value["outcome"]["tree"]),
+                    step["text"].as_str().unwrap().as_bytes()
+                );
+            }
+            if let Some(name) = step["abstract"].as_str() {
+                assert_eq!(
+                    session
+                        .entries()
+                        .iter()
+                        .find(|entry| entry.identifier == name)
+                        .unwrap()
+                        .kind,
+                    "abstract syntax"
+                );
+            }
+        }
+    }
+    let args = fixture["steps"][0]["args"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|value| value.as_str().unwrap().to_owned())
+        .collect::<Vec<_>>();
+    let prepared = run_dynamic_language_command(
+        &args,
+        |path| String::from_utf8(files[path].clone()).map_err(|error| error.to_string()),
+        |path| Ok(files[path].clone()),
+    );
+    assert_eq!(prepared.exit_code, 0, "{}", prepared.stderr);
+    files.insert("prepared.lino".to_owned(), prepared.stdout);
+    files.remove("first.lino");
+    files.remove("configuration.lino");
+    let args = fixture["steps"][3]["args"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|value| value.as_str().unwrap().to_owned())
+        .collect::<Vec<_>>();
+    let parsed = run_dynamic_language_command(
+        &args,
+        |path| {
+            files
+                .get(path)
+                .ok_or_else(|| format!("unexpected source read {path}"))
+                .and_then(|value| {
+                    String::from_utf8(value.clone()).map_err(|error| error.to_string())
+                })
+        },
+        |path| {
+            files
+                .get(path)
+                .cloned()
+                .ok_or_else(|| format!("unexpected source read {path}"))
+        },
+    );
+    assert_eq!(parsed.exit_code, 0, "{}", parsed.stderr);
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-INFERENCE-NATIVE-PARSER-ORACLE",
+        suffix: "behavior",
+        fixture_id: "grammar-discovery-parser-oracle",
+        fixture_file: "parity/fixtures/dynamic-language-command.lino",
+        assertions: &[
+            "nativeOracleChecksDeclaredAndIndependentWords",
+            "oracleObservationsReplaySourceFreeAfterRefinement",
+            "installedCandidateExecutesIndependentOracleCases",
+        ],
+        test_name: "shared_dynamic_command_sequence_retains_complete_archive_contexts",
+    });
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-INFERENCE-RECURSIVE-PARSER-ORACLE",
+        suffix: "behavior",
+        fixture_id: "grammar-discovery-recursive-parser-oracle",
+        fixture_file: "parity/fixtures/dynamic-language-command.lino",
+        assertions: &[
+            "recursiveOracleLabelsAndAnswersReplayed",
+            "recursiveOracleCheckpointSurvivesSourceFreeRefinement",
+            "installedRecursiveGrammarParsesDeeperAndRejectsNegative",
+        ],
+        test_name: "shared_dynamic_command_sequence_retains_complete_archive_contexts",
+    });
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-INFERENCE-SCANNER-PARSER-ORACLE",
+        suffix: "behavior",
+        fixture_id: "grammar-discovery-scanner-parser-oracle",
+        fixture_file: "parity/fixtures/dynamic-language-command.lino",
+        assertions: &[
+            "scannerOracleChecksNativeTokenKindsAndConflictingSpellings",
+            "scannerOracleReplaysExactSourceSpellings",
+            "installedScannerParsesHeldOutSourceAndRejectsNegative",
+        ],
+        test_name: "shared_dynamic_command_sequence_retains_complete_archive_contexts",
+    });
+}

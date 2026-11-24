@@ -237,9 +237,10 @@ pub fn read_grammar_selection_field_range_context(mappings: &[String], in_token:
         {
             let index = 0f64;
             {
-                let found_2 = self::ml_read_grammar_selection_field_range_context_loop1(
-                    mappings, found, index,
-                );
+                let found_2 =
+                    self::source_ml_temporary_read_grammar_selection_field_range_context_loop1(
+                        mappings, found, index,
+                    );
                 if found_2 {
                     if in_token {
                         2f64
@@ -247,16 +248,13 @@ pub fn read_grammar_selection_field_range_context(mappings: &[String], in_token:
                         {
                             let index_2 = 0f64;
                             {
-                                let ml_s1 =
-                                    self::ml_read_grammar_selection_field_range_context_loop2(
-                                        mappings, index_2,
-                                    );
-                                match ml_s1 {
-                                    self::MlReadGrammarSelectionFieldRangeContextLoop2Result::MlReadGrammarSelectionFieldRangeContextLoop2Done => {
+                                let source_ml_source1_s1 = self::source_ml_temporary_read_grammar_selection_field_range_context_loop2(mappings, index_2);
+                                match source_ml_source1_s1 {
+                                    self::MlTemporaryReadGrammarSelectionFieldRangeContextLoop2Result::MlTemporaryReadGrammarSelectionFieldRangeContextLoop2Done => {
                                         1f64
                                     }
-                                    self::MlReadGrammarSelectionFieldRangeContextLoop2Result::MlReadGrammarSelectionFieldRangeContextLoop2Return(ml_result2) => {
-                                        ml_result2
+                                    self::MlTemporaryReadGrammarSelectionFieldRangeContextLoop2Result::MlTemporaryReadGrammarSelectionFieldRangeContextLoop2Return(source_ml_temporary_result2) => {
+                                        source_ml_temporary_result2
                                     }
                                 }
                             }
@@ -344,23 +342,23 @@ pub fn read_grammar_selection_field_range_plan(
                                     {
                                         let index = 0f64;
                                         {
-                                            let ml_s2 = self::ml_read_grammar_selection_field_range_plan_loop3(spans, start, end, first, mode, following, ranges, previous, cursor, width, index);
-                                            match ml_s2 {
-                                                self::MlReadGrammarSelectionFieldRangePlanLoop3Result::MlReadGrammarSelectionFieldRangePlanLoop3Done(ranges_2, cursor_2, width_2) => {
+                                            let source_ml_source1_s2 = self::source_ml_temporary_read_grammar_selection_field_range_plan_loop3(spans, start, end, first, mode, following, ranges, previous, cursor, width, index);
+                                            match source_ml_source1_s2 {
+                                                self::MlTemporaryReadGrammarSelectionFieldRangePlanLoop3Result::MlTemporaryReadGrammarSelectionFieldRangePlanLoop3Done(ranges_2, cursor_2, width_2) => {
                                                     {
-                                                        let ml_s3 = if (mode == "exclude") && (cursor_2 < end) {
+                                                        let source_ml_source1_s3 = if (mode == "exclude") && (cursor_2 < end) {
                                                             {
                                                                 let ranges_3 = { let (ml_append_right, ml_append_left) = (vec![(cursor_2 - start), (end - start)], ranges_2); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                 {
                                                                     let width_3 = width_2 + (end - cursor_2);
-                                                                    self::MlReadGrammarSelectionFieldRangePlanJoin4::MlReadGrammarSelectionFieldRangePlanJoin4Next(ranges_3, width_3)
+                                                                    self::MlTemporaryReadGrammarSelectionFieldRangePlanJoin4::MlTemporaryReadGrammarSelectionFieldRangePlanJoin4Next(ranges_3, width_3)
                                                                 }
                                                             }
                                                         } else {
-                                                            self::MlReadGrammarSelectionFieldRangePlanJoin4::MlReadGrammarSelectionFieldRangePlanJoin4Next(ranges_2, width_2)
+                                                            self::MlTemporaryReadGrammarSelectionFieldRangePlanJoin4::MlTemporaryReadGrammarSelectionFieldRangePlanJoin4Next(ranges_2, width_2)
                                                         };
-                                                        match ml_s3 {
-                                                            self::MlReadGrammarSelectionFieldRangePlanJoin4::MlReadGrammarSelectionFieldRangePlanJoin4Next(ranges_4, width_4) => {
+                                                        match source_ml_source1_s3 {
+                                                            self::MlTemporaryReadGrammarSelectionFieldRangePlanJoin4::MlTemporaryReadGrammarSelectionFieldRangePlanJoin4Next(ranges_4, width_4) => {
                                                                 if (width_4 <= 0f64) || (width_4 >= (end - start)) {
                                                                     Vec::<f64>::new()
                                                                 } else {
@@ -370,8 +368,8 @@ pub fn read_grammar_selection_field_range_plan(
                                                         }
                                                     }
                                                 }
-                                                self::MlReadGrammarSelectionFieldRangePlanLoop3Result::MlReadGrammarSelectionFieldRangePlanLoop3Return(ml_result4) => {
-                                                    ml_result4
+                                                self::MlTemporaryReadGrammarSelectionFieldRangePlanLoop3Result::MlTemporaryReadGrammarSelectionFieldRangePlanLoop3Return(source_ml_temporary_result4) => {
+                                                    source_ml_temporary_result4
                                                 }
                                             }
                                         }
@@ -406,7 +404,7 @@ pub fn read_grammar_selection_field_range_children(type_: &str, source_children:
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_grammar_selection_field_range_context_loop1(
+pub fn source_ml_temporary_read_grammar_selection_field_range_context_loop1(
     mappings: &[String],
     mut found: bool,
     mut index: f64,
@@ -443,17 +441,17 @@ pub fn ml_read_grammar_selection_field_range_context_loop1(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadGrammarSelectionFieldRangeContextLoop2Result {
-    MlReadGrammarSelectionFieldRangeContextLoop2Done,
-    MlReadGrammarSelectionFieldRangeContextLoop2Return(f64),
+pub enum MlTemporaryReadGrammarSelectionFieldRangeContextLoop2Result {
+    MlTemporaryReadGrammarSelectionFieldRangeContextLoop2Done,
+    MlTemporaryReadGrammarSelectionFieldRangeContextLoop2Return(f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_grammar_selection_field_range_context_loop2(
+pub fn source_ml_temporary_read_grammar_selection_field_range_context_loop2(
     mappings: &[String],
     mut index: f64,
-) -> self::MlReadGrammarSelectionFieldRangeContextLoop2Result {
+) -> self::MlTemporaryReadGrammarSelectionFieldRangeContextLoop2Result {
     loop {
         return if index < (mappings.len() as f64) {
             if (self::accept_grammar_selection_field_range_mapping(
@@ -469,28 +467,28 @@ pub fn ml_read_grammar_selection_field_range_context_loop2(
                 }
             }
             {
-                self::MlReadGrammarSelectionFieldRangeContextLoop2Result::MlReadGrammarSelectionFieldRangeContextLoop2Return(2f64)
+                self::MlTemporaryReadGrammarSelectionFieldRangeContextLoop2Result::MlTemporaryReadGrammarSelectionFieldRangeContextLoop2Return(2f64)
             }
         } else {
-            self::MlReadGrammarSelectionFieldRangeContextLoop2Result::MlReadGrammarSelectionFieldRangeContextLoop2Done
+            self::MlTemporaryReadGrammarSelectionFieldRangeContextLoop2Result::MlTemporaryReadGrammarSelectionFieldRangeContextLoop2Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadGrammarSelectionFieldRangePlanJoin4 {
-    MlReadGrammarSelectionFieldRangePlanJoin4Next(Vec<f64>, f64),
+pub enum MlTemporaryReadGrammarSelectionFieldRangePlanJoin4 {
+    MlTemporaryReadGrammarSelectionFieldRangePlanJoin4Next(Vec<f64>, f64),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadGrammarSelectionFieldRangePlanLoop3Result {
-    MlReadGrammarSelectionFieldRangePlanLoop3Done(Vec<f64>, f64, f64),
-    MlReadGrammarSelectionFieldRangePlanLoop3Return(Vec<f64>),
+pub enum MlTemporaryReadGrammarSelectionFieldRangePlanLoop3Result {
+    MlTemporaryReadGrammarSelectionFieldRangePlanLoop3Done(Vec<f64>, f64, f64),
+    MlTemporaryReadGrammarSelectionFieldRangePlanLoop3Return(Vec<f64>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadGrammarSelectionFieldRangePlanJoin5 {
-    MlReadGrammarSelectionFieldRangePlanJoin5Next(Vec<f64>, f64),
+pub enum MlTemporaryReadGrammarSelectionFieldRangePlanJoin5 {
+    MlTemporaryReadGrammarSelectionFieldRangePlanJoin5Next(Vec<f64>, f64),
 }
 
 /// Execute the checked shared source algorithm.
@@ -500,7 +498,7 @@ pub enum MlReadGrammarSelectionFieldRangePlanJoin5 {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_read_grammar_selection_field_range_plan_loop3(
+pub fn source_ml_temporary_read_grammar_selection_field_range_plan_loop3(
     spans: &[f64],
     mut start: f64,
     mut end: f64,
@@ -512,19 +510,19 @@ pub fn ml_read_grammar_selection_field_range_plan_loop3(
     mut cursor: f64,
     mut width: f64,
     mut index: f64,
-) -> self::MlReadGrammarSelectionFieldRangePlanLoop3Result {
+) -> self::MlTemporaryReadGrammarSelectionFieldRangePlanLoop3Result {
     loop {
         return if index < (spans.len() as f64) {
             {
                 let left =
                     (self::ml_array::optional_at(spans, self::ml_array::number_index(index)))
-                        .unwrap_or(-1f64);
+                        .unwrap_or_else(|| -1f64);
                 {
                     let right = (self::ml_array::optional_at(
                         spans,
                         self::ml_array::number_index(index + 1f64),
                     ))
-                    .unwrap_or(-1f64);
+                    .unwrap_or_else(|| -1f64);
                     if ((((!(self::ml_math::is_integer(left))
                         || !(self::ml_math::is_integer(right)))
                         || (left < previous))
@@ -532,7 +530,7 @@ pub fn ml_read_grammar_selection_field_range_plan_loop3(
                         || (left >= right))
                         || (right > end)
                     {
-                        self::MlReadGrammarSelectionFieldRangePlanLoop3Result::MlReadGrammarSelectionFieldRangePlanLoop3Return(Vec::<f64>::new())
+                        self::MlTemporaryReadGrammarSelectionFieldRangePlanLoop3Result::MlTemporaryReadGrammarSelectionFieldRangePlanLoop3Return(Vec::<f64>::new())
                     } else {
                         {
                             let previous_2 = right;
@@ -565,7 +563,7 @@ pub fn ml_read_grammar_selection_field_range_plan_loop3(
                                     }
                                     {
                                         {
-                                            let ml_s4 = if cursor < left {
+                                            let source_ml_source1_s4 = if cursor < left {
                                                 {
                                                     let ranges_3 = {
                                                         let (ml_append_right, ml_append_left) = (
@@ -579,14 +577,14 @@ pub fn ml_read_grammar_selection_field_range_plan_loop3(
                                                     };
                                                     {
                                                         let width_3 = width + (left - cursor);
-                                                        self::MlReadGrammarSelectionFieldRangePlanJoin5::MlReadGrammarSelectionFieldRangePlanJoin5Next(ranges_3, width_3)
+                                                        self::MlTemporaryReadGrammarSelectionFieldRangePlanJoin5::MlTemporaryReadGrammarSelectionFieldRangePlanJoin5Next(ranges_3, width_3)
                                                     }
                                                 }
                                             } else {
-                                                self::MlReadGrammarSelectionFieldRangePlanJoin5::MlReadGrammarSelectionFieldRangePlanJoin5Next(ranges, width)
+                                                self::MlTemporaryReadGrammarSelectionFieldRangePlanJoin5::MlTemporaryReadGrammarSelectionFieldRangePlanJoin5Next(ranges, width)
                                             };
-                                            match ml_s4 {
-                                                self::MlReadGrammarSelectionFieldRangePlanJoin5::MlReadGrammarSelectionFieldRangePlanJoin5Next(ranges_4, width_4) => {
+                                            match source_ml_source1_s4 {
+                                                self::MlTemporaryReadGrammarSelectionFieldRangePlanJoin5::MlTemporaryReadGrammarSelectionFieldRangePlanJoin5Next(ranges_4, width_4) => {
                                                     {
                                                         let cursor_2 = right;
                                                         {
@@ -601,8 +599,7 @@ pub fn ml_read_grammar_selection_field_range_plan_loop3(
                                             }
                                         }
                                     }
-                                }
-                                {
+                                } else {
                                     {
                                         let index_4 = index + 2f64;
                                         {
@@ -617,7 +614,7 @@ pub fn ml_read_grammar_selection_field_range_plan_loop3(
                 }
             }
         } else {
-            self::MlReadGrammarSelectionFieldRangePlanLoop3Result::MlReadGrammarSelectionFieldRangePlanLoop3Done(ranges, cursor, width)
+            self::MlTemporaryReadGrammarSelectionFieldRangePlanLoop3Result::MlTemporaryReadGrammarSelectionFieldRangePlanLoop3Done(ranges, cursor, width)
         };
     }
 }

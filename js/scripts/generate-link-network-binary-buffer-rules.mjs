@@ -25,19 +25,17 @@ export function readLinkNetworkBinaryBufferSourceModule() {
   return primitive.slice(0,boundary)+source.replace(imported,'');
 }
 
-export async function generateLinkNetworkBinaryBufferRules({check=false}={}) {
-  const [{parseJavaScript},{checkProgram},{emitRust},{encodeTypedProgramLinks,decodeTypedProgramLinks},
-    {recheckLinkedTypedProgram},{LinkNetwork},{encodeLinkNetworkBinary,decodeLinkNetworkBinary}]=await Promise.all([
+export async function generateLinkNetworkBinaryBufferRules({check=false,draft=false}={}) {
+  assert.ok(!(check&&draft),'source authoring and verification are separate operations');
+  const [{parseJavaScript},{checkProgram},{emitRust}]=await Promise.all([
     import('../src/translation/javascript.js'),import('../src/translation/check.js'),import('../src/translation/emit-rust.js'),
-    import('../src/typed-program-links.js'),import('../src/typed-program-checked-projection.js'),
-    import('../src/network.js'),import('../src/link-network-binary.js'),
   ]);
   const source=readLinkNetworkBinaryBufferSourceModule();
   const program=checkProgram(parseJavaScript(source,{referenceSemantics:false}));
   const inventory=program.items.map((row,ordinal)=>({ordinal,kind:row.k,name:row.name,fullName:row.fullName,generated:row.generated===true}));
   const originalNames=['linkNetworkBinaryUnit','acceptLinkNetworkBinaryInteger','readLinkNetworkBinaryInteger',
     'linkNetworkBinaryIntegerByte','acceptLinkNetworkBinaryUnicode','renderLinkNetworkBinaryHexadecimalDigit',
-    'renderLinkNetworkBinaryField','transcodeLinkNetworkBinary'];
+    'renderLinkNetworkBinaryField','hasOrderedLinkNetworkIdentity','transcodeLinkNetworkBinary'];
   assert.deepEqual(inventory.filter(row=>!row.generated).map(row=>row.name),originalNames);
   assert.equal(new Set(inventory.map(row=>row.fullName)).size,program.declarations.size);
   const options={arrayConsumption:true};
@@ -45,6 +43,15 @@ export async function generateLinkNetworkBinaryBufferRules({check=false}={}) {
   assert.equal(emitted.definitions.length,inventory.length);
   for(const owner of inventory) assert.equal(emitted.mappings.filter(row=>row.source===owner.fullName
     &&row.kind===(owner.kind==='fn'?'function':owner.kind)).length,1,'one complete mapping: '+owner.fullName);
+  if(draft){
+    writeRecordRuleLibrary(emitted,'link_network_binary_buffer_rules',{sourceStyles:readBinaryBufferCompilerStyles});
+    return;
+  }
+  const [{encodeTypedProgramLinks,decodeTypedProgramLinks},
+    {recheckLinkedTypedProgram},{LinkNetwork},{encodeLinkNetworkBinary,decodeLinkNetworkBinary}]=await Promise.all([
+    import('../src/typed-program-links.js'),import('../src/typed-program-checked-projection.js'),
+    import('../src/network.js'),import('../src/link-network-binary.js'),
+  ]);
   const packet=encodeTypedProgramLinks(program),recordCount=packet.network.links().length;
   assert.ok(recordCount>0&&recordCount<=1_000_000,'the complete source archive has an explicit bounded record census');
   const binaryLimits={recordLimit:recordCount,byteLimit:64*1024*1024};
@@ -77,7 +84,8 @@ export async function generateLinkNetworkBinaryBufferRules({check=false}={}) {
 }
 
 if(process.argv[1]===fileURLToPath(import.meta.url)) {
-  assert.ok(process.argv.slice(2).every(argument=>argument==='--check'),'only read-only --check is also admitted');
-  const artifact=await generateLinkNetworkBinaryBufferRules({check:process.argv.includes('--check')});
-  console.log('Binary field buffers: '+artifact.definitionCount+' complete checked owners; both typed archives agree; native execution not selected');
+  const mode=process.argv.slice(2).join(' ');
+  assert.ok(['','--check','--draft'].includes(mode),'use --check for verification or --draft for source authoring');
+  const artifact=await generateLinkNetworkBinaryBufferRules({check:mode==='--check',draft:mode==='--draft'});
+  if(artifact)console.log('Binary field buffers: '+artifact.definitionCount+' complete checked owners; both typed archives agree; native execution not selected');
 }

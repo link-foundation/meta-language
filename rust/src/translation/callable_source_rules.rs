@@ -1,5 +1,4 @@
-// Generated from complete callable-source-rules.js through the checked translator.
-// Do not edit by hand.
+// Generated from complete js/src/translation/callable-source-rules.js. Do not edit by hand.
 // JavaScript Number equality and separate arithmetic rounding are preserved.
 // Array index casts retain the existing checked runtime guards.
 #![allow(
@@ -35,3 +34,9 @@ pub use part_6::*;
 #[path = "callable_source_rules/part_7.rs"]
 mod part_7;
 pub use part_7::*;
+#[path = "callable_source_rules/part_8.rs"]
+mod part_8;
+pub use part_8::*;
+#[path = "callable_source_rules/part_9.rs"]
+mod part_9;
+pub use part_9::*;

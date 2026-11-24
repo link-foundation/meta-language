@@ -1,37 +1,145 @@
-// Generated from complete callable-source-rules.js through the checked translator.
-// Do not edit by hand.
-use super::MlCallableStatementUsesLoop25Result;
-use super::MlReadCallableCaptureConflictsLoop27Result;
+// Generated from complete js/src/translation/callable-source-rules.js. Do not edit by hand.
 use super::callable_bound;
 use super::callable_element;
 use super::callable_field;
-use super::callable_parameter_names;
 use super::callable_tag;
 use super::callable_text;
-use super::callable_truthy;
 use super::ml_array;
-use super::ml_callable_nested_events_loop23;
-use super::ml_callable_outer_assignments_loop32;
-use super::ml_callable_read_events_loop20;
-use super::ml_callable_statement_uses_loop24;
-use super::ml_callable_statement_uses_loop25;
-use super::ml_callable_statement_uses_loop26;
-use super::ml_number;
-use super::ml_plan_callable_application_constraints_loop36;
-use super::ml_plan_callable_function_type_loop34;
-use super::ml_plan_callable_parameter_types_loop33;
-use super::ml_plan_callable_type_constraints_loop35;
-use super::ml_read_callable_capture_conflicts_loop27;
-use super::ml_read_callable_capture_conflicts_loop28;
-use super::ml_read_callable_free_references_loop16;
-use super::ml_read_callable_free_references_loop17;
-use super::ml_read_callable_free_references_loop19;
-use super::ml_read_callable_statement_uses_loop21;
-use super::read_callable_statement_role;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
+use super::source_ml_source1_temporary_callable_assigned_expression_references_loop24;
+use super::source_ml_source1_temporary_callable_assigned_expression_references_loop26;
+use super::source_ml_source1_temporary_callable_assigned_expression_references_loop27;
+use super::source_ml_source1_temporary_callable_nested_events_loop30;
+use super::source_ml_source1_temporary_callable_parameter_names_loop15;
+use super::source_ml_source1_temporary_callable_read_events_loop23;
+use super::source_ml_source1_temporary_read_callable_free_references_loop17;
+use super::source_ml_source1_temporary_read_callable_free_references_loop18;
+use super::source_ml_source1_temporary_read_callable_free_references_loop20;
+use super::source_ml_source1_temporary_read_callable_free_references_loop22;
+use super::source_ml_source1_temporary_read_callable_source_pattern_names_loop16;
+use super::source_ml_source1_temporary_read_callable_statement_uses_loop28;
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn callable_parameter_names(
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    parameters: f64,
+) -> Vec<String> {
+    {
+        let names = Vec::<String>::new();
+        if parameters < 0f64 {
+            names
+        } else {
+            {
+                let at = 0f64;
+                {
+                    self::source_ml_source1_temporary_callable_parameter_names_loop15(
+                        texts, starts, counts, labels, targets, parameters, names, at,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_callable_source_pattern_names(
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    node: f64,
+) -> Vec<String> {
+    if node < 0f64 {
+        Vec::<String>::new()
+    } else {
+        {
+            let kind = self::callable_tag(texts, starts, counts, labels, targets, node, "k");
+            {
+                let names = Vec::<String>::new();
+                {
+                    let names_3 =
+                        if ((kind == "alias") || (kind == "bind")) || (kind == "bindOrCtor") {
+                            {
+                                {
+                                    let (ml_append_right, ml_append_left) = (
+                                        vec![self::callable_tag(
+                                            texts, starts, counts, labels, targets, node, "name",
+                                        )],
+                                        names,
+                                    );
+                                    self::ml_array::append(ml_append_left, ml_append_right)
+                                }
+                            }
+                        } else {
+                            names
+                        };
+                    if (kind == "alias") || (kind == "natAdd") {
+                        {
+                            let source_ml_source2_concat_value16 = names_3;
+                            {
+                                let source_ml_source2_concat_value17 =
+                                    self::read_callable_source_pattern_names(
+                                        texts,
+                                        starts,
+                                        counts,
+                                        labels,
+                                        targets,
+                                        self::callable_field(
+                                            starts,
+                                            counts,
+                                            labels,
+                                            targets,
+                                            node,
+                                            &(if kind == "alias" {
+                                                String::from("pattern")
+                                            } else {
+                                                String::from("inner")
+                                            }),
+                                        ),
+                                    );
+                                self::ml_array::append(
+                                    self::ml_array::append(
+                                        Vec::<String>::new(),
+                                        source_ml_source2_concat_value16,
+                                    ),
+                                    source_ml_source2_concat_value17,
+                                )
+                            }
+                        }
+                    } else {
+                        {
+                            if (kind == "ctor") || (kind == "tuple") {
+                                {
+                                    let args = self::callable_field(
+                                        starts, counts, labels, targets, node, "args",
+                                    );
+                                    {
+                                        let at = 0f64;
+                                        {
+                                            self::source_ml_source1_temporary_read_callable_source_pattern_names_loop16(texts, starts, counts, labels, targets, names_3, args, at)
+                                        }
+                                    }
+                                }
+                            } else {
+                                names_3
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
 #[must_use]
 // The checked primitive-column interface retains every ordered source argument.
 #[expect(
@@ -74,16 +182,25 @@ pub fn read_callable_free_references(
                                 labels,
                                 targets,
                                 self::callable_field(starts, counts, labels, targets, node, "body"),
-                                &(self::ml_array::append(bound.to_vec(), names)),
+                                &({
+                                    let source_ml_source2_concat_value18 = bound.to_vec();
+                                    {
+                                        let source_ml_source2_concat_value19 = names;
+                                        self::ml_array::append(
+                                            self::ml_array::append(
+                                                Vec::<String>::new(),
+                                                source_ml_source2_concat_value18,
+                                            ),
+                                            source_ml_source2_concat_value19,
+                                        )
+                                    }
+                                }),
                                 checked,
                             );
                             {
                                 let at = 0f64;
                                 {
-                                    self::ml_read_callable_free_references_loop16(
-                                        forms, texts, starts, counts, labels, targets, bound,
-                                        checked, params, references, at,
-                                    )
+                                    self::source_ml_source1_temporary_read_callable_free_references_loop17(forms, texts, starts, counts, labels, targets, bound, checked, params, references, at)
                                 }
                             }
                         }
@@ -107,33 +224,72 @@ pub fn read_callable_free_references(
                             texts, starts, counts, labels, targets, node, "name",
                         );
                         {
-                            let (ml_append_right, ml_append_left) = (
-                                self::read_callable_free_references(
-                                    forms,
-                                    texts,
-                                    starts,
-                                    counts,
-                                    labels,
-                                    targets,
-                                    self::callable_field(
-                                        starts, counts, labels, targets, node, "body",
+                            let source_ml_source2_concat_value22 = value;
+                            {
+                                let source_ml_source2_concat_value23 =
+                                    self::read_callable_free_references(
+                                        forms,
+                                        texts,
+                                        starts,
+                                        counts,
+                                        labels,
+                                        targets,
+                                        self::callable_field(
+                                            starts, counts, labels, targets, node, "body",
+                                        ),
+                                        &({
+                                            let source_ml_source2_concat_value20 = bound.to_vec();
+                                            {
+                                                let source_ml_source2_concat_value21 = vec![name];
+                                                self::ml_array::append(
+                                                    self::ml_array::append(
+                                                        Vec::<String>::new(),
+                                                        source_ml_source2_concat_value20,
+                                                    ),
+                                                    source_ml_source2_concat_value21,
+                                                )
+                                            }
+                                        }),
+                                        checked,
+                                    );
+                                self::ml_array::append(
+                                    self::ml_array::append(
+                                        Vec::<f64>::new(),
+                                        source_ml_source2_concat_value22,
                                     ),
-                                    &({
-                                        let (ml_append_right, ml_append_left) =
-                                            (vec![name], bound.to_vec());
-                                        self::ml_array::append(ml_append_left, ml_append_right)
-                                    }),
-                                    checked,
-                                ),
-                                value,
-                            );
-                            self::ml_array::append(ml_append_left, ml_append_right)
+                                    source_ml_source2_concat_value23,
+                                )
+                            }
+                        }
+                    }
+                }
+            } else if !checked && (kind == "match") {
+                {
+                    let references_3 = self::read_callable_free_references(
+                        forms,
+                        texts,
+                        starts,
+                        counts,
+                        labels,
+                        targets,
+                        self::callable_field(starts, counts, labels, targets, node, "scrutinees"),
+                        bound,
+                        checked,
+                    );
+                    {
+                        let rows =
+                            self::callable_field(starts, counts, labels, targets, node, "rows");
+                        {
+                            let at_2 = 0f64;
+                            {
+                                self::source_ml_source1_temporary_read_callable_free_references_loop18(forms, texts, starts, counts, labels, targets, bound, checked, references_3, rows, at_2)
+                            }
                         }
                     }
                 }
             } else if checked && (kind == "match") {
                 {
-                    let references_3 = self::read_callable_free_references(
+                    let references_5 = self::read_callable_free_references(
                         forms,
                         texts,
                         starts,
@@ -148,45 +304,33 @@ pub fn read_callable_free_references(
                         let cases =
                             self::callable_field(starts, counts, labels, targets, node, "cases");
                         {
-                            let at_2 = 0f64;
+                            let at_3 = 0f64;
                             {
-                                self::ml_read_callable_free_references_loop17(
-                                    forms,
-                                    texts,
-                                    starts,
-                                    counts,
-                                    labels,
-                                    targets,
-                                    bound,
-                                    checked,
-                                    references_3,
-                                    cases,
-                                    at_2,
-                                )
+                                self::source_ml_source1_temporary_read_callable_free_references_loop20(forms, texts, starts, counts, labels, targets, bound, checked, references_5, cases, at_3)
                             }
                         }
                     }
                 }
             } else {
                 {
-                    let references_5 = Vec::<f64>::new();
+                    let references_7 = Vec::<f64>::new();
                     {
-                        let references_7 = if checked && (kind == "var") {
+                        let references_9 = if checked && (kind == "var") {
                             {
                                 let name_2 = self::callable_tag(
                                     texts, starts, counts, labels, targets, node, "name",
                                 );
                                 if (self::callable_bound(bound, &(name_2))) {
-                                    references_5
+                                    references_7
                                 } else {
                                     { vec![node] }
                                 }
                             }
                         } else {
-                            references_5
+                            references_7
                         };
                         {
-                            let references_9 = if !checked && (kind == "name") {
+                            let references_11 = if !checked && (kind == "name") {
                                 {
                                     let path = self::callable_field(
                                         starts, counts, labels, targets, node, "path",
@@ -202,34 +346,22 @@ pub fn read_callable_free_references(
                                                 bound,
                                                 &(self::callable_text(texts, name_3)),
                                             )) {
-                                                references_7
+                                                references_9
                                             } else {
                                                 { vec![name_3] }
                                             }
                                         }
                                     } else {
-                                        references_7
+                                        references_9
                                     }
                                 }
                             } else {
-                                references_7
+                                references_9
                             };
                             {
-                                let at_3 = self::read_required_number_fact(starts, node);
+                                let at_4 = self::read_required_number_fact(starts, node);
                                 {
-                                    self::ml_read_callable_free_references_loop19(
-                                        forms,
-                                        texts,
-                                        starts,
-                                        counts,
-                                        labels,
-                                        targets,
-                                        node,
-                                        bound,
-                                        checked,
-                                        references_9,
-                                        at_3,
-                                    )
+                                    self::source_ml_source1_temporary_read_callable_free_references_loop22(forms, texts, starts, counts, labels, targets, node, bound, checked, references_11, at_4)
                                 }
                             }
                         }
@@ -240,19 +372,251 @@ pub fn read_callable_free_references(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_read_events(references: &[f64]) -> Vec<f64> {
     {
         let events = Vec::<f64>::new();
         {
             let at = 0f64;
-            { self::ml_callable_read_events_loop20(references, events, at) }
+            {
+                self::source_ml_source1_temporary_callable_read_events_loop23(
+                    references, events, at,
+                )
+            }
         }
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn callable_assigned_expression_references(
+    forms: &[String],
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    node: f64,
+    bound: &[String],
+) -> Vec<f64> {
+    if (node < 0f64)
+        || (((self::read_required_text_fact(forms, node)) != "object")
+            && ((self::read_required_text_fact(forms, node)) != "array"))
+    {
+        Vec::<f64>::new()
+    } else {
+        {
+            let kind = self::callable_tag(texts, starts, counts, labels, targets, node, "k");
+            if kind == "match" {
+                {
+                    let references = self::callable_assigned_expression_references(
+                        forms,
+                        texts,
+                        starts,
+                        counts,
+                        labels,
+                        targets,
+                        self::callable_field(starts, counts, labels, targets, node, "scrutinees"),
+                        bound,
+                    );
+                    {
+                        let rows =
+                            self::callable_field(starts, counts, labels, targets, node, "rows");
+                        {
+                            let at = 0f64;
+                            {
+                                self::source_ml_source1_temporary_callable_assigned_expression_references_loop24(forms, texts, starts, counts, labels, targets, bound, references, rows, at)
+                            }
+                        }
+                    }
+                }
+            } else if kind == "let" {
+                {
+                    let value = self::callable_assigned_expression_references(
+                        forms,
+                        texts,
+                        starts,
+                        counts,
+                        labels,
+                        targets,
+                        self::callable_field(starts, counts, labels, targets, node, "value"),
+                        bound,
+                    );
+                    {
+                        let source_ml_source2_concat_value26 = value;
+                        {
+                            let source_ml_source2_concat_value27 =
+                                self::callable_assigned_expression_references(
+                                    forms,
+                                    texts,
+                                    starts,
+                                    counts,
+                                    labels,
+                                    targets,
+                                    self::callable_field(
+                                        starts, counts, labels, targets, node, "body",
+                                    ),
+                                    &({
+                                        let source_ml_source2_concat_value24 = bound.to_vec();
+                                        {
+                                            let source_ml_source2_concat_value25 =
+                                                vec![self::callable_tag(
+                                                    texts, starts, counts, labels, targets, node,
+                                                    "name",
+                                                )];
+                                            self::ml_array::append(
+                                                self::ml_array::append(
+                                                    Vec::<String>::new(),
+                                                    source_ml_source2_concat_value24,
+                                                ),
+                                                source_ml_source2_concat_value25,
+                                            )
+                                        }
+                                    }),
+                                );
+                            self::ml_array::append(
+                                self::ml_array::append(
+                                    Vec::<f64>::new(),
+                                    source_ml_source2_concat_value26,
+                                ),
+                                source_ml_source2_concat_value27,
+                            )
+                        }
+                    }
+                }
+            } else if kind == "lambda" {
+                {
+                    let params =
+                        self::callable_field(starts, counts, labels, targets, node, "params");
+                    {
+                        let assigned = self::callable_assigned_expression_references(
+                            forms,
+                            texts,
+                            starts,
+                            counts,
+                            labels,
+                            targets,
+                            self::callable_field(starts, counts, labels, targets, node, "body"),
+                            &({
+                                let source_ml_source2_concat_value28 = bound.to_vec();
+                                {
+                                    let source_ml_source2_concat_value29 =
+                                        self::callable_parameter_names(
+                                            texts, starts, counts, labels, targets, params,
+                                        );
+                                    self::ml_array::append(
+                                        self::ml_array::append(
+                                            Vec::<String>::new(),
+                                            source_ml_source2_concat_value28,
+                                        ),
+                                        source_ml_source2_concat_value29,
+                                    )
+                                }
+                            }),
+                        );
+                        {
+                            let index = 0f64;
+                            {
+                                self::source_ml_source1_temporary_callable_assigned_expression_references_loop26(forms, texts, starts, counts, labels, targets, bound, params, assigned, index)
+                            }
+                        }
+                    }
+                }
+            } else {
+                {
+                    let assigned_3 = Vec::<f64>::new();
+                    {
+                        let assigned_5 = if kind == "cellWrite" {
+                            {
+                                let cell = self::callable_field(
+                                    starts, counts, labels, targets, node, "cell",
+                                );
+                                {
+                                    let path = self::callable_field(
+                                        starts, counts, labels, targets, cell, "path",
+                                    );
+                                    if (((self::callable_tag(
+                                        texts, starts, counts, labels, targets, cell, "k",
+                                    )) == "name")
+                                        && (path >= 0f64))
+                                        && ((self::read_required_number_fact(counts, path)) == 1f64)
+                                    {
+                                        {
+                                            let name = self::callable_element(
+                                                starts, counts, targets, path, 0f64,
+                                            );
+                                            if (self::callable_bound(
+                                                bound,
+                                                &(self::callable_text(texts, name)),
+                                            )) {
+                                                assigned_3
+                                            } else {
+                                                { vec![1f64, name] }
+                                            }
+                                        }
+                                    } else {
+                                        assigned_3
+                                    }
+                                }
+                            }
+                        } else {
+                            assigned_3
+                        };
+                        {
+                            let at_2 = self::read_required_number_fact(starts, node);
+                            {
+                                self::source_ml_source1_temporary_callable_assigned_expression_references_loop27(forms, texts, starts, counts, labels, targets, node, bound, assigned_5, at_2)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn callable_expression_events(
+    forms: &[String],
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    node: f64,
+    bound: &[String],
+) -> Vec<f64> {
+    {
+        let source_ml_source2_concat_value30 = self::callable_read_events(
+            &(self::read_callable_free_references(
+                forms, texts, starts, counts, labels, targets, node, bound, false,
+            )),
+        );
+        {
+            let source_ml_source2_concat_value31 = self::callable_assigned_expression_references(
+                forms, texts, starts, counts, labels, targets, node, bound,
+            );
+            self::ml_array::append(
+                self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value30),
+                source_ml_source2_concat_value31,
+            )
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
 #[must_use]
 // The checked primitive-column interface retains every ordered source argument.
 #[expect(
@@ -276,7 +640,7 @@ pub fn read_callable_statement_uses(
             {
                 let at = 0f64;
                 {
-                    self::ml_read_callable_statement_uses_loop21(
+                    self::source_ml_source1_temporary_read_callable_statement_uses_loop28(
                         forms, texts, starts, counts, labels, targets, statements, events, scope,
                         at,
                     )
@@ -286,647 +650,14 @@ pub fn read_callable_statement_uses(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_nested_events(events: &[f64]) -> Vec<f64> {
     {
         let result = Vec::<f64>::new();
         {
             let at = 0f64;
-            { self::ml_callable_nested_events_loop23(events, result, at) }
-        }
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn callable_statement_uses(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    statement: f64,
-    bound: &[String],
-) -> Vec<f64> {
-    {
-        let role = self::read_callable_statement_role(
-            &(self::callable_tag(texts, starts, counts, labels, targets, statement, "s")),
-        );
-        {
-            let name = self::callable_field(starts, counts, labels, targets, statement, "name");
-            {
-                let value =
-                    self::callable_field(starts, counts, labels, targets, statement, "value");
-                if role == "declare" {
-                    self::ml_array::append(
-                        self::callable_read_events(
-                            &(self::read_callable_free_references(
-                                forms, texts, starts, counts, labels, targets, value, bound, false,
-                            )),
-                        ),
-                        vec![2f64, name],
-                    )
-                } else if role == "assign" {
-                    {
-                        let reads = self::callable_read_events(
-                            &(self::read_callable_free_references(
-                                forms, texts, starts, counts, labels, targets, value, bound, false,
-                            )),
-                        );
-                        if self::callable_bound(bound, &(self::callable_text(texts, name))) {
-                            reads
-                        } else {
-                            {
-                                let (ml_append_right, ml_append_left) =
-                                    (vec![0f64, name, 1f64, name], reads);
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            }
-                        }
-                    }
-                } else if role == "read" {
-                    self::callable_read_events(
-                        &(self::read_callable_free_references(
-                            forms,
-                            texts,
-                            starts,
-                            counts,
-                            labels,
-                            targets,
-                            self::callable_field(
-                                starts, counts, labels, targets, statement, "expr",
-                            ),
-                            bound,
-                            false,
-                        )),
-                    )
-                } else if role == "reference" {
-                    {
-                        let references = self::read_callable_free_references(
-                            forms,
-                            texts,
-                            starts,
-                            counts,
-                            labels,
-                            targets,
-                            self::callable_field(
-                                starts, counts, labels, targets, statement, "object",
-                            ),
-                            bound,
-                            false,
-                        );
-                        {
-                            let references_2 = {
-                                let (ml_append_right, ml_append_left) = (
-                                    self::read_callable_free_references(
-                                        forms,
-                                        texts,
-                                        starts,
-                                        counts,
-                                        labels,
-                                        targets,
-                                        self::callable_field(
-                                            starts, counts, labels, targets, statement, "index",
-                                        ),
-                                        bound,
-                                        false,
-                                    ),
-                                    references,
-                                );
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            };
-                            self::callable_read_events(
-                                &({
-                                    let (ml_append_right, ml_append_left) = (
-                                        self::read_callable_free_references(
-                                            forms, texts, starts, counts, labels, targets, value,
-                                            bound, false,
-                                        ),
-                                        references_2,
-                                    );
-                                    self::ml_array::append(ml_append_left, ml_append_right)
-                                }),
-                            )
-                        }
-                    }
-                } else if role == "block" {
-                    {
-                        let events = self::read_callable_statement_uses(
-                            forms,
-                            texts,
-                            starts,
-                            counts,
-                            labels,
-                            targets,
-                            self::callable_field(
-                                starts, counts, labels, targets, statement, "body",
-                            ),
-                            bound,
-                        );
-                        if self::callable_truthy(
-                            forms,
-                            texts,
-                            self::callable_field(
-                                starts, counts, labels, targets, statement, "inline",
-                            ),
-                        ) {
-                            events
-                        } else {
-                            self::callable_nested_events(&(events))
-                        }
-                    }
-                } else if (role == "branch") || (role == "loop") {
-                    {
-                        let reads_2 = self::callable_read_events(
-                            &(self::read_callable_free_references(
-                                forms,
-                                texts,
-                                starts,
-                                counts,
-                                labels,
-                                targets,
-                                self::callable_field(
-                                    starts, counts, labels, targets, statement, "cond",
-                                ),
-                                bound,
-                                false,
-                            )),
-                        );
-                        if role == "loop" {
-                            {
-                                let (ml_append_right, ml_append_left) = (
-                                    self::callable_nested_events(
-                                        &(self::read_callable_statement_uses(
-                                            forms,
-                                            texts,
-                                            starts,
-                                            counts,
-                                            labels,
-                                            targets,
-                                            self::callable_field(
-                                                starts, counts, labels, targets, statement, "body",
-                                            ),
-                                            bound,
-                                        )),
-                                    ),
-                                    reads_2,
-                                );
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            }
-                        } else {
-                            {
-                                let yes = self::read_callable_statement_uses(
-                                    forms,
-                                    texts,
-                                    starts,
-                                    counts,
-                                    labels,
-                                    targets,
-                                    self::callable_field(
-                                        starts, counts, labels, targets, statement, "then",
-                                    ),
-                                    bound,
-                                );
-                                {
-                                    let no = self::read_callable_statement_uses(
-                                        forms,
-                                        texts,
-                                        starts,
-                                        counts,
-                                        labels,
-                                        targets,
-                                        self::callable_field(
-                                            starts, counts, labels, targets, statement, "else",
-                                        ),
-                                        bound,
-                                    );
-                                    self::ml_array::append(
-                                        {
-                                            let (ml_append_right, ml_append_left) =
-                                                (self::callable_nested_events(&(yes)), reads_2);
-                                            self::ml_array::append(ml_append_left, ml_append_right)
-                                        },
-                                        self::callable_nested_events(&(no)),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                } else if role == "switch" {
-                    {
-                        let events_2 = self::callable_read_events(
-                            &(self::read_callable_free_references(
-                                forms,
-                                texts,
-                                starts,
-                                counts,
-                                labels,
-                                targets,
-                                self::callable_field(
-                                    starts,
-                                    counts,
-                                    labels,
-                                    targets,
-                                    statement,
-                                    "discriminant",
-                                ),
-                                bound,
-                                false,
-                            )),
-                        );
-                        {
-                            let clauses = self::callable_field(
-                                starts, counts, labels, targets, statement, "clauses",
-                            );
-                            {
-                                let at = 0f64;
-                                {
-                                    self::ml_callable_statement_uses_loop24(
-                                        forms, texts, starts, counts, labels, targets, bound,
-                                        events_2, clauses, at,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                } else if role == "for" {
-                    {
-                        let initial = self::read_callable_statement_uses(
-                            forms,
-                            texts,
-                            starts,
-                            counts,
-                            labels,
-                            targets,
-                            self::callable_field(
-                                starts, counts, labels, targets, statement, "init",
-                            ),
-                            bound,
-                        );
-                        {
-                            let inner = bound.to_vec();
-                            {
-                                let at_2 = 0f64;
-                                {
-                                    let ml_s8 = self::ml_callable_statement_uses_loop25(
-                                        texts,
-                                        &(initial),
-                                        inner,
-                                        at_2,
-                                    );
-                                    match ml_s8 {
-                                                                    self::MlCallableStatementUsesLoop25Result::MlCallableStatementUsesLoop25Done(inner_2, at_3) => {
-                                                                        {
-                                                                            let events_4 = self::callable_nested_events(&(initial));
-                                                                            {
-                                                                                let events_5 = { let (ml_append_right, ml_append_left) = (self::callable_read_events(&(self::read_callable_free_references(forms, texts, starts, counts, labels, targets, self::callable_field(starts, counts, labels, targets, statement, "cond"), &(inner_2), false))), events_4); self::ml_array::append(ml_append_left, ml_append_right) };
-                                                                                {
-                                                                                    let update = self::read_callable_statement_uses(forms, texts, starts, counts, labels, targets, self::callable_field(starts, counts, labels, targets, statement, "update"), &(inner_2));
-                                                                                    {
-                                                                                        let at_4 = 0f64;
-                                                                                        {
-                                                                                            let inner_3 = self::ml_callable_statement_uses_loop26(texts, inner_2, at_4, &(update));
-                                                                                            self::ml_array::append({ let (ml_append_right, ml_append_left) = (self::callable_nested_events(&(update)), events_5); self::ml_array::append(ml_append_left, ml_append_right) }, self::callable_nested_events(&(self::read_callable_statement_uses(forms, texts, starts, counts, labels, targets, self::callable_field(starts, counts, labels, targets, statement, "body"), &(inner_3)))))
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    Vec::<f64>::new()
-                }
-            }
-        }
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn read_callable_capture_conflicts(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    node: f64,
-) -> Vec<f64> {
-    {
-        let observations =
-            self::callable_outer_assignments(forms, texts, starts, counts, labels, targets, node);
-        {
-            let assigned = Vec::<String>::new();
-            {
-                let closures = Vec::<f64>::new();
-                {
-                    let at = 0f64;
-                    {
-                        let ml_s9 = self::ml_read_callable_capture_conflicts_loop27(
-                            texts,
-                            &(observations),
-                            assigned,
-                            closures,
-                            at,
-                        );
-                        match ml_s9 {
-                            self::MlReadCallableCaptureConflictsLoop27Result::MlReadCallableCaptureConflictsLoop27Done(assigned_2, closures_2, at_2) => {
-                                {
-                                    let result = Vec::<f64>::new();
-                                    {
-                                        let at_3 = 0f64;
-                                        {
-                                            self::ml_read_callable_capture_conflicts_loop28(texts, starts, counts, labels, targets, &(assigned_2), &(closures_2), at_3, result)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn callable_outer_assignments(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    node: f64,
-) -> Vec<f64> {
-    if (node < 0f64)
-        || (((self::read_required_text_fact(forms, node)) != "object")
-            && ((self::read_required_text_fact(forms, node)) != "array"))
-    {
-        Vec::<f64>::new()
-    } else if (self::callable_tag(texts, starts, counts, labels, targets, node, "k")) == "lambda" {
-        vec![1f64, node]
-    } else {
-        {
-            let result = Vec::<f64>::new();
-            {
-                let result_3 =
-                    if (self::callable_tag(texts, starts, counts, labels, targets, node, "s"))
-                        == "assign"
-                    {
-                        {
-                            vec![
-                                0f64,
-                                self::callable_field(starts, counts, labels, targets, node, "name"),
-                            ]
-                        }
-                    } else {
-                        result
-                    };
-                {
-                    let at = self::read_required_number_fact(starts, node);
-                    {
-                        self::ml_callable_outer_assignments_loop32(
-                            forms, texts, starts, counts, labels, targets, node, result_3, at,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn accept_callable_function_reference(
-    surface_kind: &str,
-    expected_kind: &str,
-    declaration_kind: &str,
-) -> bool {
-    (declaration_kind == "fn")
-        && ((surface_kind == "functionValue")
-            || ((surface_kind == "name") && (expected_kind == "function")))
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn require_callable_computed_application(
-    head_kind: &str,
-    path_length: f64,
-    local_kind: &str,
-) -> bool {
-    ((head_kind != "name") && (head_kind != "dotCtor"))
-        || (((head_kind == "name") && (path_length == 1f64)) && (local_kind == "function"))
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn read_callable_application_error(
-    kind: &str,
-    parameters: f64,
-    arguments_count: f64,
-) -> String {
-    if kind == "function" {
-        if parameters == arguments_count {
-            String::new()
-        } else {
-            format!(
-                "function expects {} arguments",
-                self::ml_number::js_number(parameters)
-            )
-        }
-    } else {
-        String::from("the called value is not a function")
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn plan_callable_parameter_types(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    parameters: f64,
-    expected: f64,
-) -> Vec<f64> {
-    {
-        let expected_kind =
-            self::callable_tag(texts, starts, counts, labels, targets, expected, "kind");
-        {
-            let expected_params =
-                self::callable_field(starts, counts, labels, targets, expected, "params");
-            {
-                let result = Vec::<f64>::new();
-                {
-                    let at = 0f64;
-                    {
-                        self::ml_plan_callable_parameter_types_loop33(
-                            forms,
-                            texts,
-                            starts,
-                            counts,
-                            labels,
-                            targets,
-                            parameters,
-                            &(expected_kind),
-                            expected_params,
-                            result,
-                            at,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn plan_callable_function_type(
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    parameters: f64,
-    result: f64,
-) -> Vec<f64> {
-    {
-        let plan = vec![result];
-        {
-            let at = 0f64;
-            {
-                self::ml_plan_callable_function_type_loop34(
-                    starts, counts, labels, targets, parameters, plan, at,
-                )
-            }
-        }
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn plan_callable_type_constraints(
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    left: f64,
-    right: f64,
-) -> Vec<f64> {
-    {
-        let left_params = self::callable_field(starts, counts, labels, targets, left, "params");
-        {
-            let right_params =
-                self::callable_field(starts, counts, labels, targets, right, "params");
-            if ((left_params < 0f64) || (right_params < 0f64))
-                || ((self::read_required_number_fact(counts, left_params))
-                    != (self::read_required_number_fact(counts, right_params)))
-            {
-                vec![-1f64]
-            } else {
-                {
-                    let pairs = Vec::<f64>::new();
-                    {
-                        let at = 0f64;
-                        {
-                            let pairs_2 = self::ml_plan_callable_type_constraints_loop35(
-                                starts,
-                                counts,
-                                targets,
-                                left_params,
-                                right_params,
-                                pairs,
-                                at,
-                            );
-                            {
-                                let (ml_append_right, ml_append_left) = (
-                                    vec![
-                                        self::callable_field(
-                                            starts, counts, labels, targets, left, "ret",
-                                        ),
-                                        self::callable_field(
-                                            starts, counts, labels, targets, right, "ret",
-                                        ),
-                                    ],
-                                    pairs_2,
-                                );
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn plan_callable_application_constraints(
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    fn_: f64,
-    arguments_node: f64,
-    candidate: f64,
-) -> Vec<f64> {
-    {
-        let params = self::callable_field(starts, counts, labels, targets, fn_, "params");
-        if ((((self::callable_tag(texts, starts, counts, labels, targets, fn_, "kind"))
-            != "function")
-            || (params < 0f64))
-            || (arguments_node < 0f64))
-            || ((self::read_required_number_fact(counts, params))
-                != (self::read_required_number_fact(counts, arguments_node)))
-        {
-            vec![-1f64, fn_, candidate]
-        } else {
-            {
-                let plan = vec![self::callable_field(
-                    starts, counts, labels, targets, fn_, "ret",
-                )];
-                {
-                    let at = 0f64;
-                    {
-                        self::ml_plan_callable_application_constraints_loop36(
-                            starts,
-                            counts,
-                            targets,
-                            arguments_node,
-                            params,
-                            plan,
-                            at,
-                        )
-                    }
-                }
-            }
+            { self::source_ml_source1_temporary_callable_nested_events_loop30(events, result, at) }
         }
     }
 }

@@ -1,0 +1,1 @@
+Draft actual Rust numeric pattern suffix types and primitive owners, preserving aliases and direct integer constraints while rejecting pointer/fixed mismatches, unsigned negation and integer/float coercions through shared automatically translated rules.

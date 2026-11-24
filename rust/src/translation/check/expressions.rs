@@ -3,13 +3,14 @@
 use super::arrays::{array_text, immutable_product_value};
 use super::expectation::ExpectedType;
 use super::{
-    BOOL, BinaryOp, Checker, Decimal, Env, Expr, FLOAT, INT, Language, LitValue, Node, Result,
-    Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT, UnaryOp, arithmetic_semantics,
-    binary_node, cast_to, coerce, comparison, fixed_bounds, negate_number, op_name, plain_binary,
-    text_lit, type_error, unsupported,
+    BOOL, BinaryOp, Checker, Decimal, Decl, Env, Expr, FLOAT, INT, Language, LitValue, Node,
+    Result, Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT, UnaryOp,
+    arithmetic_semantics, binary_node, cast_to_in_language, coerce, comparison, fixed_bounds,
+    negate_number, op_name, plain_binary, text_lit, type_error, unsupported,
 };
 use crate::translation::frontend_rules::accept_java_script_optional_tuple_context;
 use crate::translation::rust_character_rules::accept_rust_numeric_literal_negation;
+use crate::translation::rust_panic_value_rules as rust_panic_rules;
 use crate::translation::surface::SurfaceBindingTypeAnnotation;
 use crate::translation::typed_program_link_rules::accept_program_tuple_product_model;
 
@@ -75,6 +76,11 @@ impl Checker {
                 || node.block
                 || node.tag_test.is_some()
                 || node.parenthesized.is_some()
+                || node.source_position.is_some()
+                || node.source_state_transition.is_some()
+                || node.source_loop_fold.is_some()
+                || node.source_record_place.is_some()
+                || node.source_place_transform.is_some()
                 || matches!(value.node, SNode::ReferencePayload { .. })
             {
                 return Err(type_error(
@@ -110,6 +116,76 @@ impl Checker {
         let span = node.span.or(if payload { expression.span } else { None });
         if span.is_some() && result.span.is_none() {
             result.span = span;
+        }
+        if let Some(position) = node.source_position.as_deref() {
+            result.source_position = Some(Box::new(
+                super::super::source_expression_positions::check_rust_source_expression_position(
+                    position,
+                    &result.ty,
+                    self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, node.span),
+                    |ty| match ty {
+                        Type::Data { name } => match self.decls.get(name) {
+                            Some(super::Decl::Data(data)) => Some(data),
+                            _ => None,
+                        },
+                        _ => None,
+                    },
+                )?,
+            ));
+        }
+        let resolve_data = |ty: &Type| match ty {
+            Type::Data { name } => match self.decls.get(name) {
+                Some(super::Decl::Data(data)) => Some(data),
+                _ => None,
+            },
+            _ => None,
+        };
+        if let Some(facet) = node.source_state_transition.as_deref() {
+            result.source_state_transition = Some(Box::new(
+                super::super::source_loop_folds::check_state_transition(
+                    facet,
+                    &result.ty,
+                    self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, node.span),
+                    resolve_data,
+                )?,
+            ));
+        }
+        if let Some(facet) = node.source_loop_fold.as_deref() {
+            result.source_loop_fold =
+                Some(Box::new(super::super::source_loop_folds::check_loop_fold(
+                    facet,
+                    &result,
+                    self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, node.span),
+                    resolve_data,
+                )?));
+        }
+        if let Some(facet) = node.source_record_place.as_deref() {
+            let (place, _) = super::super::source_record_places::check_record_place(
+                facet,
+                &result,
+                self.language.as_str(),
+                |ty| self.resolve_type(Some(ty), path, node.span),
+                resolve_data,
+            )?;
+            result.source_record_place = Some(Box::new(place));
+        }
+        if let Some(facet) = node.source_place_transform.as_deref() {
+            result.source_place_transform = Some(Box::new(
+                super::super::source_place_transforms::check_place_transform(
+                    facet,
+                    &result,
+                    self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, node.span),
+                    resolve_data,
+                    |name| match self.decls.get(name) {
+                        Some(Decl::Fn(function)) => Some(function),
+                        _ => None,
+                    },
+                )?,
+            ));
         }
         Ok(result)
     }
@@ -156,6 +232,7 @@ impl Checker {
                 let value = self.expr(arg, env, path, None, false)?;
                 self.boolean_value(value, span)
             }
+            SNode::PropositionValue { prop } => self.proposition_value(prop, env, path, span),
             SNode::NumberValue { arg } => {
                 let value = self.expr(arg, env, path, None, false)?;
                 let value = self.number_value(value, span)?;
@@ -167,7 +244,12 @@ impl Checker {
             | SNode::OptionalField { .. } => self.optional_expr(node, env, path, expected),
             SNode::Name { path: segments } => {
                 if let Some(name) = env.local(node) {
-                    return Ok(Expr::var(name, env.vars[name].clone()));
+                    let local = Expr::var(name, env.vars[name].clone());
+                    return Ok(if self.checked_projection {
+                        local
+                    } else {
+                        self.guarded_nominal_optional(node, local, env)
+                    });
                 }
                 if let Some(reference) = self.callable_reference(node, segments, path, context)? {
                     return Ok(reference);
@@ -180,9 +262,20 @@ impl Checker {
             | SNode::CellRead { .. }
             | SNode::CellWrite { .. } => self.callable_expression(node, env, path, context),
             SNode::DotCtor { .. } => self.application(node, &[], env, path, expected, span),
-            SNode::App { func, args } => self.application(func, args, env, path, expected, span),
+            SNode::App { func, args } => {
+                let head =
+                    self.capture_callable_constant_application_head(func, env, path, span)?;
+                self.application(
+                    head.as_ref().unwrap_or(func.as_ref()),
+                    args,
+                    env,
+                    path,
+                    expected,
+                    span,
+                )
+            }
             SNode::Field { field, object } => {
-                self.record_source_field(object, field, env, path, span)
+                self.record_source_field(object, field, env, path, expected, span)
             }
             SNode::TypeOf { arg } => self.type_query(arg, env, path, span),
             SNode::ArrayIsArray { arg } => {
@@ -222,7 +315,24 @@ impl Checker {
                 op: UnaryOp::Not,
                 arg,
             } => {
-                let arg = self.expr(arg, env, path, None, false)?;
+                let arg = self.expr(
+                    arg,
+                    env,
+                    path,
+                    if self.language == Language::Rust {
+                        expected
+                    } else {
+                        None
+                    },
+                    false,
+                )?;
+                if self.language == Language::Rust && matches!(arg.ty, Type::Fixed { .. }) {
+                    let ty = arg.ty.clone();
+                    return Ok(Expr::new(Node::Math {
+                        op: crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_operation("!"),
+                        args: vec![arg],
+                    }, ty));
+                }
                 let arg = self.boolean_value(arg, span)?;
                 Ok(Expr::new(
                     Node::Unary {
@@ -265,6 +375,11 @@ impl Checker {
                         parenthesized: arg.parenthesized.clone(),
                         block: arg.block,
                         tag_test: None,
+                        source_position: arg.source_position.clone(),
+                        source_state_transition: arg.source_state_transition.clone(),
+                        source_loop_fold: arg.source_loop_fold.clone(),
+                        source_record_place: arg.source_record_place.clone(),
+                        source_place_transform: arg.source_place_transform.clone(),
                     };
                     let literal = self.expr(&flipped, env, path, expected, allow_literal)?;
                     if !accept_rust_numeric_literal_negation(
@@ -321,6 +436,46 @@ impl Checker {
                     ty,
                 ))
             }
+            SNode::ReferenceIdentity {
+                op,
+                left,
+                right,
+                extra,
+            } => {
+                if !extra.is_empty()
+                    || node.parenthesized.is_some()
+                    || node.block
+                    || node.tag_test.is_some()
+                {
+                    return Err(type_error(
+                        "explicit reference identity needs its closed owned operands",
+                        span,
+                    ));
+                }
+                let (left, right) = self.operands(left, right, env, path, span)?;
+                let form = crate::translation::rust_shared_array_handle_rules::read_rust_shared_array_handle_comparison_projection(
+                    self.language.as_str(), op_name(*op), left.ty.kind(), left.ty.is_reference(),
+                );
+                if !self.reference_semantics || form != "referenceIdentity"
+                    || !crate::translation::reference_identity_rules::accept_reference_identity_comparison(
+                        op_name(*op), left.ty.kind(), right.ty.kind(), left.ty.is_reference(), right.ty.is_reference(), left.ty == right.ty,
+                    ) {
+                    return Err(unsupported("explicit Rust array identity", "only the owned array reference domain admits this operation", span));
+                }
+                let domain = left.ty.clone();
+                Ok(Expr::new(
+                    binary_node(
+                        *op,
+                        Box::new(left),
+                        Box::new(right),
+                        Some(domain),
+                        None,
+                        None,
+                        None,
+                    ),
+                    BOOL,
+                ))
+            }
             SNode::Binary {
                 op,
                 left,
@@ -344,19 +499,63 @@ impl Checker {
                 self.check_binding_expression(node, env, path, context, allow_literal)
             }
             SNode::Match { scrutinees, rows } => {
-                let compiled = self.compile_match(scrutinees, rows, span, env, path)?;
+                let checked_tag_receiver = if self.language == Language::JavaScript
+                    && node.tag_test.is_some()
+                    && let [source] = scrutinees.as_slice()
+                {
+                    let receiver = self.expr(source, env, path, None, false)?;
+                    if matches!(receiver.ty, Type::Option { .. })
+                            && let Some(guarded) = self.javascript_nullish_access(
+                                (&receiver, source),
+                                super::javascript_nullish_fields::JavaScriptPropertyAccess::TagComparison(rows),
+                                env,
+                                path,
+                                expected,
+                                span,
+                            )?
+                        {
+                            return Ok(guarded);
+                        }
+                    Some(receiver)
+                } else {
+                    None
+                };
+                let compiled =
+                    self.compile_match(scrutinees, rows, span, env, path, checked_tag_receiver)?;
                 self.expr_with_context(&compiled, env, path, context, allow_literal)
             }
             SNode::Match1 { scrutinee, cases } => {
                 self.match_cases(scrutinee, cases, span, env, path, context)
             }
             SNode::StringMap { .. } => self.string_map(node, env, path),
-            SNode::CopySlice { object } => self.copy_slice(object, env, path, span),
+            SNode::CopySlice { object } => self.copy_slice((object, expected), env, path, span),
             SNode::Method { object, op, args } => {
+                let callback_env = args
+                    .first()
+                    .and_then(Option::as_ref)
+                    .map(|callback| self.own_key_callback_environment(object, callback, op, env));
+                let env = callback_env.as_ref().unwrap_or(env);
+                if !self.checked_projection
+                    && let Some(value) =
+                        self.source_property_call((object, expected), op, args, env, path, span)?
+                {
+                    return Ok(value);
+                }
                 let form =
                     crate::translation::array_callback_rules::read_array_callback_result_form(op);
                 if form.is_empty() || form == "mapped array" {
-                    self.primitive_method(object, op, args, env, path, span)
+                    if expected.is_none() {
+                        self.primitive_method(object, op, args, env, path, span)
+                    } else {
+                        self.primitive_method_with_context(
+                            (object, expected),
+                            op,
+                            args,
+                            env,
+                            path,
+                            span,
+                        )
+                    }
                 } else {
                     self.array_callback_method(node, env, path, context, &form)
                 }
@@ -364,6 +563,7 @@ impl Checker {
             SNode::StringTest { .. } => self.string_test(node, env, path),
             SNode::ToString { arg } => {
                 let arg = self.expr(arg, env, path, None, false)?;
+                self.refuse_callable_data_observation(&arg.ty, "display", span)?;
                 let refusal =
                     crate::translation::primitive_value_rules::read_number_display_refusal(
                         self.language.as_str(),
@@ -411,7 +611,7 @@ impl Checker {
             } => {
                 let to = self.resolve_type(Some(to), path, span)?;
                 let arg = self.expr(arg, env, path, from.as_ref(), false)?;
-                cast_to(arg, &to, *flavor, span)
+                cast_to_in_language(arg, &to, *flavor, span, self.language.as_str())
             }
             SNode::Abort { message } => {
                 let Some(expected) = expected else {
@@ -437,15 +637,7 @@ impl Checker {
                         Some(definition.span),
                     ));
                 }
-                let mut value = self.ctor_object(tag, fields, span, env, path, expected)?;
-                if let Node::Ctor {
-                    frozen: checked_frozen,
-                    ..
-                } = &mut value.node
-                {
-                    *checked_frozen = *frozen;
-                }
-                Ok(value)
+                self.ctor_object(tag, fields, span, env, path, expected, *frozen)
             }
             SNode::Print { expr, style, body } => {
                 let text = self.show(expr, env, path, *style)?;
@@ -480,6 +672,8 @@ impl Checker {
                 entries,
                 record_projection,
                 prototype_definition,
+                property_order,
+                ty,
                 ..
             } => {
                 if let Some(definition) = prototype_definition {
@@ -491,7 +685,11 @@ impl Checker {
                 }
                 self.record_literal(
                     entries,
-                    record_projection.as_ref(),
+                    (
+                        record_projection.as_ref(),
+                        property_order.as_deref(),
+                        ty.as_ref(),
+                    ),
                     env,
                     path,
                     expected,
@@ -554,337 +752,109 @@ impl Checker {
                     crate::translation::types::array(STRING),
                 ))
             }
-            SNode::ReferenceWrite { .. } => Err(unsupported(
-                &crate::translation::array_value_rules::read_reference_mutation_diagnostic(
-                    "feature",
-                ),
-                &crate::translation::array_value_rules::read_reference_mutation_diagnostic(
-                    "reason",
-                ),
+            SNode::ReferenceWrite {
+                object,
+                index,
+                field,
+                value,
+                op,
+            } => self.source_record_field_write(
+                object,
+                index.as_deref(),
+                field.as_deref(),
+                value.as_deref(),
+                op,
+                env,
+                path,
                 span,
-            )),
-            SNode::Math { op, name, args } => self.math(op, name, args, span, env, path),
+            ),
+            SNode::Math { op, name, args } => {
+                if self.checked_projection && op == "readOrderedRecordSnapshot" {
+                    if let [argument] = args.as_slice()
+                        && !argument.spread
+                    {
+                        let operand = self.expr(&argument.value, env, path, None, false)?;
+                        if matches!(
+                            operand.ty,
+                            Type::Record {
+                                reference: true,
+                                ordered: true,
+                                open: false,
+                                ..
+                            }
+                        ) {
+                            return Ok(Self::reference_value(operand));
+                        }
+                    }
+                    return Err(type_error(
+                        "an ordered record snapshot requires its actual shared closed record",
+                        span,
+                    ));
+                }
+                if op==&crate::translation::disjoint_collection_iterations::read_disjoint_collection_iteration_source_operation()||op==&crate::translation::disjoint_collection_iterations::read_disjoint_collection_spread_source_operation(){return self.closed_collection_iteration(args,span,env,path,expected,op==&crate::translation::disjoint_collection_iterations::read_disjoint_collection_spread_source_operation());}
+                if crate::translation::conditional_chain_rules::accept_conditional_chain_operation(
+                    op,
+                ) {
+                    return self.conditional_chain_value(op, args, span, env, path, expected);
+                }
+                if crate::translation::javascript_enumeration_rules::accept_java_script_record_value_reordering(op) {
+                    return self.record_value_order_operation(op, args, env, path, span, expected);
+                }
+                if !crate::translation::javascript_enumeration_rules::read_java_script_enumeration_form(op).is_empty(){return self.javascript_object_enumeration(op,args,span,env,path,expected);}
+                if op == "exponentiateJavaScriptNumericValue" {
+                    return self.javascript_exponentiation(args, span, env, path, expected);
+                }
+                if crate::translation::number_bitwise_rules::read_java_script_number_bitwise_arity(
+                    op,
+                ) > 0.0
+                    || crate::translation::big_integer_bitwise_rules::read_big_integer_bitwise_arity(
+                        op,
+                    ) > 0.0
+                {
+                    return self.check_number_bitwise_operands(op, args, span, env, path, expected);
+                }
+                if rust_panic_rules::accept_linked_rust_panic_value("math", op) {
+                    let value = if args.len() == 1 && !args[0].spread {
+                        Some(self.expr(&args[0].value, env, path, Some(&super::STRING), false)?)
+                    } else {
+                        None
+                    };
+                    let error = rust_panic_rules::read_rust_panic_value_argument_error(
+                        self.language.as_str(),
+                        args.len() as f64,
+                        args.iter().any(|item| item.spread),
+                        value.as_ref().map_or("", |value| value.ty.kind()),
+                    );
+                    if !error.is_empty() {
+                        return Err(type_error(error, span));
+                    }
+                    return Ok(Expr::new(
+                        Node::Math {
+                            op: op.clone(),
+                            args: vec![value.expect("checked panic message")],
+                        },
+                        expected.cloned().unwrap_or(super::UNIT),
+                    ));
+                }
+                if !crate::translation::source_exception_rules::read_java_script_exception_constructor_class(op).is_empty(){return self.javascript_source_exception(op,args,span,env,path,expected);}
+                if crate::translation::source_exception_rules::accept_linked_java_script_source_exception("math", op) {
+                    return self.javascript_source_exception_value(op,args,span,env,path,expected);
+                }
+                if !crate::translation::rust_shift_rules::read_rust_shift_checked_operation(op)
+                    .is_empty()
+                {
+                    return self.rust_shift(op, args, env, path, expected, span);
+                }
+                if crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_arity(op) > 0.0 {
+                    self.rust_primitive_bitwise(op, args, env, path, expected, span)
+                } else { self.math(op, name, args, span, env, path) }
+            }
             other => Err(type_error(
                 format!("unknown expression {}", other.kind()),
                 span,
             )),
         }
     }
-
-    #[allow(clippy::too_many_arguments)]
-    pub(super) fn binary(
-        &mut self,
-        op: BinaryOp,
-        left: &SExpr,
-        right: &SExpr,
-        rounding: Option<Rounding>,
-        span: Option<Span>,
-        env: &Env,
-        path: &[String],
-        expected: Option<&Type>,
-        allow_literal: bool,
-    ) -> Result<Expr> {
-        match op {
-            BinaryOp::And | BinaryOp::Or => {
-                let left = self.expr(left, env, path, None, false)?;
-                let right = self.expr(right, env, path, None, false)?;
-                self.logical_values(op, left, right, span)
-            }
-            BinaryOp::Concat => {
-                let left = self.expr(left, env, path, Some(&STRING), false)?;
-                let left = self.coerce(left, &STRING, span)?;
-                let right = self.expr(right, env, path, Some(&STRING), false)?;
-                let right = self.coerce(right, &STRING, span)?;
-                Ok(plain_binary(op, left, right, STRING))
-            }
-            _ if comparison(op) => {
-                if self.language == Language::JavaScript {
-                    let mut checked_left = self.expr(left, env, path, None, true)?;
-                    let mut checked_right = self.expr(right, env, path, None, true)?;
-                    if checked_left.ty.is_literal() {
-                        checked_left =
-                            self.expr(left, env, path, Some(&self.default_number()), false)?;
-                    }
-                    if checked_right.ty.is_literal() {
-                        checked_right =
-                            self.expr(right, env, path, Some(&self.default_number()), false)?;
-                    }
-                    if let Some(value) =
-                        self.optional_comparison(op, checked_left, checked_right, span)?
-                    {
-                        return Ok(value);
-                    }
-                }
-                let (left, right) = self.operands(left, right, env, path, span)?;
-                if self.language == Language::JavaScript && crate::translation::reference_identity_rules::accept_reference_identity_comparison(
-                    op_name(op), left.ty.kind(), right.ty.kind(),
-                    left.ty.is_reference(), right.ty.is_reference(), left.ty == right.ty,
-                ) {
-                    let domain = left.ty.clone();
-                    return Ok(Expr::new(binary_node(op, Box::new(left), Box::new(right), Some(domain), None, None, None), BOOL));
-                }
-                if matches!(left.ty, Type::Tuple { .. }) {
-                    return Err(unsupported(
-                        "comparison of tuples",
-                        "tuple value equality and JavaScript reference identity need an explicit operational comparison model; compare positional elements",
-                        span,
-                    ));
-                }
-                if matches!(left.ty, Type::Data { .. } | Type::Unit) {
-                    return Err(unsupported(
-                        "structural equality of data values",
-                        "comparisons of data values are not in the portable core",
-                        span,
-                    ));
-                }
-                if left.ty.element().is_some() {
-                    return Err(unsupported(
-                        "comparison of arrays",
-                        "=== of two arrays compares which array each is, which a value translation does not keep; compare their elements",
-                        span,
-                    ));
-                }
-                let string_order =
-                    crate::translation::string_order_rules::read_string_order_operation(
-                        self.language.as_str(),
-                        op_name(op),
-                        if left.ty == STRING { "string" } else { "" },
-                    );
-                if !string_order.is_empty() {
-                    return Ok(Expr::new(
-                        Node::StringTest {
-                            op: string_order,
-                            string: Box::new(left),
-                            search: Box::new(right),
-                        },
-                        BOOL,
-                    ));
-                }
-                if !matches!(op, BinaryOp::Eq | BinaryOp::Ne) && !left.ty.is_ordered() {
-                    return Err(type_error(format!("ordering on {}", left.ty.key()), span));
-                }
-                let domain = left.ty.clone();
-                Ok(Expr::new(
-                    binary_node(
-                        op,
-                        Box::new(left),
-                        Box::new(right),
-                        Some(domain),
-                        None,
-                        None,
-                        None,
-                    ),
-                    BOOL,
-                ))
-            }
-            BinaryOp::Plus => self.plus(
-                left,
-                right,
-                rounding,
-                span,
-                env,
-                path,
-                expected,
-                allow_literal,
-            ),
-            _ => self.arithmetic(
-                op,
-                left,
-                right,
-                rounding,
-                span,
-                env,
-                path,
-                expected,
-                allow_literal,
-                None,
-            ),
-        }
-    }
-
-    /// JavaScript's `+` concatenates when either operand is a string, reading
-    /// the other as `String(value)`, and adds numbers otherwise.
-    #[allow(clippy::too_many_arguments)]
-    pub(super) fn plus(
-        &mut self,
-        left_surface: &SExpr,
-        right_surface: &SExpr,
-        rounding: Option<Rounding>,
-        span: Option<Span>,
-        env: &Env,
-        path: &[String],
-        expected: Option<&Type>,
-        allow_literal: bool,
-    ) -> Result<Expr> {
-        let left = self.expr(left_surface, env, path, None, true)?;
-        let right = self.expr(right_surface, env, path, None, true)?;
-        if left.ty != Type::String && right.ty != Type::String {
-            return self.arithmetic(
-                BinaryOp::Add,
-                left_surface,
-                right_surface,
-                rounding,
-                span,
-                env,
-                path,
-                expected,
-                allow_literal,
-                Some((left, right)),
-            );
-        }
-        let left = self.text(left, left_surface, env, path)?;
-        let right = self.text(right, right_surface, env, path)?;
-        Ok(plain_binary(BinaryOp::Concat, left, right, STRING))
-    }
-
-    pub(super) fn text(
-        &mut self,
-        value: Expr,
-        surface: &SExpr,
-        env: &Env,
-        path: &[String],
-    ) -> Result<Expr> {
-        if value.ty == Type::String {
-            return Ok(value);
-        }
-        let checked = if value.ty.is_literal() {
-            self.expr(surface, env, path, Some(&self.default_number()), false)?
-        } else {
-            value
-        };
-        if matches!(checked.ty, Type::Data { .. } | Type::Unit) {
-            return Err(unsupported(
-                "string conversion of structured values",
-                &format!("String({}) has no portable textual form", checked.ty.key()),
-                surface.span,
-            ));
-        }
-        if let Type::Option { element, .. } = &checked.ty {
-            if !crate::translation::optional_value_rules::accept_optional_primitive_kind(
-                element.kind(),
-            ) {
-                return Err(unsupported(
-                    "string conversion of nullable structured values",
-                    "this conversion needs its source structured-value formatter",
-                    surface.span,
-                ));
-            }
-            return Ok(Expr::new(
-                Node::OptionalText {
-                    arg: Box::new(checked),
-                    console: false,
-                },
-                STRING,
-            ));
-        }
-        if checked.ty.element().is_some() {
-            return Err(array_text(surface.span));
-        }
-        Ok(Expr::new(
-            Node::ToString {
-                arg: Box::new(checked),
-                console: false,
-            },
-            STRING,
-        ))
-    }
-
-    /// `checked` holds operands already checked without an expected type, as `plus` does.
-    #[allow(clippy::too_many_arguments)]
-    pub(super) fn arithmetic(
-        &mut self,
-        op: BinaryOp,
-        left_surface: &SExpr,
-        right_surface: &SExpr,
-        rounding: Option<Rounding>,
-        span: Option<Span>,
-        env: &Env,
-        path: &[String],
-        expected: Option<&Type>,
-        allow_literal: bool,
-        checked: Option<(Expr, Expr)>,
-    ) -> Result<Expr> {
-        if !matches!(
-            op,
-            BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Rem
-        ) {
-            return Err(type_error(
-                format!("unknown operator {}", op_name(op)),
-                span,
-            ));
-        }
-        let numeric_expected = expected.filter(|ty| ty.is_numeric()).cloned();
-        let (checked_left, checked_right) = match checked {
-            Some((left, right)) => (Some(left), Some(right)),
-            None => (None, None),
-        };
-        let mut left = match checked_left {
-            Some(left) if !left.ty.is_literal() => left,
-            _ => self.expr(left_surface, env, path, numeric_expected.as_ref(), true)?,
-        };
-        let mut right = match checked_right {
-            Some(right) if !right.ty.is_literal() => right,
-            _ => {
-                let right_expected = if left.ty.is_literal() {
-                    numeric_expected.clone()
-                } else {
-                    Some(left.ty.clone())
-                };
-                self.expr(right_surface, env, path, right_expected.as_ref(), true)?
-            }
-        };
-        if left.ty.is_literal() {
-            let left_expected = if right.ty.is_literal() {
-                numeric_expected.clone()
-            } else {
-                Some(right.ty.clone())
-            };
-            left = self.expr(left_surface, env, path, left_expected.as_ref(), true)?;
-        }
-        if left.ty.is_literal() && right.ty.is_literal() {
-            if allow_literal {
-                return Ok(text_lit(Type::Literal, "0"));
-            }
-            left = self.expr(left_surface, env, path, Some(&self.default_number()), false)?;
-            right = self.expr(right_surface, env, path, Some(&left.ty), false)?;
-        }
-        if right.ty.is_literal() {
-            right = self.expr(right_surface, env, path, Some(&left.ty), false)?;
-        }
-        if left.ty.is_literal() {
-            left = self.expr(left_surface, env, path, Some(&right.ty), false)?;
-        }
-        if self.language == Language::JavaScript {
-            left = self.number_value(left, span)?;
-            right = self.number_value(right, span)?;
-        }
-        if self.language == Language::JavaScript && (left.ty == Type::Nat || right.ty == Type::Nat)
-        {
-            // BigInt arithmetic is integer arithmetic even on guarded naturals: `n - 1n` is -1n for n = 0n.
-            let widen = |value: Expr| match &value.node {
-                Node::Lit { value } => Ok(Expr::lit(INT, value.clone())),
-                _ => coerce(value, &INT, Language::JavaScript, span, None),
-            };
-            left = widen(left)?;
-            right = widen(right)?;
-        }
-        let (left, right) = self.unify(left, right, span)?;
-        if !left.ty.is_ordered() {
-            return Err(type_error(format!("arithmetic on {}", left.ty.key()), span));
-        }
-        let ty = left.ty.clone();
-        let (semantics, rounding, by_zero) = arithmetic_semantics(self.language, op, &ty, rounding);
-        Ok(Expr::new(
-            binary_node(
-                op,
-                Box::new(left),
-                Box::new(right),
-                Some(ty.clone()),
-                Some(semantics),
-                rounding,
-                by_zero,
-            ),
-            ty,
-        ))
-    }
 }
+
+include!("expression_arithmetic.rs");

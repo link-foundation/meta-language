@@ -6,6 +6,32 @@ impl JavaScriptEmitter<'_> {
     /// An array literal, an append, an element read or a length.
     pub(super) fn array_expr(&mut self, e: &Expr) -> Result<String> {
         match &e.node {
+            Node::CollectionSize { object } => {
+                let value = self.expr(object)?;
+                Ok(
+                    crate::translation::collection_access_rules::render_collection_size_expression(
+                        "JavaScript",
+                        &value,
+                    ),
+                )
+            }
+            Node::CollectionRead { object, op, key } => {
+                let value = self.expr(object)?;
+                let search = self.expr(key)?;
+                Ok(
+                    crate::translation::collection_access_rules::render_collection_read_expression(
+                        "JavaScript",
+                        object.ty.kind(),
+                        op,
+                        &value,
+                        &search,
+                        false,
+                        "",
+                        "",
+                        "",
+                    ),
+                )
+            }
             Node::Array { items } => {
                 self.arrays();
                 Ok(format!("[{}]", self.exprs(items)?.join(", ")))

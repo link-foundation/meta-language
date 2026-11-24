@@ -7,6 +7,7 @@ import {verifyGitArtifactCertificate} from '../../../../js/scripts/git-object-ce
 import {readRustSourceItems} from '../../../../js/scripts/generate-private-output-test-model.mjs';
 import {tokenize} from '../../../../js/src/translation/lexer.js';
 import {outcomeWirePolicy} from '../wire/wire-policy.mjs';
+import {readNativeCompilerHostSourceHistory,restoreNativeCompilerHostSource} from '../../../../js/scripts/native-compiler-host-source-history.mjs';
 
 export const outcomeCrateRootPath='rust/src/lib.rs';
 export const OUTCOME_CRATE_ROOT_SOURCE_PROFILE=Object.freeze({
@@ -65,6 +66,16 @@ export function restoreOutcomeCrateRootSource(file,source) {
   assert.equal(file,outcomeCrateRootPath);assert.equal(typeof source,'string');assert.ok(Buffer.byteLength(source)<=131072);
   const pair=readOutcomeCrateRootSourcePair();
   if(source===pair.predecessor.source)return{file,predecessor:source,current:source,changed:false,receipt:null};
+  const preceding=restoreNativeCompilerHostSource(source,file);
+  if(preceding!==source){
+    assert.equal(preceding,pair.successor.source,'the complete earlier root recipe remains exact');
+    const compilerSourceSuccession=readNativeCompilerHostSourceHistory().sources.find(row=>row.file===file);assert.ok(compilerSourceSuccession);
+    return{file,predecessor:pair.predecessor.source,current:source,changed:true,receipt:{
+      schemaVersion:1,profile:'complete grammar transport crate root source successor 2',file,revision:pair.revision,
+      recipe:{path:OUTCOME_CRATE_ROOT_SOURCE_PROFILE.recipe,sha256:recipeSha256},
+      predecessor:pin(pair.predecessor.source),current:pin(source),inverseVerified:true,compilerSourceSuccession,
+      boundary:'The complete earlier root recipe and its original Git source remain exact; independently certified compiler succession retains the whole actual current root and every current CST export owner. Source conservation is not native execution evidence.'}};
+  }
   assert.equal(source,pair.successor.source,'unknown complete crate-root source edits refuse');
   return{file,predecessor:pair.predecessor.source,current:source,changed:true,receipt:{
     schemaVersion:1,profile:'complete grammar transport crate root source successor 1',file,revision:pair.revision,

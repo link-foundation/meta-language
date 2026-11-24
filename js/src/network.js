@@ -538,6 +538,14 @@ export class LinkNetwork {
     }
   }
 
+  /** Replace existing link metadata while keeping IDs, references and explicit caches. */
+  setLinkMetadata(id, metadata) {
+    const link = this.link(id);
+    if (!link) return false;
+    link.setMetadata(metadata);
+    return true;
+  }
+
   setSpan(id, span) {
     const link = this.link(id);
     if (link) {

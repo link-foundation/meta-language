@@ -1,6 +1,7 @@
 //! Existing constant-item adapter, separated to bound the item module.
 use super::super::SFn;
-use super::{Options, Result, RustParser, SourceDeclaration, Type, span, unsupported};
+use super::super::{SExpr, SNode};
+use super::{Result, RustParser, SourceDeclaration, Type, span, unsupported};
 
 impl RustParser {
     /// `const N: T = e;` is a function without parameters.
@@ -21,17 +22,31 @@ impl RustParser {
         self.origins.declaration(
             &name,
             path,
-            SourceDeclaration::Function {
-                parameters: Vec::new(),
+            SourceDeclaration::Constant {
                 result: source_result.clone(),
             },
         )?;
         self.cursor.expect("=", Some("const"))?;
-        let body = self.expr(path, Options::default())?;
-        self.origins
-            .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
-        self.cursor.expect(";", Some("const"))?;
+        if self.ordinary_completion_context() {
+            self.capture_source_constant_initializer(&name, path, &start, &source_result)?;
+        }
+        let header = self.header_discovery && self.ordinary_completion_context();
+        let body = if header {
+            SExpr::new(SNode::Unit, None)
+        } else {
+            self.read_expected_copy_closure(path, Some(&source_result))?
+        };
+        if !header {
+            self.origins
+                .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
+            self.cursor.expect(";", Some("const"))?;
+        }
         Ok(SFn {
+            source_state_transform: None,
+            source_vector_mutation: None,
+            source_fn_mut_specialization: None,
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             source_diagnostic_attributes: None,
             semantic_ret: None,
             name,
@@ -46,6 +61,7 @@ impl RustParser {
             source_type_namespace: None,
             source_local_state: None,
             source_const_function: None,
+            source_standard_collection_library_owner: None,
             source_pure_unit: None,
             source_loop: None,
         })

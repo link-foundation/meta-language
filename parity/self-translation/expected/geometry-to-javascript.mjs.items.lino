@@ -3,5 +3,5 @@
 (item 83 134 line_comment translated)
 (item 135 192 function_item translated)
 (item 194 239 function_item translated)
-(item 241 273 struct_item carried "syntax")
+(item 241 273 struct_item carried "no definition")
 (item 275 409 impl_item carried "unsupported")

@@ -1,0 +1,1 @@
+Draft omitted named JavaScript arguments using the same resolved optional-domain rule as computed calls. Preserve real result and supplied-prefix inference while resolving omission after body constraints; retain ordinary default order and existing nonoptional requirements. Verification remains deferred.

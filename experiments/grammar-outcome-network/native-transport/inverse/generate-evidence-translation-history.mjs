@@ -63,7 +63,11 @@ export function generateEvidenceTranslationHistory({check=false}={}) {
   const expected=source.replace(/const archiveHash='(?:PENDING|[a-f0-9]{64})';/u,"const archiveHash='"+pin(readFileSync(path)).sha256+"';");
   const codePath=new URL('parity/self-translation/evidence-translation-source-sources-history.lino',root);
   const complete=expected.replace(/const codeArchiveHash='(?:PENDING|[a-f0-9]{64})';/u,"const codeArchiveHash='"+pin(readFileSync(codePath)).sha256+"';");
-  if(check)assert.equal(source,complete);else writeFileSync(helper,complete);
+  if(check)assert.equal(source,complete);else{
+    writeFileSync(helper,complete);
+    // The helper's final archive hashes are part of its current source pin.
+    generateEvidenceTranslationNamingHistory();
+  }
   return packets;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){

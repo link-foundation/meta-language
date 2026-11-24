@@ -19,6 +19,11 @@ const expected = Object.keys(javascriptSuiteTestGroups()).flatMap(group => {
   }));
 });
 
+const currentTranslationEntries = Array.from({ length: 6 }, (_, index) => ({
+  group: 'translation', shard: `${index + 1}/6`, partition: `${index + 1}-of-6`,
+}));
+const additionalAggregateNeeds = ['rust-source-versions', 'grammar-inference-holdout'];
+
 function assertEvidenceDagConservation(text) {
   const jobs = new Map(parseWorkflow(text).map(job => [job.id, job]));
   const early = jobs.get('javascript-suite-independent');
@@ -27,14 +32,19 @@ function assertEvidenceDagConservation(text) {
   const aggregate = jobs.get('acceptance');
   assert.ok(early && downstream && rust && aggregate, 'both JavaScript collections, Rust and aggregate exist');
   assert.equal(expected.length, 15, 'the original fifteen physical scopes remain');
-  assert.deepEqual(matrixEntries(early), expected.filter(({ group }) => group !== 'downstream'));
+  const earlyEntries = matrixEntries(early);
+  const translationEntries = earlyEntries.filter(({ group }) => group === 'translation');
+  assert.deepEqual(translationEntries, currentTranslationEntries);
+  const restored = earlyEntries.flatMap(entry => entry.group !== 'translation' ? [entry]
+    : entry.shard === '1/6' ? [{ group: 'translation', shard: '1/1', partition: '1-of-1' }] : []);
+  assert.deepEqual(restored, expected.filter(({ group }) => group !== 'downstream'));
   assert.deepEqual(matrixEntries(downstream), expected.filter(({ group }) => group === 'downstream'));
 
-  const scopes = [...matrixEntries(early), ...matrixEntries(downstream)];
+  const scopes = [...earlyEntries, ...matrixEntries(downstream)];
   const groups = javascriptSuiteTestGroups();
   const selections = scopes.map(({ group, shard }) => javascriptSuitePartition(group, shard, groups));
   const files = selections.flatMap(selection => selection.files);
-  assert.equal(new Set(selections.map(selection => selection.name)).size, expected.length);
+  assert.equal(new Set(selections.map(selection => selection.name)).size, expected.length - 1 + currentTranslationEntries.length);
   assert.equal(new Set(files).size, files.length, 'every test file executes once');
   assert.deepEqual([...files].sort(), Object.values(groups).flat().sort());
 
@@ -96,8 +106,11 @@ function assertEvidenceDagConservation(text) {
   // 1c7a4ac7 adds the native workflow producer so the aggregate can authenticate
   // its complete physical test union. Retain every original edge and its order,
   // and require exactly that one added edge before all the original tail edges.
-  assert.deepEqual(needs(aggregate).filter(name => name !== 'rust'), originalAggregateNeeds);
-  assert.deepEqual(needs(aggregate), [originalAggregateNeeds[0], 'rust', ...originalAggregateNeeds.slice(1)]);
+  const aggregateNeeds = needs(aggregate);
+  assert.deepEqual(aggregateNeeds.slice(-additionalAggregateNeeds.length), additionalAggregateNeeds);
+  const previousNeeds = aggregateNeeds.slice(0, -additionalAggregateNeeds.length);
+  assert.deepEqual(previousNeeds.filter(name => name !== 'rust'), originalAggregateNeeds);
+  assert.deepEqual(previousNeeds, [originalAggregateNeeds[0], 'rust', ...originalAggregateNeeds.slice(1)]);
   assert.equal(condition(aggregate), '${{ always() }}');
   const download = aggregate.steps.find(step => /pattern: issue-195-stage-/u.test(step.text));
   assert.match(download.text, /pattern: issue-195-stage-\*-\$\{\{ github.sha \}\}/u);
@@ -124,6 +137,8 @@ test('scope loss, duplicate scopes, missing producer edges and premature Rust fa
   for (const [name, mutate] of [
     ['removed physical scope', text => text.replace(row, '')],
     ['duplicate physical scope', text => text.replace(row, row + row)],
+    ['missing translation shard', text => text.replace('          - group: translation\n            shard: 6/6\n            partition: 6-of-6\n', '')],
+    ['aggregate misses the grammar holdout', text => text.replace(', grammar-inference-holdout]', ']')],
     ['lost workload producer', text => text.replace('needs: [candidates, consumers, rml-workloads, formal-ai-workloads, self-translation-report]',
       'needs: [candidates, consumers, rml-workloads, self-translation-report]')],
     ['premature Rust needs', text => text.replace('formal-ai-workloads, javascript-suite-independent, javascript-suite]', 'formal-ai-workloads, javascript-suite]')],

@@ -1,0 +1,1 @@
+Draft explicit Rust source std version selection in both frontends and Links factories. Preserve canonical source context as Links provenance and resolve earlier/current integer-conversion panic meanings before emission. Add automatically translated version grammar and deferred matching-compiler CI comparisons.

@@ -1,0 +1,220 @@
+// Literal executable Links programs and independent original JavaScript only.
+// Never execute an instruction, function body, callback or source observation.
+import {writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const root=new URL('../../',import.meta.url),undef={$:'undefined'},nil={$:'null'},object=(identity,callable=false)=>({$:'object',identity,callable}),text=value=>({$:'text',units:Array.from({length:value.length},(_,index)=>value.charCodeAt(index))});
+function number(value){const buffer=new ArrayBuffer(8),view=new DataView(buffer);view.setFloat64(0,value);return {$:'number',bits:view.getBigUint64(0).toString(16).padStart(16,'0')};}
+const exoticKey={$:'symbol',identity:'18446744073709551615'},realm='1000';
+const empty=()=>({configurablePresent:false,configurable:false,enumerablePresent:false,enumerable:false,valuePresent:false,value:undef,writablePresent:false,writable:false,getterPresent:false,getter:undef,setterPresent:false,setter:undef});
+const data=value=>({...empty(),configurablePresent:true,configurable:true,enumerablePresent:true,enumerable:true,valuePresent:true,value,writablePresent:true,writable:true});
+const accessor=(getter,setter)=>({...empty(),configurablePresent:true,configurable:true,enumerablePresent:true,enumerable:true,getterPresent:true,getter,setterPresent:true,setter});
+const property=(key,descriptor)=>({$:'ordinaryProperty',key:typeof key==='string'?text(key):key,descriptor});
+const entity=(identity,properties=[],callable=false)=>({$:'ordinaryObject',identity,prototype:nil,extensible:true,callable,properties});
+const heap=(objects=[])=>({$:'ordinaryHeap',objects:[...['1','2','3'].map(identity=>objects.find(object=>object.identity===identity)??entity(identity)),...['5','6','7','10','11'].map(identity=>entity(identity,[],true))],symbols:[exoticKey.identity]});
+const fn=(identity,registers,instructions,parameters=0,extra={})=>({$:'callFunction',identity,realm,receiverMode:'strict',lexicalReceiver:undef,parameters,registers,captures:[],instructions,...extra});
+const constant=(destination,value)=>({$:'constant',destination,value}),ret=source=>({$:'return',source});
+const invoke=(destination,callee,receiver,arguments_=[])=>({$:'call',destination,callee,receiver,arguments:arguments_});
+const programs=[];
+function add(name,initial,main,other,source,expected,callbacks=[],receiver=undef,arguments_=[]){programs.push({name,heap:initial,program:{$:'callProgram',functions:[main,...other].sort((a,b)=>BigInt(a.identity)<BigInt(b.identity)?-1:1),realms:[realm],exoticKey},entry:'10',receiver,arguments:arguments_,source,expected,callbacks});}
+add('constant copy and exact negative zero return',heap(),fn('10',3,[constant(1,{$:'number',bits:'8000000000000000'}),{$:'copy',destination:2,source:1},ret(2)]),[],"ctx=>-0",{kind:'value',value:{$:'number',bits:'8000000000000000'}});
+add('extra arguments remain available without inventing an arguments object',heap(),fn('10',4,[{$:'argument',destination:3,index:2},ret(3)],1),[],"(ctx,...args)=>args[2]",{kind:'value',value:text('\uD800')},[],undef,[number(1),number(2),text('\uD800')]);
+add('missing formal arguments bind actual undefined',heap(),fn('10',3,[ret(2)],2),[],"(ctx,...args)=>args[1]",{kind:'value',value:undef},[],undef,[number(1)]);
+add('unhandled throws retain their exact text units',heap(),fn('10',2,[constant(1,text('unhandled\uD800')),{$:'throw',source:1}]),[],"ctx=>{throw 'unhandled\\uD800';}",{kind:'throw',value:text('unhandled\uD800')});
+add('SameValue preserves the NaN comparison domain',heap(),fn('10',4,[constant(1,{$:'number',bits:'7ff8000000000001'}),constant(2,{$:'number',bits:'7ff8000000000002'}),{$:'sameValue',destination:3,left:1,right:2},ret(3)]),[],"ctx=>Object.is(NaN,NaN)",{kind:'value',value:{$:'boolean',value:true}});
+const nested=[constant(1,object('11',true)),constant(2,object('1')),constant(3,number(40)),invoke(4,1,2,[3]),ret(4)];
+add('registered nested strict function call returns the computed value',heap(),fn('10',5,nested),[fn('11',3,[constant(2,number(1)),{$:'numberBinary',destination:1,left:1,right:2,operator:'add'},ret(1)],1)],
+ "ctx=>Reflect.apply(ctx.objects.get('11'),ctx.objects.get('1'),[40])",{kind:'value',value:number(41)},[{identity:'11',expression:"ctx=>(function(value){'use strict';return value+1;})"}]);
+add('lexical receiver binding ignores a different call receiver',heap(),fn('10',4,[constant(1,object('11',true)),constant(2,object('2')),invoke(3,1,2),ret(3)]),[fn('11',1,[ret(0)],0,{receiverMode:'lexical',lexicalReceiver:object('1')})],
+ "ctx=>Reflect.apply(ctx.objects.get('11'),ctx.objects.get('2'),[])",{kind:'value',value:object('1')},[{identity:'11',expression:"ctx=>Reflect.apply(function(){'use strict';return ()=>this;},ctx.objects.get('1'),[])"}]);
+add('callee throws unwind into the nearest actual handler',heap(),fn('10',5,[{$:'pushHandler',destination:4,target:6},constant(1,object('11',true)),constant(2,undef),invoke(3,1,2),{$:'popHandler'},ret(3),ret(4)]),[fn('11',2,[constant(1,text('abrupt\uD800')),{$:'throw',source:1}])],
+ "ctx=>{try{return Reflect.apply(ctx.objects.get('11'),undefined,[]);}catch(error){return error;}}",{kind:'value',value:text('abrupt\uD800')},[{identity:'11',expression:"ctx=>(function(){'use strict';throw 'abrupt\\uD800';})"}]);
+add('normal handler removal and branch/jump targets retain execution order',heap(),fn('10',5,[constant(1,number(0)),{$:'branch',condition:1,yes:2,no:4},constant(2,number(99)),{$:'jump',target:7},{$:'pushHandler',destination:3,target:7},{$:'popHandler'},constant(2,number(7)),ret(2)]),[],"ctx=>{const condition=0;if(condition)return 99;try{}catch(error){}return 7;}",{kind:'value',value:number(7)});
+const getHeap=heap([{...entity('1'),prototype:object('2')},entity('2',[property('value',accessor(object('5',true),undef))])]);
+add('ordinary inherited protocol getter calls execute as registered functions',getHeap,fn('10',4,[constant(1,object('1')),constant(2,text('value')),{$:'ordinaryGet',destination:3,object:1,key:2,receiver:1},ret(3)]),[fn('5',2,[constant(1,number(41)),ret(1)])],
+ "ctx=>Reflect.get(ctx.objects.get('1'),'value',ctx.objects.get('1'))",{kind:'value',value:number(41)},[{identity:'5',expression:"ctx=>(function(){'use strict';return 41;})"}]);
+const setHeap=heap([entity('1',[property('value',accessor(undef,object('7',true)))])]);
+add('setter calls ignore normal return values and complete only afterward',setHeap,fn('10',5,[constant(1,object('1')),constant(2,text('value')),constant(3,number(9)),{$:'ordinarySet',destination:4,object:1,key:2,value:3,receiver:1},ret(4)]),[fn('7',2,[constant(1,{$:'boolean',value:false}),ret(1)],1)],
+ "ctx=>Reflect.set(ctx.objects.get('1'),'value',9,ctx.objects.get('1'))",{kind:'value',value:{$:'boolean',value:true}},[{identity:'7',expression:"ctx=>(function(value){'use strict';return false;})"}]);
+const definitionHeap=heap([entity('2',[property('value',accessor(object('7',true),undef))]),entity('3',[property(exoticKey,accessor(object('5',true),undef))])]);
+const stored={...empty(),configurablePresent:true,enumerablePresent:true,valuePresent:true,value:number(2),writablePresent:true};
+const definitionAfter={...definitionHeap,objects:definitionHeap.objects.map(entry=>entry.identity==='1'?{...entry,properties:[property('field',stored)]}:entry)};
+add('key getter method and descriptor getter execute through one definition',definitionHeap,fn('10',5,[constant(1,object('1')),constant(2,object('3')),constant(3,object('2')),{$:'propertyDefinition',destination:4,target:1,key:2,attributes:3,realm},ret(4)]),
+ [fn('5',2,[constant(1,object('6',true)),ret(1)]),fn('6',2,[constant(1,text('field')),ret(1)],1),fn('7',2,[constant(1,number(2)),ret(1)])],
+ "ctx=>Object.defineProperty(ctx.objects.get('1'),ctx.objects.get('3'),ctx.objects.get('2'))",{kind:'value',value:object('1'),heap:definitionAfter},
+ [{identity:'5',expression:"ctx=>(function(){'use strict';return ctx.objects.get('6');})"},{identity:'6',expression:"ctx=>(function(hint){'use strict';if(hint!=='string')throw new Error('wrong hint');return 'field';})"},{identity:'7',expression:"ctx=>(function(){'use strict';return 2;})"}]);
+add('intrinsic failure requests its actual source realm allocation',heap(),fn('10',4,[constant(1,number(1)),constant(2,undef),invoke(3,1,2),ret(3)]),[],"ctx=>Reflect.apply(1,undefined,[])",{kind:'allocation',realm,errorClass:'TypeError',reason:'the selected callee is not callable'});
+for(const [name,operation,values,source,expected]of [
+ ['primitive minimum keeps negative zero','read minimum number',[number(-0),number(0)],'ctx=>Math.min(-0,0)',number(-0)],
+ ['primitive maximum keeps positive zero','read maximum number',[number(-0),number(0)],'ctx=>Math.max(-0,0)',number(0)],
+ ['empty minimum retains positive infinity','read minimum number',[],'ctx=>Math.min()',number(Infinity)],
+ ['empty maximum retains negative infinity','read maximum number',[],'ctx=>Math.max()',number(-Infinity)],
+ ['text construction uses modulo unsigned code units','construct text units',[number(-1),number(65536),number(NaN)],'ctx=>String.fromCharCode(-1,65536,NaN)',{$:'text',units:[65535,0,0]}],
+ ['primitive code point retains missing position result','read text code point',[text('a'),number(1)],"ctx=>'a'.codePointAt(1)",undef],
+ ]){
+ const destination=values.length+1;
+ add(name,heap(),fn('10',destination+1,[...values.map((value,index)=>constant(index+1,value)),{$:'primitive',destination,operation,arguments:values.map((_,index)=>index+1)},ret(destination)]),[],source,{kind:'value',value:expected});
+}
+add('text search work quota retains the unadvanced instruction and actual heap',heap(),fn('10',4,[constant(1,{$:'text',units:Array(16384).fill(65)}),constant(2,{$:'text',units:Array(8192).fill(65)}),{$:'primitive',destination:3,operation:'test text inclusion',arguments:[1,2]},ret(3)]),[],"ctx=>'A'.repeat(16384).includes('A'.repeat(8192))",{kind:'resource',position:2,reason:'primitive text search exceeds its explicit comparison work quota',referenceValue:{$:'boolean',value:true}});
+const integer=value=>({$:'integer',value});
+for(const [name,operation,values,source,expected]of [
+ ['integer division truncates negative values toward zero','divide integers',[integer('-9'),integer('2')],'ctx=>-9n/2n',{kind:'value',value:integer('-4')}],
+ ['integer remainder keeps the dividend sign','read integer remainder',[integer('-9'),integer('2')],'ctx=>-9n%2n',{kind:'value',value:integer('-1')}],
+ ['integer exponentiation uses exact repeated squaring','raise integer power',[integer('-3'),integer('5')],'ctx=>(-3n)**5n',{kind:'value',value:integer('-243')}],
+ ['zero exponent on zero returns one','raise integer power',[integer('0'),integer('0')],'ctx=>0n**0n',{kind:'value',value:integer('1')}],
+ ['zero integer divisor requests the actual executing realm','divide integers',[integer('1'),integer('0')],'ctx=>1n/0n',{kind:'allocation',realm,errorClass:'RangeError',reason:'Division by zero'}],
+ ['negative integer exponent requests the actual executing realm','raise integer power',[integer('2'),integer('-1')],'ctx=>2n**-1n',{kind:'allocation',realm,errorClass:'RangeError',reason:'Exponent must be positive'}],
+ ]){
+ const destination=values.length+1;
+ add(name,heap(),fn('10',destination+1,[...values.map((value,index)=>constant(index+1,value)),{$:'primitive',destination,operation,arguments:values.map((_,index)=>index+1)},ret(destination)]),[],source,expected);
+}
+const oversizedInteger='1'+'0'.repeat(1234);
+add('integer input work quota retains the unadvanced state',heap(),fn('10',4,[constant(1,integer(oversizedInteger)),constant(2,integer(oversizedInteger)),{$:'primitive',destination:3,operation:'compare integers',arguments:[1,2]},ret(3)]),[],"ctx=>{const value=BigInt('1'+'0'.repeat(1234));return value<value?-1:value>value?1:0;}",{kind:'resource',position:2,reason:'integer input exceeds the selected 4096-bit work profile',referenceValue:number(0)});
+add('primitive Symbol Number conversion requests actual realm allocation',heap(),fn('10',3,[constant(1,exoticKey),{$:'primitive',destination:2,operation:'convert explicit number',arguments:[1]},ret(2)]),[],"ctx=>Number(Symbol.toPrimitive)",{kind:'allocation',realm,errorClass:'TypeError',reason:'Cannot convert a Symbol value to a number'});
+add('Number text work quota keeps the original instruction state',heap(),fn('10',3,[constant(1,{$:'text',units:Array(4097).fill(32)}),{$:'primitive',destination:2,operation:'convert explicit number',arguments:[1]},ret(2)]),[],"ctx=>Number(' '.repeat(4097))",{kind:'resource',position:1,reason:'Number text conversion exceeds the selected 4096-unit work profile',referenceValue:number(0)});
+const convertObject=(operation='convert explicit number')=>fn('10',3,[constant(1,object('1')),{$:'primitive',destination:2,operation,arguments:[1]},ret(2)]);
+const methodFive=fn('5',2,[constant(1,number(41)),ret(1)]),methodFiveOriginal={identity:'5',expression:"ctx=>(function(){'use strict';return 41;})"};
+add('Number executes the actual ordinary valueOf body',heap([entity('1',[property('valueOf',data(object('5',true)))])]),convertObject(),[methodFive],"ctx=>Number(ctx.objects.get('1'))",{kind:'value',value:number(41)},[methodFiveOriginal]);
+add('Number inherited valueOf retains the original receiver',heap([{...entity('1'),prototype:object('2')},entity('2',[property('valueOf',data(object('5',true)))])]),convertObject(),[methodFive],"ctx=>Number(ctx.objects.get('1'))",{kind:'value',value:number(41)},[methodFiveOriginal]);
+const fallbackHeap=heap([entity('1',[property('valueOf',data(object('5',true))),property('toString',data(object('6',true)))])]);
+add('Number tries toString only after valueOf returns an Object',fallbackHeap,convertObject(),[fn('5',2,[constant(1,object('2')),ret(1)]),fn('6',2,[constant(1,text('-0')),ret(1)])],"ctx=>Number(ctx.objects.get('1'))",{kind:'value',value:number(-0)},[{identity:'5',expression:"ctx=>(function(){'use strict';return ctx.objects.get('2');})"},{identity:'6',expression:"ctx=>(function(){'use strict';return '-0';})"}]);
+const exoticNumberHeap=heap([entity('1',[property(exoticKey,accessor(object('5',true),undef))])]);
+const exoticNumberFunctions=[fn('5',2,[constant(1,object('6',true)),ret(1)]),fn('6',3,[constant(2,integer('9007199254740993')),ret(2)],1)];
+const exoticNumberCallbacks=[{identity:'5',expression:"ctx=>(function(){'use strict';return ctx.objects.get('6');})"},{identity:'6',expression:"ctx=>(function(hint){'use strict';if(hint!=='number')throw new Error('wrong numeric hint');return 9007199254740993n;})"}];
+add('explicit Number applies the numeric exotic hint and rounds returned BigInt',exoticNumberHeap,convertObject(),exoticNumberFunctions,"ctx=>Number(ctx.objects.get('1'))",{kind:'value',value:number(9007199254740992)},exoticNumberCallbacks);
+add('implicit Number rejects a returned BigInt after actual exotic effects',exoticNumberHeap,convertObject('coerce primitive number'),exoticNumberFunctions,"ctx=>+ctx.objects.get('1')",{kind:'allocation',realm,errorClass:'TypeError',reason:'Cannot convert a BigInt value to a number'},exoticNumberCallbacks);
+add('a noncallable exotic Number method requests the actual realm',heap([entity('1',[property(exoticKey,data(number(1)))])]),convertObject(),[],"ctx=>Number(ctx.objects.get('1'))",{kind:'allocation',realm,errorClass:'TypeError',reason:'an exotic primitive conversion method must be callable or absent'});
+add('Number getter throws retain their exact original value',exoticNumberHeap,convertObject(),[fn('5',2,[constant(1,text('numeric\uD800')),{$:'throw',source:1}])],"ctx=>Number(ctx.objects.get('1'))",{kind:'throw',value:text('numeric\uD800')},[{identity:'5',expression:"ctx=>(function(){'use strict';throw 'numeric\\uD800';})"}]);
+const updatedFallbackHeap={...fallbackHeap,objects:fallbackHeap.objects.map(entry=>entry.identity==='1'?{...entry,properties:entry.properties.map(value=>value.key.units.join(',')==='116,111,83,116,114,105,110,103'?property('toString',data(object('7',true))):value)}:entry)};
+add('Number reads its second method from the latest heap after valueOf effects',fallbackHeap,convertObject(),[fn('5',5,[constant(1,object('1')),constant(2,text('toString')),constant(3,object('7',true)),{$:'ordinarySet',destination:4,object:1,key:2,value:3,receiver:1},constant(2,object('2')),ret(2)]),fn('6',2,[constant(1,number(0)),ret(1)]),fn('7',2,[constant(1,number(42)),ret(1)])],"ctx=>Number(ctx.objects.get('1'))",{kind:'value',value:number(42),heap:updatedFallbackHeap},[{identity:'5',expression:"ctx=>(function(){'use strict';ctx.objects.get('1').toString=ctx.objects.get('7');return ctx.objects.get('2');})"},{identity:'6',expression:"ctx=>(function(){'use strict';return 0;})"},{identity:'7',expression:"ctx=>(function(){'use strict';return 42;})"}]);
+const convertedText={$:'text',units:Array(4097).fill(32)};
+add('Number quota retains a completed Object conversion without replaying its method',heap([entity('1',[property('valueOf',data(object('5',true)))])]),convertObject(),[fn('5',2,[constant(1,convertedText),ret(1)])],"ctx=>Number(ctx.objects.get('1'))",{kind:'resource',position:2,reason:'Number text conversion exceeds the selected 4096-unit work profile',referenceValue:number(0),convertedValue:convertedText},[{identity:'5',expression:"ctx=>(function(){'use strict';return ' '.repeat(4097);})"}]);
+add('exotic Number method cannot return an Object',heap([entity('1',[property(exoticKey,data(object('5',true)))])]),convertObject(),[fn('5',2,[constant(1,object('2')),ret(1)],1)],"ctx=>Number(ctx.objects.get('1'))",{kind:'allocation',realm,errorClass:'TypeError',reason:'an exotic primitive conversion must return a primitive'},[{identity:'5',expression:"ctx=>(function(hint){'use strict';return ctx.objects.get('2');})"}]);
+add('Number exhausted ordinary methods request the actual realm',heap(),convertObject(),[],"ctx=>Number(ctx.objects.get('1'))",{kind:'allocation',realm,errorClass:'TypeError',reason:'ordinary conversion exhausted its callable primitive-producing methods'});
+add('null exotic Number method falls back to actual ordinary conversion',heap([entity('1',[property(exoticKey,data(nil)),property('valueOf',data(object('5',true)))])]),convertObject(),[methodFive],"ctx=>Number(ctx.objects.get('1'))",{kind:'value',value:number(41)},[methodFiveOriginal]);
+add('noncallable ordinary Number method is skipped without coercion',heap([entity('1',[property('valueOf',data(number(99))),property('toString',data(object('6',true)))])]),convertObject(),[fn('6',2,[constant(1,text('43')),ret(1)])],"ctx=>Number(ctx.objects.get('1'))",{kind:'value',value:number(43)},[{identity:'6',expression:"ctx=>(function(){'use strict';return '43';})"}]);
+add('primitive text preserves every existing UTF16 unit',heap(),fn('10',3,[constant(1,text('\uD800\u0000\uDC00')),{$:'primitive',destination:2,operation:'convert primitive text',arguments:[1]},ret(2)]),[],"ctx=>'\\uD800\\u0000\\uDC00'",{kind:'value',value:text('\uD800\u0000\uDC00')});
+add('implicit Symbol text requests the actual TypeError realm',heap(),fn('10',3,[constant(1,exoticKey),{$:'primitive',destination:2,operation:'convert primitive text',arguments:[1]},ret(2)]),[],"ctx=>''+Symbol.toPrimitive",{kind:'allocation',realm,errorClass:'TypeError',reason:'Cannot convert a Symbol value to a string'});
+const convertTextObject=()=>convertObject('convert primitive text');
+add('text conversion executes ordinary toString before valueOf',heap([entity('1',[property('toString',data(object('5',true))),property('valueOf',data(object('6',true)))])]),convertTextObject(),[methodFive,fn('6',2,[constant(1,number(99)),ret(1)])],"ctx=>String(ctx.objects.get('1'))",{kind:'value',value:text('41')},[methodFiveOriginal,{identity:'6',expression:"ctx=>(function(){'use strict';return 99;})"}]);
+add('text conversion inherited toString retains its actual receiver',heap([{...entity('1'),prototype:object('2')},entity('2',[property('toString',data(object('5',true)))])]),convertTextObject(),[methodFive],"ctx=>String(ctx.objects.get('1'))",{kind:'value',value:text('41')},[methodFiveOriginal]);
+add('text conversion falls back to valueOf after an Object result',heap([entity('1',[property('toString',data(object('5',true))),property('valueOf',data(object('6',true)))])]),convertTextObject(),[fn('5',2,[constant(1,object('2')),ret(1)]),fn('6',2,[constant(1,{$:'integer',value:'9007199254740993'}),ret(1)])],"ctx=>String(ctx.objects.get('1'))",{kind:'value',value:text('9007199254740993')},[{identity:'5',expression:"ctx=>(function(){'use strict';return ctx.objects.get('2');})"},{identity:'6',expression:"ctx=>(function(){'use strict';return 9007199254740993n;})"}]);
+add('text conversion uses the actual exotic string hint',exoticNumberHeap,convertTextObject(),[exoticNumberFunctions[0],fn('6',3,[constant(2,text('\uD800')),ret(2)],1)],"ctx=>String(ctx.objects.get('1'))",{kind:'value',value:text('\uD800')},[exoticNumberCallbacks[0],{identity:'6',expression:"ctx=>(function(hint){'use strict';if(hint!=='string')throw new Error('wrong text hint');return '\\uD800';})"}]);
+add('text conversion rejects a Symbol returned by an Object method',heap([entity('1',[property('toString',data(object('5',true)))])]),convertTextObject(),[fn('5',2,[constant(1,exoticKey),ret(1)])],"ctx=>String(ctx.objects.get('1'))",{kind:'allocation',realm,errorClass:'TypeError',reason:'Cannot convert a Symbol value to a string'},[{identity:'5',expression:"ctx=>(function(){'use strict';return Symbol.toPrimitive;})"}]);
+add('text conversion exotic getter throw retains its exact value',exoticNumberHeap,convertTextObject(),[fn('5',2,[constant(1,text('text\uD800')),{$:'throw',source:1}])],"ctx=>String(ctx.objects.get('1'))",{kind:'throw',value:text('text\uD800')},[{identity:'5',expression:"ctx=>(function(){'use strict';throw 'text\\uD800';})"}]);
+add('text conversion rejects a noncallable exotic method',heap([entity('1',[property(exoticKey,data(number(1)))])]),convertTextObject(),[],"ctx=>String(ctx.objects.get('1'))",{kind:'allocation',realm,errorClass:'TypeError',reason:'an exotic primitive conversion method must be callable or absent'});
+add('text conversion reports exhausted ordinary methods',heap(),convertTextObject(),[],"ctx=>String(ctx.objects.get('1'))",{kind:'allocation',realm,errorClass:'TypeError',reason:'ordinary conversion exhausted its callable primitive-producing methods'});
+add('null exotic text method preserves ordinary string hint fallback',heap([entity('1',[property(exoticKey,data(nil)),property('toString',data(object('5',true)))])]),convertTextObject(),[methodFive],"ctx=>String(ctx.objects.get('1'))",{kind:'value',value:text('41')},[methodFiveOriginal]);
+add('text quota retains a completed primitive without replaying its method',heap([entity('1',[property('toString',data(object('5',true)))])]),convertTextObject(),[fn('5',2,[constant(1,integer(oversizedInteger)),ret(1)])],"ctx=>String(ctx.objects.get('1'))",{kind:'resource',position:2,reason:'integer text conversion exceeds the selected 4096-bit work profile',referenceValue:text('1'+'0'.repeat(1234)),convertedValue:integer(oversizedInteger),pending:'waitText'},[{identity:'5',expression:"ctx=>(function(){'use strict';return BigInt('1'+'0'.repeat(1234));})"}]);
+add('exact mixed Number comparison does not round its integer operand',heap(),fn('10',4,[constant(1,number(9007199254740992)),constant(2,integer('9007199254740993')),{$:'primitive',destination:3,operation:'compare number integer',arguments:[1,2]},ret(3)]),[],"ctx=>9007199254740992<9007199254740993n?-1:1",{kind:'value',value:number(-1)});
+add('mixed text comparison keeps its independent unit work quota',heap(),fn('10',4,[constant(1,text(' '.repeat(4097))),constant(2,integer('0')),{$:'primitive',destination:3,operation:'compare text integer',arguments:[1,2]},ret(3)]),[],"ctx=>{const value=' '.repeat(4097);return value<0n?-1:value>0n?1:value==0n?0:2;}",{kind:'resource',position:2,reason:'mixed comparison text exceeds the selected 4096-unit work profile',referenceValue:number(0)});
+add('mixed comparison retains its independent integer work quota',heap(),fn('10',4,[constant(1,number(Infinity)),constant(2,integer(oversizedInteger)),{$:'primitive',destination:3,operation:'compare number integer',arguments:[1,2]},ret(3)]),[],"ctx=>Infinity>BigInt('1'+'0'.repeat(1234))?1:-1",{kind:'resource',position:2,reason:'mixed comparison integer exceeds the selected 4096-bit work profile',referenceValue:number(1)});
+add('source Error requests retain message units and property presence',heap(),fn('10',4,[constant(1,text('source\uD800')),constant(2,{$:'boolean',value:true}),{$:'primitive',destination:3,operation:'raiseJavaScriptTypeError',arguments:[1,2]},ret(3)]),[],"ctx=>{throw new TypeError('source\\uD800');}",{kind:'sourceAllocation',realm,errorClass:'TypeError',message:text('source\uD800'),messagePresent:true});
+add('source Error requests distinguish an absent message',heap(),fn('10',4,[constant(1,text('')),constant(2,{$:'boolean',value:false}),{$:'primitive',destination:3,operation:'raiseJavaScriptError',arguments:[1,2]},ret(3)]),[],"ctx=>{throw new Error();}",{kind:'sourceAllocation',realm,errorClass:'Error',message:text(''),messagePresent:false});
+add('source Error requests retain a different actual realm',heap(),fn('10',4,[constant(1,text('other realm')),constant(2,{$:'boolean',value:true}),{$:'primitive',destination:3,operation:'raiseJavaScriptRangeError',arguments:[1,2]},ret(3)],0,{realm:'1001'}),[],"ctx=>{throw new RangeError('other realm');}",{kind:'sourceAllocation',realm:'1001',errorClass:'RangeError',message:text('other realm'),messagePresent:true});
+programs[programs.length-1].program.realms=[realm,'1001'];
+add('explicit BigInt conversion preserves exact Number inputs',heap(),fn('10',3,[constant(1,number(9007199254740992)),{$:'primitive',destination:2,operation:'convert explicit integer',arguments:[1]},ret(2)]),[],"ctx=>BigInt(9007199254740992)",{kind:'value',value:integer('9007199254740992')});
+add('implicit BigInt conversion rejects Number operands',heap(),fn('10',3,[constant(1,number(1)),{$:'primitive',destination:2,operation:'coerce primitive integer',arguments:[1]},ret(2)]),[],"ctx=>BigInt.asIntN(64,1)",{kind:'allocation',realm,errorClass:'TypeError',reason:'Cannot convert a Number value to a BigInt'});
+add('BigInt text work quota retains the original conversion state',heap(),fn('10',3,[constant(1,text(' '.repeat(4097))),{$:'primitive',destination:2,operation:'convert explicit integer',arguments:[1]},ret(2)]),[],"ctx=>BigInt(' '.repeat(4097))",{kind:'resource',position:1,reason:'BigInt text conversion exceeds the selected 4096-unit work profile',referenceValue:integer('0')});
+add('BigInt identity does not perform bounded arithmetic work',heap(),fn('10',3,[constant(1,integer(oversizedInteger)),{$:'primitive',destination:2,operation:'convert explicit integer',arguments:[1]},ret(2)]),[],"ctx=>BigInt(BigInt('1'+'0'.repeat(1234)))",{kind:'value',value:integer(oversizedInteger)});
+// Derive independent BigInt originals from complete retained Number protocol
+// inputs. This transforms literal programs/expectations, never executes them.
+const integerConversions=[
+ ['Number executes the actual ordinary valueOf body','BigInt executes actual valueOf before integer conversion','41'],
+ ['Number inherited valueOf retains the original receiver','BigInt inherited valueOf retains the original receiver','41'],
+ ['Number tries toString only after valueOf returns an Object','BigInt tries toString after an Object valueOf result','0'],
+ ['explicit Number applies the numeric exotic hint and rounds returned BigInt','BigInt keeps the numeric exotic hint and exact returned integer','9007199254740993'],
+ ['a noncallable exotic Number method requests the actual realm','BigInt refuses a noncallable exotic method',null],
+ ['Number getter throws retain their exact original value','BigInt getter throws retain their exact original value',null],
+ ['Number reads its second method from the latest heap after valueOf effects','BigInt reads its second method from the latest mutated heap','42'],
+ ['Number quota retains a completed Object conversion without replaying its method','BigInt quota retains its completed primitive without repeating methods','resource'],
+ ['exotic Number method cannot return an Object','BigInt exotic method must return a primitive',null],
+ ['Number exhausted ordinary methods request the actual realm','BigInt exhausted methods request the actual realm',null],
+ ['null exotic Number method falls back to actual ordinary conversion','BigInt null exotic method retains ordinary fallback','41'],
+ ['noncallable ordinary Number method is skipped without coercion','BigInt skips a noncallable ordinary method','43']
+];
+for(const [original,name,result]of integerConversions){
+ const row=structuredClone(programs.find(row=>row.name===original));
+ if(!row)throw new TypeError('integer original must retain its full source protocol');
+ row.name=name;row.source=row.source.replace('Number(','BigInt(');
+ for(const fn of row.program.functions)for(const instruction of fn.instructions)if(instruction.$==='primitive'&&instruction.operation==='convert explicit number')instruction.operation='convert explicit integer';
+ if(result==='resource')row.expected={...row.expected,reason:'BigInt text conversion exceeds the selected 4096-unit work profile',referenceValue:integer('0'),pending:'waitNumber'};
+ else if(result!==null)row.expected={...row.expected,value:integer(result)};
+ programs.push(row);
+}
+add('implicit object BigInt rejects a Number only after actual method effects',heap([entity('1',[property('valueOf',data(object('5',true)))])]),convertObject('coerce primitive integer'),[methodFive],"ctx=>BigInt.asIntN(64,ctx.objects.get('1'))",{kind:'allocation',realm,errorClass:'TypeError',reason:'Cannot convert a Number value to a BigInt'},[methodFiveOriginal]);
+for(const [input,expected]of [['7ff8000000000042','fff8000000000042'],['fff8000000000042','7ff8000000000042']])add('scalar Number negation retains quiet NaN bits '+input,heap(),fn('10',3,[constant(1,{$:'number',bits:input}),{$:'primitive',destination:2,operation:'negate number',arguments:[1]},ret(2)]),[],"ctx=>{const view=new DataView(new ArrayBuffer(8));view.setBigUint64(0,0x"+input+"n);return -view.getFloat64(0);}",{kind:'value',value:{$:'number',bits:expected}});
+for(const [name,operation,value,search,replacement,result] of [
+ ['literal first substitution','replace text','ababa','b','$`','aaaba'],
+ ['literal all substitution','replace all text','ababa','b',"$'",'aabaaaa'],
+ ['literal empty code unit boundaries','replace all text','😀','','|','|\uD83D|\uDE00|'],
+ ['literal isolated replacement units','replace text','a','a','\uD800\0\uDC00','\uD800\0\uDC00']
+])add(name,heap(),fn('10',5,[constant(1,text(value)),constant(2,text(search)),constant(3,text(replacement)),
+ {$:'primitive',destination:4,operation,arguments:[1,2,3]},ret(4)]),[],
+ 'ctx=>'+JSON.stringify(value)+'.'+(operation==='replace text'?'replace':'replaceAll')+'('+JSON.stringify(search)+','+JSON.stringify(replacement)+')',
+ {kind:'value',value:text(result)});
+const base=programs[0];
+const invalid=[{name:'unknown source realm',program:{...base.program,realms:[]},reason:'call functions require their actual declared source realm'},
+ {name:'out of range register destination',program:{...base.program,functions:[{...base.program.functions[0],instructions:[constant(3,undef),ret(0)]}]},reason:'call instructions require actual in-range register coordinates'},
+ {name:'invalid branch target',program:{...base.program,functions:[{...base.program.functions[0],instructions:[{$:'jump',target:2}]}]},reason:'call jumps require actual instruction targets'},
+ {name:'unsupported sloppy binding cannot be approximated',program:{...base.program,functions:[{...base.program.functions[0],receiverMode:'sloppy'}]},reason:'call code requires explicit strict or lexical receiver binding'},
+ {name:'primitive operation requires actual registration',program:{...base.program,functions:[{...base.program.functions[0],instructions:[{$:'primitive',destination:1,operation:'unknown operation',arguments:[]},ret(1)]}]},reason:'primitive instructions require their actual registered operation'},
+ {name:'primitive operation preserves required operand count',program:{...base.program,functions:[{...base.program.functions[0],instructions:[{$:'primitive',destination:1,operation:'slice text',arguments:[0,0]},ret(1)]}]},reason:'primitive instructions require every actual operand coordinate'}];
+const stateProgram={$:'callProgram',functions:[convertObject()],realms:[realm],exoticKey};
+const conversionState={$:'primitiveConversion',receiver:object('1'),exoticKey,hint:'number',phase:'firstGet'};
+const protocolState=state=>({$:'numberProtocolState',state}),primitiveState=value=>({$:'numberPrimitiveValue',value});
+const numericPending=state=>({$:'waitNumber',destination:2,realm,state});
+const stateFrame=pending=>({$:'callFrame',identity:'10',position:2,registers:[undef,object('1'),undef],arguments:[],handlers:[],pending});
+const stateRow=(name,state,reason,extra={})=>({name,program:stateProgram,heap:heap(),machine:{$:'callMachine',heap:heap(),frames:[stateFrame(numericPending(state))]},reason,...extra});
+const originReason='pending number conversion retains its actual source instruction, receiver, Symbol and realm';
+const invalidStates=[
+ stateRow('numeric continuation rejects a counterfeit primitive hint',protocolState({...conversionState,hint:'string'}),'Number conversion retains its actual numeric primitive hint'),
+ stateRow('numeric continuation rejects an unknown method phase',protocolState({...conversionState,phase:'missing'}),'a primitive conversion requires its exact method continuation'),
+ stateRow('completed numeric conversion rejects an Object result',primitiveState(object('1')),'a completed number conversion retains its actual primitive value'),
+ stateRow('numeric continuation retains its actual instruction destination',protocolState(conversionState),originReason,{machine:{$:'callMachine',heap:heap(),frames:[stateFrame({...numericPending(protocolState(conversionState)),destination:0})]}}),
+ stateRow('numeric continuation rejects a registered but different receiver',protocolState({...conversionState,receiver:object('2')}),originReason),
+ stateRow('numeric continuation retains its actual instruction position',protocolState(conversionState),originReason,{machine:{$:'callMachine',heap:heap(),frames:[{...stateFrame(numericPending(protocolState(conversionState))),position:1}]}}),
+ stateRow('numeric continuation retains its actual source realm',protocolState(conversionState),originReason,{program:{...stateProgram,realms:[realm,'1001']},machine:{$:'callMachine',heap:heap(),frames:[stateFrame({...numericPending(protocolState(conversionState)),realm:'1001'})]}}),
+ stateRow('numeric continuation retains its actual authoritative Symbol',protocolState({...conversionState,exoticKey:{$:'symbol',identity:'99'}}),originReason,{heap:{...heap(),symbols:['99',exoticKey.identity]},machine:{$:'callMachine',heap:{...heap(),symbols:['99',exoticKey.identity]},frames:[stateFrame(numericPending(protocolState({...conversionState,exoticKey:{$:'symbol',identity:'99'}})))]}}),
+ stateRow('completed numeric primitive cannot retain an active child',primitiveState(text('')),'a completed numeric primitive cannot have a suspended child call',{machine:{$:'callMachine',heap:heap(),frames:[stateFrame(numericPending(primitiveState(text('')))),{...stateFrame({$:'callIdle'}),position:0}]}}),
+ stateRow('numeric continuation preserves the original coordinate gate',protocolState(conversionState),'pending calls retain their actual destination register',{machine:{$:'callMachine',heap:heap(),frames:[stateFrame({...numericPending(protocolState(conversionState)),destination:3})]}}),
+ ];
+// Preserve every original continuation-refusal input in the integer profile.
+function integerContinuationLiteral(value){
+ if(typeof value==='string'){
+  const tags={'convert explicit number':'convert explicit integer','coerce primitive number':'coerce primitive integer'};
+  return tags[value]??value.replace('numeric continuation','integer continuation');
+ }
+ if(Array.isArray(value))return value.map(integerContinuationLiteral);
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,integerContinuationLiteral(item)]));
+ return value;
+}
+invalidStates.push(...invalidStates.map(row=>({...integerContinuationLiteral(row),name:'integer profile: '+row.name})));
+const textProgram={...stateProgram,functions:stateProgram.functions.map(value=>({...value,instructions:value.instructions.map(instruction=>instruction.$==='primitive'?{...instruction,operation:'convert primitive text'}:instruction)}))};
+const textPending=state=>({$:'waitText',destination:2,realm,state}),textState={$:'textProtocolState',state:{...conversionState,hint:'string'}};
+const textStateRow=(name,state,reason,extra={})=>({name,program:textProgram,heap:heap(),machine:{$:'callMachine',heap:heap(),frames:[stateFrame(textPending(state))]},reason,...extra});
+invalidStates.push(
+ textStateRow('text continuation retains its string hint',{$:'textProtocolState',state:{...conversionState,hint:'number'}},'Text conversion retains its actual string primitive hint'),
+ textStateRow('text continuation retains its original receiver',{$:'textProtocolState',state:{...conversionState,hint:'string',receiver:object('2')}},'pending text conversion retains its actual source instruction, receiver, Symbol and realm'),
+ textStateRow('completed text primitive cannot contain an Object',{$:'textPrimitiveValue',value:object('1')},'a completed text conversion retains its actual primitive value'),
+ textStateRow('text continuation retains its actual operation',textState,'pending text conversion retains its actual source instruction, receiver, Symbol and realm',{program:stateProgram})
+);
+const sourceErrorFunction=fn('10',4,[constant(1,text('message')),constant(2,{$:'boolean',value:true}),{$:'primitive',destination:3,operation:'raiseJavaScriptTypeError',arguments:[1,2]},ret(3)]);
+const sourceErrorProgram={$:'callProgram',functions:[sourceErrorFunction],realms:[realm,'1001'],exoticKey};
+const sourceErrorPending={$:'waitSourceError',realm,errorClass:'TypeError',message:text('message'),messagePresent:true};
+const sourceErrorFrame=pending=>({$:'callFrame',identity:'10',position:3,registers:[undef,text('message'),{$:'boolean',value:true},undef],arguments:[],handlers:[],pending});
+const sourceErrorStateRow=(name,pending,reason,extra={})=>({name,program:sourceErrorProgram,heap:heap(),machine:{$:'callMachine',heap:heap(),frames:[sourceErrorFrame(pending)]},reason,...extra});
+invalidStates.push(
+ sourceErrorStateRow('source Error pending class retains its actual operation',{...sourceErrorPending,errorClass:'RangeError'},'pending source Error retains its actual source instruction and arguments'),
+ sourceErrorStateRow('source Error pending message retains every original unit',{...sourceErrorPending,message:text('different')},'pending source Error retains its actual source instruction and arguments'),
+ sourceErrorStateRow('source Error pending presence retains its actual argument',{...sourceErrorPending,messagePresent:false},'pending source Error retains its actual source instruction and arguments'),
+ sourceErrorStateRow('source Error pending realm retains its actual source owner',{...sourceErrorPending,realm:'1001'},'pending source Error allocation retains its actual source realm'),
+ sourceErrorStateRow('source Error pending messages remain normalized text',{...sourceErrorPending,message:number(1)},'pending source Error retains exact UTF16 message and Boolean presence')
+);
+const errorResumptionRefusals=[
+ {name:'source Error delivery retains its requested realm',program:sourceErrorProgram,machine:{$:'callMachine',heap:heap(),frames:[sourceErrorFrame(sourceErrorPending)]},realm:'1001',value:number(0),reason:'source Error resumption retains its actual requested realm'},
+ {name:'source Error delivery requires its actual allocation phase',program:sourceErrorProgram,machine:{$:'callMachine',heap:heap(),frames:[sourceErrorFrame({$:'callIdle'})]},realm,value:number(0),reason:'source Error resumption requires its actual pending allocation'},
+ {name:'source Error delivery rejects a primitive value',program:sourceErrorProgram,machine:{$:'callMachine',heap:heap(),frames:[sourceErrorFrame(sourceErrorPending)]},realm,value:number(0),reason:'source Error allocation supplies its actual noncallable Object'},
+ {name:'source Error delivery rejects a callable value',program:sourceErrorProgram,machine:{$:'callMachine',heap:heap(),frames:[sourceErrorFrame(sourceErrorPending)]},realm,value:object('5',true),reason:'source Error allocation supplies its actual noncallable Object'}
+];
+writeProjectData(new URL('parity/fixtures/javascript-call-machine.lino',root),{schemaVersion:1,model:'ordinary JavaScript registered strict call execution 1',versions:{node:['>=22.15 <23','>=24 <25'],rust:['>=1.90 <1.100; edition 2024']},programs,invalid,invalidStates,errorResumptionRefusals,invalidHeap:base.heap,
+ boundary:'Registered strict/lexical code and ordinary property protocols. Full source lowering, sloppy receiver/arguments-object semantics, allocation authority, exotics and all language coverage remain required. These literal bytecode controls are independent inputs, not claimed automatic translations of their oracle source.'});

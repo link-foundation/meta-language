@@ -60,7 +60,12 @@ export function readEmbeddedRegionAncestor(parents, languages, starts, ends, par
 export function readEmbeddedRegionDisposition(parentStart, parentEnd, parentLanguage, language,
   start, end, ancestor, depth, count, bytes, depthLimit, countLimit, byteLimit, rootSpellingReuse) {
   if (!acceptEmbeddedRegionBounds(parentStart, parentEnd, start, end)) return 'invalidEmbeddedRegionBounds';
-  if (ancestor === -2) return 'invalidEmbeddedRegionAncestry';
+  if (ancestor !== -1 && !acceptEmbeddedRegionLimit(ancestor)) return 'invalidEmbeddedRegionAncestry';
+  if (!acceptEmbeddedRegionLimit(parentLanguage) || !acceptEmbeddedRegionLimit(language)) return 'invalidEmbeddedRegionAncestry';
+  // Reusing a CST saves parsing, but does not make malformed supplied resource
+  // facts valid. Check the domain before either same-host reuse branch.
+  if (!acceptEmbeddedRegionLimit(depth) || !acceptEmbeddedRegionLimit(count) || !acceptEmbeddedRegionLimit(bytes)
+    || !acceptEmbeddedRegionLimit(depthLimit) || !acceptEmbeddedRegionLimit(countLimit) || !acceptEmbeddedRegionLimit(byteLimit)) return 'invalidEmbeddedRegionLimits';
   const sameHost = parentLanguage === language && start === parentStart && end === parentEnd;
   if (sameHost && depth !== 1) return 'reuseAttached';
   if (sameHost && rootSpellingReuse) return 'reuse';
@@ -68,8 +73,6 @@ export function readEmbeddedRegionDisposition(parentStart, parentEnd, parentLang
   // when the requested alias had another spelling. Preserve that exact view.
   const legacyRootAlias = sameHost && depth === 1 && !rootSpellingReuse;
   if (ancestor >= 0 && !legacyRootAlias) return 'nonConsumingEmbeddingCycle';
-  if (!acceptEmbeddedRegionLimit(depth) || !acceptEmbeddedRegionLimit(count) || !acceptEmbeddedRegionLimit(bytes)
-    || !acceptEmbeddedRegionLimit(depthLimit) || !acceptEmbeddedRegionLimit(countLimit) || !acceptEmbeddedRegionLimit(byteLimit)) return 'invalidEmbeddedRegionLimits';
   if (depth > depthLimit) return 'embeddedRegionDepthLimit';
   if (count >= countLimit) return 'embeddedRegionCountLimit';
   if (bytes > byteLimit || end - start > byteLimit - bytes) return 'embeddedRegionByteLimit';

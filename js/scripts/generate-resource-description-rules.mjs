@@ -55,7 +55,9 @@ if (process.argv.includes('--update-styles')) {
   replace('right_kind: String', 'right_kind: &str');
   // SSA labels are purely lexical; this phi position is distinct from part_3.
   replace('part_13', 'next_part_position');
-  for (const match of raw.matchAll(/\blet (ml_s[0-9]+|ml_result[0-9]+) = |\b[A-Za-z_0-9]+Return\((ml_result[0-9]+)\) => \{/gu)) {
+  const temporary = '(?:ml_s|ml_result|source_ml_source[0-9]+_s|source_ml_source[0-9]+_concat_value|source_ml_source[0-9]+_comparison_operand|source_ml_temporary_result)[0-9]+(?:_[0-9]+)?';
+  const declarations = new RegExp('\\blet (' + temporary + ') = |\\b[A-Za-z_0-9]+Return\\((' + temporary + ')\\) => \\{', 'gu');
+  for (const match of raw.matchAll(declarations)) {
     const name = match[1] ?? match[2];
     if ([...raw.matchAll(new RegExp('\\b' + name + '\\b', 'gu'))].length === 2) replace(name + '.clone()', name);
   }
@@ -86,12 +88,12 @@ if (process.argv.includes('--update-styles')) {
   for (const name of localUnitArrays) {
     replace('resource_description_unit(' + name + '.clone(),', 'resource_description_unit(&' + name + ',');
   }
-  for (const item of items) {
-    const match = /^pub fn ([A-Za-z_0-9]+)\(([^)]*)\)/mu.exec(item);
+  for (const [index, item] of formatItems(items).entries()) {
+    const match = /^pub fn ([A-Za-z_0-9]+)\(([^)]*)\)/mu.exec(items[index]);
     if (!match) continue;
     const attributes = [];
     if (match[2].split(',').length > 7) attributes.push('clippy::too_many_arguments');
-    if (format(item).split('\n').length > 100) attributes.push('clippy::too_many_lines');
+    if (item.split('\n').length > 100) attributes.push('clippy::too_many_lines');
     replace('pub fn ' + match[1] + '(', '/// Execute the checked shared resource-description algorithm.\n#[must_use]\n'
       + (attributes.length ? '// The checked continuation explicitly carries its lexical state.\n#[allow(' + attributes.join(', ') + ')]\n' : '') + 'pub fn ' + match[1] + '(');
   }

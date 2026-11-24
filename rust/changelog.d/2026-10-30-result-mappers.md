@@ -1,0 +1,1 @@
+Draft immediate integer `Result::map_or` translation for immutable Copy scalar closures, named functions and function-pointer factories, preserving input/default/callable evaluation order and success-only invocation. Shared policies generate Rust automatically. Behavioral checks remain deferred.

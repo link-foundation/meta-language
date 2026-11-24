@@ -11,6 +11,50 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::process::Command;
 
+#[test]
+fn optional_number_conversion_rechecks_each_absence_guard_after_both_codecs() {
+    let call_fixtures = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/javascript-call-source.lino"
+    ))
+    .unwrap();
+    let original = call_fixtures["rows"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|row| row["name"] == "Number optional null retains positive zero")
+        .unwrap();
+    let saved = meta_language::create_typed_program_links(
+        original["source"].as_str().unwrap(),
+        "JavaScript",
+    )
+    .unwrap();
+    for network in archives(&saved) {
+        let mut program = decode_typed_program_links(&network, saved.root).unwrap();
+        let entry = program
+            .declarations
+            .iter_mut()
+            .find_map(|declaration| match declaration {
+                Decl::Fn(function) if function.name == "inspect" => Some(function),
+                _ => None,
+            })
+            .unwrap();
+        let Node::Let { body, .. } = &mut entry.body.node else {
+            panic!("the optional Number operand is evaluated once");
+        };
+        let Node::If { cond, .. } = &mut body.node else {
+            panic!("the optional Number operand retains its absence guard");
+        };
+        **cond = Expr::new(
+            Node::Lit {
+                value: LitValue::Bool(false),
+            },
+            Type::Bool,
+        );
+        let failure = encode_typed_program_links(&program).unwrap_err();
+        assert!(failure.to_string().contains("actual dominating absence guards"));
+    }
+}
+
 fn fixture() -> Value {
     read_structured_data_lino(include_str!(
         "../../../parity/fixtures/program-number-projection.lino"

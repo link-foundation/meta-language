@@ -2,6 +2,7 @@
 import {fileURLToPath} from 'node:url';
 import {readProjectData} from './project-data.mjs';
 import {publicGrammarSourcePlaneConsumers} from './public-grammar-source-plane-consumers.mjs';
+import {publicRustSourceStateConsumers} from './public-rust-source-state-consumers.mjs';
 
 const publicModule = fileURLToPath(new URL('../src/index.js', import.meta.url));
 
@@ -727,6 +728,7 @@ export function createWrongLanguagePacket() {
     },
     {
       name: 'reject-unregistered-explicit-const-predicate-signature-model', expectedDiagnostics: ['TS2322'],
+      assertionPolicy: 'typescript-const-signature-rejection-diagnostic',
       source: `import { createTypedProgramLinks } from ${module};
 createTypedProgramLinks(${JSON.stringify(constFunctionFixture.cases[0].source)},'Rust',
   {rustConstFunctionModel:${JSON.stringify(constFunctionFixture.model)},rustSourceSignatureModel:'Rust source function signature 99'});
@@ -928,6 +930,7 @@ export function createWrongLanguagePacket(){return createTypedProgramLinks('func
     },
     {
       name: 'reject-unregistered-owned-tuple-call-source-signature-model', expectedDiagnostics: ['TS2322'],
+      assertionPolicy: 'typescript-const-signature-rejection-diagnostic',
       source: `import { createTypedProgramLinks } from ${module};
 createTypedProgramLinks(${JSON.stringify(retargetTupleCall.source)},'Rust',
   {rustOwnedLocalStateModel:${JSON.stringify(ownedTupleCallFixture.model)},rustSourceSignatureModel:'Rust source function signature 99'});
@@ -972,5 +975,6 @@ export function createInvalidParser(archive:string) {
 `,
     })),
     ...publicGrammarSourcePlaneConsumers(moduleSpecifier),
+    ...publicRustSourceStateConsumers(moduleSpecifier),
   ];
 }

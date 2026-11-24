@@ -10,6 +10,13 @@ use super::{
 };
 
 impl Checker {
+    pub(super) fn refuse_callable_data_observation(&self,ty:&Type,operation:&str,span:Option<Span>)->Result<()>{
+        super::super::rust_standard_collection_carriers::check_observation(ty, |name| self.decls.get(name), operation, span)?;
+        if crate::translation::class_owners::accept_type_observation(ty,self.source_class_owners.as_ref(),operation){return Ok(());}
+        let facts=crate::translation::callable_data::read_callable_data_facts(ty,&|name|match self.decls.get(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
+        let reason=crate::translation::callable_data_derivation_rules::read_callable_data_observation_error(operation,facts.callable);
+        if reason.is_empty(){Ok(())}else{Err(unsupported("callable aggregate observation",&reason,span))}
+    }
     pub(super) fn declare(&mut self, items: &[SItem], path: &[String]) -> Result<()> {
         for item in items {
             let name = item.name().to_owned();
@@ -41,7 +48,8 @@ impl Checker {
                 )?;
             }
             let owned_loop = matches!(item, SItem::Fn(function) if function.source_loop.is_some());
-            if name.starts_with("ml_") && !generated && !owned_loop {
+            if self.language != "JavaScript" && name.starts_with("ml_") && !generated && !owned_loop
+            {
                 return Err(unsupported(
                     "reserved identifier",
                     &format!("{name} uses the translator's reserved ml_ prefix"),
@@ -75,6 +83,9 @@ impl Checker {
                     span,
                     generated: data.generated,
                     output: false,
+                    source_field_signatures: None,
+                    source_standard_collection_library_owner: data.source_standard_collection_library_owner.clone(),
+                    source_standard_collection_carrier: data.source_standard_collection_carrier.clone(),
                     source_unit_clone_derivation: data
                         .source_unit_clone_derivation
                         .as_deref()
@@ -97,10 +108,14 @@ impl Checker {
                     decreasing: None,
                     mutual: false,
                     source_signature: None,
+                    source_state_transform: None,
+                    source_vector_mutation: None,
+                    source_fn_mut_specialization: None,
                     source_primitive_owners: function.source_primitive_owners.clone(),
                     source_empty_option: function.source_empty_option.as_deref().cloned(),
                     source_type_namespace: function.source_type_namespace.as_deref().cloned(),
                     source_loop: function.source_loop.as_deref().cloned(),
+                    source_standard_collection_library_owner: function.source_standard_collection_library_owner.clone(),
                     source_pure_unit: function.source_pure_unit.as_deref().cloned(),
                     source_local_state: function.source_local_state.as_deref().cloned(),
                     source_const_function: function.source_const_function.as_deref().cloned(),
@@ -174,12 +189,17 @@ impl Checker {
             for ctor in &item.ctors {
                 let mut fields = Vec::new();
                 for (index, field) in ctor.fields.iter().enumerate() {
+                    let ty = self.resolve_type(Some(&field.ty), path, item.span)?;
+                    if field.optional && crate::translation::javascript_constructor_presence::field_value_type(&ty).is_none() {
+                        return Err(type_error("an optional constructor field requires its complete own-property presence carrier", item.span));
+                    }
                     fields.push(Field {
+                        optional: field.optional,
                         name: field
                             .name
                             .clone()
                             .unwrap_or_else(|| format!("field{index}")),
-                        ty: self.resolve_type(Some(&field.ty), path, item.span)?,
+                        ty,
                     });
                 }
                 ctors.push(Ctor {
@@ -187,9 +207,40 @@ impl Checker {
                     fields,
                 });
             }
+            let source_fields = if let Some(signature) = item.source_field_signatures.as_deref() {
+                let mut signature = signature.clone();
+                for constructor in &mut signature.ctors {
+                    for position in &mut constructor.fields {
+                        super::super::source_signatures::resolve_source_position(position,&mut |ty|self.resolve_type(Some(ty),path,item.span))?;
+                    }
+                }
+                Some(Box::new(signature))
+            } else {
+                None
+            };
+            let mut collection_carrier = item.source_standard_collection_carrier.clone();
+            if let Some(carrier) = &mut collection_carrier {
+                carrier.kernel_type = self.resolve_type(Some(&carrier.kernel_type), path, item.span)?;
+            }
             if let Some(Decl::Data(entry)) = self.decls.get_mut(&full(path, &item.name)) {
                 entry.ctors = ctors;
+                entry.source_field_signatures = source_fields;
+                entry.source_standard_collection_carrier = collection_carrier;
             }
+        }
+        // Every actual layout and each field's original declaration context is
+        // now available before a nested sum signature consults the registry.
+        for (item,path) in &flat {
+            let SItem::Data(item) = item else { continue };
+            let Some(signature) = item.source_field_signatures.as_deref() else { continue };
+            let name = full(path,&item.name);
+            let Some(Decl::Data(entry)) = self.decls.get(&name) else { continue };
+            let source_fields = crate::translation::source_data_field_signatures::check(
+                signature,&entry.ctors,self.language.as_str(),&name,
+                |ty|self.resolve_type(Some(ty),path,item.span),
+                |ty|match ty {Type::Data {name} => match self.decls.get(name) {Some(Decl::Data(data))=>Some(data),_=>None},_=>None},
+            )?;
+            if let Some(Decl::Data(entry)) = self.decls.get_mut(&name) { entry.source_field_signatures=Some(Box::new(source_fields)); }
         }
         for (item, path) in &flat {
             let SItem::Fn(item) = item else { continue };
@@ -220,9 +271,9 @@ impl Checker {
                     .iter_mut()
                     .chain(std::iter::once(&mut signature.result))
                 {
-                    position.ty = self.resolve_type(Some(&position.ty), path, item.span)?;
+                    super::super::source_signatures::resolve_source_position(position,&mut |ty|self.resolve_type(Some(ty),path,item.span))?;
                 }
-                super::super::source_signatures::validate_source_signature(
+                super::super::source_signatures::validate_source_signature_with_data(
                     signature,
                     &params
                         .iter()
@@ -230,8 +281,49 @@ impl Checker {
                         .collect::<Vec<_>>(),
                     &ret,
                     self.language.as_str(),
+                    |ty|self.resolve_type(Some(ty),path,item.span),
+                    |ty|match ty {Type::Data {name} => match self.decls.get(name) {Some(Decl::Data(data))=>Some(data),_=>None},_=>None},
                 )?;
             }
+            let source_state_transform = item.source_state_transform.as_deref().map(|facet| {
+                super::super::source_state_transforms::check_state_transform(
+                    facet, item, &params, &ret, self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, item.span),
+                    |ty| match ty {
+                        Type::Data { name } => match self.decls.get(name) {
+                            Some(Decl::Data(data)) => Some(data),
+                            _ => None,
+                        },
+                        _ => None,
+                    },
+                ).map(Box::new)
+            }).transpose()?;
+            let source_vector_mutation = item.source_vector_mutation.as_deref().map(|facet| {
+                super::super::source_vector_mutations::check_surface(
+                    facet, item, &params, &ret, self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, item.span),
+                    |ty| match ty {
+                        Type::Data { name } => match self.decls.get(name) {
+                            Some(Decl::Data(data)) => Some(data),
+                            _ => None,
+                        },
+                        _ => None,
+                    },
+                ).map(Box::new)
+            }).transpose()?;
+            let source_fn_mut_specialization = item.source_fn_mut_specialization.as_deref().map(|facet| {
+                super::super::source_fn_mut_specializations::check_surface(
+                    facet, item, &params, &ret, self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, item.span),
+                    |ty| match ty {
+                        Type::Data { name } => match self.decls.get(name) {
+                            Some(Decl::Data(data)) => Some(data),
+                            _ => None,
+                        },
+                        _ => None,
+                    },
+                ).map(Box::new)
+            }).transpose()?;
             if let Some(annotation) = &annotated_ret
                 && !super::optional_values::annotation_compatible(&ret, annotation)
             {
@@ -243,6 +335,9 @@ impl Checker {
             let name = full(path, &item.name);
             if let Some(Decl::Fn(entry)) = self.decls.get_mut(&name) {
                 entry.source_signature = source_signature;
+                entry.source_state_transform = source_state_transform;
+                entry.source_vector_mutation = source_vector_mutation;
+                entry.source_fn_mut_specialization = source_fn_mut_specialization;
                 entry.params = params;
                 entry.ret = ret;
                 entry.semantic_ret.clone_from(&item.semantic_ret);
@@ -266,11 +361,19 @@ impl Checker {
                             .collect(),
                         known: HashMap::new(),
                         immutable_products: HashMap::new(),
+                        own_properties: Vec::new(),
+                        nominal_spread_absences: Vec::new(),
+                        nominal_constructors: Vec::new(),
+                        nominal_own_fields: Vec::new(),
+                        own_key_callback: None,
                     };
                     let body = self.expr(&item.body, &env, path, Some(&ret), false)?;
                     let body = self.coerce(body, &ret, item.span)?;
                     if let Some(Decl::Fn(entry)) = self.decls.get_mut(&name) {
                         entry.body = body;
+                        if let Some(facet) = entry.source_vector_mutation.as_deref() {
+                            super::super::source_vector_mutations::check_body(entry, facet)?;
+                        }
                         if let Some(proof) = &entry.source_local_state {
                             entry.source_local_state = Some(
                                 super::super::owned_local_state::prepare_owned_local_state_proof(
@@ -306,6 +409,11 @@ impl Checker {
                             .collect(),
                         known: HashMap::new(),
                         immutable_products: HashMap::new(),
+                        own_properties: Vec::new(),
+                        nominal_spread_absences: Vec::new(),
+                        nominal_constructors: Vec::new(),
+                        nominal_own_fields: Vec::new(),
+                        own_key_callback: None,
                     };
                     let mut prop = self.prop(&item.prop, &env, path)?;
                     // `theorem t : ∀ n, P n` and `theorem t (n) : P n` state the same
@@ -352,6 +460,12 @@ impl Checker {
         let Some(ty) = ty else {
             return Err(type_error("missing type annotation", span));
         };
+        if let Type::Record { fields, .. } = ty
+            && fields.iter().any(|field| field.optional
+                && super::super::javascript_constructor_presence::field_value_type(&field.ty).is_none())
+        {
+            return Err(type_error("an optional record field needs its actual presence carrier", span));
+        }
         if !ty.children().is_empty() {
             return ty.map_children(|child| self.resolve_type(Some(child), path, span));
         }
@@ -521,6 +635,7 @@ impl Checker {
         style: ShowStyle,
     ) -> Result<Expr> {
         let value = self.expr(expr, env, path, None, false)?;
+        self.refuse_callable_data_observation(&value.ty,"display",expr.span)?;
         let refusal = crate::translation::primitive_value_rules::read_number_display_refusal(
             self.language.as_str(),
             value.ty.kind(),
@@ -621,6 +736,7 @@ impl Checker {
                         prop.span,
                     ));
                 }
+                for binder in &checked{self.refuse_callable_data_observation(&binder.ty,"proof",prop.span)?;}
                 let mut inner = env.clone();
                 for binder in &checked {
                     inner.bind_local(&binder.name, binder.ty.clone());
@@ -667,6 +783,7 @@ impl Checker {
                     _ => BinaryOp::Ge,
                 };
                 let (left, right) = self.operands(&pair.left, &pair.right, env, path, prop.span)?;
+                self.refuse_callable_data_observation(&left.ty,"comparison",prop.span)?;
                 if matches!(left.ty, Type::Tuple { .. }) {
                     return Err(unsupported(
                         "comparison of tuples",
@@ -737,7 +854,11 @@ impl Checker {
 
     pub(super) fn fresh_name(&mut self, prefix: &str) -> String {
         self.fresh += 1;
-        format!("{prefix}{}", self.fresh)
+        crate::translation::source_identifiers::render_source_generated_identifier(
+            &self.generated_prefix,
+            prefix,
+            self.fresh,
+        )
     }
 
     pub(super) fn unify(
@@ -784,13 +905,11 @@ impl Checker {
         if then.ty.same(&otherwise.ty) {
             return Ok((then, otherwise));
         }
-        if matches!(then.node, Node::Abort { .. }) {
-            let ty = otherwise.ty.clone();
-            return Ok((Expr { ty, ..then }, otherwise));
+        if let Some(abrupt) = super::abrupt_results::coerce_abrupt_result(&then, &otherwise.ty) {
+            return Ok((abrupt, otherwise));
         }
-        if matches!(otherwise.node, Node::Abort { .. }) {
-            let ty = then.ty.clone();
-            return Ok((then, Expr { ty, ..otherwise }));
+        if let Some(abrupt) = super::abrupt_results::coerce_abrupt_result(&otherwise, &then.ty) {
+            return Ok((then, abrupt));
         }
         if let Some(expected) = expected {
             let then = coerce(then, expected, self.language, span, None)?;

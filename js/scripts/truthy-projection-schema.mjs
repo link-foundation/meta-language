@@ -93,6 +93,7 @@ export const inspectedTruthyPreimages = freezeTruthyProjectionData([
   }
 ]);
 
+import {restoreSharedArrayNativeFrontendSource} from './shared-array-native-frontend-history.mjs';
 export const TRUTHY_PROJECTION_REVISION='8d77e476d097448eb381ebe03e2aa173402bc03d';
 export const TRUTHY_PROJECTION_OUTPUT='parity/self-translation/truthy-projection-schema.lino';
 export const TRUTHY_PROJECTION_HOST_SUCCESSORS='parity/self-translation/truthy-projection-host-successors.lino';
@@ -185,6 +186,7 @@ export function verifyTruthyProjectionHostSuccessors(packet) {
 }
 
 export function restoreTruthyProjectionHostSource(source,file) {
+ source=restoreSharedArrayNativeFrontendSource(source,file);
  assert.equal(typeof source,'string');
  if(!['js/src/translation/check.js','rust/src/translation/surface/nodes.rs','rust/src/translation/check/expressions.rs'].includes(file))return source;
  const packet=verifyTruthyProjectionHostSuccessors(readProjectData(new URL(TRUTHY_PROJECTION_HOST_SUCCESSORS,root)));

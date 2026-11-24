@@ -19,11 +19,59 @@ fn literal_array_value(value: &SExpr) -> bool {
     }
 }
 
+// Bound expansion of the constructor body to the actual finite source choices.
+fn accept_constructor_tag_expression(expression: &SExpr) -> bool {
+    let mut pending = vec![expression];
+    let mut alternatives = 0.0;
+    while let Some(value) = pending.pop() {
+        match &value.node {
+            SNode::If {
+                then, otherwise, ..
+            } => {
+                pending.push(otherwise);
+                pending.push(then);
+            }
+            SNode::Str { .. }
+                if alternatives
+                    < super::surface_rules::read_java_script_constructor_tag_alternative_limit(
+                    ) =>
+            {
+                alternatives += 1.0;
+            }
+            _ => return false,
+        }
+    }
+    true
+}
+
+fn expand_constructor_tag(tag: SExpr, fields: &[(String, SExpr)], place: Span) -> SExpr {
+    let expression = match tag.node {
+        SNode::Str { value } => SNode::CtorObject {
+            tag: value,
+            fields: fields.to_vec(),
+            frozen: false,
+            prototype_definition: None,
+        },
+        SNode::If {
+            cond,
+            then,
+            otherwise,
+        } => SNode::If {
+            cond,
+            then: Box::new(expand_constructor_tag(*then, fields, place)),
+            otherwise: Box::new(expand_constructor_tag(*otherwise, fields, place)),
+        },
+        _ => unreachable!("constructor tag alternatives were admitted before expansion"),
+    };
+    node(expression, place)
+}
+
 impl JavaScriptParser {
     /// `{ $: 'node', left, value: v }` constructs the `node` alternative of a data type.
     pub(super) fn object_literal(&mut self) -> Result<SExpr> {
         let start = self.cursor.advance();
-        let mut tag = None;
+        let mut tag: Option<SExpr> = None;
+        let mut tag_field_count = 0;
         let mut fields: Vec<(String, SExpr)> = Vec::new();
         let mut entries = Vec::new();
         let mut duplicate = None;
@@ -61,6 +109,7 @@ impl JavaScriptParser {
                 key.end = close.end;
                 here = Some(span(&key, &key));
             } else {
+                self.require_scalar_string_token(&key, "record property key")?;
                 if !matches!(key.kind, TokenKind::Identifier | TokenKind::String) {
                     return Err(unsupported(
                         &format!("object key {}", describe(&key)),
@@ -95,15 +144,21 @@ impl JavaScriptParser {
             ) == "tag"
             {
                 self.cursor.expect(":", Some("object"))?;
-                let value = self.cursor.advance();
-                if value.kind != TokenKind::String {
+                let value = self.expr()?;
+                if !accept_constructor_tag_expression(&value)
+                    || tag.as_ref().is_some_and(|prior| {
+                        !matches!(prior.node, SNode::Str { .. })
+                            || !matches!(value.node, SNode::Str { .. })
+                    })
+                {
                     return Err(unsupported(
                         "computed tag",
-                        "the $ tag is a string literal",
-                        Some(span(&value, &value)),
+                        "a constructor tag needs literal strings in a finite conditional expression",
+                        value.span,
                     ));
                 }
-                tag = Some(value.value);
+                tag = Some(value);
+                tag_field_count = entries.len();
             } else {
                 if duplicate.is_none() && fields.iter().any(|(name, _)| *name == key.value) {
                     duplicate = Some(key.clone());
@@ -156,6 +211,7 @@ impl JavaScriptParser {
                     record_projection: None,
                     ty: None,
                     prototype_definition,
+                    property_order: None,
                 },
                 self.to_here(&start),
             ));
@@ -167,23 +223,75 @@ impl JavaScriptParser {
                 Some(span(&key, &key)),
             ));
         }
+        let tag = tag.expect("shared tagged constructor selection");
+        let place = self.to_here(&start);
         if form == "spread" {
-            return Err(unsupported(
-                "tagged object spread",
-                "constructor spreads require a complete tagged field projection",
-                Some(self.to_here(&start)),
+            if let Some(prototype) = prototype_definition {
+                return Err(unsupported(
+                    "object prototype definition",
+                    "the portable core does not represent object prototypes",
+                    Some(prototype.span),
+                ));
+            }
+            return super::object_constructor_spreads::expand_constructor_spreads(
+                tag,
+                entries,
+                || {
+                    self.generated_count += 1;
+                    format!(
+                        "{}temporary_constructor_field{}",
+                        self.generated_prefix, self.generated_count
+                    )
+                },
+                place,
+            );
+        }
+        if let SNode::Str { value } = tag.node {
+            return Ok(node(
+                SNode::CtorObject {
+                    tag: value,
+                    fields,
+                    frozen: false,
+                    prototype_definition,
+                },
+                place,
             ));
         }
-        let tag = tag.expect("shared tagged constructor selection");
-        Ok(node(
-            SNode::CtorObject {
-                tag,
-                fields,
-                frozen: false,
-                prototype_definition,
-            },
-            self.to_here(&start),
-        ))
+        if let Some(prototype) = prototype_definition {
+            return Err(unsupported(
+                "object prototype definition",
+                "an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes",
+                Some(prototype.span),
+            ));
+        }
+        let mut bindings = Vec::new();
+        for (_, value) in fields.iter_mut().take(tag_field_count) {
+            self.generated_count += 1;
+            let binding = format!(
+                "{}temporary_constructor_field{}",
+                self.generated_prefix, self.generated_count
+            );
+            let reference = SExpr::new(
+                SNode::Name {
+                    path: vec![binding.clone()],
+                },
+                value.span,
+            );
+            bindings.push((binding, std::mem::replace(value, reference)));
+        }
+        let mut result = expand_constructor_tag(tag, &fields, place);
+        for (name, value) in bindings.into_iter().rev() {
+            result = node(
+                SNode::Let {
+                    name,
+                    ty: None,
+                    value: Box::new(value),
+                    body: Box::new(result),
+                },
+                place,
+            );
+        }
+        Ok(result)
     }
 
     pub(super) fn freeze_object_argument(&self, mut arg: SExpr, called: Span) -> Result<SExpr> {

@@ -17,6 +17,9 @@ import {readProjectData,serializeProjectData} from '../scripts/project-data.mjs'
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {readStringCodeUnitTemplateGeneration} from '../scripts/generate-string-code-unit-template.mjs';
 
+const [stringUnitNodeMajor,stringUnitNodeMinor]=process.versions.node.split('.').map(Number);
+assert.ok(stringUnitNodeMajor===22&&stringUnitNodeMinor>=15||stringUnitNodeMajor===24,'uncovered Node '+process.versions.node);
+
 const source=`/** @param {string} text @param {number} position @returns {string} */
 function character(text,position){return text.charAt(position);}
 /** @param {string} text @param {number|null|undefined} position @returns {string} */
@@ -52,8 +55,15 @@ console.log('ABC'.charAt(undefined),'ABC'.charAt(null),'ABC'.charAt(NaN));`;
 function collision(text,position,Math,Number){const readStringCharacter=999;return text.charAt(position);}`;
   const compiled=runInNewContext(emitJavaScript(checkProgram(parseJavaScript(collision))).text+';collision;');
   assert.equal(compiled('ABC',1,8,9),'B');
-  for(const position of ['true','false',"'1'",'{}','[1]'])assert.throws(()=>checkProgram(parseJavaScript("console.log('ABC'.charAt("+position+'));')));
-  assert.throws(()=>checkProgram(parseJavaScript("console.log('ABC'.charAt(0,1));")),/expects 0 to 1 arguments/u);
+  // Full former assertions and inputs are retained in string-unit-calls.lino.
+  // ECMAScript 2025 ToIntegerOrInfinity admits these primitive inputs.
+  for(const [position,expected] of [['true','B'],['false','A'],["'1'",'B'],['0,1','A']]){
+    const source="console.log('ABC'.charAt("+position+'));';
+    const observe=text=>{const lines=[];runInNewContext(text,{console:{log:value=>lines.push(String(value))}});return lines;};
+    assert.deepEqual(observe(source),[expected]);
+    assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(source))).text),[expected]);
+  }
+  for(const position of ['{}','[1]'])assert.throws(()=>checkProgram(parseJavaScript("console.log('ABC'.charAt("+position+'));')));
 });
 
 test('character selection rechecks after complete text and binary Links reload without a special graph operation',()=>{

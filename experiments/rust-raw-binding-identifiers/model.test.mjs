@@ -16,7 +16,7 @@ import {
   checkRustRawBindingIdentifiers, emitRustRawBindingIdentifiers, reconstructRustRawBindingIdentifierSource,
   checkRustRawBindingIdentifierInvocation,
 } from './model.mjs';
-import { validName } from './syntax.mjs';
+import { tokenizeRawBindingIdentifierProof, validName } from './syntax.mjs';
 
 const fixture = readProjectData(new URL('./data/fixtures.lino', import.meta.url));
 const reloads = packet => [LinkNetwork.fromLino(packet.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))].map(network => ({ network, root: packet.root }));
@@ -211,12 +211,14 @@ test('actual saved invocation premises enforce exact Boolean and i32 domains and
   for (const value of [0, 1, 'true', null, undefined, new Boolean(false), 0n]) assert.throws(() => checkRustRawBindingIdentifierInvocation(program, proof, declaration, [value]));
 });
 
-test('default production raw identifier and namespace refusal paths are unchanged by this explicit experiment', () => {
-  for (const entry of fixture.cases) {
-    assert.throws(() => createTypedProgramLinks(entry.source, 'Rust'));
-    const raw = tokenize('r#type', 'Rust').tokens;
-    assert.deepEqual(raw.slice(0, 3).map(token => [token.kind, token.raw]), [['identifier', 'r'], ['punct', '#'], ['identifier', 'type']]);
-  }
+test('production raw identifiers and the historical explicit proof retain their respective source intervals', () => {
+  const raw = tokenize('r#type', 'Rust').tokens;
+  assert.deepEqual(raw[0], { kind: 'identifier', raw: 'r#type', value: 'type', start: 0, end: 6 });
+  assert.equal(raw[1].kind, 'eof');
+  const proof = tokenizeRawBindingIdentifierProof('r#type');
+  assert.deepEqual(proof.slice(0, 3).map(token => [token.kind, token.raw, token.start, token.end]),
+    [['identifier', 'r', 0, 1], ['punct', '#', 1, 2], ['identifier', 'type', 2, 6]]);
+  assert.ok(createTypedProgramLinks('fn main(){let r#type=2i32;println!("{}",r#type);}', 'Rust').root);
 });
 
 test('the experimental linked policy, fixtures and whole checked selectors regenerate without native compilation', () => {

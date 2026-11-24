@@ -1,0 +1,2 @@
+# PyPI universal wheel, MIT, pinned independently of the runner image.
+lark==1.2.2 --hash=sha256:c2276486b02f0f1b90be155f2c8ba4a8e194d42775786db622faccd652d8e80c

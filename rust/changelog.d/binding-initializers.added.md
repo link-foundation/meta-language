@@ -1,0 +1,1 @@
+Draft represented JavaScript binding defaults with lazy undefined-only initializer selection, retained null, structured values, shared inference/native rules and editable program graphs. Preserve former inputs and source-qualified assertion corrections; controls remain unexecuted.

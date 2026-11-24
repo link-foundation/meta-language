@@ -11,6 +11,7 @@ import {readCurrentOwnCodebaseRawDescriptorPolicy,readCurrentOwnCodebaseRawDescr
   verifyCurrentOwnCodebaseRawDescriptorPacket,deriveCurrentOwnCodebaseRawDescriptorSource,
   restoreCurrentOwnCodebaseRawSource,restoreCurrentOwnCodebaseRawText,restoreCurrentOwnCodebaseRawEdge} from '../scripts/current-own-codebase-raw-source-descriptors.mjs';
 import {restoreCompleteDeclarationReceipt} from '../scripts/complete-declaration-receipts.mjs';
+import {restoreTypedSourceDescriptorHostSource} from '../scripts/typed-source-descriptor-host-history.mjs';
 const root=new URL('../../',import.meta.url);
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 
@@ -32,7 +33,7 @@ test('one current source edge retains every complete prior artifact receipt alia
     const source=readFileSync(new URL(row.file,root),'utf8');assert.equal(source,row.current.sourceText);assert.deepEqual(pin(source),{bytes:row.current.bytes,sha256:row.current.sha256});
     assert.equal(restoreCurrentOwnCodebaseRawSource(source,row.file),row.sourceText);
   }
-  for(const row of packet.adapters)assert.equal(deriveCurrentOwnCodebaseRawDescriptorSource(row),readFileSync(new URL(row.file,root),'utf8'));
+  for(const row of packet.adapters)assert.equal(deriveCurrentOwnCodebaseRawDescriptorSource(row),restoreTypedSourceDescriptorHostSource(readFileSync(new URL(row.file,root),'utf8'),row.file));
   for(const row of[packet.artifact,packet.register,packet.loan])assert.equal(restoreCurrentOwnCodebaseRawText(readFileSync(new URL(row.file,root),'utf8'),row.file),row.sourceText);
   const loan=readProjectData(new URL(policy.loanFile,root));assert.deepEqual({bytes:loan.predecessor.bytes,sha256:loan.predecessor.sha256},packet.edge.current);
   assert.doesNotThrow(()=>restoreCompleteDeclarationReceipt(actual,'raw consuming',{register}));

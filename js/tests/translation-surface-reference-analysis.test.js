@@ -102,6 +102,20 @@ test('flat recursive scope and type flow preserve original structural identity d
   }
 });
 
+test('nested conditional projections preserve resolved container identity at bounded depth', () => {
+  function nestedProbe(depth) {
+    let selected = name('value');
+    for (let position = 0; position < depth; position += 1) {
+      selected = { k: 'if', cond: { k: 'bool', value: true }, then: selected, else: name('unknown') };
+    }
+    return program(equality(selected, name('value')), [parameter('value', array)]);
+  }
+  const shallow = nestedProbe(8);
+  assert.equal(original.hasStructuralIdentity(shallow), true);
+  assert.equal(hasStructuralIdentity(shallow), true);
+  assert.equal(hasStructuralIdentity(nestedProbe(36)), true);
+});
+
 test('module signatures external overrides and main binding order keep their original priority', () => {
   const call = { k: 'app', fn: { k: 'name', path: ['crate', 'nested', 'make'] }, args: [] };
   const probe = program(equality(call, call));
@@ -178,20 +192,21 @@ test('selected allocation and member reads survive complete checked surface rech
 test('the entire reference rule module checks and emits every declaration with executable original-oracle controls', () => {
   const source = readFileSync(new URL('../src/translation/surface-reference-analysis-rules.js', import.meta.url), 'utf8');
   const names = [...source.matchAll(/^(?:export )?function (\w+)\(/gmu)].map(match => match[1]);
-  const originalNames = names.slice(0, -4);
+  const originalNames = names.slice(0, -5);
   const priorNames = originalNames.slice(0, -1);
   assert.equal(priorNames.slice(0, -2).length, 21, 'all prior reference declarations remain before the two appended emission guards');
   assert.equal(priorNames.length, 23);
   assert.deepEqual(priorNames.slice(-2), ['readSurfaceReferenceEmissionOperation', 'readSurfaceReferenceEmissionRefusal']);
   assert.deepEqual(originalNames.slice(-1), ['requireSurfaceReferenceTokenAfterElimination']);
   assert.equal(originalNames.length, 24);
-  assert.deepEqual(names.slice(-4), ['readSurfaceReferenceProjectionForm', 'readSurfaceReferencePayloadOperand', 'acceptSurfaceReferencePayloadField', 'readSurfaceReferencePayloadError']);
-  assert.equal(names.length, 28);
+  assert.deepEqual(names.slice(-5, -1), ['readSurfaceReferenceProjectionForm', 'readSurfaceReferencePayloadOperand', 'acceptSurfaceReferencePayloadField', 'readSurfaceReferencePayloadError']);
+  assert.equal(names.at(-1), 'collectSurfaceReferenceItemSignatures');
+  assert.equal(names.length, 29);
   const closed = readSurfaceReferenceSourceModule(source);
   const allNames = [...closed.matchAll(/^(?:export )?function (\w+)\(/gmu)].map(match => match[1]);
-  assert.equal(allNames.slice(0, -5).length, 29, 'all23 reference functions and the complete actual6 required-column functions are retained');
-  assert.equal(allNames.slice(0, -4).length, 30);
-  assert.equal(allNames.length, 34);
+  assert.equal(allNames.slice(0, -6).length, 29, 'all 23 reference functions and all six required-column functions are retained');
+  assert.equal(allNames.slice(0, -5).length, 30);
+  assert.equal(allNames.length, 35);
   const surface = parseJavaScript(closed, {referenceSemantics: false});
   assert.equal(Object.hasOwn(surface, 'referenceSemantics'), false);
   const checked = checkProgram(surface);

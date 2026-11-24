@@ -38,6 +38,9 @@ pub(crate) fn deserialize_tuple_product_model<'de, D: serde::Deserializer<'de>>(
 /// One named field of a structural record.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TypeField {
+    /// The JavaScript property may be absent independently of its value.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub optional: bool,
     /// The source field name.
     pub name: std::string::String,
     /// The field's recursively structured type.
@@ -95,6 +98,12 @@ pub enum Type {
     /// Named fields, whose declaration order does not affect type identity.
     Record {
         fields: Vec<TypeField>,
+        /// Actual source class constructor owner, retained through graph edits.
+        #[serde(default,rename="sourceClassOwner",skip_serializing_if="Option::is_none",deserialize_with="deserialize_tuple_product_model")]
+        source_class_owner: Option<std::string::String>,
+        /// The value carries its own property order separately from its layout.
+        #[serde(default, skip_serializing_if = "is_false")]
+        ordered: bool,
         #[serde(default, skip_serializing_if = "is_false")]
         open: bool,
         #[serde(default, skip_serializing_if = "is_false")]
@@ -240,11 +249,18 @@ impl Type {
                     .map(&mut map)
                     .collect::<Result<_, _>>()?,
             },
-            Self::Record { fields, open, .. } => {
+            Self::Record {
+                fields,
+                open,
+                ordered,
+                source_class_owner,
+                ..
+            } => {
                 let mut fields: Vec<_> = fields
                     .iter()
                     .map(|field| {
                         Ok(TypeField {
+                            optional: field.optional,
                             name: field.name.clone(),
                             ty: map(&field.ty)?,
                         })
@@ -255,8 +271,10 @@ impl Type {
                 });
                 Self::Record {
                     fields,
+                    source_class_owner: source_class_owner.clone(),
                     open: *open,
                     reference: self.is_reference(),
+                    ordered: *ordered,
                 }
             }
             Self::Map { key, value, .. } => Self::Map {
@@ -281,6 +299,10 @@ impl Type {
                 Vec::new(),
             ),
             Self::Data { name } => (name.clone(), Vec::new()),
+            Self::Named { path, .. } => {
+                let path = serde_json::to_string(path).expect("a source type path is text");
+                return format!("named:{path}");
+            }
             Self::Array { element, .. } | Self::Set { element, .. } | Self::Cell { element } => {
                 (std::string::String::new(), vec![element.key()])
             }
@@ -305,7 +327,13 @@ impl Type {
                 std::string::String::new(),
                 alternatives.iter().map(Self::key).collect(),
             ),
-            Self::Record { fields, open, .. } => {
+            Self::Record {
+                fields,
+                open,
+                ordered,
+                source_class_owner,
+                ..
+            } => {
                 let mut sorted: Vec<_> = fields.iter().collect();
                 sorted.sort_by(|first, second| {
                     first.name.encode_utf16().cmp(second.name.encode_utf16())
@@ -313,16 +341,21 @@ impl Type {
                 let children = sorted
                     .iter()
                     .map(|field| {
-                        serde_json::to_string(&[field.name.clone(), field.ty.key()])
-                            .expect("string pairs serialize")
+                        if field.optional {
+                            serde_json::to_string(&(&field.name, field.ty.key(), true))
+                        } else {
+                            serde_json::to_string(&(&field.name, field.ty.key()))
+                        }
+                        .expect("record field identity serializes")
                     })
                     .collect();
                 (
-                    if *open {
+                    (if *open {
                         "open:".to_owned()
                     } else {
                         std::string::String::new()
-                    },
+                    }) + (if *ordered { "ordered:" } else { "" })
+                        + &source_class_owner.as_ref().map(|owner|format!("class:{}:",serde_json::to_string(owner).expect("class owner string serializes"))).unwrap_or_default(),
                     children,
                 )
             }

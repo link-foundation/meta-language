@@ -1,0 +1,4 @@
+// Complete selected class workload authoring, without execution or fixtures.
+import {draftSourceLibrary} from './draft-source-library.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+draftSourceLibrary({sourcePath:'examples/closed-source-class-composition/entry.js',moduleName:'closed_source_class_composition',model:'actual selected Scope supplied class module composition 1',programAsset:'closed-source-class-composition-program',sourceDependencies:true,sourceAliases:true,sourceClasses:'closed local class declarations 1',sourceReExports:'resolved named module providers 1',referenceSemantics:true,sourceLints:'preserve',sourceFormatting:'preserve',valueSharing:'exact scalars, types and source spans 1',programEntryPoints:'source module exports 1',nativeEntryPoints:'source module exports 1'});

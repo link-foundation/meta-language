@@ -1,6 +1,7 @@
 // Header/owner projection only. The existing complete-token Rust parser owns bodies.
 import { acceptRustPureUnitNameCharacter } from '../../js/src/translation/rust-pure-unit-call-rules.js';
 import { acceptRustRawBindingIdentifierName } from './rules.mjs';
+import { tokenize } from '../../js/src/translation/lexer.js';
 import { checkGeneratedOwnedRustFields as fields } from '../generated-owned-rust/model.mjs';
 
 export const fail = reason => { throw new TypeError('Experimental Rust raw binding identifiers: ' + reason); };
@@ -9,6 +10,18 @@ const owned = token => roles.some(role => Object.hasOwn(token, role));
 export function validName(name, raw) {
   return typeof name === 'string' && acceptRustRawBindingIdentifierName(name, raw,
     [...name].every((letter, index) => acceptRustPureUnitNameCharacter(letter.codePointAt(0), index === 0)));
+}
+// The existing proof model owns the three historical extents separately.
+export function tokenizeRawBindingIdentifierProof(source) {
+  return tokenize(source, 'Rust').tokens.flatMap(token => {
+    if (token.kind !== 'identifier' || !token.raw.startsWith('r#')) return [token];
+    const { start, end, value } = token;
+    return [
+      { kind: 'identifier', raw: 'r', value: 'r', start, end: start + 1 },
+      { kind: 'punct', raw: '#', value: '#', start: start + 1, end: start + 2 },
+      { kind: 'identifier', raw: token.raw.slice(2), value, start: start + 2, end },
+    ];
+  });
 }
 function groups(tokens) {
   const result = [];

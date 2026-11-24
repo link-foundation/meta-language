@@ -975,6 +975,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "links-notation"
+version = "0.31.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "813d02bd0432e83be5851f620f45423b1b6738b3bcdcd854a6702440ab8fcfbc"
+dependencies = [
+ "nom",
+]
+
+[[package]]
 name = "linux-raw-sys"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1039,7 +1048,8 @@ dependencies = [
  "indexmap",
  "lindera",
  "lingua",
- "links-notation",
+ "links-notation 0.22.0",
+ "links-notation 0.31.8",
  "native-source-oracles",
  "pest",
  "pest_derive",

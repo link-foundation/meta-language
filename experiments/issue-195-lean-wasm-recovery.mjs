@@ -1,12 +1,14 @@
 // Compares Lean error recovery in web-tree-sitter for string input and callback input.
 //   node experiments/issue-195-lean-wasm-recovery.mjs [SOURCE]
-import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { gunzipSync } from 'node:zlib';
-import { Parser, Language } from '../js/node_modules/web-tree-sitter/tree-sitter.js';
+import { readExternalGrammarAsset } from '../js/scripts/external-grammar-cache.mjs';
 
+const require = createRequire(new URL('../js/package.json', import.meta.url));
+const { Parser, Language } = require('web-tree-sitter');
 const source = process.argv[2] ?? 'import';
 await Parser.init();
-const wasm = gunzipSync(await readFile(new URL('../js/src/vendor/grammars/lean.wasm.gz', import.meta.url)));
+const wasm = gunzipSync(readExternalGrammarAsset('js/oracles/grammars/lean.wasm.gz'));
 const language = await Language.load(wasm);
 for (const [label, input] of [
   ['string', source],
@@ -14,6 +16,8 @@ for (const [label, input] of [
 ]) {
   const parser = new Parser();
   parser.setLanguage(language);
-  console.log(label.padEnd(8), parser.parse(input).rootNode.toString());
+  const tree = parser.parse(input);
+  console.log(label.padEnd(8), tree.rootNode.toString());
+  tree.delete();
   parser.delete();
 }

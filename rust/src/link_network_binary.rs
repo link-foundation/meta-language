@@ -179,7 +179,9 @@ pub fn encode_link_network_binary(
     network: &LinkNetwork,
     options: BinaryLinksOptions,
 ) -> Result<Vec<u8>, BinaryLinksError> {
-    let mut fields = vec![2.0, number(network.next_id)?, length(network.links.len())?];
+    let next_id = u64::try_from(network.next_id)
+        .map_err(|_| fail("unsafe integer is outside the interoperable Number profile"))?;
+    let mut fields = vec![2.0, number(next_id)?, length(network.links.len())?];
     if network.links.len() > options.record_limit {
         return Err(fail("record resource limit exceeded"));
     }
@@ -253,30 +255,28 @@ pub fn encode_link_network_binary(
         .collect()
 }
 
-struct Fields {
-    values: Vec<u64>,
-    cursor: usize,
+struct Fields<'a> {
+    values: std::str::SplitTerminator<'a, char>,
 }
-impl Fields {
-    fn number(&mut self) -> u64 {
-        let value = self.values[self.cursor];
-        self.cursor += 1;
-        value
+impl Fields<'_> {
+    fn number(&mut self) -> Result<u64, BinaryLinksError> {
+        self.values
+            .next()
+            .and_then(|value| value.parse().ok())
+            .ok_or_else(|| fail("generated numeric framing is invalid"))
     }
     fn size(&mut self) -> Result<usize, BinaryLinksError> {
-        usize::try_from(self.number()).map_err(|_| fail("value does not fit usize"))
+        usize::try_from(self.number()?).map_err(|_| fail("value does not fit usize"))
     }
     fn text(&mut self) -> Result<String, BinaryLinksError> {
         let length = self.size()?;
-        let bytes = self.values[self.cursor..self.cursor + length]
-            .iter()
-            .map(|value| u8::try_from(*value).map_err(|_| fail("invalid string byte")))
+        let bytes = (0..length)
+            .map(|_| u8::try_from(self.number()?).map_err(|_| fail("invalid string byte")))
             .collect::<Result<Vec<_>, _>>()?;
-        self.cursor += length;
         String::from_utf8(bytes).map_err(|_| fail("metadata or cache string is not valid UTF-8"))
     }
     fn optional_text(&mut self) -> Result<Option<String>, BinaryLinksError> {
-        if self.number() == 0 {
+        if self.number()? == 0 {
             Ok(None)
         } else {
             self.text().map(Some)
@@ -297,41 +297,36 @@ pub fn decode_link_network_binary(
     if bytes.len() > options.byte_limit {
         return Err(fail("byte resource limit exceeded"));
     }
-    let input = bytes
-        .iter()
-        .map(|byte| f64::from(*byte))
-        .collect::<Vec<_>>();
-    let decoded = transcode(&input, true, options)?;
-    let values = decoded
-        .trim_end_matches(',')
-        .split(',')
-        .map(|value| {
-            value
-                .parse::<u64>()
-                .map_err(|_| fail("generated numeric framing is invalid"))
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    let mut fields = Fields { values, cursor: 0 };
-    let version = fields.number();
-    let next_identity = if version == 2 { fields.number() } else { 1 };
+    let decoded = {
+        let input = bytes
+            .iter()
+            .map(|byte| f64::from(*byte))
+            .collect::<Vec<_>>();
+        transcode(&input, true, options)?
+    };
+    let mut fields = Fields {
+        values: decoded.split_terminator(','),
+    };
+    let version = fields.number()?;
+    let next_identity = if version == 2 { fields.number()? } else { 1 };
     let count = fields.size()?;
     let mut network = LinkNetwork::new();
     for _ in 0..count {
-        let identity = LinkId::from_u64(fields.number());
+        let identity = LinkId::from_u64(fields.number()?);
         let arity = fields.size()?;
         let references = (0..arity)
-            .map(|_| LinkId::from_u64(fields.number()))
-            .collect::<Vec<_>>();
-        fields.number(); // Shared scanner checked the metadata version.
+            .map(|_| fields.number().map(LinkId::from_u64))
+            .collect::<Result<Vec<_>, _>>()?;
+        fields.number()?; // Shared scanner checked the metadata version.
         let link_type = types()[fields.size()?];
-        let named = fields.number() == 1;
-        let bits = fields.number();
-        let registered = fields.number() == 1;
-        fields.number(); // Shared scanner rejected tombstones.
+        let named = fields.number()? == 1;
+        let bits = fields.number()?;
+        let registered = fields.number()? == 1;
+        fields.number()?; // Shared scanner rejected tombstones.
         let term = fields.optional_text()?;
         let definition = fields.optional_text()?;
         let language = fields.optional_text()?;
-        let span = if fields.number() == 1 {
+        let span = if fields.number()? == 1 {
             Some(SourceSpan::new(
                 ByteRange::new(fields.size()?, fields.size()?),
                 Point::new(fields.size()?, fields.size()?),
@@ -376,7 +371,7 @@ pub fn decode_link_network_binary(
         {
             network.terms.insert(Arc::from(term), identity);
         }
-        network.next_id = network.next_id.max(identity.as_u64() + 1);
+        network.observe_identifier(identity);
         network.links.insert(
             identity,
             Arc::new(Link {
@@ -390,7 +385,7 @@ pub fn decode_link_network_binary(
         let terms = fields.size()?;
         for _ in 0..terms {
             let key: Arc<str> = Arc::from(fields.text()?);
-            let identity = LinkId::from_u64(fields.number());
+            let identity = LinkId::from_u64(fields.number()?);
             if network.terms.insert(key, identity).is_some() {
                 return Err(fail("duplicate term-cache key"));
             }
@@ -413,7 +408,7 @@ pub fn decode_link_network_binary(
                 return Err(fail("duplicate selected-syntax key"));
             }
         }
-        network.next_id = next_identity;
+        network.next_id = u128::from(next_identity);
     }
     Ok(network)
 }

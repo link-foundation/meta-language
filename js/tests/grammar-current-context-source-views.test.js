@@ -14,6 +14,7 @@ import {structuredDataToLino,encodeStructuredDataLinks} from '../src/structured-
 import {decodeStructuredDataLinks} from '../src/structured-data-graph.js';
 import {LinkNetwork} from '../src/network.js';
 import {readProjectData} from '../scripts/project-data.mjs';
+import {readNativeCompilerHostSourceHistory} from '../scripts/native-compiler-host-source-history.mjs';
 import {outcomeWirePolicy} from '../../experiments/grammar-outcome-network/native-transport/wire/wire-policy.mjs';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
 const root=fileURLToPath(new URL('../../',import.meta.url));
@@ -103,7 +104,9 @@ test('current crate root retains complete certified predecessors actual export o
   const pair=readOutcomeCrateRootSourcePair(),original=restoreOutcomeCrateRootSource(outcomeCrateRootPath,pair.predecessor.source);
   assert.equal(original.changed,false);assert.equal(original.receipt,null);
   const current=restoreOutcomeCrateRootSource(outcomeCrateRootPath,readFileSync(join(root,outcomeCrateRootPath),'utf8'));
-  assert.equal(current.changed,true);assert.equal(current.predecessor,pair.predecessor.source);assert.equal(current.current,pair.successor.source);
+  const compiler=readNativeCompilerHostSourceHistory().sources.find(row=>row.file===outcomeCrateRootPath);assert.ok(compiler);
+  assert.equal(compiler.previous.source,pair.successor.source,'the entire earlier recipe remains exact');
+  assert.equal(current.changed,true);assert.equal(current.predecessor,pair.predecessor.source);assert.equal(current.current,compiler.current.source);
   assert.deepEqual(checkOutcomeCrateRootSourceReceipt(outcomeCrateRootPath,current.current,current.receipt),current.receipt);
   const inventory=readOutcomeInventory(root),view=inventory.sourceViews;
   assert.equal(view.schemaVersion,3);assert.equal(view.predecessorView.schemaVersion,2);
@@ -111,11 +114,12 @@ test('current crate root retains complete certified predecessors actual export o
   assert.equal(view.historicalPins.length,13);assert.equal(view.currentPins.length,13);assert.deepEqual(view.historicalPins,inventory.pins);
   const before=view.predecessorView.currentPins.find(row=>row.file===outcomeCrateRootPath),after=view.currentPins.find(row=>row.file===outcomeCrateRootPath);
   assert.deepEqual({bytes:before.bytes,sha256:before.sha256},{bytes:pair.predecessor.bytes,sha256:pair.predecessor.sha256});
-  assert.deepEqual({bytes:after.bytes,sha256:after.sha256},{bytes:pair.successor.bytes,sha256:pair.successor.sha256});
+  assert.deepEqual({bytes:after.bytes,sha256:after.sha256},{bytes:compiler.current.bytes,sha256:compiler.current.sha256});
   const proof=view.crateRootSuccessor.currentSourceProof;
   assert.equal(proof.predecessor.rootReexport.source,proof.current.rootReexport.source);
   assert.deepEqual(proof.current.selectedOwners.map(({name,source})=>({name,source})),proof.predecessor.selectedOwners.map(({name,source})=>({name,source})));
   assert.ok(proof.current.reexports.some(row=>row.source.includes('encode_formal_function_declaration_value')));
+  assert.ok(proof.current.reexports.some(row=>row.source.includes('create_typed_program_links_with_rust_shared_array_handle_source_model')));
   assert.equal(proof.predecessor.reexports.some(row=>row.source.includes('encode_formal_function_declaration_value')),false);
   assert.deepEqual(checkOutcomeSourceViews(inventory,diagnosticOrderDecorator),view);
   assert.deepEqual(checkOutcomeSourceViews({...inventory,sourceViews:view.predecessorView},diagnosticOrderDecorator),view.predecessorView);

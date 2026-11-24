@@ -1,0 +1,1 @@
+Draft typed Rust byte-character patterns, actual u8 validation and direct literal constraints in both runtimes, retaining literal alias source ownership and exact predecessor inputs through shared automatically translated policy.

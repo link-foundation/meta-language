@@ -1,0 +1,1 @@
+Draft explicit Rust source-std context across self-translation, whole-module signatures, per-item emission, shared handles and diagnostics, retaining the selected version in generated headers. Use existing shared version semantics and preserve omitted-selector behavior.

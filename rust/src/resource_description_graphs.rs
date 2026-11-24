@@ -38,10 +38,31 @@ fn units(text: &str) -> Vec<f64> {
     text.encode_utf16().map(f64::from).collect()
 }
 
+pub(crate) fn accept_identifier_text(text: &str) -> bool {
+    // A UTF-16 unit contributes at most three UTF-8 bytes. Reject this
+    // necessarily oversized term before allocating a numeric unit vector.
+    if text.len() > 3 * 65_536 {
+        return false;
+    }
+    let source = units(text);
+    if source.len() > 65_536 {
+        return false;
+    }
+    let projected =
+        crate::resource_description_address_rules::project_resource_address_authority(&source);
+    crate::resource_description_address_rules::accept_resource_address_identifier(
+        accept_resource_description_identifier(&source),
+        !projected.is_empty() && accept_resource_description_identifier(&projected),
+    )
+}
+
 fn bounded_text(value: &Value) -> Result<&str, String> {
     let text = value
         .as_str()
         .ok_or_else(|| fail("a bounded Unicode scalar string is required"))?;
+    if text.len() > 3 * 65_536 {
+        return Err(fail("a bounded Unicode scalar string is required"));
+    }
     let code_units = units(text);
     if code_units.len() > 65_536 || !accept_resource_description_unicode(&code_units) {
         return Err(fail("a bounded Unicode scalar string is required"));
@@ -50,7 +71,7 @@ fn bounded_text(value: &Value) -> Result<&str, String> {
 }
 
 fn identifier(text: &str) -> Result<&str, String> {
-    if !accept_resource_description_identifier(&units(text)) {
+    if !accept_identifier_text(text) {
         return Err(fail(
             "an absolute identifier is malformed or uses an unsupported bracketed address",
         ));

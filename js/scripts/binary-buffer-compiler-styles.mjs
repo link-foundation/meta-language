@@ -9,6 +9,53 @@ import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
 const reviewFile=new URL('../../parity/self-translation/binary-buffer-ci-style-review-117536842665.lino',import.meta.url);
 const digest=source=>createHash('sha256').update(source).digest('hex');
 
+function verifyReviewedBinaryBufferSource(current,previous){
+ if(current===previous)return new Map();
+ // Adding the binary-search owner advances the emitted local and loop names
+ // by one. The two loops retain their original result uses and carry the new
+ // identity-order state. Keep the historical diagnostic packet verbatim.
+ if(digest(current)==='4e13c855544753360662b68adef5a0d82e0f3e99a45f9347d63f4f233f132513'){
+  for(const [binding,loop,state] of [
+   ['source_ml_source1_s16',9,'ordered_identities, record'],
+   ['source_ml_source1_s19',11,'ordered_identities_2, section'],
+  ]){
+   const assignment=current.match(new RegExp('let '+binding+' = self::source_ml_temporary_transcode_link_network_binary_loop'+loop+'\\(([^\\n]+)\\);\\s+match '+binding+' \\{','u'));
+   assert.ok(assignment?.[1].endsWith(', '+state),'the successor keeps the reviewed loop result and carries its actual identity order');
+  }
+  return new Map([['ml_s15','source_ml_source1_s16'],['ml_s18','source_ml_source1_s19']]);
+ }
+ assert.equal(digest(current),'fc538108ce75bfa56d830e0a7feb2fb295a72adc213956acbf99b7a5e7930d98',
+  'the complete pre-style function is the recorded emitter successor');
+ const tokens=tokenize(current,'Rust').tokens, aliases=new Map();
+ const identifiers=new Set(tokens.filter(token=>token.kind==='identifier').map(token=>token.raw));
+ let restored=current;
+ for(const token of tokens.toReversed()){
+  if(token.kind!=='identifier')continue;
+  const original=token.raw
+   .replace(/^source_ml_source1_(s[0-9]+)$/u,'ml_$1')
+   .replace(/^source_ml_temporary_(result[0-9]+|transcode_link_network_binary_loop[0-9]+)$/u,'ml_$1')
+   .replace(/^MlTemporary(TranscodeLinkNetworkBinary(?:Join|Loop)[0-9]+[A-Za-z]*)$/u,'Ml$1');
+  if(original===token.raw)continue;
+  assert.ok(!identifiers.has(original),'the original identifier must not already be bound or referenced');
+  assert.equal(aliases.get(original)??token.raw,token.raw,'each original identifier has one successor');
+  aliases.set(original,token.raw);
+  restored=restored.slice(0,token.start)+original+restored.slice(token.end);
+ }
+ assert.equal(aliases.size,51);
+ const call='let ml_s6 = self::ml_transcode_link_network_binary_loop40(input, &(header), index);';
+ assert.equal(restored.split(call).length,2,'there is one formatting-only call change');
+ restored=restored.replace(call,[
+  'let ml_s6 =',
+  '                                                self::ml_transcode_link_network_binary_loop40(',
+  '                                                    input,',
+  '                                                    &(header),',
+  '                                                    index,',
+  '                                                );',
+ ].join('\n'));
+ assert.equal(restored,previous,'the complete reviewed function is recovered byte for byte');
+ return aliases;
+}
+
 export function readBinaryBufferCompilerStyles(source,feedback=readProjectData(reviewFile)){
  assert.equal(digest(serializeProjectData(feedback,reviewFile)),'e78283bb105f5e1d7703e15e89a360beb3ec162850a4a192a68128d0e546a97d','the complete reviewed diagnostic packet is immutable');
  assert.equal(feedback.schemaVersion,1);
@@ -19,7 +66,7 @@ export function readBinaryBufferCompilerStyles(source,feedback=readProjectData(r
  const item=feedback.function;assert.equal(item.name,'transcode_link_network_binary');
  assert.equal(digest(item.source),item.sha256);
  const from=readSourceTextRustBlock(source,'fn',item.name);
- assert.equal(formatProductRuleSource(from).trim(),item.source,'the whole original function matches the actual CI source');
+ const aliases=verifyReviewedBinaryBufferSource(formatProductRuleSource(from).trim(),item.source);
  const tokens=tokenize(from,'Rust').tokens,renames=new Map(),seen=new Set();
  assert.equal(item.renames.length,4);
  for(const row of item.renames){
@@ -28,10 +75,11 @@ export function readBinaryBufferCompilerStyles(source,feedback=readProjectData(r
   const diagnostic=feedback.diagnostics[row.diagnostic];assert.equal(diagnostic.index,row.diagnostic);
   assert.equal(diagnostic.path,feedback.capture.path);
   assert.equal(diagnostic.message,"binding's name is too similar to existing binding");seen.add(row.diagnostic);
-  assert.equal(tokens.filter(token=>token.kind==='identifier'&&token.value===row.from).length,2,'one actual binding and one actual use');
+  const actual=aliases.get(row.from)??row.from;
+  assert.equal(tokens.filter(token=>token.kind==='identifier'&&token.value===actual).length,2,'one actual binding and one actual use');
   assert.ok(!tokens.some(token=>token.kind==='identifier'&&token.value===row.to),'new names cannot capture existing identifiers');
-  assert.ok(!tokens.some(token=>token.kind==='string'&&new RegExp('\\b'+row.from+'\\b','u').test(token.value)),'implicit format captures remain outside this finite rename');
-  renames.set(row.from,row.to);
+  assert.ok(!tokens.some(token=>token.kind==='string'&&new RegExp('\\b'+actual+'\\b','u').test(token.value)),'implicit format captures remain outside this finite rename');
+  renames.set(actual,row.to);
  }
  assert.equal(new Set(renames.values()).size,renames.size);
  assert.deepEqual([...seen].sort((a,b)=>a-b),[0,1,2,3],'every reported binding has one correction');

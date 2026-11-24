@@ -54,6 +54,21 @@ test('reloaded graph edits change byte output and survive another reconstruction
   assert.equal(decodeLinkNetworkBinary(changed).link(2).metadata().term, 'edited linked relation');
 });
 
+test('binary replay keeps safe integer boundaries and validates custom byte iteration', () => {
+  const network = new LinkNetwork();
+  const largestIdentity = Number.MAX_SAFE_INTEGER - 1;
+  network.insertLinkWithOptionalId(largestIdentity, [Number.MAX_SAFE_INTEGER], LinkMetadata.new());
+  const bytes = encodeLinkNetworkBinary(network);
+  const restored = decodeLinkNetworkBinary(bytes);
+  assert.equal(restored._nextId, Number.MAX_SAFE_INTEGER);
+  assert.deepEqual(restored.link(largestIdentity).references().map(Number), [Number.MAX_SAFE_INTEGER]);
+  bytes[Symbol.iterator] = function* () {
+    yield this[0] + 256;
+    for (let index = 1; index < this.length; index += 1) yield this[index];
+  };
+  assert.throws(() => decodeLinkNetworkBinary(bytes), /invalid archive header at byte 0/);
+});
+
 test('unsafe numeric IDs, spans, isolated surrogates and ambiguous cache keys are refused precisely', () => {
   const network = new LinkNetwork();
   const id = network.insertTypedPoint(LinkType.Concept, 'safe');
@@ -163,11 +178,11 @@ function readBufferedBinaryEmission() {
   if (!bufferedBinaryEmission) {
     const source = readLinkNetworkBinaryBufferSourceModule();
     const program = checkProgram(parseJavaScript(source, { referenceSemantics: false }));
-    assert.equal(program.declarations.size, 74, 'the actual complete source and all generated owners are checked');
+    assert.equal(program.declarations.size, 77, 'the actual complete source and all generated owners are checked');
     assert.deepEqual(program.items.filter(owner => !owner.generated).map(owner => owner.name), [
       'linkNetworkBinaryUnit', 'acceptLinkNetworkBinaryInteger', 'readLinkNetworkBinaryInteger',
       'linkNetworkBinaryIntegerByte', 'acceptLinkNetworkBinaryUnicode', 'renderLinkNetworkBinaryHexadecimalDigit',
-      'renderLinkNetworkBinaryField', 'transcodeLinkNetworkBinary',
+      'renderLinkNetworkBinaryField', 'hasOrderedLinkNetworkIdentity', 'transcodeLinkNetworkBinary',
     ]);
     const context = {};
     runInNewContext(emitJavaScript(program).text, context, { timeout: 1000 });
@@ -249,8 +264,8 @@ test('buffered framing preserves safe integer identities cache membership limits
     if (version === 2) input[1] = Number.MAX_SAFE_INTEGER;
     assert.match(compareBufferedBinaryControl(input, false), /^-7,/u);
   }
-  for (const identity of [1, largest, 2, Number.MAX_SAFE_INTEGER]) {
-    const records = createBinaryIdentityControl(2, [largest, 1]);
+  for (const identities of [[1, largest], [largest, 1]]) for (const identity of [1, largest, 2, Number.MAX_SAFE_INTEGER]) {
+    const records = createBinaryIdentityControl(2, identities);
     records[1] = Number.MAX_SAFE_INTEGER;
     const input = [...records.slice(0, -2), 1, 1, 99, identity, 0];
     const expected = compareBufferedBinaryControl(input, false);

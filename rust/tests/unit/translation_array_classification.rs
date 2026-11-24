@@ -101,7 +101,12 @@ fn compiled(source: &str) -> (bool, String, String) {
 fn array_classification_keeps_actual_raw_shape_optional_presence_effects_and_both_codecs() {
     versions();
     let policy = policy();
-    for row in policy["cases"].as_array().unwrap() {
+    for row in policy["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .chain(policy["arityCases"].as_array().unwrap())
+    {
         let source = row["source"].as_str().unwrap();
         let expected = row["expected"].as_str().unwrap();
         assert_eq!(
@@ -322,10 +327,8 @@ import {emitJavaScript} from './js/src/translation/emit-javascript.js';
 import {emitRust} from './js/src/translation/emit-rust.js';
 const program=checkProgram(parseJavaScript(process.argv[1]));
 const javascript=emitJavaScript(program,{identifierModel:process.argv[2]}).text;
-let reverseRust=null,reverseError=null;
-try{reverseRust=emitRust(checkProgram(parseJavaScript(javascript))).text;}
-catch(error){reverseError={reason:error.reason,span:error.span};}
-console.log(JSON.stringify({javascript,defaultJavaScript:emitJavaScript(program).text,reverseRust,reverseError}));
+const reverseRust=emitRust(checkProgram(parseJavaScript(javascript))).text;
+console.log(JSON.stringify({javascript,defaultJavaScript:emitJavaScript(program).text,reverseRust}));
 ";
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let output = run(Command::new("node").current_dir(root).args([
@@ -414,32 +417,15 @@ fn ordinary_identifier_models_retain_both_collision_sources_oracles_and_source_f
             );
             assert_eq!(emit_rust(&restored).unwrap().text, original_rust);
             if fixed_number_prelude {
-                assert_eq!(
-                    env!("CARGO_PKG_VERSION"),
-                    "1.0.0",
-                    "uncovered package version; >=1.0.0 <1.0.1 required for this exact fixed Number prelude refusal"
-                );
-                let failure = parse_javascript(&javascript).unwrap_err();
-                assert_eq!(
-                    failure.reason,
-                    "Object.is: the JavaScript standard library is outside the portable core"
-                );
-                assert_eq!(
-                    failure.span.unwrap(),
-                    meta_language::translation::Span {
-                        start: 195,
-                        end: 216
-                    }
-                );
-                assert_eq!(contract["reverseError"]["reason"], failure.reason);
-            } else {
-                assert_identifier_reverse(
-                    &javascript,
-                    expected,
-                    &model,
-                    contract["reverseRust"].as_str().unwrap(),
-                );
+                assert!(javascript.contains("function ml_showNumber(value)"));
+                assert!(javascript.contains("Object.is(value, -0)"));
             }
+            assert_identifier_reverse(
+                &javascript,
+                expected,
+                &model,
+                contract["reverseRust"].as_str().unwrap(),
+            );
         }
     }
     let variants = [

@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {tokenize} from '../src/translation/lexer.js';
-import {readSourceTextRustBlock, simplifySourceTextRustParentheses} from './source-text-byte-library-style.mjs';
+import {simplifySourceTextRustParentheses} from './source-text-byte-library-style.mjs';
 import {simplifyPortableProductLibraryStyles, simplifyRustOptionIdentityMatches} from './reviewed-rust-branch-styles.mjs';
 import {flattenRustSourceHeaderStyleFormat, stripRustSourceHeaderStyleParentheses} from './rust-source-header-library-style.mjs';
 import {flattenFamilyLibraryElseIf, mergeFamilyLibraryIdenticalBranches, qualifyFamilyLibraryBooleanFunctions,
@@ -37,6 +37,25 @@ function readPortableLintTokens(source) {
     for (let at = index; at <= matching.get(open); at += 1) opaque.add(at);
   }
   return {tokens, comments, matching, opaque};
+}
+
+function readPortableLintFunctionBlocks(source, {tokens, matching, opaque} = readPortableLintTokens(source)) {
+  const functions = new Set();
+  for (const [index, token] of tokens.entries()) {
+    if (token.kind !== 'identifier' || token.value !== 'pub' || opaque.has(index)
+      || (token.start > 0 && source[token.start - 1] !== '\n') || tokens[index + 1]?.value !== 'fn') continue;
+    const name = tokens[index + 2]?.value;
+    if (tokens[index + 3]?.value !== '(' || !source.startsWith('pub fn ' + name + '(', token.start)) continue;
+    let body = matching.get(index + 3) + 1;
+    while (body < tokens.length && tokens[body].value !== '{') {
+      body = matching.get(body) > body ? matching.get(body) + 1 : body + 1;
+    }
+    const end = matching.get(body);
+    assert.notEqual(end, undefined, 'an emitted lint target retains its complete function body: ' + name);
+    // A recorded string replacement changes every exact occurrence at once.
+    functions.add(source.slice(token.start, tokens[end].end));
+  }
+  return functions;
 }
 
 function removePortableTemporaryCopies(source) {
@@ -411,15 +430,19 @@ function acceptPortableMustUseAttribute(prefix) {
 
 /** Preserve IEEE equality, separate arithmetic rounding and existing guarded
  * index conversions; correct only mechanical styles of actual checked output. */
-export function readPortableSourceLintStyles(source, {modulePath, scopedCallBorrows = false, functionNames: scopedFunctionNames = []} = {}) {
+export function readPortableSourceLintStyles(source, {modulePath, scopedCallBorrows = false, functionNames: scopedFunctionNames = [], trace} = {}) {
   if (modulePath !== undefined) assert.match(modulePath, /^(?:crate|self)(?:::[A-Za-z_][A-Za-z_0-9]*)+$/u, 'a qualified local call needs its explicit module path');
   let adapted = source;
   const actions = [];
   const replace = (from, to) => {
     if (from === to) return;
-    assert.ok(adapted.includes(from), 'a library lint style retains its exact source context');
-    actions.push({op: 'replace', field: 'source', from, to});
-    adapted = adapted.split(from).join(to);
+    assert.ok(adapted.includes(from), 'a library lint style retains its exact source context: ' + from.slice(0, 100));
+    // Keep small recorded edits independent of each full preceding library
+    // string. A sliced UTF-16 view can otherwise retain that entire library.
+    const preceding = Buffer.from(from, 'utf16le').toString('utf16le');
+    const replacement = Buffer.from(to, 'utf16le').toString('utf16le');
+    actions.push({op: 'replace', field: 'source', from: preceding, to: replacement});
+    adapted = adapted.split(from).join(replacement);
   };
   const header = /^#!\[allow\([\s\S]*?\)\]/mu.exec(adapted)?.[0];
   if (header) {
@@ -435,24 +458,25 @@ export function readPortableSourceLintStyles(source, {modulePath, scopedCallBorr
   const numberStyles = readPortableNumberSourceStyles(adapted);
   for (const action of numberStyles.actions) replace(action.from, action.to);
   assert.equal(adapted, numberStyles.source, 'Number styles replay their complete checked source actions');
+  trace?.('selected Number lint styles');
   // Drop the same single-use temporary copies before inferring enum payload
   // ownership. No formatting or branch rewrite hides an operand in this pass.
-  for (const [, name] of [...adapted.matchAll(/^pub fn (\w+)\(/gmu)]) {
-    const original = readSourceTextRustBlock(adapted, 'fn', name);
+  for (const original of readPortableLintFunctionBlocks(adapted)) {
     replace(original, removePortableTemporaryCopies(original));
   }
+  trace?.('selected temporary copy lint styles');
   // Inspect ownership once while emitted format arguments remain explicit.
   // Formatting styles may capture names inside opaque format-string tokens.
   const ownedStyles = readPortableOwnedSourceStyles(adapted, {scopedCallBorrows, functionNames: scopedFunctionNames});
   for (const action of ownedStyles.actions) replace(action.from, action.to);
   assert.equal(adapted, ownedStyles.source, 'ownership styles replay their complete declared source actions');
+  trace?.('selected ownership lint styles');
   const stringFunctions = new Set([...adapted.matchAll(/^pub fn (\w+)\([^)]*\)\s*->\s*String\s*\{/gmu)].map(match => match[1]));
   const allTokens = readPortableLintTokens(adapted);
   const functionNames = new Set(allTokens.tokens.flatMap((token, index) =>
     !allTokens.opaque.has(index) && token.kind === 'identifier' && token.value === 'fn'
       && allTokens.tokens[index + 1]?.kind === 'identifier' ? [allTokens.tokens[index + 1].value] : []));
-  for (const [, name] of [...adapted.matchAll(/^pub fn (\w+)\(/gmu)]) {
-    const original = readSourceTextRustBlock(adapted, 'fn', name);
+  for (const original of readPortableLintFunctionBlocks(adapted, allTokens)) {
     let styled = simplifySourceTextRustParentheses(original);
     const reviewed = simplifyPortableProductLibraryStyles(styled);
     // The frozen historical return producer selects token spans and can omit
@@ -495,6 +519,7 @@ export function readPortableSourceLintStyles(source, {modulePath, scopedCallBorr
     if (attributes.length) styled = attributes.join('\n') + '\n' + styled;
     replace(original, styled);
   }
+  trace?.('selected function lint styles');
   // Runtime fragments retain their original generic bodies. Their public
   // results are useful, and decimal grouping changes only numeric spelling.
   const runtime = adapted.replace(/^( +)pub fn /gmu, (match, indent, offset) =>

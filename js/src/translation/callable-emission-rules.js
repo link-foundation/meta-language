@@ -46,6 +46,92 @@ export function acceptCallableCreationEffectTraversal(kind) {
   return kind !== 'lambda';
 }
 
+/** @param {string} kind @returns {boolean} */
+export function acceptFormalLocalCellElement(kind) {
+  return kind === 'bool' || kind === 'float' || kind === 'fixed'
+    || kind === 'int' || kind === 'nat' || kind === 'string';
+}
+
+/** @param {string} kind @param {boolean} referenceReceiver @returns {boolean} */
+export function requireFormalReferenceStore(kind, referenceReceiver) {
+  return observeFormalStructuralState(kind, referenceReceiver)
+    || kind === 'cellAllocate' || kind === 'cellRead' || kind === 'cellWrite';
+}
+
+/** @param {boolean} callableClassSlot @returns {boolean} */
+export function acceptFormalReferenceType(callableClassSlot) {
+  return !callableClassSlot;
+}
+
+/** @param {string} kind @param {boolean} referenceReceiver @returns {boolean} */
+export function observeFormalStructuralState(kind, referenceReceiver) {
+  return kind === 'referenceAllocate' || kind === 'referenceRead' || kind === 'referenceWrite'
+    || kind === 'referenceIdentity' || (kind === 'method' || kind === 'binary') && referenceReceiver;
+}
+
+/** @param {boolean} observedCollection @param {boolean} observedCell
+ * @param {boolean} structuralState @param {boolean} standalone
+ * @param {boolean} checkedClass @returns {boolean}
+ */
+export function acceptFormalReferenceStoreLowering(observedCollection, observedCell, structuralState, standalone, checkedClass) {
+  return observedCollection || observedCell && !structuralState || structuralState && (standalone || checkedClass);
+}
+
+/** Each edge is an actual checked call, from its owner to its callee.
+ * @param {string[]} roots @param {string[]} callers @param {string[]} callees @returns {string[]}
+ */
+export function planFormalReferenceStoreFunctions(roots, callers, callees) {
+  let selected = roots;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    let position = 0;
+    while (position < callers.length) {
+      const caller = readRequiredTextFact(callers, position);
+      if (!callableEmissionHasName(selected, caller)
+        && callableEmissionHasName(selected, readRequiredTextFact(callees, position))) {
+        selected = selected.concat([caller]);
+        changed = true;
+      }
+      position += 1;
+    }
+  }
+  return selected;
+}
+
+/** @param {string} kind @param {string} operation @param {string} identity
+ * @param {number} argumentsCount @param {boolean} orderedRecord @param {string} recordOperator @returns {string}
+ */
+export function readFormalReferenceStoreOperation(kind, operation, identity, argumentsCount, orderedRecord, recordOperator) {
+  if (kind === 'record' && recordOperator === '=' && !orderedRecord && argumentsCount === 1) return 'write field';
+  if (identity === 'fill-array-elements' && argumentsCount === 1) return 'fill';
+  if (kind === 'array' && identity === 'append-array-elements') return 'append array';
+  if (identity === '' || kind !== 'map' && kind !== 'set') return '';
+  if (operation === 'clear') return operation;
+  if (operation === 'set' && kind === 'map' && argumentsCount >= 2) return operation;
+  if (argumentsCount < 1) return '';
+  if (operation === 'has' || operation === 'delete' || operation === 'get' && kind === 'map'
+    || operation === 'add' && kind === 'set') return operation;
+  return '';
+}
+
+/** @param {string} bodyKind @param {number} parameters @param {boolean} guarded @returns {boolean} */
+export function acceptFormalClassMethodFactory(bodyKind, parameters, guarded) {
+  return bodyKind === 'lambda' && parameters === 1 && !guarded;
+}
+
+/** @param {string} bodyKind @param {number} parameters @param {boolean} selfCall @param {number} operands @returns {boolean} */
+export function acceptFormalClassMethodPlaceholder(bodyKind, parameters, selfCall, operands) {
+  return bodyKind === 'call' && selfCall && operands === parameters;
+}
+
+/** @param {string} operator @param {boolean} actualReceiver @param {number} operands
+ * @param {boolean} actualFactory @param {boolean} factoryReceiver @param {number} factoryOperands @returns {boolean}
+ */
+export function acceptFormalClassMethodInstallation(operator, actualReceiver, operands, actualFactory, factoryReceiver, factoryOperands) {
+  return operator === '=' && actualReceiver && operands === 1 && actualFactory && factoryReceiver && factoryOperands === 1;
+}
+
 /** After the existing total-operation settling, these operations can abort.
  * @param {string} kind @param {string} semantics @param {string} flavor @param {string} byZero @returns {boolean}
  */

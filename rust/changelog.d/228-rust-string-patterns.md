@@ -1,0 +1,1 @@
+Draft borrowed-str string literal patterns through the existing match algebra in both runtimes, preserving guards, aliases and actual nested field ownership through shared automatically translated policy.

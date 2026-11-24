@@ -1,0 +1,1 @@
+Draft scalar callback mapping for checked integers by reusing the integer Result source adapter. Preserve eager operands/default/callable order and success-only invocation for closures, functions and pointer factories. Shared admission rules generate Rust; controls remain unexecuted.

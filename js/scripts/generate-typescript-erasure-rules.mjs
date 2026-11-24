@@ -14,8 +14,10 @@ const dataTarget = new URL('../../rust/src/data/typescript-erasure.lino', import
 const typing = readFileSync(new URL('../src/data/typescript-portable-typing.lino', import.meta.url), 'utf8');
 const typingTarget = new URL('../../rust/src/data/typescript-portable-typing.lino', import.meta.url);
 const decorators = DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/typescript-erasure-rules-decorators.lino', import.meta.url), 'utf8'));
+const documentationStyle = DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/typescript-documentation-pattern-utf16-decorators.lino', import.meta.url), 'utf8'));
 const emitted = emitRust(checkProgram(parseJavaScript(readFileSync(source, 'utf8'))));
-const decorated = decorators.decorate('emitter', { format: 'Rust', source: emitted.definitions.join('\n\n') }).source;
+const decorated = decorators.add(...documentationStyle.decorators)
+  .decorate('emitter', { format: 'Rust', source: emitted.definitions.join('\n\n') }).source;
 // Source CSTs retain Unicode scalars. The reviewed documentation adapter replaces
 // an ASCII delimiter identically over UTF-8 and UTF-16 without an auxiliary runtime.
 if (decorated.includes('crate::ml_string')) throw new Error('TypeScript source rule style left an unbound string runtime');

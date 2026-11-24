@@ -1,0 +1,37 @@
+// Future Rust products and complete predecessor sources; execute none.
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const cases=[],definition='enum Value{Some(i64),None} ';
+function add(name,body,value,prefix=definition,abort=null){cases.push({name,module:'let_else_completion_case_'+cases.length,source:prefix+'pub fn result()->i64{'+body+'}',value,abort});}
+add('a matching constructor continues with its bound value','let Value::Some(value)=Value::Some(3) else{return 7;};value','3');
+add('an unmatched constructor returns the fallback','let Value::Some(value)=Value::None else{return 7;};value','7');
+add('a fallback sees the outer shadow','let value=7;let Value::Some(value)=Value::None else{return value;};value','7');
+add('a successful pattern shadows only its continuation','let value=7;let Value::Some(value)=Value::Some(3) else{return value;};value','3');
+add('two let-else declarations retain ordered scopes','let Value::Some(first)=Value::Some(3) else{return 9;};let Value::Some(second)=Value::Some(first+1) else{return 8;};first+second','7');
+add('a later fallback sees an earlier successful binding','let Value::Some(first)=Value::Some(3) else{return 9;};let Value::Some(second)=Value::None else{return first+4;};first+second','7');
+add('a failed first pattern skips later initializer failure','let Value::Some(first)=Value::None else{return 7;};let Value::Some(second)=failLater() else{return first;};second','7',definition+'fn failLater()->Value{panic!("later initializer")}');
+add('the initializer fails before the fallback','let Value::Some(value)=failFirst() else{return 7;};value',null,definition+'fn failFirst()->Value{panic!("initializer first")}','initializer first');
+add('a successful pattern keeps fallback failure lazy','let Value::Some(value)=Value::Some(3) else{if true{return 7;}panic!("fallback last")};value','3');
+add('all fallback return branches are completed','let Value::Some(value)=Value::None else{if true{return 7;}else{return 8;}};value','7');
+add('a fallback return can follow a guarded ordinary completion','let Value::Some(value)=Value::None else{if false{return 8;}return 7;};value','7');
+add('tuple pattern success retains every selected field','let (value,true)=(3,true) else{return 7;};value','3','');
+add('tuple pattern failure returns without binding its names','let (value,true)=(3,false) else{return 7;};value','7','');
+add('a Boolean literal pattern can complete its fallback','let true=false else{return 7;};3','7','');
+add('an irrefutable name keeps the fallback unreachable','let value=3 else{return 7;};value','3','');
+add('a record literal pattern retains its actual source fields','let Point{value,flag:true}=(Point{value:3,flag:true}) else{return 7;};value','3','struct Point{value:i64,flag:bool} ');
+add('an unmatched record literal returns its fallback','let Point{value,flag:true}=(Point{value:3,flag:false}) else{return 7;};value','7','struct Point{value:i64,flag:bool} ');
+add('nested tuple and record patterns preserve selection','let Point{value:(value,true)}=(Point{value:(3,true)}) else{return 7;};value','3','struct Point{value:(i64,bool)} ');
+add('an annotated constructor owner retains its actual type','let Value::Some(value):Value=Value::Some(3) else{return 7;};value','3');
+add('the constructor rest belongs to its actual pattern','let Value::Some(first,..,last)=Value::Some(3,9,4) else{return 7;};first+last','7','enum Value{Some(i64,i64,i64),None} ');
+add('a parenthesized Boolean initializer retains its restrictions','let true=(false||true) else{return 7;};3','3','');
+add('ordinary early returns compose with the successful continuation','let Value::Some(value)=Value::Some(3) else{return 7;};if value>0{return value;}9','3');
+add('a let-else inside an if keeps its outer continuation','if true{let Value::Some(value)=Value::Some(3) else{return 7;};if value>0{return value;}}9','3');
+add('borrowed nominal payloads retain their dereference','read(&Value::Some(3))','3',definition+'fn read(source:&Value)->i64{let Value::Some(value)=source else{return 7;};*value}');
+add('bare return is a completed Unit fallback','step(false);3','3','fn step(flag:bool){let true=flag else{return;};}');
+add('ordinary initializer if-else is not a let-else clause','let value=if true{3}else{4};return value;','3','');
+add('opaque text does not introduce a fallback return','let text="return else";let Value::Some(value)=Value::Some(3) else{panic!("return")};return value;','3');
+const revision='a03feb3f',history=['parity/fixtures/rust-let-else.lino','js/scripts/generate-rust-let-else-fixtures.mjs','js/src/translation/rust-ordinary-completions.js','js/src/translation/rust-records.js','rust/src/translation/rust/ordinary_completions.rs','rust/src/translation/rust/records/bindings.rs','rust/src/translation/rust/items/product_bindings.rs','rust/src/translation/rust/expressions/control/conditional_chains.rs','js/tests/translation-rust-records.test.js'].map(path=>{const bytes=execFileSync('git',['show',revision+':'+path],{maxBuffer:4*1024*1024});return {path,revision,source:bytes.toString('utf8'),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};});
+const refusals=[{name:'a mixed returning fallback still cannot fall through',source:'enum Value{Some(i64),None} fn f(source:Value)->i64{let Value::Some(value)=source else{if true{return 7;}0};value}fn main(){}',kind:'unsupported',reason:'Rust let-else fallback: the fallback needs a represented diverging completion'}];
+writeProjectData(new URL('../../parity/fixtures/rust-let-else-completions.lino',import.meta.url),{schemaVersion:1,model:'Rust let-else ordinary completed fallback and lexical continuation 1',cases,refusals,history,source:cases.map(row=>'pub mod '+row.module+'{\n'+row.source+'\n}').join('\n')+'\nfn main(){}\n',versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},references:['https://doc.rust-lang.org/reference/statements.html#let-statements'],assertions:['actualClauseAndReturnKeywordsOutsideOpaqueTokens','initializerEvaluatedOnceBeforeEitherContinuation','fallbackOutsideNewPatternBindings','completeFallbackReturnAbortCoverage','successBindingsReachTheEnclosingContinuation','originalTypeAnnotationAndPatternValidation','existingAbortOnlyAndOrdinaryLetRoutesRetained','completePredecessorsDefinitionsBothCodecsFourEmissionsNativeProducts'],boundary:'Unexecuted controls. Reuses the existing completion tree, conditional packets and actual pattern/origin checks. Divergence must be represented by complete return/abort alternatives; arbitrary divergence, loops, move/borrow/drop/temporary and full statement environments remain obligations.'});

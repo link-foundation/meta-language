@@ -10,15 +10,30 @@ import {DecoratorSet} from '../src/decorators.js';
 import {tokenize} from '../src/translation/lexer.js';
 const review=readProjectData(new URL('../../parity/self-translation/binary-buffer-ci-style-review-117536842665.lino',import.meta.url));
 
-test('the actual binary buffer compiler correction changes only four bound names and matches the shipped whole function',()=>{
+test('the actual binary buffer compiler correction changes only four bound names',()=>{
  const original=review.function.source,correction=readBinaryBufferCompilerStyles(original);
  const aliases=new Map(review.function.renames.map(row=>[row.from,row.to]));
  const before=tokenize(original,'Rust').tokens,after=tokenize(correction.source,'Rust').tokens;
  assert.deepEqual(after.map(token=>[token.kind,token.raw]),before.map(token=>[token.kind,token.kind==='identifier'&&aliases.has(token.value)?aliases.get(token.value):token.raw]));
  const styles=new DecoratorSet([{id:'binary-buffer-review-control',level:'emitter',when:[['format','Rust']],actions:correction.actions}]);
  assert.equal(DecoratorSet.fromLino(styles.toLino()).decorate('emitter',{format:'Rust',source:original}).source,correction.source);
+});
+
+test('the same four corrections apply to the complete emitted binary buffer successor',()=>{
  const shipped=readFileSync(new URL('../../rust/src/translation/link_network_binary_buffer_rules/part_2.rs',import.meta.url),'utf8');
- assert.equal(formatProductRuleSource(correction.source).trim(),readSourceTextRustBlock(shipped,'fn',review.function.name));
+ const corrected=readSourceTextRustBlock(shipped,'fn',review.function.name);
+ const originalNames=new Map(review.function.renames.map(row=>[row.to,row.from]));
+ originalNames.set('record_iteration_result','source_ml_source1_s15');
+ originalNames.set('metadata_iteration_result','source_ml_source1_s18');
+ const tokens=tokenize(corrected,'Rust').tokens;
+ let original=corrected;
+ for(const token of tokens.toReversed()){
+  if(token.kind!=='identifier'||!originalNames.has(token.raw))continue;
+  original=original.slice(0,token.start)+originalNames.get(token.raw)+original.slice(token.end);
+ }
+ const correction=readBinaryBufferCompilerStyles(original);
+ assert.equal(formatProductRuleSource(correction.source).trim(),corrected);
+ assert.throws(()=>readBinaryBufferCompilerStyles(original.replace('index = 0f64','index = 1f64')));
 });
 
 test('binary buffer compiler corrections refuse altered diagnostics captures aliases and source contexts',()=>{

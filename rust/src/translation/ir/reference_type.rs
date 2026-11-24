@@ -41,6 +41,16 @@ impl Serialize for Expr {
             reference_operation: Option<String>,
             #[serde(skip_serializing_if = "Option::is_none")]
             span: Option<Span>,
+            #[serde(rename="sourcePosition",skip_serializing_if="Option::is_none")]
+            source_position: Option<&'a crate::translation::source_signatures::RustSourceExpressionPosition>,
+            #[serde(rename = "sourceStateTransition", skip_serializing_if = "Option::is_none")]
+            source_state_transition: Option<&'a crate::translation::source_loop_folds::RustSourceStateTransition>,
+            #[serde(rename = "sourceLoopFold", skip_serializing_if = "Option::is_none")]
+            source_loop_fold: Option<&'a crate::translation::source_loop_folds::RustSourceLoopFold>,
+            #[serde(rename = "sourceRecordPlace", skip_serializing_if = "Option::is_none")]
+            source_record_place: Option<&'a crate::translation::source_record_places::RustSourceRecordPlace>,
+            #[serde(rename = "sourcePlaceTransform", skip_serializing_if = "Option::is_none")]
+            source_place_transform: Option<&'a crate::translation::source_place_transforms::RustSourcePlaceTransform>,
         }
         ExpressionWire {
             node: &self.node,
@@ -56,6 +66,11 @@ impl Serialize for Expr {
                 field: read_surface_reference_result_field(self.kind()),
             },
             span: self.span,
+            source_position: self.source_position.as_deref(),
+            source_state_transition: self.source_state_transition.as_deref(),
+            source_loop_fold: self.source_loop_fold.as_deref(),
+            source_record_place: self.source_record_place.as_deref(),
+            source_place_transform: self.source_place_transform.as_deref(),
         }
         .serialize(serializer)
     }
@@ -73,6 +88,16 @@ impl<'de> Deserialize<'de> for Expr {
             reference_operation: Option<String>,
             #[serde(default)]
             span: Option<Span>,
+            #[serde(rename="sourcePosition",default,deserialize_with="crate::translation::source_position_transport::read_present_source_position")]
+            source_position: Option<Box<crate::translation::source_signatures::RustSourceExpressionPosition>>,
+            #[serde(rename = "sourceStateTransition", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+            source_state_transition: Option<Box<crate::translation::source_loop_folds::RustSourceStateTransition>>,
+            #[serde(rename = "sourceLoopFold", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+            source_loop_fold: Option<Box<crate::translation::source_loop_folds::RustSourceLoopFold>>,
+            #[serde(rename = "sourceRecordPlace", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+            source_record_place: Option<Box<crate::translation::source_record_places::RustSourceRecordPlace>>,
+            #[serde(rename = "sourcePlaceTransform", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+            source_place_transform: Option<Box<crate::translation::source_place_transforms::RustSourcePlaceTransform>>,
         }
         let wire = ExpressionWire::deserialize(deserializer)?;
         let operation =
@@ -93,6 +118,11 @@ impl<'de> Deserialize<'de> for Expr {
             node: wire.node,
             ty: serde_json::from_value(wire.ty).map_err(<D::Error as serde::de::Error>::custom)?,
             span: wire.span,
+            source_position: wire.source_position,
+            source_state_transition: wire.source_state_transition,
+            source_loop_fold: wire.source_loop_fold,
+            source_record_place: wire.source_record_place,
+            source_place_transform: wire.source_place_transform,
         })
     }
 }

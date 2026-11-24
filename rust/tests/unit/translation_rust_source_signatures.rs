@@ -2,9 +2,10 @@
 use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 use meta_language::translation::check::check_program;
 use meta_language::translation::ir::{Decl, Program};
-use meta_language::translation::output::thread_output;
+use meta_language::translation::output::{thread_output, thread_output_for_target};
 use meta_language::translation::rust::{
     parse_rust, parse_rust_with_source_profiles, parse_rust_with_source_signature_model,
+    parse_rust_with_source_type_owners,
 };
 use meta_language::{
     LinkId, LinkNetwork, LinkType, create_typed_program_links_with_rust_source_profiles,
@@ -259,6 +260,25 @@ fn selected_models_and_caller_provenance_are_independently_preserved() {
             .contains("effect threading changes the captured source header")
     );
     assert!(thread_output(&check_program(&parse_rust(effectful).unwrap()).unwrap()).is_ok());
+}
+
+#[test]
+fn pure_targets_thread_effects_with_separate_ordinary_retained_header_positions() {
+    let source = "fn keep(value:bool)->bool{if value{true}else{panic!(\"message\")}}fn main(){}";
+    let original = check_program(&parse_rust_with_source_type_owners(source).unwrap()).unwrap();
+    let header = signature(&original, "keep");
+    assert_eq!(header["parameters"].as_array().unwrap().len(), 1);
+    for target in ["Lean", "Rocq"] {
+        let target_program = thread_output_for_target(&original, target).unwrap();
+        let Some(Decl::Fn(lowered)) = target_program.declaration("keep") else {
+            panic!("target effect threading retains the declaration");
+        };
+        assert_eq!(lowered.params.len(), 2);
+        assert_eq!(lowered.params[1].ty.kind(), "output");
+        assert_eq!(lowered.ret.kind(), "data");
+        assert!(lowered.source_signature.is_none());
+        assert_eq!(signature(&original, "keep"), header);
+    }
 }
 
 #[test]

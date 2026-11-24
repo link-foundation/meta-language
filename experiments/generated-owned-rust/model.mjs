@@ -41,7 +41,7 @@ function surfaceMap(surface,program){
   for(const field of ['value','body','cond','then','else','left','right','object'])if(source[field]){if(!node[field])fail('the actual checked expression lost a source role');walk(source[field],node[field]);}}
  for(const item of surface.items){const entry=program.declarations.get(item.name);if(!entry)fail('the actual source helper lost its checked declaration');result.set(item,entry);walk(item.body,entry.body);}return result;
 }
-function checkCst(proof,selected){
+function checkCst(proof,selected,lexRust=source=>tokenize(source,'Rust').tokens){
  if(!Array.isArray(proof.tokens)||!Array.isArray(proof.gaps)||proof.tokens.length!==proof.gaps.length||!proof.tokens.length||proof.tokens.length>100_000||new Set(proof.tokens).size!==proof.tokens.length)fail('the whole source requires every distinct token and trivia interval');
  let text='',end=0;
  for(const[index,token]of proof.tokens.entries()){
@@ -55,7 +55,7 @@ function checkCst(proof,selected){
  }
  if(proof.span.start!==0||end!==proof.span.end||text.length!==proof.span.end)fail('the complete CST does not cover its actual source');
  if(!acceptRustOwnedLocalTextInput(text))fail('the actual Rust source contains unpaired UTF16 values');
- const lexical=tokenize(text,'Rust').tokens;if(lexical.length!==proof.tokens.length)fail('the trivia or literal spelling changes active source tokens');
+ const lexical=lexRust(text);if(lexical.length!==proof.tokens.length)fail('the trivia or literal spelling changes active source tokens');
  for(const[index,original]of lexical.entries()){
   const token=proof.tokens[index];if(original.kind!==token.kind||original.start!==token.span.start||original.end!==token.span.end||text.slice(original.start,original.end)!==token.raw||token.kind==='number'&&(original.suffix!==token.suffix||Boolean(original.floating)!==token.floating)||!['declaration','binding','literal'].some(role=>own(token,role))&&original.value!==token.value)fail('the stored source token differs from the actual whole-source lexer');
   if(token.kind==='string'&&selected.literalTokenMode!=='production Rust string token'){if(!token.raw.startsWith('"'))fail('only actual generated cooked strings have an interpretation');readGeneratedOwnedRustCookedLiteral(token.raw,selected);}

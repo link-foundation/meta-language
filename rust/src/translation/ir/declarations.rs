@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Field {
+    /// Whether a JavaScript property can be omitted independently of its value.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub optional: bool,
     pub name: String,
     #[serde(rename = "type")]
     pub ty: Type,
@@ -50,6 +53,12 @@ pub struct LambdaParam {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DataDecl {
+    /// Source owner of a projected standard collection library declaration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_standard_collection_library_owner: Option<Box<crate::translation::rust_standard_collection_carriers::CollectionLibraryOwner>>,
+    /// Concrete front-end collection identity and its actual kernel declaration links.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_standard_collection_carrier: Option<Box<crate::translation::rust_standard_collection_carriers::CollectionCarrier>>,
     pub name: String,
     pub ctors: Vec<Ctor>,
     #[serde(default)]
@@ -64,11 +73,22 @@ pub struct DataDecl {
     /// Optional actual field-free Rust Clone derivation owned by this datatype.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_unit_clone_derivation: Option<serde_json::Value>,
+    /// Recursively owned original field type positions for every constructor.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::translation::source_data_field_signatures::read_present"
+    )]
+    pub source_field_signatures:
+        Option<Box<crate::translation::source_data_field_signatures::RustDataTypeFieldSignatures>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FnDecl {
+    /// Source owner of a projected standard collection library declaration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_standard_collection_library_owner: Option<Box<crate::translation::rust_standard_collection_carriers::CollectionLibraryOwner>>,
     /// Actual complete pure Unit header and body sites under the selected model.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_pure_unit: Option<serde_json::Value>,
@@ -102,6 +122,15 @@ pub struct FnDecl {
     /// A function the translator made up, such as a lifted loop.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub generated: bool,
+    /// Exact checked interface of a generated finite source state helper.
+    #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+    pub source_state_transform: Option<Box<crate::translation::source_state_transforms::RustFiniteLoopStateTransform>>,
+    /// Complete checked interface for a generated standard Vec mutation.
+    #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+    pub source_vector_mutation: Option<Box<crate::translation::source_vector_mutations::RustVectorMutation>>,
+    /// Complete checked interface for a specialized Rust mutable callback.
+    #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+    pub source_fn_mut_specialization: Option<Box<crate::translation::source_fn_mut_specializations::RustFnMutSpecialization>>,
     /// Optional owned source-header facts, checked against this signature.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_signature: Option<crate::translation::source_signatures::SourceSignature>,

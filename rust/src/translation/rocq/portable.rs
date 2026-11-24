@@ -20,7 +20,9 @@ pub(super) fn check_portable(node: &SExpr) -> Result<()> {
                 node.span,
             ));
         }
-        SNode::Binary { left, right, .. } => vec![left, right],
+        SNode::ReferenceIdentity { left, right, .. } | SNode::Binary { left, right, .. } => {
+            vec![left, right]
+        }
         SNode::If {
             cond,
             then,

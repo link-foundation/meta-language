@@ -86,7 +86,8 @@ export function deriveDeclarationDependencyNativeInterface(files,libraryInterfac
         const primitive=kind==='number'?'f64':'bool';assert.equal(type,primitive,'unknown primitive ABI refuses');declarations.push(parameter+': '+primitive);arguments_.push(parameter);
       }
     });
-    definitions.push('pub(super) fn '+name+'('+declarations.join(', ')+') -> '+result+' {\n'+conversion+'    rules::'+row.target+'('+arguments_.join(', ')+')\n}');
+    const attribute=parameters.length>7?'#[expect(clippy::too_many_arguments, reason = "the complete ordered CST columns are the shared checked interface")]\n':'';
+    definitions.push(attribute+'pub(super) fn '+name+'('+declarations.join(', ')+') -> '+result+' {\n'+conversion+'    rules::'+row.target+'('+arguments_.join(', ')+')\n}');
   }
   return'// Generated actual-ABI transport only; shared JS decisions own every dependency/admission result.\nuse crate::translation::declaration_dependency_rules as rules;\n\n'+definitions.join('\n\n')+'\n';
 }

@@ -723,6 +723,29 @@ fn synthetic_embedding_cycles_keep_the_actual_ancestor_and_error_after_reload() 
 }
 
 #[test]
+fn same_host_reuse_rejects_malformed_limits_and_identity_facts() {
+    let original=[0.0,100.0,0.0,0.0,0.0,100.0,0.0,2.0,0.0,0.0,2.0,2.0,100.0];
+    let disposition=|row:[f64;13]|rules::read_embedded_region_disposition(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],true);
+    assert_eq!(disposition(original),"reuseAttached");
+    for column in [7,8,9,10,11,12] {
+        for value in [-1.0,0.5,f64::NAN,f64::INFINITY,9_007_199_254_740_992.0] {
+            let mut supplied=original;supplied[column]=value;
+            assert_eq!(disposition(supplied),"invalidEmbeddedRegionLimits");
+        }
+    }
+    for column in [2,3,6] {
+        for value in [-2.0,-3.0,0.5,f64::NAN,f64::INFINITY,9_007_199_254_740_992.0] {
+            let mut supplied=original;supplied[column]=value;
+            assert_eq!(disposition(supplied),"invalidEmbeddedRegionAncestry");
+        }
+    }
+    let mut root=original;root[7]=1.0;root[10]=0.0;
+    assert_eq!(disposition(root),"reuse");
+    root[11]=f64::NAN;
+    assert_eq!(disposition(root),"invalidEmbeddedRegionLimits");
+}
+
+#[test]
 fn generated_region_policy_keeps_malformed_ancestry_zero_width_and_current_host_reuse_distinct() {
     assert!(rules::accept_embedded_region_bounds(10.0, 20.0, 20.0, 20.0));
     assert!(!rules::accept_embedded_region_bounds(10.0, 20.0, 9.0, 20.0));

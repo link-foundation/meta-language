@@ -13,7 +13,7 @@ import {emitRustTextValueProjection,encodeRustTextValueProjection} from '../rust
 import {projectOriginalLinkCompleteCertificateTables as project,readOriginalLinkCompleteStringQueries} from './rules.mjs';
 import {projectOriginalLinkCompleteTables,ORIGINAL_LINK_COMPLETE_TABLE_POLICY as policy} from './transport.mjs';
 import {originalLinkCompleteTableRulesSource} from './policy.mjs';
-import {generateOriginalLinkCompleteTableProjection} from './generate.mjs';
+import {regenerateHistoricalOriginalLinkCompleteTable} from './historical-table-generation.mjs';
 const fixtures=readProjectData(new URL('../rust-text-value-projection/data/fixtures.lino',import.meta.url));
 const key=id=>id.asU64().toString();
 const label=name=>schema.fields[name]??name.replace(/[A-Z]/gu,letter=>' '+letter.toLowerCase());
@@ -135,5 +135,5 @@ test('all sixty-six definitions survive source-free checked text/binary reload a
 });
 
 test('all complete generated Rust definitions and both unchanged source kernels remain fresh',()=>{
- const artifact=generateOriginalLinkCompleteTableProjection(true);assert.equal(artifact.declarations.length,66);assert.equal(artifact.declarationNames.length,66);assert.ok(artifact.completeRust.includes('pub fn project_original_link_complete_certificate_tables('));assert.ok(artifact.completeRust.includes('fn main('));assert.ok(artifact.declarationNames.includes('projectOriginalLinkCompleteCertificateTables'));assert.ok(artifact.declarationNames.includes('readOriginalLinkCompleteStringQueries'));const source=originalLinkCompleteTableRulesSource();for(const path of['../original-link-table-projection/rules.mjs','../original-link-symbol-projection/rules.mjs'])assert.ok(source.includes(readFileSync(new URL(path,import.meta.url),'utf8')));assert.equal(policy.output.length,17);
+ const artifact=regenerateHistoricalOriginalLinkCompleteTable();assert.equal(artifact.declarations.length,66);assert.equal(artifact.declarationNames.length,66);assert.ok(artifact.completeRust.includes('pub fn project_original_link_complete_certificate_tables('));assert.ok(artifact.completeRust.includes('fn main('));assert.ok(artifact.declarationNames.includes('projectOriginalLinkCompleteCertificateTables'));assert.ok(artifact.declarationNames.includes('readOriginalLinkCompleteStringQueries'));const source=originalLinkCompleteTableRulesSource();for(const path of['../original-link-table-projection/rules.mjs','../original-link-symbol-projection/rules.mjs'])assert.ok(source.includes(readFileSync(new URL(path,import.meta.url),'utf8')));assert.equal(policy.output.length,17);
 });

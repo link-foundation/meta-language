@@ -1,0 +1,26 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import * as rules from '../src/translation/javascript-class-owner-rules.js';
+import {createSurfaceReferenceFacts} from '../src/translation/surface-reference-facts.js';
+import {closedClassOwnerDecisions as decisions,closedClassOwnerOriginals as originals,closedClassOwnerArchiveEdits as edits,closedClassOwnerGraphEdits as graphEdits} from './fixtures/closed-class-owner-witnesses.mjs';
+import {readCollectionCopyOriginalControl} from './support/collection-copy-integration.js';
+import {readClosedClassOwnerArchiveControl,readClosedClassOwnerGraphControl} from './support/closed-class-owner-integration.js';
+test('persistent class owner literal decisions preserve representation capabilities',()=>{for(const row of decisions)assert.deepEqual(rules[row.operation](...row.arguments),row.expected);});
+test('class facts share exact scalars while preserving distinct allocation identities',()=>{
+ const first={k:'referenceAllocate',metadata:[null,true,-0,0]},second={k:'referenceAllocate',metadata:[null,true,-0,0]};
+ const facts=createSurfaceReferenceFacts([first,second],{retainValues:true,shareScalars:true});
+ const edge=(node,index)=>facts.targets[facts.starts[node]+index];
+ const left=edge(facts.root,0),right=edge(facts.root,1);
+ assert.notEqual(left,right);
+ assert.equal(facts.values[left],first);
+ assert.equal(facts.values[right],second);
+ assert.equal(edge(left,0),edge(right,0));
+ assert.equal(facts.texts[edge(left,0)],'referenceAllocate');
+ const leftMetadata=edge(left,1),rightMetadata=edge(right,1);
+ assert.notEqual(leftMetadata,rightMetadata);
+ for(let index=0;index<4;index+=1) assert.equal(edge(leftMetadata,index),edge(rightMetadata,index));
+ assert.notEqual(edge(leftMetadata,2),edge(leftMetadata,3));
+});
+for(const row of originals)test('class owner source and complete archive matrix: '+row.name,()=>readCollectionCopyOriginalControl(row));
+for(const name of edits)test('edited class ownership reaches every direct consumer: '+name,()=>readClosedClassOwnerArchiveControl(name));
+for(const name of graphEdits)test('edited restored class graph reaches every archive transport and target: '+name,()=>readClosedClassOwnerGraphControl(name));

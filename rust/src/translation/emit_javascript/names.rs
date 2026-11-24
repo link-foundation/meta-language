@@ -2,6 +2,10 @@
 //! word the emitter reserves.
 
 pub(super) const KEYWORDS: &[&str] = &[
+    "ml_unicode_case",
+    "ml_utf16_text",
+    "ml_record_property_order",
+    "Object",
     "break",
     "case",
     "catch",
@@ -54,6 +58,7 @@ pub(super) const KEYWORDS: &[&str] = &[
     "NaN",
     "Infinity",
     "globalThis",
+    "encodeURIComponent",
     "console",
     "process",
     "BigInt",
@@ -61,6 +66,11 @@ pub(super) const KEYWORDS: &[&str] = &[
     "Object",
     "Error",
     "RangeError",
+    "TypeError",
+    "SyntaxError",
+    "ReferenceError",
+    "URIError",
+    "EvalError",
     "Math",
     "Number",
     "Array",

@@ -2,12 +2,14 @@
 use super::super::emission::{check_and_emit_item, check_and_emit_item_with_ownership};
 use super::super::{Context, GroupKind, Translated, project_type_script_typing, translate_group};
 use super::dependency_rules;
-use super::{Binder, Scan, Visit, accept_signature};
+use super::{Binder, Scan, Visit};
 use crate::translation::{
     check::check_program,
     frontend_rules::ml_array::number_index,
     ir::Decl,
-    javascript::{ModuleBindingScope, ModuleContext, parse_javascript_bound_in},
+    javascript::{
+        ModuleBindingScope, ModuleContext, parse_javascript_bound_in_with_module_representation,
+    },
     surface::External,
 };
 use std::collections::{HashMap, HashSet};
@@ -87,6 +89,7 @@ impl Binder<'_, '_> {
             self.to,
             self.decorators,
             self.utf16_strings,
+            self.reference_semantics,
             Some(&candidate_scope),
         );
         let forms = self
@@ -134,6 +137,20 @@ impl Binder<'_, '_> {
                 GroupKind::Item { .. } if literal_groups.contains(&index) => {
                     "primitive literal binding"
                 }
+                GroupKind::Item { .. }
+                    if state.scans[index]
+                        .as_ref()
+                        .is_some_and(|scan| scan.inert_binding.is_some()) =>
+                {
+                    "owned inert value binding"
+                }
+                GroupKind::Item { .. }
+                    if state.scans[index]
+                        .as_ref()
+                        .is_some_and(|scan| scan.intrinsic_binding.is_some()) =>
+                {
+                    "intrinsic value binding"
+                }
                 _ => "unknown module form",
             })
             .collect::<Vec<_>>();
@@ -142,6 +159,48 @@ impl Binder<'_, '_> {
         {
             return true;
         }
+        let owners = forms
+            .iter()
+            .enumerate()
+            .map(|(index, form)| {
+                if *form == "owned inert value binding" {
+                    state.scans[index]
+                        .as_ref()
+                        .and_then(|scan| scan.inert_binding)
+                        .map_or(-1.0, f64::from)
+                } else {
+                    -1.0
+                }
+            })
+            .collect::<Vec<_>>();
+        let owned_forms = forms
+            .iter()
+            .map(|form| (*form).to_owned())
+            .collect::<Vec<_>>();
+        if crate::translation::inert_module_binding_rules::accept_inert_module_binding_scope(
+            &owned_forms,
+            &owners,
+            &state.module_binding_names,
+        ) {
+            return true;
+        }
+        let intrinsic_owners = forms
+            .iter()
+            .enumerate()
+            .map(|(index, form)| {
+                let scan = state.scans[index].as_ref();
+                match *form {
+                    "owned inert value binding" => scan
+                        .and_then(|scan| scan.inert_binding)
+                        .map_or(-1.0, f64::from),
+                    "intrinsic value binding" => scan
+                        .and_then(|scan| scan.intrinsic_binding)
+                        .map_or(-1.0, f64::from),
+                    _ => -1.0,
+                }
+            })
+            .collect::<Vec<_>>();
+        if crate::translation::intrinsic_initializer_rules::accept_intrinsic_module_initializer_scope(&owned_forms,&intrinsic_owners,&state.module_binding_names) {return true;}
         let mut externals = Vec::new();
         for (index, scan) in state.scans.iter().enumerate() {
             if scan.as_ref().is_none_or(|scan| scan.imports.is_none()) {
@@ -165,9 +224,16 @@ impl Binder<'_, '_> {
             externals,
             module_directory: Some(self.module_directory.to_vec()),
         };
-        let complete_checked = parse_javascript_bound_in(&source, &context, &HashMap::new(), true)
-            .and_then(|surface| check_program(&surface))
-            .is_ok();
+        let complete_checked = parse_javascript_bound_in_with_module_representation(
+            &source,
+            &context,
+            &HashMap::new(),
+            true,
+            None,
+            self.reference_semantics,
+        )
+        .and_then(|surface| check_program(&surface))
+        .is_ok();
         dependency_rules::accept_module_scope(&forms, complete_checked)
     }
 
@@ -234,7 +300,8 @@ impl Binder<'_, '_> {
                     continue;
                 }
                 if let Some(signature) = out.signatures.iter().find(|signature| {
-                    signature.name() == name.as_str() && accept_signature(signature)
+                    signature.name() == name.as_str()
+                        && self.accept_source_signature(owner, signature)
                 }) {
                     if let Some(previous) = externals
                         .iter_mut()
@@ -285,6 +352,7 @@ impl Binder<'_, '_> {
                 module_directory: Some(self.module_directory.to_vec()),
             },
             utf16_strings: self.utf16_strings,
+            reference_semantics: self.reference_semantics,
             module_binding_scope: Some(Self::module_binding_scope(state)),
         };
         let whole = check_and_emit_item_with_ownership(
@@ -299,7 +367,7 @@ impl Binder<'_, '_> {
         let signatures = &whole.signatures;
         let flat=whole.program.main.as_ref().is_none_or(|main|main.effects.is_empty())&&whole.program.imports.is_empty()
             &&declarations.iter().all(|declaration|matches!(declaration,Decl::Fn(function)if function.module_path.is_empty()&&!function.generated&&names.contains(&function.name)))
-            &&declarations.iter().map(|declaration|declaration.name()).collect::<HashSet<_>>().len()==names.len()
+            &&declarations.iter().map(Decl::name).collect::<HashSet<_>>().len()==names.len()
             &&signatures.iter().all(|signature|matches!(signature,External::Function{name,..}if names.contains(name)))
             &&signatures.iter().map(External::name).collect::<HashSet<_>>().len()==names.len();
         let count = source_number(names.len())?;
@@ -347,11 +415,11 @@ impl Binder<'_, '_> {
                     module_directory: Some(self.module_directory.to_vec()),
                 },
                 utf16_strings: self.utf16_strings,
+                reference_semantics: self.reference_semantics,
                 module_binding_scope: Some(Self::module_binding_scope(state)),
             };
-            let text = match &self.groups[member].kind {
-                GroupKind::Item { text, .. } => text,
-                _ => return None,
+            let GroupKind::Item { text, .. } = &self.groups[member].kind else {
+                return None;
             };
             let capture =
                 check_and_emit_item(text, self.from, self.to, &context, &HashMap::new()).ok()??;

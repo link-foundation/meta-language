@@ -319,6 +319,7 @@ impl TermFacts {
                     self.kind("record"),
                     ("fields".to_owned(), fields),
                     ("open".to_owned(), self.scalar(json!(record.open))),
+                    ("sourceClassOwner".to_owned(),self.scalar(json!(record.source_class_owner))),
                 ]
             }
             Term::Function { params, ret } => vec![
