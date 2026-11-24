@@ -920,6 +920,13 @@ impl RustEmitter<'_> {
             );
             return Ok(code);
         }
+        if matches!(from, Type::Fixed { signed: false, .. })
+            && *to == Type::Nat
+            && *flavor == Flavor::Exact
+        {
+            self.preludes.insert(Prelude::Big);
+            return Ok(format!("crate::ml::Big::from_u128(u128::from({arg}))"));
+        }
         if matches!(from, Type::Fixed { .. }) && matches!(to, Type::Fixed { .. }) {
             return Ok(format!("{}::from({arg})", to.key()));
         }

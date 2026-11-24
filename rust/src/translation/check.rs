@@ -332,6 +332,11 @@ fn cast_to_in_language(
         )
     };
     match (&from, to) {
+        (Type::Fixed { signed: false, .. }, Type::Nat)
+            if language == "Rust" && flavor == Flavor::Exact =>
+        {
+            Ok(cast(arg, Flavor::Exact))
+        }
         (Type::Nat, Type::Int) => Ok(cast(arg, Flavor::Exact)),
         (Type::Int, Type::Nat) => {
             if !matches!(flavor, Flavor::Checked | Flavor::Clamp) {

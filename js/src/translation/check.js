@@ -2619,6 +2619,11 @@ function castTo(arg, to, flavor, span, language = '') {
   if (sameType(arg.type, to)) return arg;
   const from = arg.type;
   if(flavor==='exact'&&from.kind==='int'&&acceptRustExactArrayLengthResult(arg.k,to.kind,to.bits??0,to.signed===true,arg.array?.type.kind??''))return {...arg,type:to};
+  // Rust collection indices enter the portable unbounded natural domain
+  // without truncating a usize value or converting it through Number.
+  if (language === 'Rust' && from.kind === 'fixed' && !from.signed && to.kind === 'nat' && flavor === 'exact') {
+    return { k: 'cast', arg, from, to, flavor, type: to };
+  }
   if (from.kind === 'nat' && to.kind === 'int') return { k: 'cast', arg, from, to, flavor: 'exact', type: to };
   if (from.kind === 'int' && to.kind === 'nat') {
     if (flavor !== 'checked' && flavor !== 'clamp') throw typeError('int to nat conversion needs checked or clamp semantics', span);

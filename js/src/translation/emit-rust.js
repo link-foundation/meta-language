@@ -1824,6 +1824,10 @@ class RustEmitter {
       this.state.encode('fixed integer casts', readFixedIntegerCastStatement());
       return code;
     }
+    if (e.from.kind === 'fixed' && e.to.kind === 'nat' && e.flavor === 'exact') {
+      this.usesBig = true;
+      return `crate::ml::Big::from_u128(u128::from(${arg}))`;
+    }
     if (e.from.kind === 'fixed' && e.to.kind === 'fixed') return `${typeKey(e.to)}::from(${arg})`;
     if (e.flavor === 'exact') return arg;
     if (e.flavor === 'clamp') return `crate::ml::clamp_nat(${arg})`;
