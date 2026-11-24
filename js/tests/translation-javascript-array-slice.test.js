@@ -1,3 +1,4 @@
+import { fillOrdinaryPropertyLimit } from './support/ordinary-property-limit.js';
 // Deferred shared-kernel controls. No represented execution occurs on import.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -67,7 +68,7 @@ test('getter and final setter throws retain actual abrupt identity and completed
  heap=custom(setup().heap);heap=accessor(heap,7n,'length','setter',object(9n,true));const request=begin(heap,directory),setter=advance(directory,resumeJavaScriptArraySliceConstruction(request.heap,directory,request.state,normal(object(7n)))),abrupt=resumeJavaScriptArraySliceCall(setter.heap,directory,setter.state,{$:'throwCompletion',value:object(6n)});assert.equal(abrupt.$,'arraySliceThrow');assert.deepEqual(abrupt.value,object(6n));assert.deepEqual(get(abrupt.heap,7n,'2'),number(7));
 });
 test('completed getter values survive output property resource suspension without replay',()=>{
- let {heap,directory}=setup();heap=custom(heap);heap=accessor(heap,3n,'0','getter',object(5n,true));for(let at=0;at<4096;at++)heap=data(heap,7n,'slot'+at,number(at));const request=begin(heap,directory),getter=advance(directory,resumeJavaScriptArraySliceConstruction(request.heap,directory,request.state,normal(object(7n)))),limited=advance(directory,resumeJavaScriptArraySliceCall(getter.heap,directory,getter.state,normal(number(13))));assert.equal(limited.$,'arraySliceResourceLimit');assert.equal(limited.state.phase,'write');assert.deepEqual(limited.state.value,number(13));
+ let {heap,directory}=setup();heap=custom(heap);heap=accessor(heap,3n,'0','getter',object(5n,true));heap=fillOrdinaryPropertyLimit(heap,7n);const request=begin(heap,directory),getter=advance(directory,resumeJavaScriptArraySliceConstruction(request.heap,directory,request.state,normal(object(7n)))),limited=advance(directory,resumeJavaScriptArraySliceCall(getter.heap,directory,getter.state,normal(number(13))));assert.equal(limited.$,'arraySliceResourceLimit');assert.equal(limited.state.phase,'write');assert.deepEqual(limited.state.value,number(13));
  heap=deleteJavaScriptOrdinaryProperty(limited.heap,7n,text('slot0')).heap;const next=stepJavaScriptArraySlice(heap,directory,limited.state);assert.equal(next.$,'arraySliceContinue');assert.deepEqual(get(next.heap,7n,'0'),number(13));assert.equal(next.state.index,1);
 });
 test('species authority can extend without repeating its retained constructor Get',()=>{
