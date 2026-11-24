@@ -1,5 +1,6 @@
 // The original complete generated bundle is compiled only through the explicit CI selector.
 import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
@@ -41,8 +42,20 @@ function numberBits(value){assert.equal(typeof value,'number');const bytes=Buffe
 function bitsNumber(value){assert.match(value,/^[0-9a-f]{16}$/u);return Buffer.from(value,'hex').readDoubleBE();}
 export function verifyBinaryMetadataBufferNativeModel(read=readFileSync){
  return Object.entries(digests).map(([file,expected])=>{
-  const physicalBytes=read(new URL(file,root));let actualBytes=physicalBytes,sourceSuccession;
+  const liveBytes=read(new URL(file,root));
+  let physicalBytes=liveBytes,sourceSuccession,frontendRegeneration;
   const refusal='the frozen binary candidate model changed: '+file;
+  if(file==='rust/src/translation/frontend_rules.rs'&&sha256(liveBytes)==='b64361eaaf6239b7d6d13fea04b0b1db51e45f578cf6ef928cb5c9286a6554f2'){
+   const revision='6f7d603e24c190475c2d95af286c044af17ec705',predecessor='3fe3a9f9decfa6431b5b0718729a5d123b5f236b';
+   const readRevision=commit=>execFileSync('git',['show',commit+':'+file],{cwd:root});
+   assert.deepEqual(liveBytes,readRevision(revision),refusal+': the entire generated source must match its reviewed commit');
+   physicalBytes=readRevision(predecessor);
+   assert.equal(sha256(physicalBytes),'3c9be49f013c6ed1d3e8f2c5a9235236160f6eed4cc3e60b27b415ef5d7d55e7',refusal);
+   assert.equal(readSourceTextRustBlock(liveBytes.toString('utf8'),'mod','ml_array'),
+    readSourceTextRustBlock(physicalBytes.toString('utf8'),'mod','ml_array'),refusal+': the entire compiled provider is unchanged');
+   frontendRegeneration={revision,predecessor,sourceSha256:sha256(liveBytes),sourceBytes:liveBytes.length};
+  }
+  let actualBytes=physicalBytes;
   if(file==='rust/src/translation/frontend_rules.rs'&&sha256(physicalBytes)==='3c9be49f013c6ed1d3e8f2c5a9235236160f6eed4cc3e60b27b415ef5d7d55e7'){
    assert.equal(physicalBytes.length,43982,refusal);
    const physical=physicalBytes.toString('utf8'),current=readSourceTextRustBlock(physical,'fn','accept_java_script_optional_tuple_context');
@@ -114,7 +127,7 @@ export function verifyBinaryMetadataBufferNativeModel(read=readFileSync){
    }
   }
   const actual=sha256(modelBytes);assert.equal(actual,expected,refusal);
-  return{file,sha256:actual,...(ownerRevision?{ownerRevision}:{}),...(sourceSuccession?{sourceSuccession}:{})};
+  return{file,sha256:actual,...(ownerRevision?{ownerRevision}:{}),...(sourceSuccession?{sourceSuccession}:{}),...(frontendRegeneration?{frontendRegeneration}:{})};
  });
 }
 export function binaryMetadataBufferNativeMode(environment=process.env){if(environment.BINARY_METADATA_BUFFER_NATIVE!=='1')return false;if(environment.CI!=='true')throw new TypeError('BINARY_METADATA_BUFFER_NATIVE=1 requires CI=true; native compilation is forbidden locally');return true;}

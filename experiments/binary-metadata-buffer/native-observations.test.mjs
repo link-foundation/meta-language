@@ -66,7 +66,8 @@ test('every pinned source, model, policy, style, builder, provider and fixture r
  const live=verifyBinaryMetadataBufferNativeModel(),liveOwner=live.find(row=>row.file===owner.file);
  assert.equal(live.length,13);assert.equal(liveOwner.ownerRevision.actualSourceSha256,'bbf032af0422fd7252da32e090c065d3e4c9c4c8d88a284a4a15c02c1884a71d');
  const physical=readFileSync(new URL('../../'+owner.file,import.meta.url));
- assert.deepEqual(liveOwner.sourceSuccession,{revision:'3fe3a9f9decfa6431b5b0718729a5d123b5f236b',actualSourceBytes:physical.length,actualSourceSha256:digest(physical),historicalSourceSha256:'bbf032af0422fd7252da32e090c065d3e4c9c4c8d88a284a4a15c02c1884a71d'});
+ assert.deepEqual(liveOwner.sourceSuccession,{revision:'3fe3a9f9decfa6431b5b0718729a5d123b5f236b',actualSourceBytes:43982,actualSourceSha256:'3c9be49f013c6ed1d3e8f2c5a9235236160f6eed4cc3e60b27b415ef5d7d55e7',historicalSourceSha256:'bbf032af0422fd7252da32e090c065d3e4c9c4c8d88a284a4a15c02c1884a71d'});
+ assert.deepEqual(liveOwner.frontendRegeneration,{revision:'6f7d603e24c190475c2d95af286c044af17ec705',predecessor:liveOwner.sourceSuccession.revision,sourceSha256:digest(physical),sourceBytes:physical.length});
  for(const changed of[Buffer.concat([physical,Buffer.from('\n')]),Buffer.from(physical.toString('utf8').replace('source_kind == "tuple"','source_kind == "record"'))]){
   assert.throws(()=>verifyBinaryMetadataBufferNativeModel(file=>new URL(file).pathname.endsWith('/'+owner.file)?changed:readFileSync(file)),/frozen binary candidate model changed/u);
  }
