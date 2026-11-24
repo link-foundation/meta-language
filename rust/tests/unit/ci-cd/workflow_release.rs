@@ -206,7 +206,7 @@ fn cargo_cache_keys_are_scoped_by_job() {
         ),
         (
             "check",
-            "key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}",
+            "key: ${{ runner.os }}-cargo-check-1.99.0-${{ hashFiles('**/Cargo.lock') }}",
         ),
         (
             "coverage",
@@ -232,7 +232,7 @@ fn cargo_cache_keys_are_scoped_by_job() {
         "Windows test cache should use a test registry key"
     );
     assert!(
-        test.contains("key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}"),
+        test.contains("key: ${{ runner.os }}-cargo-test-1.99.0-${{ hashFiles('**/Cargo.lock') }}"),
         "Unix test cache should use a test target key"
     );
     assert!(

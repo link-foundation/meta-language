@@ -333,6 +333,15 @@ ASCII test import after a statement, which the test corrections move above
 the first assertion. Both compiler versions still run the existing lint gate.
 [Fresh Merge Simulation (6)](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138282883746)
 
+Fresh Merge Simulation (4) also failed the job-scoped Cargo cache assertion
+at log lines 2232–2246. Cargo Check and the Unix test cache include the
+compiler pin because both archive target outputs. The native test now
+requires those exact keys and keeps its earlier assertions for the other
+jobs and the Windows registry. The JavaScript reproduction reads the native
+assertion and the workflow and detects the stale key before the repair.
+[Fresh Merge Simulation (4)](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138282883797),
+[cache-key regression](../../../js/tests/issue-195-evidence-automated-translation-pause.test.js)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |

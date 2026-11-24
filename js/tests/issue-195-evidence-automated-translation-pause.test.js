@@ -37,6 +37,20 @@ test('native CI uses the covered toolchain for test harnesses, grammar artifacts
     /native-transport\/runner\/run\.mjs --native$/mu);
 });
 
+test('native job-scoped cache assertions cover the toolchain-specific target keys', () => {
+  const oracle = read('rust/tests/unit/ci-cd/workflow_release.rs');
+  const cacheTest = oracle.split('fn cargo_cache_keys_are_scoped_by_job() {')[1].split('\n#[test]')[0];
+  for (const cache of [
+    step(rust.check, 'Cache cargo registry'),
+    step(rust.test, 'Cache cargo registry and target on Unix'),
+  ]) {
+    const key = cache.text.split('\n').find(line => line.trimStart().startsWith('key: ')).trim();
+    assert.ok(key.includes('-1.99.0-'), cache.name);
+    assert.ok(cacheTest.includes(`"${key}"`), cache.name);
+    assert.ok(!cacheTest.includes(`"${key.replace('-1.99.0-', '-')}"`), cache.name);
+  }
+});
+
 test('the native diagnostic fixture authenticates the active manifest and lock', () => {
   const fixture = readProjectData(new URL(diagnosticFixturePath, root));
   assert.deepEqual(fixture.dependencyProfile, captureDiagnosticDependencyProfile(fileURLToPath(root)));
