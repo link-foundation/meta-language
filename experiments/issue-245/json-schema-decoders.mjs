@@ -7,6 +7,7 @@ const fixtures = [
   'json-schema-exclusive-typed-array-items.lino',
   'json-schema-exclusive-typed-array-prefixes.lino',
   'json-schema-exclusive-array-items.lino',
+  'json-schema-exclusive-member-types.lino',
   'json-schema-exclusive-object-property.lino',
   'json-schema-exclusive-object-siblings.lino',
   'json-schema-exclusive-object-fields.lino',

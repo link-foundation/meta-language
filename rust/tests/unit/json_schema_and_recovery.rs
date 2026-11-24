@@ -340,6 +340,25 @@ fn exclusive_array_alternatives_count_matching_branches_across_member_values_and
 }
 
 #[test]
+fn exclusive_collection_alternatives_count_matching_branches_across_member_types() {
+    const FIXTURE: &str = "parity/fixtures/json-schema-exclusive-member-types.lino";
+    check_exclusive_alternatives(include_str!(
+        "../../../parity/fixtures/json-schema-exclusive-member-types.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I240-JSON-SCHEMA-EXCLUSIVE-MEMBER-TYPES",
+        suffix: "behavior",
+        fixture_id: "i195-i240-json-schema-exclusive-member-types",
+        fixture_file: FIXTURE,
+        assertions: &[
+            "decoderCountsExclusiveCollectionMemberTypes",
+            "equivalentMemberTypesHaveNoGeneratableDocument",
+        ],
+        test_name: "exclusive_collection_alternatives_count_matching_branches_across_member_types",
+    });
+}
+
+#[test]
 fn exclusive_object_alternatives_count_values_of_a_single_differing_property() {
     check_exclusive_alternatives(include_str!(
         "../../../parity/fixtures/json-schema-exclusive-object-property.lino"

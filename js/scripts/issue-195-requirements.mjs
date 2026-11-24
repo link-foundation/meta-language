@@ -754,6 +754,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-MEMBER-TYPES',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON and JSON Schema draft 2020-12 semantics',
+      construct: 'exclusive arrays and objects with overlapping member type declarations',
+      expectedBehavior: 'Group base JSON member productions by the branches accepting each type. Intersect type declarations across local references and with siblings. Apply the same membership for every item or declared property and enforce exactly one matching collection branch. Emit no document when the alternatives have equivalent member type languages and collection boundaries.',
+      fixture: 'parity/fixtures/json-schema-exclusive-member-types.lino',
+      selector: 'overlapping Boolean, null, string, object, array and number domains, exponent notation, local references, sibling types, variable lengths, absent and required properties, and equivalent alternatives',
+      assertions: ['decoderCountsExclusiveCollectionMemberTypes', 'equivalentMemberTypesHaveNoGeneratableDocument'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import/exclusive_alternatives.rs', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-PROPERTY',
       source: ISSUE_195_SOURCES.jsonSchema,
       language: 'JSON with draft 2020-12 schemas',

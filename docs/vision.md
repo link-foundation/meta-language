@@ -4868,6 +4868,12 @@ each distinct item schema has a finite candidate domain or a common sibling
 schema supplies that domain. It groups item values by the branches accepting
 them and carries only those branches to the next array position. A shared item
 schema can constrain all surviving branches without enumerating its values.
+For item and property schemas that constrain only instance types, the decoder
+groups each base JSON production by the branches that accept its type. It
+intersects declarations across reference layers and with sibling constraints.
+The unrestricted number production applies when integral and fractional numbers
+have the same membership. Each exclusive group for one differing property
+contributes to that property's generated language.
 Closing the array requires exactly one surviving branch that accepts its length.
 Beyond the final prefix and length boundaries, the current item schema and
 the effect of length stay the same. The decoder can represent the remaining

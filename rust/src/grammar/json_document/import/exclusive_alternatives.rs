@@ -486,30 +486,39 @@ impl<'schema> Importer<'schema> {
             && let [field] = fields.as_mut_slice()
         {
             let mut values = Vec::new();
-            let mut shared = None;
+            let mut children = Vec::new();
             for variant in field
                 .variants
                 .drain(..)
                 .filter(|variant| variant.branches.len() == 1)
             {
-                if variant.child.is_some() {
-                    shared = Some(variant);
+                if let Some(child) = variant.child {
+                    children.push(child);
                 } else {
                     values.extend(variant.values);
                 }
             }
-            if shared.is_none() && values.is_empty() {
+            if children.is_empty() && values.is_empty() {
                 return Some(None);
             }
-            field
-                .variants
-                .push(shared.unwrap_or(CollectionValueVariant {
-                    branches: Vec::new(),
-                    use_common_schema: false,
-                    child: None,
-                    values,
-                    expression: None,
-                }));
+            let child = if children.len() > 1 {
+                let location = pointer_child(&properties_pointer, field.name);
+                let entries = children
+                    .into_iter()
+                    .filter_map(|child| self.lower_child(child, &location))
+                    .map(ConjunctionEntry::Expression)
+                    .collect();
+                Some(CollectionChild::Conjunction(entries))
+            } else {
+                children.pop()
+            };
+            field.variants.push(CollectionValueVariant {
+                branches: Vec::new(),
+                use_common_schema: false,
+                child,
+                values,
+                expression: None,
+            });
             selections.push(vec![0]);
         } else {
             // An absent field admits only branches that leave it optional. Each selected
@@ -637,6 +646,79 @@ impl<'schema> Importer<'schema> {
         Some((!expressions.is_empty()).then(|| EXPRESSION.choice_unordered(expressions)))
     }
 
+    fn exclusive_collection_type_variants(
+        &self,
+        schemas: &[&'schema Value],
+        sibling: &'schema Value,
+        remaining_work: &mut usize,
+    ) -> Option<Vec<CollectionValueVariant<'schema>>> {
+        let mut work = JSON_TYPES
+            .len()
+            .checked_mul(schemas.len().checked_add(1)?)?;
+        let mut type_domain = |schema: &'schema Value| {
+            let layers = reference_layers(self.root, schema)?;
+            work = work.checked_add(layers.len())?;
+            if work > *remaining_work
+                || layers.iter().any(|layer| {
+                    layer.as_object().is_some_and(|fields| {
+                        fields.keys().any(|keyword| {
+                            active_conjunction_keyword(keyword, 0, None, ALL_JSON_TYPES)
+                        })
+                    })
+                })
+            {
+                return None;
+            }
+            Some(layers.iter().fold(ALL_JSON_TYPES, |types, layer| {
+                possible_type_membership(layer, types)
+            }))
+        };
+        let guard = type_domain(sibling)?;
+        let mut domains = Vec::new();
+        // The unrestricted number production includes both numeric types and their exponent spellings.
+        for &schema in schemas {
+            let types = type_domain(schema)?;
+            if types & guard & NUMBER_TYPE == INTEGER_TYPE {
+                return None;
+            }
+            domains.push(types);
+        }
+        *remaining_work -= work;
+        let mut groups = Vec::<(Vec<usize>, Vec<ConjunctionEntry<'schema>>)>::new();
+        for (name, mask) in JSON_TYPES {
+            if name == "integer" || guard & mask == 0 {
+                continue;
+            }
+            let branches: Vec<_> = domains
+                .iter()
+                .enumerate()
+                .filter_map(|(index, &types)| (types & mask == mask).then_some(index))
+                .collect();
+            if branches.is_empty() {
+                continue;
+            }
+            let entry = ConjunctionEntry::Expression(reference_expression(name));
+            if let Some((_, entries)) = groups.iter_mut().find(|(current, _)| *current == branches)
+            {
+                entries.push(entry);
+            } else {
+                groups.push((branches, vec![entry]));
+            }
+        }
+        Some(
+            groups
+                .into_iter()
+                .map(|(branches, entries)| CollectionValueVariant {
+                    branches,
+                    use_common_schema: false,
+                    child: Some(CollectionChild::Conjunction(entries)),
+                    values: Vec::new(),
+                    expression: None,
+                })
+                .collect(),
+        )
+    }
+
     fn select_exclusive_collection_value_variants(
         &mut self,
         schemas: &[&'schema Value],
@@ -672,6 +754,9 @@ impl<'schema> Importer<'schema> {
                 values: Vec::new(),
                 expression: None,
             }]);
+        }
+        if let Some(typed) = self.exclusive_collection_type_variants(schemas, sibling, work) {
+            return Some(typed);
         }
         let checks = schemas.len() + usize::from(sibling != &UNRESTRICTED_SCHEMA);
         let mut seen = HashSet::new();

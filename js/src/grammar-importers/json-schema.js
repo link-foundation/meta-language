@@ -1103,9 +1103,11 @@ export function importJsonSchema(schema) {
     if (dimensions.length === 1 && differingRequired.size === 0) {
       const [dimension] = dimensions;
       const exclusive = dimension.variants.filter(variant => variant.matches.length === 1);
-      const shared = exclusive.find(variant => variant.schema !== undefined);
+      const children = exclusive.flatMap(variant => variant.schema === undefined ? [] : [variant.schema]);
+      const location = pointerChild(propertiesPointer, dimension.name);
+      const shared = children.length > 1 ? () => choice(...children.map(schema => childExpression(schema, location)).filter(Boolean)) : children[0];
       const values = exclusive.flatMap(variant => variant.values ?? []);
-      dimension.variants = [shared ?? { values }];
+      dimension.variants = [shared === undefined ? { values } : { schema: shared }];
       selections = shared || values.length ? [[0]] : [];
     } else {
       // An absent field matches only branches that leave it optional.
@@ -1169,6 +1171,38 @@ export function importJsonSchema(schema) {
     }).filter(Boolean);
     return expressions.length ? choice(...expressions) : null;
   }
+  function exclusiveCollectionTypeVariants(schemas, sibling, budget) {
+    let work = jsonTypes.size * (schemas.length + 1);
+    function typeMembership(schema) {
+      const layers = referenceLayers(schema);
+      if (!layers) return undefined;
+      work += layers.length;
+      if (budget.remaining < work || layers.some(layer => Object.keys(layer).some(key => (
+        activeConjunctionKeyword(key, 0, undefined, allJsonTypes)
+      )))) return undefined;
+      return layers.reduce((types, layer) => possibleTypeMembership(layer, types), allJsonTypes);
+    }
+    const guard = typeMembership(sibling);
+    if (guard === undefined) return undefined;
+    const domains = [];
+    // The unrestricted number production includes both numeric types and their exponent spellings.
+    for (const schema of schemas) {
+      const types = typeMembership(schema);
+      if (types === undefined || (types & guard & numberType) === integerType) return undefined;
+      domains.push(types);
+    }
+    budget.remaining -= work;
+    const variants = new Map();
+    for (const [name, mask] of jsonTypes) {
+      if (name === 'integer' || !(guard & mask)) continue;
+      const matches = domains.flatMap((types, index) => (types & mask) === mask ? [index] : []);
+      if (!matches.length) continue;
+      const key = matches.join(',');
+      if (!variants.has(key)) variants.set(key, { matches, expressions: [] });
+      variants.get(key).expressions.push(ref(name));
+    }
+    return [...variants.values()].map(({ matches, expressions }) => ({ matches, schema: () => choice(...expressions) }));
+  }
   function selectExclusiveCollectionValueVariants(schemas, sibling, pointer, budget, allowSharedSchema = false) {
     if (sibling === false) return [];
     const allowed = schemas.filter(schema => schema !== false);
@@ -1180,6 +1214,8 @@ export function importJsonSchema(schema) {
       if (schema === false) return [];
       return [{ matches: schemas.flatMap((rule, index) => rule === false ? [] : [index]), schema }];
     }
+    const typed = exclusiveCollectionTypeVariants(schemas, sibling, budget);
+    if (typed) return typed;
     const checks = schemas.length + Number(sibling !== true);
     const candidates = new Map();
     const shared = allowSharedSchema && sibling !== true && finiteSchemaCandidates(sibling, analysis.target, budget);
