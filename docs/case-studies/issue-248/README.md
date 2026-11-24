@@ -396,6 +396,13 @@ libtest names. Reusing them keeps each opted-in command and its scope available.
 contexts and YAML structure. Repository tests cover mode and artifact behavior
 using the workflows' current conditions and shell commands.
 
+The offline dependency audit initially reported that both paused runners had
+been removed. Its collector only recognized runner labels written in the
+workflow YAML. It now follows the native and clean-consumer matrix commands to
+the shared shard policy, which retains all three platforms. The regression test
+compares the collected runner entries with the existing audit, including their
+workflow ownership and release comparison.
+
 ## Operating the pause
 
 Normal PR, push and release runs leave `automated_translation` off. Clean
@@ -451,10 +458,12 @@ ran, and each run's platform audit reports only Linux scheduling. A conflicting
 branch requires its own conflict resolution before it can be verified. The
 captured branch inventory is a rollout input.
 
-The 2026-11-24 09:08 UTC audit found seven other open PRs targeting
-`main` at `ec9f4efb0e9ef936114e09823981352f6db13700`. Each exact head's
-`ci.yml` lacked the pause check. The linked runs below are observations from
-that audit. [Default branch commit](https://github.com/link-foundation/meta-language/commit/ec9f4efb0e9ef936114e09823981352f6db13700)
+The 2026-11-24 10:06 UTC audit from `fe27e9db9` found seven other open PRs
+targeting `main` at `ec9f4efb0e9ef936114e09823981352f6db13700`. The workflow
+files at all seven audited heads lacked the Linux scheduling check. The
+observed rollout report has SHA-256
+`6ad0ee29f1e0b6736bc0c3285d33357d7c58af74d10600676b1e4bc2a6d1dd52`.
+[Default branch commit](https://github.com/link-foundation/meta-language/commit/ec9f4efb0e9ef936114e09823981352f6db13700)
 
 | PR | Workflow at audited head | Eligible run observation |
 | --- | --- | --- |
@@ -464,7 +473,7 @@ that audit. [Default branch commit](https://github.com/link-foundation/meta-lang
 | #246 | [`fdec74850`](https://github.com/link-foundation/meta-language/blob/fdec748503360a6621f5cca0656c3af4150fd27a/.github/workflows/ci.yml) | Queued. [Run](https://github.com/link-foundation/meta-language/actions/runs/45336634236) |
 | #247 | [`e8bc968b4`](https://github.com/link-foundation/meta-language/blob/e8bc968b4fb55f02f34854eaf58f375ac715c34c/.github/workflows/ci.yml) | Queued at the updated head. [Run](https://github.com/link-foundation/meta-language/actions/runs/45359109686) |
 | #249 | [`61965b24f`](https://github.com/link-foundation/meta-language/blob/61965b24ff7888ea64f9cd118d02d88d737443de/.github/workflows/ci.yml) | Queued. [Run](https://github.com/link-foundation/meta-language/actions/runs/45332829639) |
-| #251 | [`0597f6148`](https://github.com/link-foundation/meta-language/blob/0597f6148879b26eeb57d431ca2130ffcf384230/.github/workflows/ci.yml) | Queued. [Run](https://github.com/link-foundation/meta-language/actions/runs/45325647941) |
+| #251 | [`f17ec763c`](https://github.com/link-foundation/meta-language/blob/f17ec763cebcd4c2fba918ce1255bc9ad11916b2/.github/workflows/ci.yml) | Queued at the updated head. [Run](https://github.com/link-foundation/meta-language/actions/runs/45369857807) |
 
 The post-merge report records the newest eligible workflow run and its latest
 attempt for each current pull request head and base pair. It requires a

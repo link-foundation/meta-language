@@ -71,14 +71,14 @@ export const nativeLintCaptureSources = Object.freeze([
 export const nativePlatformPausePredecessor = '7853a7351adf37d1ccc8f73479abf3d1960623bc';
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = '26510e4d735765d4dd6e8ae4aca90ced9fe00fb6d9786edeeade1022ed4d61aa';
+const archiveDigest = '1067b5797abb13b34edeeb4e3a550b581ed73bf34cdcbe2badda5d3d996e8f68';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
 export function restoreAutomatedTranslationPauseSource(source, file, revision) {
   const workflow = file.startsWith('.github/workflows/');
   if (!workflow && !nativeRepairNamingSources.includes(file) && !nativeLintCaptureSources.includes(file) &&
-    !['js/scripts/current-ci-repair-source-history.mjs', 'js/scripts/rust-test-shards.mjs',
+    !['js/scripts/current-ci-repair-source-history.mjs', 'js/scripts/dependency-inventory.mjs', 'js/scripts/rust-test-shards.mjs',
     'js/scripts/grammar-test-partition-history.mjs', 'js/scripts/generate-link-network-binary-rules.mjs', 'js/tests/cache-fresh-merge-dependencies.test.js',
     'js/scripts/own-codebase-baseline-naming-history.mjs', 'js/scripts/own-codebase-test-registration-history.mjs',
     'js/scripts/run-issue-195-consumer.mjs', 'js/scripts/test-groups.mjs',

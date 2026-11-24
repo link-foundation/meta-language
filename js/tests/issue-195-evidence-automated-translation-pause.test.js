@@ -11,6 +11,7 @@ import { runInNewContext } from 'node:vm';
 import { captureDiagnosticDependencyProfile, diagnosticFixturePath } from '../../experiments/grammar-outcome-network/native-transport/diagnostic-order/generate.mjs';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { nativeLintCaptureSources, nativePlatformPausePredecessor, restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
+import { collectDependencies } from '../scripts/dependency-inventory.mjs';
 import { supportedPlatformCoverage } from '../scripts/issue-195-delivery.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { executePhysicalHarness, matchesLogicalFilters, nativeTestArguments, nativeTestMatrix, readPhysicalShardPolicy, readShardAdmission, verifyHarnessExecution, verifyWorkflowPlatforms } from '../scripts/rust-test-shards.mjs';
@@ -81,6 +82,21 @@ test('the two new tooling tests preserve all established shard assignments', () 
 const observe = (scope, assertions, name) =>
   recordIssue195DirectiveObservation(`I195-AUTOMATED-TRANSLATION-PAUSE-${scope}`, assertions, name);
 
+test('retained matrix runners keep their workflow dependency ownership during the pause', () => {
+  const collected = collectDependencies(fileURLToPath(root)).filter(item => item.category === 'runner');
+  const inventory = readProjectData(new URL('parity/dependency-inventory.lino', root));
+  const fields = ({ id, declaredIn, pinned, compare, source }) => ({ id, declaredIn, pinned, compare, source });
+  for (const platform of readPhysicalShardPolicy().platforms) {
+    const stored = inventory.items.find(item => item.category === 'runner' && item.name === platform);
+    const runner = collected.find(item => item.name === platform);
+    assert.ok(runner, `${platform} remains a declared workflow runner`);
+    assert.ok(stored, `${platform} retains its audited inventory entry`);
+    assert.ok(runner.declaredIn.includes('.github/workflows/ci.yml'));
+    assert.ok(runner.declaredIn.includes('.github/workflows/rust.yml'));
+    assert.deepEqual(fields(runner), fields(stored));
+  }
+});
+
 test('Linux scheduling preserves every native platform definition and all strict evidence requirements', (context) => {
   const previousJobs = name => {
     const file = `.github/workflows/${name}.yml`;
@@ -113,7 +129,7 @@ test('Linux scheduling preserves every native platform definition and all strict
   assert.match(ci.candidates.header, /consumer-matrix: \$\{\{ steps\.consumer-matrix\.outputs\.matrix \}\}/u);
   assert.match(rust.test.header, /matrix: \$\{\{ fromJSON\(needs\.check\.outputs\.test-matrix\) \}\}/u);
   assert.match(ci.consumers.header, /matrix: \$\{\{ fromJSON\(needs\.candidates\.outputs\.consumer-matrix\) \}\}/u);
-  const workflowFiles = readdirSync(new URL('.github/workflows/', root)).filter(file => /\.ya?ml$/u.test(file));
+  const workflowFiles = readdirSync(new URL('.github/workflows/', root)).filter(file => /\.ya?ml$/u.test(file)).sort();
   const dynamicRunners = workflowFiles.flatMap(file => parseWorkflow(read(`.github/workflows/${file}`)).flatMap(job => {
     const runner = /^ {4}runs-on: (.+)$/mu.exec(job.header)?.[1];
     return runner && runner !== 'ubuntu-latest' ? [[file, job.id, runner]] : [];
