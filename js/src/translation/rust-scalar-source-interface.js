@@ -13,7 +13,7 @@ import {checkRustSourceSignature} from './rust-source-signatures.js';
 import {RUST_SOURCE_HEADER_EMISSION_POLICY} from './rust-source-header-emission.js';
 import {renderRustSourceHeaderParameter,renderRustSourceHeaderLifetime,renderRustSourceHeaderDereference,renderRustSourceHeaderCopy,renderRustSourceHeaderFunction} from './rust-source-header-emission-rules.js';
 import {renderRustBorrowedCallHeaderReference,renderRustBorrowedCallReference,renderRustBorrowedCallInvocation,renderRustBorrowedCallBlock} from './rust-borrowed-call-interface-rules.js';
-import {acceptRustScalarSourceInterfaceModel,readRustScalarValueType,readRustScalarSourceType,acceptRustScalarSourceContext,acceptRustScalarSourceDeclaration,acceptRustScalarSourceDeclarationField,acceptRustScalarSourcePosition,acceptRustScalarSourceExpression,acceptRustScalarSourceExpressionField,acceptRustScalarSourceCall,acceptRustScalarSourceBudget,renderRustScalarSourceConversion} from './rust-scalar-source-interface-rules.js';
+import {acceptRustScalarSourceInterfaceModel,readRustScalarValueType,readRustScalarSourceType,acceptRustScalarSourceContext,acceptRustScalarSourceDeclaration,acceptRustScalarSourceDeclarationField,acceptRustScalarSourcePosition,acceptRustScalarSourceExpression,acceptRustScalarSourceExpressionField,acceptRustScalarImplicitBooleanDomain,acceptRustScalarSourceCall,acceptRustScalarSourceBudget,renderRustScalarSourceConversion} from './rust-scalar-source-interface-rules.js';
 import {acceptRustSourceHeaderLifetimeCharacter} from './rust-source-header-emission-rules.js';
 const fail=detail=>{throw unsupported('Rust scalar source interface',detail);};
 function valueType(type,strings=false){
@@ -71,10 +71,14 @@ export function readRustScalarSourceInterface(program,model){
   else if(node.k==='unary')enqueue([node.arg]);
   else if(node.k==='cast'){valueType(node.from);valueType(node.to);enqueue([node.arg]);}
   else if(node.k==='binary'){
+   const explicit=Object.hasOwn(node,'domain');
    if(constructed&&node.op==='concat'){
-    const explicit=Object.hasOwn(node,'domain');if(explicit)valueType(node.domain,strings);
+    if(explicit)valueType(node.domain,strings);
     if(!acceptRustConstructedStringConcatenation(explicit?node.domain.kind:'implicit string',node.type.kind,node.left?.type?.kind??'',node.right?.type?.kind??''))fail('string concatenation needs its complete scalar String domain, result and operands');
-   }else{valueType(node.domain,strings);if(strings&&!(constructed?acceptRustConstructedStringBinary(node.domain.kind,node.op):acceptRustTextualSourceBinary(node.domain.kind,node.op)))fail('string ordering needs its own source interface interpretation');}
+   }else if(explicit||!acceptRustScalarImplicitBooleanDomain(node.op,node.type.kind,node.left?.type?.kind??'',node.right?.type?.kind??'')){
+    valueType(node.domain,strings);
+    if(strings&&!(constructed?acceptRustConstructedStringBinary(node.domain.kind,node.op):acceptRustTextualSourceBinary(node.domain.kind,node.op)))fail('string ordering needs its own source interface interpretation');
+   }
    enqueue([node.left,node.right]);
   }
  }

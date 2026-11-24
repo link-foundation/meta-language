@@ -79,3 +79,7 @@ export function readRustScalarSourceEncoding() { return 'retained-scalar-source-
 export function readRustScalarSourceStatement() {
   return 'owned version-two scalar headers retain source primitive identities; calls evaluate each argument once in order before borrowing copies; usize/isize use exact 64-bit boundary conversions and other pointer widths refuse';
 }
+/** @param {string} operation @param {string} result @param {string} left @param {string} right @returns {boolean} */
+export function acceptRustScalarImplicitBooleanDomain(operation, result, left, right) {
+  return (operation === 'and' || operation === 'or') && result === 'bool' && left === 'bool' && right === 'bool';
+}

@@ -244,3 +244,15 @@ pub fn read_rust_scalar_source_statement() -> String {
         "owned version-two scalar headers retain source primitive identities; calls evaluate each argument once in order before borrowing copies; usize/isize use exact 64-bit boundary conversions and other pointer widths refuse",
     )
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_scalar_implicit_boolean_domain(
+    operation: &str,
+    result: &str,
+    left: &str,
+    right: &str,
+) -> bool {
+    ((((operation == "and") || (operation == "or")) && (result == "bool")) && (left == "bool"))
+        && (right == "bool")
+}

@@ -19,6 +19,7 @@ use super::rust_scalar_source_interface_rules::{
     accept_rust_scalar_source_context, accept_rust_scalar_source_declaration,
     accept_rust_scalar_source_declaration_field, accept_rust_scalar_source_expression,
     accept_rust_scalar_source_interface_model, accept_rust_scalar_source_position,
+    accept_rust_scalar_implicit_boolean_domain,
     read_rust_scalar_source_type, read_rust_scalar_value_type,
     render_rust_scalar_source_conversion,
 };
@@ -332,6 +333,10 @@ pub fn read_rust_scalar_source_interface(
                     ));
                 }
             }
+            Node::Binary { op, domain: None, left, right, .. }
+                if accept_rust_scalar_implicit_boolean_domain(
+                    op.name(), node.ty.kind(), left.ty.kind(), right.ty.kind(),
+                ) => {}
             Node::Binary { op, domain, .. } => {
                 let domain = domain.as_ref().ok_or_else(|| {
                     fail("every interface and expression needs an actual scalar value type")

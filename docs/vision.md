@@ -2284,6 +2284,9 @@ Only the pointer-sized scalar representation needs an extra numeric conversion;
 the emitted library refuses other pointer widths with a compile-time guard.
 The actual checked scalar graph has at most 100000 queued expression references,
 including repeated edges; distinct nodes are checked once.
+Checked Boolean conjunction and disjunction use the Boolean result and both
+Boolean operands as their implicit domain. Other scalar binary nodes require
+their explicit checked domain, with string concatenation handled by its own model.
 Automatically translated shared decisions and syntax supply both runtimes;
 native adapters project owned IR instead of duplicating the algorithm.
 Existing portable, leaf-header and borrowed-call profiles retain independent
