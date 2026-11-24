@@ -130,6 +130,8 @@ fn relative_arrays_preserve_complete_original_programs_through_native_execution_
             );
         }
         let translated = meta_language::self_translate(source, "JavaScript", "Rust").unwrap();
+        assert!(translated.code.ends_with(&consumed));
+        assert_eq!(array_relative_native(&translated.code, index), expected);
         assert_eq!(
             translated
                 .items

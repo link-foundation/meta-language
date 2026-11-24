@@ -168,7 +168,7 @@ fn out_of_bounds_array_reads_retain_absence_instead_of_an_in_bounds_assumption()
 
 #[test]
 fn source_iteration_retains_its_actual_iterable_wrapper_and_generated_read_proof() {
-    fn count(value: &serde_json::Value, kind: &str, proven: bool) -> usize {
+    fn count(value: &serde_json::Value, kind: &str, receiver: Option<&str>, proven: bool) -> usize {
         match value {
             serde_json::Value::Object(fields) => {
                 if fields.get("k").and_then(serde_json::Value::as_str) == Some("forOfIterable") {
@@ -179,24 +179,29 @@ fn source_iteration_retains_its_actual_iterable_wrapper_and_generated_read_proof
                 }
                 usize::from(
                     fields.get("k").and_then(serde_json::Value::as_str) == Some(kind)
+                        && receiver.is_none_or(|expected| fields["object"]["k"] == expected)
                         && (!proven
                             || fields.get("provenInBounds")
                                 == Some(&serde_json::Value::Bool(true))),
                 ) + fields
                     .values()
-                    .map(|value| count(value, kind, proven))
+                    .map(|value| count(value, kind, receiver, proven))
                     .sum::<usize>()
             }
-            serde_json::Value::Array(values) => {
-                values.iter().map(|value| count(value, kind, proven)).sum()
-            }
+            serde_json::Value::Array(values) => values
+                .iter()
+                .map(|value| count(value, kind, receiver, proven))
+                .sum(),
             _ => 0,
         }
     }
     let program = parse_javascript(ARRAYS).expect("the original array program parses");
     let raw = serde_json::to_value(program).expect("raw source tree serialization");
-    assert_eq!(count(&raw, "forOfIterable", false), 1);
-    assert_eq!(count(&raw, "index", true), 1);
+    // The loop iterates the `values` binding and the spread iterates `[2n]`.
+    assert_eq!(count(&raw, "forOfIterable", None, false), 2);
+    assert_eq!(count(&raw, "forOfIterable", Some("name"), false), 1);
+    assert_eq!(count(&raw, "forOfIterable", Some("array"), false), 1);
+    assert_eq!(count(&raw, "index", None, true), 1);
 }
 
 #[test]

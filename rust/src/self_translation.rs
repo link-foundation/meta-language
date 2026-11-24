@@ -11,9 +11,7 @@
 //!
 //! Mirrors `js/src/self-translation.js`.
 
-use crate::translation::frontend_rules::{
-    accept_source_envelope_restoration, accept_source_prefix_restoration,
-};
+use crate::translation::frontend_rules::accept_source_prefix_restoration;
 use crate::translation::surface::SExpr;
 use std::collections::BTreeMap;
 use std::collections::{HashMap, HashSet};
@@ -33,7 +31,10 @@ mod binding;
 mod emission;
 pub mod representation;
 mod representation_rules;
-use emission::emit_item;
+use emission::{
+    emit_complete_relative_element_program, emit_item, restore_source_envelope, source_envelope,
+    standalone_translation, uses_relative_element_call,
+};
 use representation::Context;
 mod scope;
 mod typescript_erasure;
@@ -289,6 +290,26 @@ fn translate_module(
         });
     }
     let items = top_level_items(source, from);
+    let header = items
+        .iter()
+        .find(|item| item.comment && item.text.starts_with(HEADER));
+    if from == "Rust"
+        && to == "JavaScript"
+        && let Some(header) = header
+        && header
+            .text
+            .strip_prefix(HEADER)
+            .is_some_and(|fields| fields.starts_with("source=JavaScript target=Rust "))
+        && header
+            .text
+            .split_once(" envelope-sha256=")
+            .is_some_and(|(fields, _)| fields.ends_with(" mode=standalone"))
+        && let Some(original) = restore_source_envelope(source, header, to)
+    {
+        return Ok(standalone_translation(
+            from, to, original, &items, "restored",
+        ));
+    }
     let kept_family =
         from == "JavaScript" || (from == "TypeScript" && !requires_type_script_erasure(source));
     if family(from) == family(to) && (from == to || (kept_family && !source.starts_with(HEADER))) {
@@ -309,6 +330,28 @@ fn translate_module(
             items,
         };
         return Ok((translation, Vec::new()));
+    }
+    if from == "JavaScript"
+        && to == "Rust"
+        && decorators.decorators().is_empty()
+        && !items.iter().any(|item| {
+            is_marker(item)
+                || matches!(
+                    item.term.as_str(),
+                    "ERROR" | "import_statement" | "export_statement"
+                )
+        })
+        && uses_relative_element_call(&network, source)
+        && let Some(complete) = emit_complete_relative_element_program(source, utf16_strings)
+    {
+        let tail = format!("\n\n{RUST_ALLOW}\n\n{complete}");
+        let envelope = source_envelope(source, &tail);
+        let code = format!(
+            "{HEADER}source={from} target={to} sha256={} bytes={} mode=standalone{envelope}{tail}",
+            sha256(source),
+            source.len()
+        );
+        return Ok(standalone_translation(from, to, code, &items, "translated"));
     }
     let mut blocks: Vec<String> = Vec::new();
     let mut preludes: Vec<String> = Vec::new();
@@ -435,9 +478,6 @@ fn translate_module(
     }
     let body = format!("{}\n", blocks.concat());
     // An unedited translation back gives the source its header describes.
-    let header = items
-        .iter()
-        .find(|item| item.comment && item.text.starts_with(HEADER));
     if let Some(header) = header
         && header.text.contains(&format!(" source={to} "))
         && header.text.contains(&format!(" sha256={} ", sha256(&body)))
@@ -451,24 +491,7 @@ fn translate_module(
         return Ok((translation, signatures));
     }
     if let Some(header) = header {
-        static SOURCE_ENVELOPE: LazyLock<Regex> = LazyLock::new(|| {
-            Regex::new(r" envelope-sha256=([a-f0-9]{64}) original=(.*)$").unwrap()
-        });
-        if let Some(envelope) = SOURCE_ENVELOPE.captures(header.text)
-            && let Ok(original) = serde_json::from_str::<String>(&envelope[2])
-            && accept_source_envelope_restoration(
-                header.text.contains(&format!(" source={to} ")),
-                sha256(&source[header.end..]) == envelope[1],
-                header.text.split_ascii_whitespace().find_map(|field| {
-                    field
-                        .strip_prefix("bytes=")
-                        .and_then(|value| value.parse::<usize>().ok())
-                }) == Some(original.len())
-                    && header
-                        .text
-                        .contains(&format!(" sha256={} ", sha256(&original))),
-            )
-        {
+        if let Some(original) = restore_source_envelope(source, header, to) {
             return Ok((
                 SelfTranslation {
                     source_language: from,
@@ -532,16 +555,7 @@ fn translate_module(
     }
     if layout_envelope {
         let tail = format!("\n{}\n{body}", lines[1..].join("\n"));
-        let original = serde_json::to_string(source)
-            .expect("source text serializes")
-            .replace('\u{2028}', "\\u2028")
-            .replace('\u{2029}', "\\u2029");
-        write!(
-            lines[0],
-            " envelope-sha256={} original={original}",
-            sha256(&tail)
-        )
-        .expect("writing a string succeeds");
+        lines[0].push_str(&source_envelope(source, &tail));
     }
     let translation = SelfTranslation {
         source_language: from,

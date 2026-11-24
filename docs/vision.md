@@ -3279,6 +3279,13 @@ translated body before restoration. Editing emitted code cannot restore obsolete
 source. This source-preservation metadata does not count carried items as
 executable translation or substitute for the complete CST contract.
 
+Self-translation of a standalone JavaScript program with relative element
+access checks the program as a single scope when its main body has effects.
+The existing array-consumption emitter produces the whole Rust program from
+that scope. A whole-body envelope authenticates reversal, including the shared
+prelude and executable body. Modules with imports, exports or decorators retain
+their item-based translation path.
+
 Owned native reconstruction can separately plan static string-reference
 selection from a caller-supplied existing registry. It authenticates the complete
 owned model and actual captured static reference type before reading occurrence

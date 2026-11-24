@@ -99,10 +99,16 @@ fn compare<'a, T: Serialize>(
 ) -> Option<&'a T> {
     match (actual, expected.get("sha256")) {
         (Ok(value), Some(sha256)) => {
-            if digest(value) == sha256.as_str().expect("digest") {
+            let expected_digest = sha256.as_str().expect("digest");
+            let actual_digest = digest(value);
+            if actual_digest == expected_digest {
                 return Some(value);
             }
-            failures.push(format!("{label}: the result differs from javascript"));
+            let actual = serde_json::to_string(value).expect("stage results serialize");
+            let detail = if actual.len() <= 1024 { &actual } else { "" };
+            failures.push(format!(
+                "{label}: expected {expected_digest}, observed {actual_digest} {detail}"
+            ));
         }
         (Err(error), None) => {
             let recorded = &expected["error"];

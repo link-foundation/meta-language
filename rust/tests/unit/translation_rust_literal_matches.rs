@@ -5,7 +5,7 @@ use meta_language::translation::check::check_program;
 use meta_language::translation::diagnostics::ErrorKind;
 use meta_language::translation::rust::parse_rust;
 use meta_language::{
-    BinaryLinksOptions, LinkNetwork, ParseConfiguration, create_typed_program_links,
+    BinaryLinksOptions, LinkNetwork, ParseConfiguration, QueryIndex, create_typed_program_links,
     decode_link_network_binary, decode_typed_program_links, emit_typed_program_links,
     encode_link_network_binary, read_structured_data_lino,
 };
@@ -219,12 +219,31 @@ fn main(){println!("{}",selected("π"));println!("{}",selected("😀"));println!
         false,
     );
     observe(source, expected, true);
-    let literal = packet
+    let index = QueryIndex::new(&packet.network);
+    let selected = packet
         .network
         .links()
-        .find(|link| link.metadata().definition() == Some("π"))
+        .find(|link| {
+            index
+                .field_targets(link.id(), "full name")
+                .iter()
+                .any(|id| index.link(*id).unwrap().metadata().definition() == Some("selected"))
+        })
         .unwrap()
         .id();
+    let [binding] = index.field_targets(selected, "body")[..] else {
+        panic!("selected has one checked body");
+    };
+    let mut first_alternative = index.field_targets(binding, "body")[0];
+    for _ in 0..4 {
+        first_alternative = index.field_targets(first_alternative, "left")[0];
+    }
+    let literal_expression = index.field_targets(first_alternative, "right")[0];
+    let literal = index.field_targets(literal_expression, "value")[0];
+    assert_eq!(
+        index.link(literal).unwrap().metadata().definition(),
+        Some("π")
+    );
     let prefix = format!("({literal}: ");
     let changed = packet
         .network
@@ -247,7 +266,7 @@ fn main(){println!("{}",selected("π"));println!("{}",selected("😀"));println!
             .code;
         observe(
             &format!("{code}\nconsole.log(selected(\"π\"));console.log(selected(\"δ\"));"),
-            &format!("{expected}false\ntrue\n"),
+            "false\ntrue\ntrue\ntrue\ntrue\nfalse\ntrue\ntrue\nfalse\ntrue\n",
             false,
         );
     }

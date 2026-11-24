@@ -8,7 +8,7 @@ import {restoreCurrentNativeHostSource} from './current-native-host-source-histo
 import {restoreNativeCompilerSource} from './native-compiler-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const file='parity/self-translation/ci-39422441941-repair-source-history.lino';
-const archiveSha256='07ae94b5c36a92e8d07dc312e9079ec83622bf606822ec6ebe4fafe8f3ca2e3d';
+const archiveSha256='5d7a557e072430c23c353449abc8fa2f5cce2a637528dc0ee7e90cff3ea451b8';
 const revision='90636f9fb52b1b9095defbac041c8089608b8576';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 let history;
