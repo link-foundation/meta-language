@@ -131,7 +131,8 @@ export function verifyProgramStringHostRegistrationHistory(packet){
 /** Unknown successors remain visible to the old strict host assertion. */
 export function restoreProgramStringHostRegistrationSource(source,path){
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
-  if(['rust/src/translation/emit_rust.rs','rust/src/translation/ir.rs','rust/src/typed_program_links/checked.rs'].includes(path)){
+  if(['rust/src/translation/emit_rust.rs','rust/src/translation/ir.rs','rust/src/typed_program_links/checked.rs',
+    'rust/tests/unit/translation_array_relative_element.rs'].includes(path)){
     // Reuse the existing complete current-source certificate/inverse, then
     // replay the immutable host proposal. Actual runtime source stays current.
     const previous=restoreCurrentCiRepairSource(source,path);

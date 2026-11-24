@@ -160,7 +160,7 @@ export function encodeTypedProgramLinks(program, { provenance, nodeLimit = defau
   return { network, root };
 }
 
-function decodeTypedProgramLinksContext(network, root, { nodeLimit = defaultNodeLimit, depthLimit = 256 } = {}) {
+function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, depthLimit = 256 } = {}) {
   if (!Number.isSafeInteger(nodeLimit) || nodeLimit < 0 || !Number.isSafeInteger(depthLimit) || depthLimit < 0) {
     throw new TypeError('the linked program has invalid structural limits');
   }

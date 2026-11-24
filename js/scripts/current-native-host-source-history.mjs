@@ -91,6 +91,21 @@ const externalBindingSourcePins = new Map([
 /** Preserve the exact checked codec sources used by the older proof readers. */
 export function restoreCheckedExternalBindingSource(source, file) {
   const pins = externalBindingSourcePins.get(file);
+  if (file === 'js/src/typed-program-links.js'
+    && pinCurrentNativeHostSource(source).sha256 === 'a34295cc51b946bda830c43c31e4d273c641dedf0509ef79dd1251c4c4ed17d0') {
+    source = source.replace('const defaultNodeLimit = 100_000;\n', '')
+      .replace('function bindingTargets(program, nodeLimit)', 'function bindingTargets(program)')
+      .replace('if (++referenceVisits > nodeLimit)', 'if (++referenceVisits > 100_000)')
+      .replace('{ provenance, nodeLimit = defaultNodeLimit } = {}) {\n'
+        + "  if (!Number.isSafeInteger(nodeLimit) || nodeLimit < 0) throw new TypeError('the linked program has an invalid node limit');",
+      '{ provenance } = {}) {')
+      .replace('= bindingTargets(program, nodeLimit);', '= bindingTargets(program);')
+      .replace('  if (!Number.isSafeInteger(nodeLimit) || nodeLimit < 0 || !Number.isSafeInteger(depthLimit) || depthLimit < 0) {\n'
+        + "    throw new TypeError('the linked program has invalid structural limits');\n  }\n", '')
+      .replace('const program = decodeTypedProgramLinks(network, root, options);',
+      'const program = decodeTypedProgramLinks(network, root);');
+    assert.equal(pinCurrentNativeHostSource(source).sha256, pins.current);
+  }
   if (pins && pinCurrentNativeHostSource(source).sha256 === pins.current) {
     const previous = source.replace(
       '  for (const external of program.externals ?? []) {\n    if (!program.declarations.has(external.name)) declarations.set(external.name, external);\n  }',
