@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {replayRequiredFieldNativeHostIntervals} from './required-field-native-host-succession.mjs';
+import {restoreIssue245SourceSuccessor,typedProgramCheckerSource} from '../../experiments/issue-245/source-history.mjs';
 const root=new URL('../../',import.meta.url);
 export const CURRENT_NATIVE_HOST_REVISION='8d77e476d097448eb381ebe03e2aa173402bc03d';
 export const CURRENT_NATIVE_HOST_OUTPUT='parity/self-translation/ci-39539903548-native-host-source-history.lino';
@@ -57,6 +58,7 @@ export function readCurrentNativeHostSourceHistory(){
  * No unknown source is assigned a historical identity; runtime files stay current. */
 export function restoreCurrentNativeHostSource(source,file){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');
+  if(file===typedProgramCheckerSource)return restoreIssue245SourceSuccessor(file,source);
   if(!CURRENT_NATIVE_HOST_FILES.includes(file))return source;
   const row=readCurrentNativeHostSourceHistory().sources.find(row=>row.file===file);
   return source===row.current.source?row.previous.source:source;

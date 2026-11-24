@@ -20,6 +20,7 @@ export const typedProgramLinksValidationSource = 'js/src/typed-program-links-val
 export const asciiPredicateAssertionSource = 'js/tests/translation-ascii-text-predicates.test.js';
 export const nativeNumberObservationSource = 'parity/fixtures/original-native-number-observations.lino';
 export const booleanProjectionCheckerSource = 'js/src/translation/check.js';
+export const typedProgramCheckerSource = 'rust/src/typed_program_links/checked.rs';
 export const runtimeSourceFiles = Object.freeze([
   'rust/src/grammar/feature_runtime/mod.rs',
   'rust/src/grammar/feature_runtime/operations.rs',
@@ -120,6 +121,10 @@ const profiles = [
   ['rust/src/translation/javascript/declarations.rs', { revision: mainRevision,
     predecessor: 'dfc79a3cb7003704e29948116ff4b27f05675f8da30aba23fe7692a46ab61267',
     current: 'c05b669c3c8ffa857fc3f8f3b8ccfd7674679fb7ee06b5ca891194c417e2a8af' }],
+  [typedProgramCheckerSource, { revision: toolingTimingRevision,
+    predecessor: 'ea6b9054929ad83be10af922b26238f5b2f19066c26b435773f99218306dcd10',
+    current: 'bc936ce3708e84b4cb6bb77d1459b869694cf1448b36676ee4665cf5ac78150a',
+    successorRevision: 'faa65b77e773ffb533ee94a49e702a6d6c4c7ff4' }],
 ];
 const reviewedFiles = new Set(profiles.map(([file]) => file));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
