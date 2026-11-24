@@ -197,21 +197,13 @@ pub fn read_grammar_composition_candidate_issue(
                     {
                         let index = 0f64;
                         {
-                            let ml_s1 = self::ml_read_grammar_composition_candidate_issue_loop1(
-                                kinds,
-                                mappings,
-                                names,
-                                selectors,
-                                &(mapping),
-                                &(selector),
-                                index,
-                            );
-                            match ml_s1 {
-                                self::MlReadGrammarCompositionCandidateIssueLoop1Result::MlReadGrammarCompositionCandidateIssueLoop1Done => {
+                            let source_ml_source1_s1 = self::source_ml_temporary_read_grammar_composition_candidate_issue_loop1(kinds, mappings, names, selectors, &(mapping), &(selector), index);
+                            match source_ml_source1_s1 {
+                                self::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Result::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Done => {
                                     String::new()
                                 }
-                                self::MlReadGrammarCompositionCandidateIssueLoop1Result::MlReadGrammarCompositionCandidateIssueLoop1Return(ml_result1) => {
-                                    ml_result1
+                                self::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Result::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Return(source_ml_temporary_result1) => {
+                                    source_ml_temporary_result1.clone()
                                 }
                             }
                         }
@@ -253,32 +245,32 @@ pub fn read_grammar_composition_publication_issue(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlReadGrammarCompositionCandidateIssueLoop1Result {
-    MlReadGrammarCompositionCandidateIssueLoop1Done,
-    MlReadGrammarCompositionCandidateIssueLoop1Return(String),
+pub enum MlTemporaryReadGrammarCompositionCandidateIssueLoop1Result {
+    MlTemporaryReadGrammarCompositionCandidateIssueLoop1Done,
+    MlTemporaryReadGrammarCompositionCandidateIssueLoop1Return(String),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlReadGrammarCompositionCandidateIssueLoop3Result {
-    MlReadGrammarCompositionCandidateIssueLoop3Done,
-    MlReadGrammarCompositionCandidateIssueLoop3Return(String),
+pub enum MlTemporaryReadGrammarCompositionCandidateIssueLoop3Result {
+    MlTemporaryReadGrammarCompositionCandidateIssueLoop3Done,
+    MlTemporaryReadGrammarCompositionCandidateIssueLoop3Return(String),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_grammar_composition_candidate_issue_loop3(
+pub fn source_ml_temporary_read_grammar_composition_candidate_issue_loop3(
     names: &[String],
     mut index: f64,
     name: &str,
     mut previous: f64,
-) -> self::MlReadGrammarCompositionCandidateIssueLoop3Result {
+) -> self::MlTemporaryReadGrammarCompositionCandidateIssueLoop3Result {
     loop {
         return if previous < index {
             if ((self::ml_array::optional_at(names, self::ml_array::number_index(previous)))
-                .unwrap_or_default())
+                .unwrap_or_else(|| String::new()))
                 == name
             {
-                self::MlReadGrammarCompositionCandidateIssueLoop3Result::MlReadGrammarCompositionCandidateIssueLoop3Return(String::from("composition candidate source names collide"))
+                self::MlTemporaryReadGrammarCompositionCandidateIssueLoop3Result::MlTemporaryReadGrammarCompositionCandidateIssueLoop3Return(String::from("composition candidate source names collide"))
             } else {
                 {
                     let previous_2 = previous + 1f64;
@@ -289,20 +281,20 @@ pub fn ml_read_grammar_composition_candidate_issue_loop3(
                 }
             }
         } else {
-            self::MlReadGrammarCompositionCandidateIssueLoop3Result::MlReadGrammarCompositionCandidateIssueLoop3Done
+            self::MlTemporaryReadGrammarCompositionCandidateIssueLoop3Result::MlTemporaryReadGrammarCompositionCandidateIssueLoop3Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlReadGrammarCompositionCandidateIssueJoin2 {
-    MlReadGrammarCompositionCandidateIssueJoin2Next,
-    MlReadGrammarCompositionCandidateIssueJoin2Return(String),
+pub enum MlTemporaryReadGrammarCompositionCandidateIssueJoin2 {
+    MlTemporaryReadGrammarCompositionCandidateIssueJoin2Next,
+    MlTemporaryReadGrammarCompositionCandidateIssueJoin2Return(String),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_grammar_composition_candidate_issue_loop1(
+pub fn source_ml_temporary_read_grammar_composition_candidate_issue_loop1(
     kinds: &[String],
     mappings: &[String],
     names: &[String],
@@ -310,62 +302,62 @@ pub fn ml_read_grammar_composition_candidate_issue_loop1(
     mapping: &str,
     selector: &str,
     mut index: f64,
-) -> self::MlReadGrammarCompositionCandidateIssueLoop1Result {
+) -> self::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Result {
     loop {
         return if index < (kinds.len() as f64) {
             {
                 let kind =
                     (self::ml_array::optional_at(kinds, self::ml_array::number_index(index)))
-                        .unwrap_or_default();
+                        .unwrap_or_else(|| String::new());
                 {
                     let name =
                         (self::ml_array::optional_at(names, self::ml_array::number_index(index)))
-                            .unwrap_or_default();
+                            .unwrap_or_else(|| String::new());
                     {
                         let current_selector = (self::ml_array::optional_at(
                             selectors,
                             self::ml_array::number_index(index),
                         ))
-                        .unwrap_or_default();
-                        if name.is_empty() {
-                            self::MlReadGrammarCompositionCandidateIssueLoop1Result::MlReadGrammarCompositionCandidateIssueLoop1Return(String::from("composition candidates require nonempty source names"))
+                        .unwrap_or_else(|| String::new());
+                        if name == "" {
+                            self::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Result::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Return(String::from("composition candidates require nonempty source names"))
                         } else {
                             let ml_library_inequality_2 = ((self::ml_array::optional_at(
                                 mappings,
                                 self::ml_array::number_index(index),
                             ))
-                            .unwrap_or_default())
+                            .unwrap_or_else(|| String::new()))
                                 != mapping;
                             if ml_library_inequality_2 {
-                                self::MlReadGrammarCompositionCandidateIssueLoop1Result::MlReadGrammarCompositionCandidateIssueLoop1Return(String::from("composition requires one common source mapping"))
+                                self::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Result::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Return(String::from("composition requires one common source mapping"))
                             } else if (self::accept_grammar_composition_candidate_profile(
                                 &(kind),
                                 mapping,
                             )) {
                                 {
-                                    let ml_s2 = if mapping == "field-ranges" {
+                                    let source_ml_source1_s2 = if mapping == "field-ranges" {
                                         if ((selector).is_empty()) || (current_selector != selector)
                                         {
-                                            self::MlReadGrammarCompositionCandidateIssueJoin2::MlReadGrammarCompositionCandidateIssueJoin2Return(String::from("composition field candidates require one common exact selector"))
+                                            self::MlTemporaryReadGrammarCompositionCandidateIssueJoin2::MlTemporaryReadGrammarCompositionCandidateIssueJoin2Return(String::from("composition field candidates require one common exact selector"))
                                         } else {
-                                            self::MlReadGrammarCompositionCandidateIssueJoin2::MlReadGrammarCompositionCandidateIssueJoin2Next
+                                            self::MlTemporaryReadGrammarCompositionCandidateIssueJoin2::MlTemporaryReadGrammarCompositionCandidateIssueJoin2Next
                                         }
                                     } else {
-                                        let ml_library_inequality_1 = !current_selector.is_empty();
+                                        let ml_library_inequality_1 = current_selector != "";
                                         if ml_library_inequality_1 {
-                                            self::MlReadGrammarCompositionCandidateIssueJoin2::MlReadGrammarCompositionCandidateIssueJoin2Return(String::from("composition JSON candidates require their exact candidate form"))
+                                            self::MlTemporaryReadGrammarCompositionCandidateIssueJoin2::MlTemporaryReadGrammarCompositionCandidateIssueJoin2Return(String::from("composition JSON candidates require their exact candidate form"))
                                         } else {
-                                            self::MlReadGrammarCompositionCandidateIssueJoin2::MlReadGrammarCompositionCandidateIssueJoin2Next
+                                            self::MlTemporaryReadGrammarCompositionCandidateIssueJoin2::MlTemporaryReadGrammarCompositionCandidateIssueJoin2Next
                                         }
                                     };
-                                    match ml_s2 {
-                                            self::MlReadGrammarCompositionCandidateIssueJoin2::MlReadGrammarCompositionCandidateIssueJoin2Next => {
+                                    match source_ml_source1_s2 {
+                                            self::MlTemporaryReadGrammarCompositionCandidateIssueJoin2::MlTemporaryReadGrammarCompositionCandidateIssueJoin2Next => {
                                                 {
                                                     let previous = 0f64;
                                                     {
-                                                        let ml_s3 = self::ml_read_grammar_composition_candidate_issue_loop3(names, index, &(name), previous);
-                                                        match ml_s3 {
-                                                            self::MlReadGrammarCompositionCandidateIssueLoop3Result::MlReadGrammarCompositionCandidateIssueLoop3Done => {
+                                                        let source_ml_source1_s3 = self::source_ml_temporary_read_grammar_composition_candidate_issue_loop3(names, index, &(name), previous);
+                                                        match source_ml_source1_s3 {
+                                                            self::MlTemporaryReadGrammarCompositionCandidateIssueLoop3Result::MlTemporaryReadGrammarCompositionCandidateIssueLoop3Done => {
                                                                 {
                                                                     let index_2 = index + 1f64;
                                                                     {
@@ -374,27 +366,27 @@ pub fn ml_read_grammar_composition_candidate_issue_loop1(
                                                                     }
                                                                 }
                                                             }
-                                                            self::MlReadGrammarCompositionCandidateIssueLoop3Result::MlReadGrammarCompositionCandidateIssueLoop3Return(ml_result3) => {
-                                                                self::MlReadGrammarCompositionCandidateIssueLoop1Result::MlReadGrammarCompositionCandidateIssueLoop1Return(ml_result3)
+                                                            self::MlTemporaryReadGrammarCompositionCandidateIssueLoop3Result::MlTemporaryReadGrammarCompositionCandidateIssueLoop3Return(source_ml_temporary_result3) => {
+                                                                self::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Result::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Return(source_ml_temporary_result3.clone())
                                                             }
                                                         }
                                                     }
                                                 }
                                             }
-                                            self::MlReadGrammarCompositionCandidateIssueJoin2::MlReadGrammarCompositionCandidateIssueJoin2Return(ml_result3_2) => {
-                                                self::MlReadGrammarCompositionCandidateIssueLoop1Result::MlReadGrammarCompositionCandidateIssueLoop1Return(ml_result3_2)
+                                            self::MlTemporaryReadGrammarCompositionCandidateIssueJoin2::MlTemporaryReadGrammarCompositionCandidateIssueJoin2Return(source_ml_temporary_result3_2) => {
+                                                self::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Result::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Return(source_ml_temporary_result3_2.clone())
                                             }
                                         }
                                 }
                             } else {
-                                self::MlReadGrammarCompositionCandidateIssueLoop1Result::MlReadGrammarCompositionCandidateIssueLoop1Return(String::from("composition needs its exact candidate form"))
+                                self::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Result::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Return(String::from("composition needs its exact candidate form"))
                             }
                         }
                     }
                 }
             }
         } else {
-            self::MlReadGrammarCompositionCandidateIssueLoop1Result::MlReadGrammarCompositionCandidateIssueLoop1Done
+            self::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Result::MlTemporaryReadGrammarCompositionCandidateIssueLoop1Done
         };
     }
 }

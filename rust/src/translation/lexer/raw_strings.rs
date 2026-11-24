@@ -58,13 +58,13 @@ pub fn decode_rust_raw_string(
                             {
                                 let cursor = opening_2 + 1f64;
                                 {
-                                    let ml_s4 = crate::translation::lexer::raw_strings::ml_decode_rust_raw_string_loop6(units, opening_2, delimiters, cursor);
-                                    match ml_s4 {
+                                    let source_ml_source1_s28 = crate::translation::lexer::raw_strings::ml_decode_rust_raw_string_loop6(units, opening_2, delimiters, cursor);
+                                    match source_ml_source1_s28 {
                                         crate::translation::lexer::raw_strings::MlDecodeRustRawStringLoop6Result::Done => {
                                             crate::translation::lexer::raw_strings::RustRawString::Unterminated
                                         }
-                                        crate::translation::lexer::raw_strings::MlDecodeRustRawStringLoop6Result::Return(ml_result6) => {
-                                            *ml_result6
+                                        crate::translation::lexer::raw_strings::MlDecodeRustRawStringLoop6Result::Return(source_ml_temporary_result6) => {
+                                            *source_ml_temporary_result6
                                         }
                                     }
                                 }
@@ -87,13 +87,13 @@ fn ml_decode_rust_raw_string_loop5(units: &[f64], mut opening: f64) -> f64 {
             < (serde_json::Number::from(units.len())
                 .as_f64()
                 .expect("a source unit vector length has a finite binary64 representation")))
-            && match (
+            && (match (
                 ml_array::optional_at(units, ml_array::number_index(opening)),
                 35f64,
             ) {
                 (Some(ml_left), ml_right) => ml_left.to_bits() == ml_right.to_bits(),
                 _ => false,
-            }
+            })
         {
             {
                 let opening_2 = opening + 1f64;
@@ -134,13 +134,13 @@ fn ml_decode_rust_raw_string_loop8(
 ) -> crate::translation::lexer::raw_strings::MlDecodeRustRawStringLoop8Result {
     loop {
         if (matched < delimiters)
-            && match (
+            && (match (
                 ml_array::optional_at(units, ml_array::number_index(closing)),
                 35f64,
             ) {
                 (Some(ml_left), ml_right) => ml_left.to_bits() == ml_right.to_bits(),
                 _ => false,
-            }
+            })
         {
             {
                 let closing_2 = closing + 1f64;
@@ -176,7 +176,7 @@ fn ml_decode_rust_raw_string_loop6(
                 .expect("a source unit vector length has a finite binary64 representation"))
         {
             {
-                let ml_s6 = if match (
+                let source_ml_source1_s36 = if match (
                     ml_array::optional_at(units, ml_array::number_index(cursor)),
                     34f64,
                 ) {
@@ -205,7 +205,7 @@ fn ml_decode_rust_raw_string_loop6(
                 } else {
                     crate::translation::lexer::raw_strings::MlDecodeRustRawStringJoin7::Next
                 };
-                match ml_s6 {
+                match source_ml_source1_s36 {
                     crate::translation::lexer::raw_strings::MlDecodeRustRawStringJoin7::Next => {
                         if match (
                             ml_array::optional_at(units, ml_array::number_index(cursor)),
@@ -247,10 +247,10 @@ fn ml_decode_rust_raw_string_loop6(
                         }
                     }
                     crate::translation::lexer::raw_strings::MlDecodeRustRawStringJoin7::Return(
-                        ml_result7,
+                        source_ml_temporary_result7,
                     ) => {
-                        let ml_result7 = *ml_result7;
-                        crate::translation::lexer::raw_strings::MlDecodeRustRawStringLoop6Result::Return(Box::new(ml_result7))
+                        let source_ml_temporary_result7 = *source_ml_temporary_result7;
+                        crate::translation::lexer::raw_strings::MlDecodeRustRawStringLoop6Result::Return(Box::new(source_ml_temporary_result7))
                     }
                 }
             }

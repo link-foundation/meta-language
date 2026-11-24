@@ -11,6 +11,7 @@ import {emitRust} from '../src/translation/emit-rust.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {readGlobalConceptIdentityStyles,readGlobalConceptIdentityCompilerStyles} from './global-concept-identity-styles.mjs';
 import {readProjectData} from './project-data.mjs';
+import {restoreProductContinuationNames} from './product-continuation-style.mjs';
 
 const sourcePath=new URL('../src/global-concept-rules.js',import.meta.url);
 const decoratorsPath=new URL('../../parity/self-translation/global-concept-rules-decorators.lino',import.meta.url);
@@ -40,7 +41,19 @@ const families=[
   ])},
 ];
 for(const family of families){
-  let final=format(decorateEmitted('Rust',{source:emitRust(family.program).text},family.styles).source);
+  let raw=emitRust(family.program).text;
+  if(family.program===identity){
+    raw=restoreProductContinuationNames(raw,[
+      ['source_ml_temporary_contains_global_concept_identity_loop1','ml_contains_global_concept_identity_loop1'],
+      ['source_ml_temporary_select_global_concept_identity_loop2','ml_select_global_concept_identity_loop2'],
+      ['source_ml_source1_s1','ml_s1'],['source_ml_temporary_result1','ml_result1'],
+      ...['Done','Result','Return'].map(name=>['MlTemporaryContainsGlobalConceptIdentityLoop1'+name,'MlContainsGlobalConceptIdentityLoop1'+name]),
+    ]);
+    const comparison=/\{\s*let (source_ml_source1_comparison_operand2) = (crate::ml_array::optional_at\(&identities, crate::ml_array::number_index\(index\)\));\s*\{\s*let (source_ml_source1_comparison_operand3) = candidate\.clone\(\);\s*match \(\1\.clone\(\), \3\.clone\(\)\) \{ \(Some\(ml_left\), ml_right\) => ml_left == ml_right, _ => false \}\s*\}\s*\}/gu;
+    assert.equal([...raw.matchAll(comparison)].length,1,'the identity loop retains one ordered optional String comparison');
+    raw=raw.replace(comparison,(_,_left,operand)=>`match (${operand}, candidate.clone()) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }`);
+  }
+  let final=format(decorateEmitted('Rust',{source:raw},family.styles).source);
   for(let round=0;round<10;round++){
     const next=format(family.styles.decorate('emitter',{format:'Rust',scope:'formatted-module',source:final}).source);
     if(next===final)break;
