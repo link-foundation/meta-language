@@ -133,13 +133,13 @@ export async function verifyPublishedRelease(identity, {
   throw new Error(`npm does not serve ${identity.name}@${identity.version} after ${attempts} registry checks`);
 }
 
-async function verifyPublishedNativeHtml({ name, version, npmIntegrity, npmTarball }) {
+export async function verifyPublishedNativeHtml({ name, version, npmIntegrity, npmTarball }, { run = execFileSync } = {}) {
   const directory = await mkdtemp(path.join(tmpdir(), 'meta-language-published-html-'));
   try {
     await writeFile(path.join(directory, 'package.json'), '{"private":true}\n');
-    execFileSync('npm', [
+    run('npm', [
       'install', '--ignore-scripts', '--no-audit', '--no-fund',
-      '--cache', path.join(directory, 'npm-cache'), '--registry', 'https://registry.npmjs.org', npmTarball,
+      '--cache', path.join(directory, 'npm-cache'), '--registry', 'https://registry.npmjs.org', `${name}@${version}`,
     ], { cwd: directory, stdio: 'inherit' });
     const lock = JSON.parse(readFileSync(path.join(directory, 'package-lock.json'), 'utf8'));
     const installed = lock.packages?.[`node_modules/${name}`];
@@ -149,7 +149,7 @@ async function verifyPublishedNativeHtml({ name, version, npmIntegrity, npmTarba
     const fixture = path.join(directory, 'native-html.test.mjs');
     await copyFile(new URL('../tests/downstream-native-html.test.js', import.meta.url), fixture);
     const networkGuard = fileURLToPath(new URL('../tests/support/deny-consumer-network.mjs', import.meta.url));
-    execFileSync(process.execPath, ['--import', networkGuard, '--test', fixture], {
+    run(process.execPath, ['--import', networkGuard, '--test', fixture], {
       cwd: directory, env: {}, stdio: 'inherit',
     });
   } finally {

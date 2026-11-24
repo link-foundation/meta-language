@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { verifyReleaseProvenance } from '../scripts/release-publication.mjs';
+import { verifyPublishedNativeHtml, verifyReleaseProvenance } from '../scripts/release-publication.mjs';
 
 const release = {
   name: 'meta-language',
@@ -65,4 +65,48 @@ test('a published npm package must identify the tagged commit and official regis
   }
   await assert.rejects(verifyReleaseProvenance({ ...state, npmTarball: 'https://example.com/package.tgz' }, { fetchImpl }),
     /npm returned an unexpected registry tarball/u);
+});
+
+test('the published HTML smoke installs an exact registry version and verifies the lockfile', async () => {
+  const { name, version, npmTarball } = release;
+  const npmIntegrity = 'sha512-registry-integrity';
+  const state = { ...release, npmIntegrity };
+  const installed = { version, resolved: npmTarball, integrity: npmIntegrity };
+  const mismatches = [{ version: '1.0.1' }, { resolved: 'https://example.com/package.tgz' }, { integrity: 'sha512-different-integrity' }];
+
+  for (const mismatch of [null, ...mismatches]) {
+    let directory;
+    let smokeRuns = 0;
+    const verification = verifyPublishedNativeHtml(state, {
+      run(command, args, options) {
+        if (command === 'npm') {
+          directory = options.cwd;
+          assert.deepEqual(args, [
+            'install', '--ignore-scripts', '--no-audit', '--no-fund', '--cache', path.join(directory, 'npm-cache'),
+            '--registry', 'https://registry.npmjs.org', `${name}@${version}`,
+          ]);
+          assert.deepEqual(JSON.parse(readFileSync(path.join(directory, 'package.json'), 'utf8')), { private: true });
+          writeFileSync(path.join(directory, 'package-lock.json'), JSON.stringify({
+            packages: { [`node_modules/${name}`]: { ...installed, ...mismatch } },
+          }));
+          return;
+        }
+        smokeRuns++;
+        assert.equal(command, process.execPath);
+        assert.equal(options.cwd, directory);
+        assert.deepEqual(options.env, {});
+        assert.equal(args[0], '--import');
+        assert.equal(path.basename(args[1]), 'deny-consumer-network.mjs');
+        assert.deepEqual(args.slice(2), ['--test', path.join(directory, 'native-html.test.mjs')]);
+        assert.equal(existsSync(args[3]), true);
+      },
+    });
+    if (mismatch) {
+      await assert.rejects(verification, /did not install the registry artifact/u);
+    } else {
+      await verification;
+    }
+    assert.equal(smokeRuns, mismatch ? 0 : 1);
+    assert.equal(existsSync(directory), false);
+  }
 });
