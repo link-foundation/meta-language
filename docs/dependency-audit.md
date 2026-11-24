@@ -72,7 +72,7 @@ they are.
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 105 | 0 | 0 | 105 |
+| Published artifact contents | 106 | 0 | 0 | 106 |
 
 ## JavaScript engines
 
@@ -995,6 +995,7 @@ they are.
 | `src/data/text-location-case-folding.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/morphology/*-LICENSE.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/text-location-character-classes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/unit/owned_recursive_emission_target.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 

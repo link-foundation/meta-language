@@ -3667,7 +3667,11 @@ and receipt with those inputs. Compile-time references keep the copied fields
 and operations checked without relaxing native lints or exposing private
 production interfaces. This source extraction preserves the original algorithm
 and assertions; it does not establish semantic self-translation or native test
-execution before CI runs.
+execution before CI runs. A mutation test that needs the actual private
+production values may be declared in the owning module with `#[cfg(test)]`
+and a relative `#[path]` to its file under `rust/tests/`. The source check
+requires the resolved file to live under `rust/tests/` and rejects test bodies
+under `rust/src/`.
 
 Expression-dispatch frame extraction records byte-exact original match arms
 and parent reconstruction in

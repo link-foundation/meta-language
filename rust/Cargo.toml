@@ -110,6 +110,7 @@ include = [
     "src/translation/runtime/array-*.txt",
     "src/data/language-trigrams.lino",
     "examples/**/*.rs",
+    "tests/unit/owned_recursive_emission_target.rs",
     "README.md",
     "/LICENSE",
     "CHANGELOG.md",

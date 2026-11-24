@@ -8,7 +8,7 @@ import { checkProjectData, writeProjectData, readProjectData } from './project-d
 import { asciiPredicateAssertionSource, readIssue245SourcePair } from '../../experiments/issue-245/source-history.mjs';
 import { ASCII_HOST_REVISION, ASCII_HOST_ADDITIONS, ASCII_HOST_REGISTRATIONS,
   ASCII_HOST_EDITS, ASCII_ASSERTION_EDITS, asciiHostPin, replayAsciiHostEdits, verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
-import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
+import { restoreAsciiNativeArtifact, restoreAsciiNativeHostSource } from './ascii-native-source-succession.mjs';
 
 const root = new URL('../../', import.meta.url);
 
@@ -35,7 +35,7 @@ export function generateAsciiTextPredicateHostHistory({ check = false, assertion
     const source = blob.toString('utf8');
     assert.deepEqual(Buffer.from(source), blob);
     const replay = replayAsciiHostEdits(source, specification.changes);
-    assert.equal(restoreRequiredFieldNativeHostSource(readFileSync(new URL(specification.path, root), 'utf8'), specification.path, 'ASCII character host'), replay.source,
+    assert.equal(restoreAsciiNativeHostSource(readFileSync(new URL(specification.path, root), 'utf8'), specification.path), replay.source,
       'capture the exact finite reviewed successor, without unrelated source drift');
     return { path: specification.path, source, certificate, current: asciiHostPin(replay.source), edits: replay.edits };
   });
@@ -44,7 +44,7 @@ export function generateAsciiTextPredicateHostHistory({ check = false, assertion
     return { path, source, pin: asciiHostPin(source) };
   });
   const artifactPath = 'parity/self-translation/ascii-text-predicate-rules-native.lino';
-  const artifactBytes = readFileSync(new URL(artifactPath, root));
+  const artifactBytes = restoreAsciiNativeArtifact(readFileSync(new URL(artifactPath, root), 'utf8'), artifactPath);
   const artifact = readProjectData(new URL(artifactPath, root));
   const archive = { schemaVersion: 1, model: 'Rust ASCII character query host replay 1',
     revision: ASCII_HOST_REVISION, coordinateUnit: 'UTF-16 code units', hosts, additions,

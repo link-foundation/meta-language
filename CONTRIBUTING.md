@@ -62,8 +62,9 @@ cleanup and low-disk escalation, and records the scope in the cleanup receipt.
   links-network model internally.
 - Prefer explicit metadata links or typed metadata over side tables.
 - Add focused tests for each new behavior.
-- Keep Rust tests under `tests/`; CI rejects `#[test]`, `#[cfg(test)]`, and
-  `mod tests` markers under `src/`.
+- Keep Rust test bodies under `tests/`. When a test needs access to private
+  production values, a private `#[cfg(test)]` module in `src/` may point to
+  its Rust file under `tests/` using a relative `#[path]`.
 - Use Rust documentation comments for public APIs.
 - Keep generated experiments in `experiments/` and real usage examples in
   `examples/`.

@@ -117,6 +117,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
       'rust/src/translation/javascript/infer/arrays.rs',
       'rust/src/translation/javascript_record_parameter_rules/part_3.rs',
       'rust/src/translation/reference_identity_rules/part_1.rs',
+      'rust/src/translation/rust/expressions.rs',
       'rust/src/translation/rust_literal_match_rules/part_1.rs',
       'rust/src/typed_program_links/checked.rs',
     ].map(path=>({path,revision:baseline})),

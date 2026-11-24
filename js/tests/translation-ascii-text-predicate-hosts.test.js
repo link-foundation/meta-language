@@ -3,8 +3,9 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { asciiPredicateAssertionSource, restoreIssue245Source } from '../../experiments/issue-245/source-history.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
-import { verifyAsciiTextPredicateHosts } from '../scripts/ascii-text-predicate-host-history.mjs';
+import { asciiHostPin, verifyAsciiTextPredicateHosts } from '../scripts/ascii-text-predicate-host-history.mjs';
 import { generateAsciiTextPredicateHosts } from '../scripts/generate-ascii-text-predicate-hosts.mjs';
+import { restoreAsciiNativeArtifact, restoreAsciiNativeHostSource } from '../scripts/ascii-native-source-succession.mjs';
 
 test('complete ASCII native source hosts preserve certified predecessors actual ABI and registered test ownership', () => {
   const { archive, files } = generateAsciiTextPredicateHosts({ check: true });
@@ -16,6 +17,15 @@ test('complete ASCII native source hosts preserve certified predecessors actual 
   const assertion = readFileSync(new URL(`../../${asciiPredicateAssertionSource}`, import.meta.url), 'utf8');
   assert.equal(restoreIssue245Source(asciiPredicateAssertionSource, assertion), archive.assertionCorrection.current.source);
   assert.throws(() => restoreIssue245Source(asciiPredicateAssertionSource, assertion + '\n'), /unreviewed complete source/u);
+  const { path, pin } = archive.sourceArtifact;
+  const artifact = readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
+  assert.deepEqual(asciiHostPin(restoreAsciiNativeArtifact(artifact, path)), pin);
+  assert.equal(restoreAsciiNativeArtifact(artifact + '\n', path), artifact + '\n');
+  const expression = files.find(row => row.path === 'rust/src/translation/rust/expressions.rs');
+  const host = readFileSync(new URL('../../' + expression.path, import.meta.url), 'utf8');
+  const cast = readFileSync(new URL('../../rust/src/translation/rust/expressions/cast.rs', import.meta.url), 'utf8');
+  assert.equal(restoreAsciiNativeHostSource(host, expression.path, cast), expression.source);
+  assert.notEqual(restoreAsciiNativeHostSource(host, expression.path, cast.replace('self.unary(', 'self.primary(')), expression.source);
 });
 
 test('unknown host edits source corruption and forged predecessor certificates cannot produce a reviewed source view', () => {
