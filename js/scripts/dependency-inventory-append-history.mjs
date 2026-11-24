@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
+import {isDeepStrictEqual} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {readProjectData} from './project-data.mjs';
 import {structuredDataToLino,readStructuredDataLino} from '../src/structured-data-links.js';
@@ -46,7 +47,15 @@ export function verifyDependencyInventoryAppends(inventory,declarations,history)
   const before=readStructuredDataLino(history.inventory.source);
   assert.equal(before.items.length,745);
   assert.ok(inventory.items.length>=before.items.length);
-  const prefix={...inventory,items:inventory.items.slice(0,before.items.length)};
+  // The existing pinned action now also runs native observations in rust.yml.
+  // Restore the predecessor only when that declaration is the sole difference.
+  const prefix={...inventory,items:inventory.items.slice(0,before.items.length).map((entry,index)=>{
+    const previous=before.items[index];
+    if(previous.id==='action dtolnay/rust-toolchain@1.99.0'&&isDeepStrictEqual(entry,{
+      ...previous,declaredIn:[...previous.declaredIn,'.github/workflows/rust.yml'],
+    }))return previous;
+    return entry;
+  })};
   assert.equal(structuredDataToLino(prefix),history.inventory.source,'every complete original item, audit fact, order and alias stays exact');
   const ids=new Set(prefix.items.map(row=>row.id));
   for(const entry of inventory.items.slice(before.items.length)){

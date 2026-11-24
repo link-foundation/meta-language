@@ -100,8 +100,8 @@ const policy={
         "sha256": "b565ef42762f2ccecce0b657a241fce87debbcce645b88cc93e3bbf5954dc511"
       },
       "current": {
-        "bytes": 4363,
-        "sha256": "331f2216a841436adc1c630ed89ec248bd843982735196c8de4e8a050be88cb1"
+        "bytes": 4846,
+        "sha256": "9547b0f41e02730fa568629f0951e317e4bab3e089b2b761642f27224c6c8535"
       },
       "edits": [
         {
@@ -115,6 +115,14 @@ const policy={
         {
           "before": "=readDependencyInventoryAppendHistory()) {\n  assert.equal(digest(structuredDataToLino(history)),policyHash);\n  for(const [capture,revision,path]of [[history.inventory,inventoryRevision,'parity/dependency-inventory.lino'],\n    [history.test,testRevision,'js/tests/issue-195-evidence-node-dependency.test.js']]){\n    verifyGitArtifactCertificate(capture.certificate,Buffer.from(capture.source),{revision,path});\n  }\n  assert.deepEqual(checkInventory(inventory,declarations),[],'the actual complete current declaration corpus stays checked');",
           "after": ") {\n  // Impossible current inventories cannot select a historical view. Reject\n  // them before decoding its complete certificate/source packet; successful\n  // inputs still run every original historical authentication below.\n  assert.deepEqual(checkInventory(inventory,declarations),[],'the actual complete current declaration corpus stays checked');\n  if(history===undefined)history=readDependencyInventoryAppendHistory();\n  assert.equal(digest(structuredDataToLino(history)),policyHash);\n  for(const [capture,revision,path]of [[history.inventory,inventoryRevision,'parity/dependency-inventory.lino'],\n    [history.test,testRevision,'js/tests/issue-195-evidence-node-dependency.test.js']]){\n    verifyGitArtifactCertificate(capture.certificate,Buffer.from(capture.source),{revision,path});\n  }"
+        },
+        {
+          "before": "import {readFileSync} from 'node:fs';\n",
+          "after": "import {readFileSync} from 'node:fs';\nimport {isDeepStrictEqual} from 'node:util';\n"
+        },
+        {
+          "before": "  const prefix={...inventory,items:inventory.items.slice(0,before.items.length)};\n",
+          "after": "  // The existing pinned action now also runs native observations in rust.yml.\n  // Restore the predecessor only when that declaration is the sole difference.\n  const prefix={...inventory,items:inventory.items.slice(0,before.items.length).map((entry,index)=>{\n    const previous=before.items[index];\n    if(previous.id==='action dtolnay/rust-toolchain@1.99.0'&&isDeepStrictEqual(entry,{\n      ...previous,declaredIn:[...previous.declaredIn,'.github/workflows/rust.yml'],\n    }))return previous;\n    return entry;\n  })};\n"
         }
       ]
     }

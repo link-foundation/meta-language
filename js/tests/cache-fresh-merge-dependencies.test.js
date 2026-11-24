@@ -68,3 +68,21 @@ test('native partition artifact recovery retries the identical complete payload 
   for(const step of [first,retry])assert.match(step.text,/if-no-files-found: error/u);
   assert.notEqual(removePartitionUploadRetry(source),source);
 });
+
+test('native Rust observations use the supported compiler and lint still tracks stable', () => {
+  const workflow = '.github/workflows/rust.yml';
+  const source = readFileSync(file, 'utf8');
+  const current = new Map(parseWorkflow(source).map(job => [job.id, job]));
+  for (const name of ['fresh-merge', 'native-grammar-outcome-experiment', 'test', 'coverage']) {
+    const step = current.get(name).steps.find(step => step.name === 'Setup Rust');
+    assert.match(step.text, /dtolnay\/rust-toolchain@1\.99\.0\b/u, name);
+  }
+  for (const name of ['check', 'lint']) {
+    const step = current.get(name).steps.find(step => step.name === 'Setup Rust');
+    assert.match(step.text, /dtolnay\/rust-toolchain@stable\b/u, name);
+  }
+  assert.notEqual(restoreRustObservationToolchain(source, workflow), source);
+  const changed = source.replace('dtolnay/rust-toolchain@1.99.0', 'dtolnay/rust-toolchain@1.100.0');
+  assert.notEqual(changed, source);
+  assert.equal(restoreRustObservationToolchain(changed, workflow), changed);
+});

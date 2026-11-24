@@ -14,7 +14,6 @@ import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
-import { restoreRustObservationToolchain } from '../scripts/current-ci-repair-source-history.mjs';
 import { lineCoverage, mergeLcov, renderLcov } from '../../scripts/merge-lcov.mjs';
 import { partitionGroupFiles, partitionTests, testFiles, TEST_GROUPS } from '../scripts/test-groups.mjs';
 import {readFrozenToolingTestGroups} from '../scripts/tooling-frozen-source-history.mjs';
@@ -520,24 +519,6 @@ test('Rust test jobs install the JavaScript dependencies used by the shared repo
       assert.ok(run > install, `${id} installs before executing Rust tests`);
     }
   }
-});
-
-test('native Rust observations use the supported compiler and lint still tracks stable', () => {
-  const file = '.github/workflows/rust.yml';
-  const source = read(file);
-  const current = new Map(parseWorkflow(source).map(job => [job.id, job]));
-  for (const name of ['fresh-merge', 'native-grammar-outcome-experiment', 'test', 'coverage']) {
-    const step = current.get(name).steps.find(step => step.name === 'Setup Rust');
-    assert.match(step.text, /dtolnay\/rust-toolchain@1\.99\.0\b/u, name);
-  }
-  for (const name of ['check', 'lint']) {
-    const step = current.get(name).steps.find(step => step.name === 'Setup Rust');
-    assert.match(step.text, /dtolnay\/rust-toolchain@stable\b/u, name);
-  }
-  assert.notEqual(restoreRustObservationToolchain(source, file), source);
-  const changed = source.replace('dtolnay/rust-toolchain@1.99.0', 'dtolnay/rust-toolchain@1.100.0');
-  assert.notEqual(changed, source);
-  assert.equal(restoreRustObservationToolchain(changed, file), changed);
 });
 
 test('both self-translation acceptance suites install Clippy for the generated Rust', () => {
