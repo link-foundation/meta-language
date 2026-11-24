@@ -103,11 +103,9 @@ test('the complete kernel executes after public text and binary Links reload wit
 
 test('historical public collisions remain inspectable while live constructors, text and references reject unsafe identities',()=>{
  for(const control of [policy.feasibility.growth,policy.feasibility.arrayFrom])for(const options of [{},{referenceSemantics:true},{referenceSemantics:false}]){
-  // Keep both the original reference refusal and the recorded CI owned-read
-  // diagnostic. Explicit reference selection retains the actual heap operation.
-  const profile=options.referenceSemantics===true?'reference':options.referenceSemantics===false?'owned':'automatic';
-  const expected=assertionProfiles.feasibility.growthProfiles.find(row=>row.profile===profile).expected;
-  const current=control===policy.feasibility.growth?assertionProfiles.feasibility[expected]:control;
+  // All active profiles reach the actual unguarded argument read. The
+  // earlier reference refusal remains recorded in the original policy.
+  const current=control===policy.feasibility.growth?assertionProfiles.feasibility.currentGrowth:control;
   assert.throws(()=>checkProgram(parseJavaScript(control.source,options)),error=>error.kind===current.kind&&error.reason===current.reason&&error.span.start===current.span.start&&error.span.end===current.span.end);
  }
  const history=policy.feasibility.historicalPublicLinkId,context={};

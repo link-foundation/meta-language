@@ -59,19 +59,11 @@ test('the experimental model remains explicit while original fresh collectors al
   const source = freshNumberArrayCollectorFixtures()[0].source;
   assert.throws(() => createFreshNumberArrayCollector(source), /select the exact experimental source model/u);
   assert.throws(() => createFreshNumberArrayCollector(source, { model: 'another collector' }), /select the exact/u);
-  // CI 38911564946 job 117015296609 showed that the former unconditional
-  // default refusal is obsolete for owned construction. Explicit reference
-  // selection still retains the original operation and its exact refusal.
+  // The explicit reference lowering now keeps the original ordered heap append.
+  // Owned construction and the explicit experimental model remain available.
   for (const entry of freshNumberArrayCollectorFixtures()) for (const referenceSemantics of [undefined, true, false]) {
-    if (referenceSemantics === true) {
-      const operation = /\b[A-Za-z][A-Za-z_0-9]*\.push\([^;]+\)/u.exec(entry.source);
-      assert.ok(operation, entry.id);
-      assert.throws(() => checkProgram(parseJavaScript(entry.source, { referenceSemantics })), error => error.kind === 'unsupported'
-        && error.reason === 'method call .push(): .push() has no checked operation on array:float'
-        && error.span.start === operation.index && error.span.end === operation.index + operation[0].length, entry.id);
-      continue;
-    }
     const program = checkProgram(parseJavaScript(entry.source, { referenceSemantics }));
+    assert.equal(program.referenceSemantics === true, referenceSemantics === true, entry.id);
     assert.deepEqual(execute(entry.source, entry.name, entry.input), entry.expected);
     assert.deepEqual(execute(emitJavaScript(program).text, entry.name, entry.input), entry.expected);
     const packet = encodeTypedProgramLinks(program);
