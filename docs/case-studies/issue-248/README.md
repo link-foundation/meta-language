@@ -271,6 +271,23 @@ regressions passed on Node.js 22.23.5. The naming check retained 28,605 source
 names and all 25 WordNet cases. The protected-scope check confirmed all 474
 requirements and 495 fixture identities against the default branch.
 
+The next run at `87a62636a` found the Rust 1.99.0 workflow pin missing from
+the dependency inventory's list of declaring files. Two downstream
+assertions reported the missing path at log lines 744–797, and two historical
+inventory assertions reproduced it at lines 1260–1342. The third tooling
+partition reproduced the same error at lines 772–1022, and the test for
+both certified predecessors reproduced it at lines 913–938 of the fourth.
+The declaration refresh adds that one path and retains all 819 entries
+and the existing audit date. The verifiers check the complete current
+declarations, validate the exact addition, and reconstruct both certified
+inventories byte for byte. The regression rejects any extra declaring path
+even when it is added to both the current inventory and the declaration input.
+[Downstream job](https://github.com/link-foundation/meta-language/actions/runs/45288277212/job/138090162126),
+[first tooling job](https://github.com/link-foundation/meta-language/actions/runs/45288277212/job/138090162107),
+[third tooling job](https://github.com/link-foundation/meta-language/actions/runs/45288277212/job/138090163114),
+[fourth tooling job](https://github.com/link-foundation/meta-language/actions/runs/45288277212/job/138090162763),
+[historical inventory tests](../../../js/tests/issue-195-evidence-dependency-appends.test.js)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |

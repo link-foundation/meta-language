@@ -44,10 +44,13 @@ export const nativeRepairNamingSources = Object.freeze([
   'rust/tests/unit/translation_surface_reference_analysis.rs',
   'js/tests/support/platform-test-deadline-history.js',
   'rust/tests/unit/ci-cd/workflow_release.rs',
+  'js/scripts/dependency-inventory-append-history.mjs',
+  'js/scripts/generate-dependency-inventory-order-history.mjs',
+  'js/tests/issue-195-evidence-dependency-appends.test.js',
 ]);
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = 'a1c50f5714fe428fa023255c180ac33792bf61dc82557ed187749eeda6105b14';
+const archiveDigest = 'c1de8ff0897d216d5d3e539ee8d86296505c0dd375dfbb59a9650c236103a22f';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
