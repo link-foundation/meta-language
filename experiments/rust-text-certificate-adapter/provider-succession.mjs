@@ -30,10 +30,11 @@ export const OVERLAY_PROVIDER_APPEND_REVIEW=Object.freeze({
 });
 export const OVERLAY_PROVIDER_REFERENCE_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-reference-provider-review.lino',import.meta.url)));
 export const OVERLAY_PROVIDER_EXTERNAL_BINDING_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-external-binding-provider-review.lino',import.meta.url)));
+export const OVERLAY_PROVIDER_GRAPH_LIMIT_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-graph-limit-provider-review.lino',import.meta.url)));
 export const OVERLAY_PROVIDER_REVIEWS=Object.freeze([
-  OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_EXTERNAL_BINDING_REVIEW,
+  OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_EXTERNAL_BINDING_REVIEW,OVERLAY_PROVIDER_GRAPH_LIMIT_REVIEW,
 ]);
-const packetSha256='c2812c8fef3af20a70c50d3f50e6cfe825562172a7e7dac953116af04838ca36';
+const packetSha256='d319725285637fee2d1783a50003b7bf754e0c5fe7e8893608660a155b3de8bc';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:hash(value)});
 const exactKeys=(value,keys)=>assert.deepEqual(Object.keys(value).sort(),[...keys].sort());
