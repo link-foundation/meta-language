@@ -41,7 +41,10 @@ test('conformance adapters retain both complete original guard modules and every
     ['js/tests/support/platform-test-deadline-history.js',"\nimport {restoreConformancePartitionHistory} from './conformance-partition-history.js';\n","  assert.equal(typeof source,'string');",'  source=restoreConformancePartitionHistory(source);'],
     ['js/tests/issue-195-evidence-translation-feedback.test.js',"\nimport {restoreConformancePartitionHistory} from './support/conformance-partition-history.js';\n",'function assertInitialTranslationShards(text) {','  text=restoreConformancePartitionHistory(text);'],
   ]){
-    const current=restoreCiRepairSourceHistory(file,readFileSync(new URL(file,root),'utf8'));assert.ok(current.endsWith(addition));
+    const active=readFileSync(new URL(file,root),'utf8');
+    assert.ok(active.includes(addition.trim()),`${file} continues to import the conformance adapter`);
+    const current=restoreDependencyWorkflowSource(active,file,'3f72318d4d63e26323f86b50dcf389d5a531e4c4');
+    assert.ok(current.endsWith(addition));
     const changed=marker+'\n'+call;assert.equal(current.split(changed).length,2);
     const previous=current.slice(0,-addition.length).replace(changed,marker);
     assert.ok(Buffer.from(previous).equals(execFileSync('git',['show',revision+':'+file],{cwd:root,maxBuffer:128*1024})));
@@ -51,3 +54,4 @@ test('conformance adapters retain both complete original guard modules and every
 import {restoreRawContractPartitionHistory} from './support/raw-contract-partition-history.js';
 
 import {restoreCiRepairSourceHistory} from '../scripts/ci-repair-source-history.mjs';
+import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';

@@ -371,6 +371,19 @@ pub fn oracle_rows(language: &tree_sitter::Language, source: &str) -> (Vec<Value
     (rows, tree.root_node().has_error())
 }
 
+/// Loads the exact independent parser registered for this native port.
+pub fn pinned_oracle(language: &str) -> tree_sitter::Language {
+    let grammar = &meta_language::oracle_grammar_provenance(language)[0];
+    native_source_oracles::baseline(&grammar.id, &grammar.version)
+        .unwrap_or_else(|| {
+            panic!(
+                "unregistered {language} oracle {} {}",
+                grammar.id, grammar.version
+            )
+        })
+        .into()
+}
+
 /// Checks that the pinned oracle still gives the fixture: the rows of every
 /// match, and a recovery from every divergence and rejection.
 pub fn oracle_agrees(language: &tree_sitter::Language, fixture: &Value) {

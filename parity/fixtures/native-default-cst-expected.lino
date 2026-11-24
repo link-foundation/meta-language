@@ -1620,7 +1620,7 @@
 (1620: 1627 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (1621: (meta: (t: semantic) (n: 1) (term: string%20value) (def: cmake) (lang: meta-language%20structured%20data)))
 (1622: 1624 1626 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
-(1623: (meta: (t: semantic) (n: 1) (term: string%20value) (def: v0.7.5) (lang: meta-language%20structured%20data)))
+(1623: (meta: (t: semantic) (n: 1) (term: string%20value) (def: v0.7.6) (lang: meta-language%20structured%20data)))
 (1624: 19 1623 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1625: (meta: (t: semantic) (n: 1) (term: string%20value) (def: ece92c2e3fbf15634fb90fab91d0af749348c069d27208eeb10dcdd4e77fe5a2) (lang: meta-language%20structured%20data)))
 (1626: 22 1625 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))

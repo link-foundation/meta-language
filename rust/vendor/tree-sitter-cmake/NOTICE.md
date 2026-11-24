@@ -3,19 +3,17 @@
 `src/parser.c.gz` and the `src/tree_sitter` headers are the unmodified
 generated grammar assets of
 [`uyha/tree-sitter-cmake`](https://github.com/uyha/tree-sitter-cmake)
-revision `e997bd0b275ca525ce9befecedf5299031183661` (`v0.7.5`),
-byte-identical to the `src` files of the `tree-sitter-cmake` 0.7.5 crate.
+revision `a3ec2b2144daf7132e7ee824d8cab9610523d10f` (`v0.7.6`),
+with the same parser and header bytes as `v0.7.5`.
 `src/scanner.c` is that revision's scanner with `scanner-state.patch` applied.
 
-Upstream's external scanner allocates its state with `ts_malloc` and never
-initialises the remembered token, and deserialising an empty state resets only
-the bracket level. The first scan therefore reads whatever the allocator
-returned: a zero token means "a bracket argument is open", so during error
-recovery the scanner emitted a spurious `bracket_argument_content` and the
-recovery tree of `project(Demo\nset(X 1)\n` had an `ERROR` root on macOS and
-Windows but `source_file` with a missing `)` on Linux and in WebAssembly. The
-patch starts every parse with no bracket open; upstream's test corpus passes
-with it (`experiments/issue-195-cmake-scanner` reproduces all three trees).
+The `v0.7.5` scanner read uninitialised state, so it could emit a spurious
+`bracket_argument_content` and recover `project(Demo\nset(X 1)\n` differently
+across platforms. `v0.7.6` zero-initialises the state, where zero represents an
+open bracket. The patch resets both fields to the explicit no-bracket state
+and retains the established include paths. The patched scanner bytes match
+the previous build, so the published WebAssembly oracle still uses the same
+parser and scanner inputs.
 `node js/scripts/build-vendored-grammars.mjs --only cmake` clones the
 revision, applies the patch and requires its `src/parser.c` to equal
 `src/parser.c.gz`, so both runtimes compile the same scanner.

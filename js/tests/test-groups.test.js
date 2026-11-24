@@ -22,6 +22,55 @@ test('CI file partitions preserve every original native, conformance and transla
   for (const shard of ['0/3', '4/3', '1/0', '1/999', '1.5/3', '1/2x']) assert.throws(() => partitionGroupFiles(['a', 'b', 'c'], shard), /test group shard/u);
 });
 
+test('eight translation shards balance observed whole-file costs and keep every test exactly once', () => {
+  const files = partitionTests(testFiles()).groups.translation;
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45186623729-translation-wall-costs.lino', import.meta.url));
+  const actual = Array.from({ length: 8 }, (_, index) => partitionGroupFiles(files, `${index + 1}/8`));
+  assert.deepEqual(actual.flat().sort(), files);
+  const observedCosts = new Map(costs.entries.map(({ file, milliseconds }) => [file.slice('js/tests/'.length), milliseconds]));
+  const estimates = actual.map(shard => shard.reduce((total, file) => total + (observedCosts.get(file) ?? 0), 0));
+  assert.ok(Math.max(...estimates) <= 600_000, `observed test costs by shard: ${estimates.join(', ')} ms`);
+  assert.deepEqual(costs.logs.filter(log => !log.completed).map(log => log.job), [137641360015, 137733805489]);
+
+  const historicalCosts = readProjectData(new URL('../../parity/fixtures/ci-45080642295-translation-costs.lino', import.meta.url));
+  const historical = partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), 6, { costs: historicalCosts });
+  for (const [index, shard] of historical.entries()) {
+    assert.deepEqual(partitionGroupFiles(files, `${index + 1}/6`), shard.map(file => file.slice('js/tests/'.length)));
+  }
+});
+
+test('four tooling shards keep every file while balancing observed whole-file costs', () => {
+  const files = partitionTests(testFiles()).groups.tooling;
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45186623729-tooling-wall-costs.lino', import.meta.url));
+  const actual = Array.from({ length: 4 }, (_, index) => partitionGroupFiles(files, `${index + 1}/4`));
+  assert.deepEqual(actual.flat().sort(), files);
+  const observedCosts = new Map(costs.entries.map(({ file, milliseconds }) => [file.slice('js/tests/'.length), milliseconds]));
+  assert.ok(files.filter(file => observedCosts.has(file)).length >= files.length * 0.9);
+  const estimates = actual.map(shard => shard.reduce((total, file) => total + (observedCosts.get(file) ?? 0), 0));
+  assert.ok(Math.max(...estimates) <= 600_000, `observed tooling costs by shard: ${estimates.join(', ')} ms`);
+  assert.deepEqual(costs.logs.filter(log => !log.completed).map(log => log.job), [137733805955]);
+});
+
+test('tooling spreads changed and unmeasured files before balancing measured work', () => {
+  const sources = new Map([['slow.js', 'a'.repeat(100)], ['fast.js', 'b'.repeat(100)], ['changed.js', 'c'.repeat(100)]]);
+  const entries = [...sources].map(([file, source], index) => ({
+    file, bytes: Buffer.byteLength(source), sha256: createHash('sha256').update(source).digest('hex'),
+    milliseconds: [1_000, 600, 900][index],
+  }));
+  const costs = { schemaVersion: 1, model: 'observed CI workload scheduling costs 1', run: 39615628279,
+    revision: '8bc0ef9725388c7927acf1854870bf46f5e365be', entries };
+  sources.set('changed.js', 'c');
+  sources.set('unmeasured.js', 'dd');
+  const files = [...sources.keys()];
+  const options = { costs, readSource: file => sources.get(file) };
+  const unmeasuredOwners = shards => shards.filter(shard => shard.includes('changed.js') || shard.includes('unmeasured.js')).length;
+  assert.equal(unmeasuredOwners(partitionMeasuredWorkloads(files, 2, options)), 1);
+  const spread = partitionMeasuredWorkloads(files, 2, { ...options, prioritizeUnmeasured: true });
+  assert.equal(unmeasuredOwners(spread), 2);
+  assert.deepEqual(spread.flat().sort(), [...files].sort());
+  assert.deepEqual(spread, partitionMeasuredWorkloads([...files].reverse(), 2, { ...options, prioritizeUnmeasured: true }));
+});
+
 test('measured workload scheduling balances complete sources and rejects duplicate owners or malformed costs',()=>{
   const sources=new Map([['slow-a.js','a'],['slow-b.js','b'],['fast-a.js','c'],['fast-b.js','d']]);
   const entries=[300,290,10,10].map((milliseconds,index)=>{const [file,source]=[...sources][index];return{file,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex'),milliseconds};});
@@ -135,6 +184,20 @@ test('four conformance jobs preserve each original two-job partition under its u
   }
 });
 
+test('eight current conformance jobs preserve each four-job partition and its configured deadline', async () => {
+  const workflow = await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
+  const tests = workflow.slice(workflow.indexOf('\n  tests:\n'), workflow.indexOf('\n  package-checks:\n'));
+  assert.match(tests, /timeout-minutes: 15\n/u);
+  const shards = [...tests.matchAll(/\{group: conformance, partition: (\d+), shards: (\d+)\}/gu)]
+    .map(([, index, count]) => `${index}/${count}`);
+  assert.deepEqual(shards, Array.from({ length: 8 }, (_, index) => `${index + 1}/8`));
+  const files = partitionTests(testFiles()).groups.conformance;
+  for (let index = 1; index <= 4; index++) {
+    assert.deepEqual([...partitionGroupFiles(files, shards[index - 1]), ...partitionGroupFiles(files, shards[index + 3])].sort(),
+      partitionGroupFiles(files, `${index}/4`));
+  }
+});
+
 test('the test group guard reports unassigned, ambiguous and empty groups', () => {
   const problems = partitionProblems(partitionTests(['grammar-a.test.js', 'unknown.test.js']));
   assert.ok(problems.includes('tests/unknown.test.js is in no test group of scripts/test-groups.mjs'));
@@ -235,7 +298,10 @@ test('CI report assertions consume every exact-commit shard and gate Rust and de
     assert.ok(required(parsed.get(name)).includes('self-translation-report-validation'), name);
   }
   assert.match(parsed.get('js').header, /external_reports: true/u);
-  assert.doesNotMatch(parsed.get('rust').header, /always\(\)|cancelled\(\)/u);
+  const rust = parsed.get('rust').header;
+  assert.doesNotMatch(rust, /always\(\)/u);
+  assert.match(rust, /!cancelled\(\) && needs\.changes\.result == 'success' && needs\.js\.result == 'success'/u);
+  assert.match(rust, /!\(inputs\.automated_translation \|\| vars\.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true'\) \|\| needs\.self-translation-report-validation\.result == 'success'/u);
   const seen = new Set();
   const active = new Set();
   const visit = id => {
@@ -262,6 +328,7 @@ test('standalone JavaScript runs produce and validate the same report shards', a
   assert.match(producers.steps.map(step => step.text).join('\n'), /name: self-translation-report-\$\{\{ github.sha \}\}-\$\{\{ matrix.shard \}\}/u);
   assert.match(assertions.header, /needs: reports/u);
   assert.match(assertions.header, /!cancelled\(\) && !inputs.external_reports/u);
+  assert.match(assertions.header, /inputs\.automated_translation \|\| vars\.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true'/u);
   for (const job of [producers, assertions]) {
     const checkout = job.steps.find(step => /actions\/checkout@/u.test(step.text));
     assert.match(checkout.text, /ref: \$\{\{ github.sha \}\}/u);

@@ -1,10 +1,6 @@
 MIT License
 
-The `tree-sitter-sequel` Cargo manifest declares `license = "MIT"` but ships
-no license file; this notice reproduces the MIT terms for its authors.
-Repository: https://github.com/derekstride/tree-sitter-sql.git
-
-Copyright (c) derek stride
+Copyright (c) 2021 Derek Stride
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

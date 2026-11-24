@@ -1,9 +1,34 @@
 // Automatic immutable source capture; reviewed edits select historical inputs
 // without replacing any original assertion, declaration or current inventory gate.
 import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {readStructuredDataLino} from '../src/structured-data-links.js';
+import {collectDependencies} from './dependency-inventory.mjs';
+
+const root=new URL('../../',import.meta.url);
+const revision='ec9f4efb0e9ef936114e09823981352f6db13700';
+
+/** Recollect from the complete declaration inputs before the release refresh. */
+export function collectDependencyDeclarationsBeforeRefresh(inventory, sourceRevision = revision) {
+  const declaredPaths=new Set(inventory.items.flatMap(item=>item.declaredIn));
+  const packageInputs=/^(?:\.github\/workflows\/[^/]+\.ya?ml|(?:experiments|rust\/oracles)\/.+\/(?:Cargo\.toml|Cargo\.lock|package\.json|lean-toolchain)|js\/scripts\/(?:build|generate)-[^/]+\.mjs|rust\/scripts\/.+\.(?:sh|rs)|(?:js\/|rust\/)?Dockerfile)$/u;
+  const files=execFileSync('git',['ls-tree','-r','--name-only','-z',sourceRevision],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024})
+    .split('\0').filter(file=>declaredPaths.has(file)||packageInputs.test(file));
+  const scratch=mkdtempSync(join(tmpdir(),'meta-language-dependency-declarations-'));
+  try{
+    const inputs=execFileSync('git',['archive',sourceRevision,'--',...files],{cwd:root,maxBuffer:16*1024*1024});
+    execFileSync('tar',['-xf','-','-C',scratch],{input:inputs});
+    return collectDependencies(scratch);
+  }finally{
+    rmSync(scratch,{recursive:true,force:true});
+  }
+}
 
 export function generateDependencyInventoryAppendHistory({check=false}={}) {
   const capture=(revision,path)=>{const {certificate,blob}=captureGitArtifactCertificate(revision,path);return{certificate,source:blob.toString('utf8')};};
@@ -28,6 +53,15 @@ export function generateDependencyInventoryAppendHistory({check=false}={}) {
   for(const edit of policy.edits){assert.equal(current.split(edit.before).length,2);current=current.replace(edit.before,()=>edit.after);}
   const file=new URL('../../parity/fixtures/dependency-inventory-append-history.lino',import.meta.url);
   if(check)checkProjectData(file,policy);else writeProjectData(file,policy);
+
+  const predecessor=capture(revision,'parity/dependency-inventory.lino');
+  const initial=readStructuredDataLino(policy.inventory.source);
+  const previous=readStructuredDataLino(predecessor.source);
+  assert.equal(previous.auditDate,initial.auditDate);
+  assert.deepEqual(previous.items.slice(0,initial.items.length),initial.items);
+  const appends={revision,certificate:predecessor.certificate,items:previous.items.slice(initial.items.length)};
+  const appendedFile=new URL('../../parity/fixtures/dependency-inventory-before-refresh.lino',import.meta.url);
+  if(check)checkProjectData(appendedFile,appends);else writeProjectData(appendedFile,appends);
   return policy;
 }
 

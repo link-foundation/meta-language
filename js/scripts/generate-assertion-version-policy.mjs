@@ -38,6 +38,11 @@ export function assertionVersionPolicy() {
         minimum: '5.1.0', maximum: '5.1.0', includeMinimum: true, includeMaximum: true,
         expected: 'Peggy 5.1.0',
         evidence: 'js/package.json and js/package-lock.json pin Peggy 5.1.0. Its actual generate(..., { output: ast }) optimizer merges the retained BMP, ASCII and astral literal alternatives into class nodes; js/tests/grammar-interchange-tools.test.js executes the optimizer and retains every source lexer, offset and tampering assertion.',
+      }, {
+        id: 'peggy-5-1-1-character-set-shape',
+        minimum: '5.1.1', maximum: '5.1.1', includeMinimum: true, includeMaximum: true,
+        expected: 'Peggy 5.1.1',
+        evidence: 'js/tests/grammar-interchange-tools.test.js tests the installed Peggy 5.1.1 optimizer against the same BMP, ASCII and astral inputs and checks the original source lexer, offsets and tampering refusals.',
       }],
     }, {
       id: 'typescript-const-model-rejection-diagnostic',
@@ -85,6 +90,21 @@ export function assertionVersionPolicy() {
           wasmSha256: '9587dfbf28a91100dc4cb8717288ae9d99693e1d8aade1396443a5142fe28f7a',
         },
         evidence: 'The existing authenticated grammar lock pins this exact released Agda1.3.3 WebAssembly artifact. Existing JavaScript focused match/rejection/divergence assertions remain in this historical sandboxed profile; this does not select the unsafe original native C scanner or apply historical recovery expectations to corrected scanner sources.',
+      }],
+    }, {
+      id: 'agda-tree-sitter-runtime',
+      subject: 'Tree-sitter runtime for Agda test oracles',
+      comparison: { kind: 'release', precision: 3 },
+      expectations: [{
+        id: 'agda-tree-sitter-0-27-0',
+        minimum: '0.27.0', maximum: '0.27.0', includeMinimum: true, includeMaximum: true,
+        expected: '0.27.0',
+        evidence: 'The original Agda assertions run with the locked Tree-sitter 0.27.0 runtime and maintain the exact released WebAssembly and corrected scanner inputs.',
+      }, {
+        id: 'agda-tree-sitter-0-27-2',
+        minimum: '0.27.2', maximum: '0.27.2', includeMinimum: true, includeMaximum: true,
+        expected: '0.27.0',
+        evidence: 'The 0.27.2 dependency lock retains the original released Agda parser and WebAssembly hashes. The corrected scanner is built from the original certified source and CLI. All original focused oracle comparisons still run against the selected runtime.',
       }],
     }],
     observationBindings: [{

@@ -11,6 +11,8 @@ use meta_language::{
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
+use super::issue_195_native_grammar_rows::oracle_rows;
+
 fn parity_json(name: &str) -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity")
@@ -97,11 +99,11 @@ fn the_catalog_native_grammars_are_the_shipped_grammar_files() {
 fn a_native_default_grammar_builds_the_trees_of_its_pinned_tree_sitter_oracle() {
     let oracle = parity_json("fixtures/default-cst-expected.json");
     let native = parity_json("fixtures/native-default-cst-expected.json");
+    let inventory = parity_json("language-grammar-inventory.json");
     let native = native["languages"].as_object().expect("native languages");
     assert!(!native.is_empty());
     for (name, want) in native {
         let oracle = &oracle["languages"][name];
-        assert_eq!(want["positive"], oracle["positive"], "{name} positive rows");
         assert_eq!(want["sourceSha256"], oracle["sourceSha256"], "{name}");
         assert_eq!(
             want["recoverySourceSha256"], oracle["recoverySourceSha256"],
@@ -114,23 +116,54 @@ fn a_native_default_grammar_builds_the_trees_of_its_pinned_tree_sitter_oracle() 
             "{name} parses with a native grammar"
         );
         let oracles = oracle_grammar_provenance(name);
+        let baseline = oracles
+            .first()
+            .and_then(|grammar| native_source_oracles::baseline(&grammar.id, &grammar.version));
+        if let Some(baseline) = baseline {
+            let language = inventory["languages"]
+                .as_array()
+                .expect("inventory languages")
+                .iter()
+                .find(|language| language["name"] == name.as_str())
+                .expect("native inventory language");
+            let baseline = baseline.into();
+            let (rows, recovers) =
+                oracle_rows(&baseline, language["source"].as_str().expect("source"));
+            assert!(!recovers, "{name} positive sample");
+            assert_eq!(want["positive"], Value::Array(rows), "{name} positive rows");
+            assert!(
+                oracle_rows(
+                    &baseline,
+                    language["recoverySource"]
+                        .as_str()
+                        .expect("recovery source")
+                )
+                .1,
+                "{name} oracle recovery"
+            );
+        } else {
+            assert_eq!(want["positive"], oracle["positive"], "{name} positive rows");
+        }
         assert_eq!(
             want["oracleGrammars"].as_object().map(serde_json::Map::len),
             Some(oracles.len()),
             "{name}"
         );
         for grammar in oracles {
-            let pinned = &oracle["grammars"][grammar.id.as_str()];
+            let recorded = &want["oracleGrammars"][grammar.id.as_str()];
+            let pinned = if baseline.is_some() {
+                recorded
+            } else {
+                &oracle["grammars"][grammar.id.as_str()]
+            };
             assert_eq!(pinned["version"], grammar.version.as_str(), "{name}");
             assert_eq!(
                 pinned["parserSha256"],
                 grammar.parser_sha256.as_str(),
                 "{name}"
             );
-            assert_eq!(
-                want["oracleGrammars"][grammar.id.as_str()]["version"],
-                pinned["version"]
-            );
+            assert_eq!(recorded["version"], pinned["version"], "{name}");
+            assert_eq!(recorded["parserSha256"], pinned["parserSha256"], "{name}");
         }
         assert!(
             rows_of(&want["recovery"])
@@ -800,6 +833,85 @@ fn every_rust_inventory_language_parses_to_its_complete_lossless_default_cst() {
         }
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+    record_dependency_grammar_observation("allConcreteSyntaxTreesRoundTrip", POSITIVE_TEST_NAME);
+}
+
+fn record_dependency_grammar_observation(assertion: &str, test_name: &str) {
+    super::issue_195_observations::record(&super::issue_195_observations::Observation {
+        requirement_id: "I195-ISSUE-197-GRAMMARS",
+        suffix: "behavior",
+        fixture_id: "planned:repository-directive:i195-issue-197-grammars",
+        fixture_file: "parity/language-grammar-inventory.lino",
+        assertions: &[assertion],
+        test_name,
+    });
+}
+
+#[test]
+fn tree_sitter_accepts_the_abi_of_every_upgraded_grammar() {
+    let grammars = [
+        ("csharp", tree_sitter_c_sharp::LANGUAGE),
+        ("dart", tree_sitter_dart::LANGUAGE),
+        ("erlang", tree_sitter_erlang::LANGUAGE),
+        ("graphql", tree_sitter_graphql::LANGUAGE),
+        ("json5", tree_sitter_json5_orchard::LANGUAGE),
+        ("lua", tree_sitter_lua::LANGUAGE),
+        ("matlab", tree_sitter_matlab::LANGUAGE),
+        ("perl", ts_parser_perl::LANGUAGE),
+        ("php", tree_sitter_php::LANGUAGE_PHP),
+        ("php_only", tree_sitter_php::LANGUAGE_PHP_ONLY),
+        ("powershell", tree_sitter_powershell::LANGUAGE),
+        ("proto", tree_sitter_proto::LANGUAGE),
+        ("scala", tree_sitter_scala::LANGUAGE),
+        ("scheme", tree_sitter_scheme::LANGUAGE),
+        ("sql", tree_sitter_sequel::LANGUAGE),
+    ];
+    let mut parser = tree_sitter::Parser::new();
+    for (name, grammar) in grammars {
+        parser
+            .set_language(&grammar.into())
+            .unwrap_or_else(|error| panic!("{name}: {error}"));
+    }
+    record_dependency_grammar_observation(
+        "grammarLanguageAbiAccepted",
+        "tree_sitter_accepts_the_abi_of_every_upgraded_grammar",
+    );
+}
+
+#[test]
+fn the_updated_tree_sitter_parsers_match_their_independent_wasm_trees() {
+    let grammars = HashMap::from([
+        ("dart", tree_sitter_dart::LANGUAGE),
+        ("erlang", tree_sitter_erlang::LANGUAGE),
+        ("json5", tree_sitter_json5_orchard::LANGUAGE),
+        ("powershell", tree_sitter_powershell::LANGUAGE),
+        ("proto", tree_sitter_proto::LANGUAGE),
+        ("scheme", tree_sitter_scheme::LANGUAGE),
+        ("sql", tree_sitter_sequel::LANGUAGE),
+    ]);
+    let inventory = parity_json("language-grammar-inventory.json");
+    let expected = parity_json("fixtures/default-cst-expected.json");
+    let mut checked = HashSet::new();
+    for language in inventory["languages"].as_array().expect("languages") {
+        let name = language["name"].as_str().expect("language name");
+        let Some(id) = language["grammars"][0].as_str() else {
+            continue;
+        };
+        let Some(grammar) = grammars.get(id) else {
+            continue;
+        };
+        checked.insert(id);
+        for (input, rows) in [("source", "positive"), ("recoverySource", "recovery")] {
+            let (actual, _) =
+                oracle_rows(&(*grammar).into(), language[input].as_str().expect(input));
+            assert_eq!(
+                actual.as_slice(),
+                rows_of(&expected["languages"][name][rows]),
+                "{name} {rows} tree"
+            );
+        }
+    }
+    assert_eq!(checked.len(), grammars.len());
 }
 
 const EMBEDDED_TEST_NAME: &str =

@@ -4,13 +4,22 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreDependencyWorkflowSource} from './dependency-workflow-source-history.mjs';
 const archive=new URL('../../parity/self-translation/ci-39403403220-scheduling-sources-history.lino',import.meta.url);
-const archiveHash='f346442b7cc9fb187c434c901c429955c91ac8c7cbc3dd299159a2068334bacc';
+const archiveHash='ef90ddcedda2c70c893284696b1bfabb03d2c19eeb647422b3bc133fdd54e878';
 const digest=value=>createHash('sha256').update(value).digest('hex');
 let history;
 
+/** This archive predates the measured grammar scheduling test additions. */
+export function restoreSchedulingTestPredecessor(file,source) {
+  if(file!=='js/tests/test-groups.test.js')return source;
+  return restoreDependencyWorkflowSource(source,file,'8bc0ef9725388c7927acf1854870bf46f5e365be');
+}
+
 export function restoreSchedulingSourceHistory(file,source) {
   assert.equal(typeof file,'string');assert.equal(typeof source,'string');
+  source=restoreSchedulingTestPredecessor(file,source);
+  if(file==='js/tests/test-groups.test.js')source=restoreAutomatedTranslationPauseSource(source,file,'231c6610fc93225fccb1682ab2943729e0c0e52e');
   source=restoreCurrentCiRepairSource(source,file);
   if(!history){assert.equal(digest(readFileSync(archive)),archiveHash);history=readProjectData(archive);}
   const row=history.sources.find(row=>row.file===file);if(!row)return source;
@@ -24,3 +33,4 @@ export function restoreSchedulingSourceHistory(file,source) {
 }
 
 import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';
+import {restoreAutomatedTranslationPauseSource} from './automated-translation-pause-source-history.mjs';

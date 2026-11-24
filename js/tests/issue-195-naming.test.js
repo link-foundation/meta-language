@@ -12,29 +12,32 @@ import { test } from 'node:test';
 import { areSynonyms, loadWordNet, partsOfSpeech } from '../scripts/english-vocabulary.mjs';
 import {
   checkConceptRecords,
+  checkInventoryCoverage,
   checkNamingFixtures,
   checkRepositoryNames,
+  checkSourceDescriptions,
   extractNameInventory,
-  extractSourceDescriptions,
   FORMER_NAME_TABLES,
-  loadNamingRegisters,
   NAME_INVENTORIES,
   NAMING_FIXTURES,
   nameProblems,
 } from '../scripts/issue-195-naming.mjs';
+import { nativeRepairNamingSources, restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
+import { ciIntegrationHistoryPath, restoreCiIntegrationSource } from '../scripts/ci-integration-source-history.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 import { extractOwnCodebaseHistoricalNames, readOwnCodebaseHistoricalNamingPolicy } from '../scripts/own-codebase-baseline-naming-history.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
+import { dependencyWorkflowHistoryPath, restoreDependencyWorkflowSource } from '../scripts/dependency-workflow-source-history.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const wordnet = loadWordNet();
-const registers = loadNamingRegisters(root);
-const context = { wordnet, vocabulary: registers.vocabulary };
 const { fixtures } = readProjectData(new URL(`../../${NAMING_FIXTURES}`, import.meta.url));
 // Use the same complete current plus certified historical source inventory as the normal naming driver.
 const currentNames = extractNameInventory(root);
 const historicalNames = extractOwnCodebaseHistoricalNames(root, NAME_INVENTORIES);
 const repository = checkRepositoryNames(root, wordnet, { names: [...currentNames, ...historicalNames] });
+const { vocabulary } = repository;
+const context = { wordnet, vocabulary };
 
 function observe(assertions, testName) {
   recordIssue195Observations({
@@ -50,8 +53,13 @@ function observe(assertions, testName) {
 
 const record = (id) => structuredClone(repository.records.find((candidate) => candidate.id === id));
 const kindsOf = (problems) => [...new Set(problems.map((problem) => problem.kind))].sort();
-// The problems of the repository with records or source names mutated in memory.
-const mutated = (override) => checkRepositoryNames(root, wordnet, { names: repository.names, ...override }).problems;
+// Mutations change only records or names. Keep the complete source evidence and
+// use the same production validators for each changed snapshot.
+const mutated = ({ records = repository.records, names = repository.names }) => [
+  ...checkConceptRecords(records, context),
+  ...checkSourceDescriptions(records, repository.descriptions),
+  ...checkInventoryCoverage(records, repository.exemptions, names, context, repository.formers),
+];
 
 test('the vocabulary is WordNet 3.1 plus registered technical terms, not a letter pattern', () => {
   assert.equal(wordnet.source, 'WordNet 3.1 (wordnet-db)');
@@ -62,7 +70,7 @@ test('the vocabulary is WordNet 3.1 plus registered technical terms, not a lette
   assert.equal(areSynonyms(wordnet, 'loop', 'branch', 'noun'), false);
   // Every technical term is outside WordNet in the part of speech it registers
   // and cites the reference that defines it.
-  for (const [word, term] of registers.vocabulary.technicalTerms) {
+  for (const [word, term] of vocabulary.technicalTerms) {
     assert.ok(term.partsOfSpeech.some((part) => !partsOfSpeech(wordnet, word).includes(part)), word);
     assert.match(term.source, /\S/u, word);
     assert.match(term.definition, /^\p{Lu}.*\.$/u, word);
@@ -100,7 +108,7 @@ test('concepts must be noun phrases and operations verb phrases', () => {
 test('an abbreviation fails the gate, including one WordNet lists with another meaning', () => {
   for (const abbreviation of ['char', 'ref', 'id', 'min', 'max']) {
     assert.ok(partsOfSpeech(wordnet, abbreviation).length > 0, `${abbreviation} is a WordNet lemma`);
-    assert.ok(registers.vocabulary.abbreviations.has(abbreviation), abbreviation);
+    assert.ok(vocabulary.abbreviations.has(abbreviation), abbreviation);
   }
   const renamed = repository.records.map((candidate) =>
     candidate.id === 'grammar.character-class' ? { ...candidate, id: 'grammar.char-class', phrase: 'char class' } : candidate);
@@ -148,20 +156,22 @@ test('every name the sources define has a concept record and every record is use
   assert.deepEqual([...inventories].sort(), [...new Set(NAME_INVENTORIES.map(({ inventory }) => inventory))].sort());
   assert.equal(new Set(repository.formers.map(({ table }) => table)).size, FORMER_NAME_TABLES.length);
   // Every described inventory describes each name it defines.
-  const descriptions = extractSourceDescriptions(root);
-  const names = extractNameInventory(root);
+  const { descriptions } = repository;
   const exempt = (name) => repository.exemptions.some(({ pattern }) => new RegExp(pattern, 'u').test(name));
   for (const inventory of new Set(descriptions.map((entry) => entry.inventory))) {
     const files = new Set(descriptions.filter((entry) => entry.inventory === inventory).map((entry) => entry.file));
-    const defined = new Set(names.filter((entry) => entry.inventory === inventory && files.has(entry.file) && !exempt(entry.name)).map((entry) => entry.name));
+    const defined = new Set(currentNames.filter((entry) => entry.inventory === inventory && files.has(entry.file) && !exempt(entry.name)).map((entry) => entry.name));
     const described = new Set(descriptions.filter((entry) => entry.inventory === inventory).map((entry) => entry.name));
     assert.deepEqual([...described].sort(), [...defined].sort(), inventory);
   }
   // A source name without a record, a record without a source name, a former
   // name the record does not list and a source definition changed in the record
   // each fail the gate.
-  const unrecorded = mutated({ names: [...repository.names, { inventory: 'grammar constructs', file: 'rust/src/grammar/fidelity.rs', name: 'word-boundary', record: 'grammar.word-boundary' }] });
+  const unrecordedNames = [...repository.names, { inventory: 'grammar constructs', file: 'rust/src/grammar/fidelity.rs', name: 'word-boundary', record: 'grammar.word-boundary' }];
+  const unrecorded = mutated({ names: unrecordedNames });
   assert.deepEqual(unrecorded.map((problem) => problem.message), ['rust/src/grammar/fidelity.rs (grammar constructs) defines word-boundary without a concept record']);
+  assert.deepEqual(unrecorded, checkRepositoryNames(root, wordnet, { names: unrecordedNames }).problems,
+    'the source snapshot and repository entry point reject the same unrecorded name');
   const unused = mutated({ records: [...repository.records, { ...record('loop'), id: 'program.iteration-count', phrase: 'iteration count', definition: 'How many times a loop body runs.' }] });
   assert.deepEqual(unused.map((problem) => problem.message), ['program.iteration-count: no inventory defines the recorded name']);
   const forgotten = repository.records.map((candidate) => (candidate.id === 'block-quote' ? { ...candidate, formerNames: [] } : candidate));
@@ -178,15 +188,36 @@ test('the normal naming source profile retains every actual current name and bot
   const policy = readOwnCodebaseHistoricalNamingPolicy();
   assert.equal(policy.views.length, 2);
   assert.equal(historicalNames.slice(0,2).length,2,'both original certified owners remain first');
-  assert.equal(historicalNames.length,2+policy.additionalSourceViews.views.reduce((count,view)=>count+view.names.length,0));
+  const dependencyNames = historicalNames.filter(row => row.sourceView.archive === dependencyWorkflowHistoryPath);
+  assert.ok(dependencyNames.length > 0);
+  const precedingCount = 2 + policy.additionalSourceViews.views.reduce((count, view) => count + view.names.length, 0);
+  const precedingNames = historicalNames.slice(0, precedingCount);
+  const integrationNames = historicalNames.filter(row => row.sourceView.archive === ciIntegrationHistoryPath);
+  assert.ok(integrationNames.length > 0);
+  const remainingNames = historicalNames.slice(precedingCount + dependencyNames.length, historicalNames.length - integrationNames.length);
+  const pauseNames = remainingNames.filter(({ file }) => !nativeRepairNamingSources.includes(file));
+  const repairedNames = remainingNames.filter(({ file }) => nativeRepairNamingSources.includes(file));
+  assert.equal(precedingNames.length, precedingCount);
+  const originalPauseNames = pauseNames.filter(({ inventory, file, name }) => {
+    const entry = NAME_INVENTORIES.find(candidate => candidate.inventory === inventory && candidate.files.includes(file));
+    const checkout = readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+    const parent = restoreCiIntegrationSource(checkout, file, 'translationPause');
+    return !entry.extract(parent, file).includes(name);
+  });
+  assert.equal(originalPauseNames.length, 68, 'every certified pre-pause source owner remains present');
+  assert.ok(repairedNames.length >= 327, 'all replaced naming witnesses have a certified source view');
+  assert.deepEqual([...new Set(repairedNames.map(({ file }) => file))].sort(), [...nativeRepairNamingSources].sort());
+  assert.deepEqual(remainingNames, [...pauseNames, ...repairedNames], 'native repair source views are appended');
+  assert.deepEqual(historicalNames, [...precedingNames, ...dependencyNames, ...remainingNames, ...integrationNames]);
   assert.deepEqual(repository.names, [...currentNames, ...historicalNames]);
   assert.deepEqual(repository.names.slice(0, currentNames.length), currentNames);
   for (const view of policy.views) {
-    const actual = readFileSync(new URL(`../../${view.file}`, import.meta.url));
-    assert.equal(actual.length, view.current.bytes);
+    const checkout = readFileSync(new URL(`../../${view.file}`, import.meta.url), 'utf8');
+    const actual = restoreDependencyWorkflowSource(checkout, view.file);
+    assert.equal(Buffer.byteLength(actual), view.current.bytes);
     assert.equal(createHash('sha256').update(actual).digest('hex'), view.current.sha256,
       `${view.file} retains its complete independently pinned actual current source`);
-    const rows = historicalNames.filter((row) => row.inventory === view.inventory && row.file === view.file);
+    const rows = precedingNames.filter((row) => row.inventory === view.inventory && row.file === view.file);
     assert.deepEqual(rows.map(({ name, record }) => ({ name, record })), view.names);
     for (const row of rows) {
       assert.equal(row.sourceView.kind, 'complete certified historical source');
@@ -200,9 +231,47 @@ test('the normal naming source profile retains every actual current name and bot
   }
   for(const view of policy.additionalSourceViews.views){
     const source=policy.additionalSourceViews.sources.find(row=>row.file===view.file&&row.predecessor.revision===view.revision);
-    const rows=historicalNames.filter(row=>row.inventory===view.inventory&&row.file===view.file&&row.sourceView.revision===view.revision);
+    const rows=precedingNames.filter(row=>row.inventory===view.inventory&&row.file===view.file&&row.sourceView.revision===view.revision);
     assert.deepEqual(rows.map(({name,record})=>({name,record})),view.names);
     for(const row of rows){assert.equal(row.sourceView.revision,view.revision);assert.equal(row.sourceView.sha256,source.predecessor.sha256);assert.equal(row.sourceView.bytes,source.predecessor.bytes);}
+  }
+  for (const row of dependencyNames) {
+    const current = readFileSync(new URL(`../../${row.file}`, import.meta.url), 'utf8');
+    const predecessor = restoreDependencyWorkflowSource(current, row.file);
+    const entry = NAME_INVENTORIES.find(entry => entry.inventory === row.inventory);
+    assert.notEqual(predecessor, current);
+    assert.ok(entry.extract(predecessor, row.file).includes(row.name));
+    assert.equal(entry.extract(current, row.file).includes(row.name), false);
+    assert.equal(entry.recordOf(row.name), row.record);
+    assert.equal(restoreDependencyWorkflowSource(current + '\n# unknown edit', row.file), current + '\n# unknown edit');
+  }
+  const rawProfileSource = 'experiments/original-link-complete-table-projection/raw-native-observations.mjs';
+  const rawProfileRecord = 'repository.read-selected-raw-emission-profile';
+  const rawProfileName = 'read selected raw emission profile';
+  assert.ok(dependencyNames.some(row => row.file === rawProfileSource && row.record === rawProfileRecord &&
+    row.name === rawProfileName && row.inventory === `B64 authenticated raw emission source names for ${rawProfileSource}`));
+  assert.ok(currentNames.some(row => row.file === rawProfileSource && row.record === rawProfileRecord &&
+    row.name === rawProfileName && row.inventory === `B70 physical field source view names for ${rawProfileSource}`));
+  for (const rows of Map.groupBy(remainingNames, ({ inventory }) => inventory).values()) {
+    const [{ inventory, file, sourceView }] = rows;
+    const entries = NAME_INVENTORIES.filter(entry => entry.inventory === inventory && entry.files.includes(file));
+    assert.equal(entries.length, 1, inventory);
+    const [entry] = entries;
+    const checkout = readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+    const previous = restoreAutomatedTranslationPauseSource(checkout, file, sourceView.revision);
+    assert.notEqual(previous, checkout, file);
+    const activeNames = new Set(entry.extract(checkout, file));
+    const expected = [...new Set(entry.extract(previous, file))].filter(name => !activeNames.has(name));
+    assert.deepEqual(rows.map(({ name, record }) => ({ name, record })),
+      expected.map(name => ({ name, record: entry.recordOf(name) })), inventory);
+    for (const row of rows) {
+      assert.equal(row.file, file);
+      assert.deepEqual(row.sourceView, sourceView);
+    }
+    assert.equal(sourceView.archive, 'parity/self-translation/automated-translation-pause-source-history.lino');
+    assert.equal(sourceView.path, file);
+    assert.equal(sourceView.bytes, Buffer.byteLength(previous));
+    assert.equal(sourceView.sha256, createHash('sha256').update(previous).digest('hex'));
   }
   const changed = structuredClone(historicalNames); changed[0].sourceView.path = 'unregistered/source.rs';
   assert.notDeepEqual(changed, historicalNames);

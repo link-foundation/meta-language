@@ -5,7 +5,7 @@ import test from 'node:test';
 
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { grammarSourceOf, importSource } from '../scripts/import-native-grammars.mjs';
-import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
+import { nativeRows, nativeProfileOracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 
 const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
 const readData = file => readProjectData(new URL(`../../${file}`, import.meta.url));
@@ -26,7 +26,7 @@ test('the six C# collection CI reproductions retain their pinned upstream source
   assert.deepEqual(fixture.cases.map(({ id }) => id), [9, 10, 11, 12, 13, 14]);
   for (const { file, title, source, rows } of fixture.cases) {
     assert.equal(corpus.find(entry => entry.file === file && entry.title === title)?.source, source, title);
-    const oracle = oracleSnapshot(source, fixture.language);
+    const oracle = nativeProfileOracleSnapshot(source, fixture.language);
     assert.equal(oracle.recovers, false, title);
     assert.deepEqual(oracle.rows, rows, title);
     const result = parser.parseTree(source);
@@ -39,7 +39,7 @@ test('the six C# collection CI reproductions retain their pinned upstream source
 
 test('the collection preference preserves conditional element binding and ordinary element access', () => {
   for (const source of ['var result = owner?[1, 2];', 'var result = owner[1];', 'var combined = [1, ..others, 2,];']) {
-    const oracle = oracleSnapshot(source, fixture.language);
+    const oracle = nativeProfileOracleSnapshot(source, fixture.language);
     assert.equal(oracle.recovers, false, source);
     const result = parser.parseTree(source);
     assert.equal(result.ok, true, source);

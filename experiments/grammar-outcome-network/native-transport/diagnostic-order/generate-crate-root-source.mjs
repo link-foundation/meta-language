@@ -5,6 +5,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {readBootstrapStructuredDataLino} from '../../../../scripts/lib/structured-data-bootstrap.mjs';
 import {checkProjectData,writeProjectData} from '../../../../js/scripts/project-data.mjs';
+import {restoreDependencyWorkflowSource} from '../../../../js/scripts/dependency-workflow-source-history.mjs';
 import {OUTCOME_CRATE_ROOT_SOURCE_PROFILE,verifyOutcomeCrateRootSourcePacket} from './crate-root-source-view.mjs';
 const root=new URL('../../../../',import.meta.url);
 const archive=OUTCOME_CRATE_ROOT_SOURCE_PROFILE.origin.path;
@@ -18,7 +19,8 @@ export function generateOutcomeCrateRootSource({check=false}={}) {
   const history=readBootstrapStructuredDataLino(archiveBytes.toString('utf8'));
   assert.equal(history.schemaVersion,1);assert.equal(history.revision,profile.revision);
   const owners=history.sources.filter(row=>row.file===profile.file);assert.equal(owners.length,1);
-  const original=owners[0],before=Buffer.from(original.sourceText),after=readFileSync(new URL(profile.file,root));
+  const original=owners[0],before=Buffer.from(original.sourceText);
+  const after=Buffer.from(restoreDependencyWorkflowSource(readFileSync(new URL(profile.file,root),'utf8'),profile.file));
   assert.deepEqual(pin(after),profile.current,'only the complete reviewed current crate-root successor is admitted');
   let start=0;while(start<before.length&&start<after.length&&before[start]===after[start])start++;
   let suffix=0;while(suffix<before.length-start&&suffix<after.length-start&&before[before.length-suffix-1]===after[after.length-suffix-1])suffix++;

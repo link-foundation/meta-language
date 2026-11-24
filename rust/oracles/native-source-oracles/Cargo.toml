@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2024"
 publish = false
 license = "Unlicense"
-description = "Independent development parsers for pinned Lean and Rocq sources"
+description = "Independent development parsers for pinned native grammar sources"
 
 [dependencies]
-tree-sitter-language = "0.1.8"
+tree-sitter-language = "0.1.9"
 
 [build-dependencies]
 cc = "1.2"

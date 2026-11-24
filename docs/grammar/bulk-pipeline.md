@@ -23,9 +23,11 @@ stages:
    grammar names. grammars-v4 runs its own tests from that rule. Without a
    `desc.xml`, the first parser rule is the start rule.
 3. **compile and parse.** Both grammars are compiled on the native executor
-   and parse the catalog's sample source. The rows of the tree-sitter tree are
-   compared with the oracle rows in
-   [`parity/fixtures/default-cst-expected.lino`](../../parity/fixtures/default-cst-expected.lino).
+   and parse the catalog's sample source. For an imported native grammar with a
+   [registered historical oracle](../../parity/grammars/native-oracle-baselines.lino),
+   the pipeline compares the native rows with an independent parse using that
+   exact Tree-sitter version and records its identity. Other rows use the current
+   oracle rows in [`parity/fixtures/default-cst-expected.lino`](../../parity/fixtures/default-cst-expected.lino).
 4. **merge.** The grammars that imported are merged with `mergeGrammars`.
 
 A failing language does not fail the run. It becomes a matrix row that lists
@@ -53,11 +55,14 @@ node js/scripts/run-grammar-bulk-pipeline.mjs --out-dir grammar-bulk --only JSON
 Upstream grammars are fetched at their pinned revisions into
 `GRAMMAR_BULK_CACHE`, which defaults to a directory under the system temporary
 directory. [`js/tests/grammar-bulk-pipeline.test.js`](../../js/tests/grammar-bulk-pipeline.test.js)
-checks two things without downloading anything:
+checks these behaviors using the provisioned sources.
 
 - every catalog language has a pinned source;
 - a row runs every stage on the pinned C grammar, and the matrix lists every
-  missing feature.
+  missing feature;
+- the Dart, MySQL, BigQuery and Protocol Buffers rows preserve their exact CST
+  comparisons when later Tree-sitter releases change the oracle rows for the
+  same sources.
 
 ## What the matrix has driven so far
 

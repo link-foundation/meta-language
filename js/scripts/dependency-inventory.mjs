@@ -53,6 +53,8 @@ export const COMPARISONS = ['version', 'major', 'minor', 'floor', 'revision', 'f
 
 const RUST_EDITIONS = ['2015', '2018', '2021', '2024'];
 const WORKFLOWS = '.github/workflows';
+const NATIVE_ASSERTION_PROFILE = 'rust/src/data/declaration-dependency-rules.lino';
+const JAVASCRIPT_ASSERTION_PROFILE = 'js/src/translation/data/ascii-text-predicate-rules.lino';
 const PLACEHOLDER_REASON = /no recorded compatibility reason|must be updated|\bTODO\b|\bTBD\b|^\s*$/iu;
 
 const readText = (root, file) => readFileSync(path.join(root, file), 'utf8');
@@ -127,7 +129,9 @@ export function parseCargoManifest(text) {
       const renamed = value.match(/package\s*=\s*"([^"]+)"/u)?.[1];
       const kind = section.endsWith('dev-dependencies') ? 'development' : section.endsWith('build-dependencies') ? 'build' : 'runtime';
       const localPath = value.match(/path\s*=\s*"([^"]+)"/u)?.[1];
-      dependencies.push({ name: renamed ?? key, requirement, kind, optional: /optional\s*=\s*true/u.test(value), ...(localPath ? { path: localPath } : {}) });
+      const blocker = value.match(/\s+#\s*blocked:\s*(\S+)\s*$/u)?.[1];
+      dependencies.push({ name: renamed ?? key, requirement, kind, optional: /optional\s*=\s*true/u.test(value),
+        ...(localPath ? { path: localPath } : {}), ...(blocker ? { blocker } : {}) });
     }
   }
   return { settings, dependencies };
@@ -387,13 +391,17 @@ function collectWorkflows(root, items) {
     }
     for (const match of text.matchAll(/--default-toolchain leanprover\/lean4:(\S+)/gu)) addItem(items, leanItem(file, match[1]));
     collectFloatingTools(items, file, text);
-    for (const match of text.matchAll(/\b((?:ubuntu|macos|windows)-(?:latest|\d[\d.]*))\b/gu)) {
-      const floating = match[1].endsWith('-latest');
+    const runners = [...text.matchAll(/\b((?:ubuntu|macos|windows)-(?:latest|\d[\d.]*))\b/gu)].map(([, runner]) => runner);
+    if (/^ *run: node js\/scripts\/rust-test-shards\.mjs --workflow-matrix (?:test|consumer) *$/mu.test(text)) {
+      runners.push(...readJson(root, 'parity/rust-test-physical-shards.lino').platforms);
+    }
+    for (const runner of runners) {
+      const floating = runner.endsWith('-latest');
       addItem(items, {
         category: 'runner',
-        name: match[1],
+        name: runner,
         declaredIn: file,
-        pinned: floating ? 'latest' : match[1].replace(/^[a-z]+-/u, ''),
+        pinned: floating ? 'latest' : runner.replace(/^[a-z]+-/u, ''),
         compare: floating ? 'floating' : 'unversioned',
         source: { type: 'none' },
       });
@@ -463,6 +471,24 @@ function collectPreCommit(root, items) {
 }
 
 function collectScripts(root, items) {
+  const nativeProfile = path.join(root, NATIVE_ASSERTION_PROFILE);
+  if (existsSync(nativeProfile)) {
+    const requirement = readProjectData(nativeProfile).assertionVersions?.Rust;
+    if (!/^>=\d+\.\d+\.\d+ <\d+\.\d+\.\d+$/u.test(requirement ?? '')) {
+      throw new Error(`${NATIVE_ASSERTION_PROFILE} needs a bounded Rust assertion range`);
+    }
+    addItem(items, { category: 'toolchain', name: NATIVE_ASSERTION_PROFILE, declaredIn: NATIVE_ASSERTION_PROFILE,
+      pinned: 'profile', compare: 'unversioned', source: { type: 'none' }, requirement });
+  }
+  const javascriptProfile = path.join(root, JAVASCRIPT_ASSERTION_PROFILE);
+  if (existsSync(javascriptProfile)) {
+    const requirement = readProjectData(javascriptProfile).assertionVersions?.Node;
+    if (!/^>=\d+\.\d+\.\d+ <\d+\.\d+\.\d+(?: \|\| >=\d+\.\d+\.\d+ <\d+\.\d+\.\d+)*$/u.test(requirement ?? '')) {
+      throw new Error(`${JAVASCRIPT_ASSERTION_PROFILE} needs a bounded Node assertion range`);
+    }
+    addItem(items, { category: 'toolchain', name: JAVASCRIPT_ASSERTION_PROFILE, declaredIn: JAVASCRIPT_ASSERTION_PROFILE,
+      pinned: 'profile', compare: 'unversioned', source: { type: 'none' }, requirement });
+  }
   for (const file of trackedFiles(root, 'rust/scripts', /\.sh$/u)) collectFloatingTools(items, file, readText(root, file));
   for (const file of ['Dockerfile', 'rust/Dockerfile', 'js/Dockerfile'].filter((candidate) => existsSync(path.join(root, candidate)))) {
     for (const match of readText(root, file).matchAll(/^FROM\s+([^\s:]+):(\S+)/gmu)) {
@@ -979,7 +1005,7 @@ export function releaseResolvers({ http, github, today }) {
       }),
     'rust-edition': async () => ({ current: RUST_EDITIONS.at(-1), evidence: 'Rust editions, the newest stable edition' }),
     none: async () => ({}),
-    couplings: couplingResolvers({ github }),
+    couplings: couplingResolvers({ github, nodeIndex }),
   };
 }
 
@@ -1008,8 +1034,49 @@ export function opamConstraint(opam, name) {
  * release, the requirements that exclude the current release, and the
  * reason, all queried live.
  */
-export function couplingResolvers({ github }) {
+export function couplingResolvers({ github, nodeIndex }) {
   return {
+    'toolchain node': async (item, find) => {
+      const holder = find('toolchain', JAVASCRIPT_ASSERTION_PROFILE);
+      if (!holder || item.source.type !== 'node-lts' || item.compare !== 'version' ||
+          !item.declaredIn.includes('.github/workflows/rust.yml') || !item.declaredIn.includes('.github/workflows/ci.yml') ||
+          !satisfies(item.pinned, holder.requirement, 'npm') || satisfies(item.current, holder.requirement, 'npm')) {
+        return {};
+      }
+      const stable = (await nodeIndex()).map(({ version }) => version.replace(/^v/u, ''))
+        .filter(version => /^\d+\.\d+\.\d+$/u.test(version));
+      const minima = holder.requirement.split(' || ').map(range => range.split(' ')[0].slice(2));
+      if (!stable.includes(item.current) || !stable.some(version => minima.every(minimum => compareVersions(version, minimum) <= 0))) {
+        throw new Error('Node release index does not cover the full JavaScript assertion range');
+      }
+      const compatible = newestStable(stable.filter(version => satisfies(version, holder.requirement, 'npm')));
+      if (!compatible) throw new Error('Node release index has no stable release in the JavaScript assertion range');
+      return {
+        compatible,
+        heldBy: [{ id: holder.id, requirement: holder.requirement, evidence: `${JAVASCRIPT_ASSERTION_PROFILE} assertionVersions.Node` }],
+        reason: `The complete test jobs share an exact Node version, and the recorded JavaScript assertions only cover ${holder.requirement}.`,
+      };
+    },
+    'action dtolnay/rust-toolchain': async (item, find) => {
+      const holder = find('toolchain', NATIVE_ASSERTION_PROFILE);
+      if (!holder || !item.declaredIn.includes('.github/workflows/rust.yml') ||
+          !satisfies(item.pinned, holder.requirement, 'npm') || satisfies(item.current, holder.requirement, 'npm')) {
+        return {};
+      }
+      const releases = await github('repos/rust-lang/rust/releases?per_page=100');
+      const stable = releases.filter(({ draft, prerelease, tag_name }) => !draft && !prerelease && /^\d+\.\d+\.\d+$/u.test(tag_name))
+        .map(release => release.tag_name);
+      const minimum = holder.requirement.split(' ')[0].slice(2);
+      if (!stable.includes(item.current) || !stable.some(version => compareVersions(version, minimum) <= 0)) {
+        throw new Error('Rust release page does not cover the full native assertion range');
+      }
+      const compatible = newestStable(stable.filter(version => satisfies(version, holder.requirement, 'npm')));
+      return {
+        compatible,
+        heldBy: [{ id: holder.id, requirement: holder.requirement, evidence: `${NATIVE_ASSERTION_PROFILE} assertionVersions.Rust` }],
+        reason: `Held by the native assertion profile, which covers Rust ${holder.requirement}. The GitHub release list identifies ${compatible} as its newest stable toolchain.`,
+      };
+    },
     // The vendored web-tree-sitter runtime is built with the emscripten that
     // its tree-sitter release pins; another emscripten changes the runtime.
     'image emscripten/emsdk': async (item, find) => {

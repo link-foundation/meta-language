@@ -294,7 +294,7 @@ pub fn ml_plan_java_script_record_parameters_loop13(
                                                     let name = self::read_required_text_fact(values, binding_3);
                                                     if (self::accept_java_script_record_parameter_binding(&(self::read_required_text_fact(kinds, binding_3)), &(name), &(names), reserved)) {
                                                         {
-                                                            let names_2 = { let (ml_append_right, ml_append_left) = (vec![name.clone()], names); self::ml_array::append(ml_append_left, ml_append_right) };
+                                                            let names_2 = { let (ml_append_right, ml_append_left) = (vec![name], names); self::ml_array::append(ml_append_left, ml_append_right) };
                                                             {
                                                                 let pairs_2 = { let (ml_append_right, ml_append_left) = (vec![property, binding_3], pairs); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                 if at_5 >= (kinds.len() as f64) {
@@ -430,8 +430,7 @@ pub fn ml_plan_java_script_record_parameters_loop11(
                             )) {
                                 {
                                     let names_3 = {
-                                        let (ml_append_right, ml_append_left) =
-                                            (vec![name.clone()], names);
+                                        let (ml_append_right, ml_append_left) = (vec![name], names);
                                         self::ml_array::append(ml_append_left, ml_append_right)
                                     };
                                     {
@@ -520,13 +519,13 @@ pub fn ml_find_java_script_record_parameter_strict_directive_loop15(
                     == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))
                 {
                     {
-                        let raw_ = self::read_required_text_fact(raws, at);
+                        let directive_text = self::read_required_text_fact(raws, at);
                         {
-                            let strict = (raw_
+                            let strict = (directive_text
                                 == (self::ml_string::Text::from_units(vec![
                                     34, 117, 115, 101, 32, 115, 116, 114, 105, 99, 116, 34,
                                 ])))
-                                || (raw_
+                                || (directive_text
                                     == (self::ml_string::Text::from_units(vec![
                                         39, 117, 115, 101, 32, 115, 116, 114, 105, 99, 116, 39,
                                     ])));

@@ -1,4 +1,6 @@
-import { DelimitedReferences, blankRanges, commentRanges, parseLinoCst } from './lino-grammar.js';
+import { decodeReferenceLiteral } from 'links-notation/src/ReferenceLiteral.js';
+
+import { DelimitedReferences, parseLinoCst, referenceLiteralPrefixEnd } from './lino-grammar.js';
 import { ByteRange, LinkMetadata, LinkType, Point, SourceSpan } from './primitives.js';
 
 /**
@@ -6,7 +8,7 @@ import { ByteRange, LinkMetadata, LinkType, Point, SourceSpan } from './primitiv
  * the ids of its top-level links in document order.
  *
  * The links are read from the built-in lossless LiNo CST (`parseLinoCst`)
- * with the transformation the official links-notation 0.22 `Parser` applies
+ * with the transformation the official links-notation `Parser` applies
  * to its raw parse (`links-notation/src/Parser.js`): an indented id takes the
  * lines below it as its values, a line with values and indented lines is
  * combined with each of them, and a parenthesized group holding one link is
@@ -80,7 +82,7 @@ const QUOTES = ['"', "'", '`'];
 // with, preferring one it does not contain, and a delimiter inside is doubled.
 function quoteName(name) {
   if (name === '') return '""';
-  if (!/[ \t\n\r():"'`]/u.test(name) && name[0] !== '#') return name;
+  if (!/[ \t\n\r():"'`]/u.test(name) && name[0] !== '#' && referenceLiteralPrefixEnd(name) === null) return name;
   const quote = QUOTES.find((candidate) => !name.includes(candidate)) ??
     QUOTES.find((candidate) => name[0] !== candidate);
   return `${quote}${name.replaceAll(quote, quote + quote)}${quote}`;
@@ -110,7 +112,7 @@ class LinoSemantics {
     this.network = network;
     this.text = text;
     this.language = language;
-    this.quoted = new DelimitedReferences(blankRanges(text, commentRanges(text)));
+    this.quoted = new DelimitedReferences(text);
     // The UTF-8 byte offset and the row of every string offset.
     this.byteOffsets = new Uint32Array(text.length + 1);
     this.lineStarts = [0];
@@ -145,7 +147,11 @@ class LinoSemantics {
   // ---- The raw parse, as the official PEG grammar returns it ---------------
 
   rawItem(node) {
-    if (node.term === 'reference') return { id: this.text.slice(node.start, node.end), start: node.start, end: node.end };
+    if (node.term === 'reference') {
+      const raw = this.text.slice(node.start, node.end);
+      const id = referenceLiteralPrefixEnd(raw) === null ? raw : decodeReferenceLiteral(raw);
+      return { id, start: node.start, end: node.end };
+    }
     if (node.term === 'quoted_reference') {
       return { id: this.quoted.readAt(node.start).value, start: node.start, end: node.end };
     }

@@ -47,7 +47,18 @@ test('evidence plan covers every published-artifact verification exactly once', 
   const observed = plan.flatMap(({ cells }) => cells.map(({ cell }) => cell.testId));
 
   assert.deepEqual(observed.toSorted(), expected.toSorted());
-  assert.equal(observed.length, 8);
+  const dependencyDelivery = {
+    'i195-issue-197-crate-published-rust-published': 'delivery:crate',
+    'i195-issue-197-links-consumer-rust-published': 'delivery:crate',
+    'i195-issue-197-npm-consumer-javascript-published': 'delivery:npm',
+    'i195-issue-197-npm-published-javascript-published': 'delivery:npm',
+    'i195-issue-197-tree-sitter-consumer-rust-published': 'delivery:crate',
+  };
+  const observedDependencyDelivery = Object.fromEntries(plan.flatMap(({ group, cells }) =>
+    cells.filter(({ requirement }) => requirement.id.startsWith('I195-ISSUE-197-'))
+      .map(({ cell }) => [cell.testId, group])));
+  assert.deepEqual(observedDependencyDelivery, dependencyDelivery);
+  assert.equal(observed.length, 8 + Object.keys(dependencyDelivery).length);
   assert.equal(new Set(observed).size, observed.length);
   assert.deepEqual(
     plan.map(({ group }) => group),

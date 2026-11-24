@@ -16,12 +16,14 @@ import {verifyStringOrderSchemaSuccessor} from '../../js/scripts/check-typed-pro
 import {SOURCE_NATIVE_RUNNER_ADDITIONS,SOURCE_NATIVE_RUNNER_VERIFIER_FILES,verifySourceNativeRunnerSourceClosure} from '../source-native-runner-source-closure.mjs';
 import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, readCanonicalArchiveTransportSource, requireSuccessfulSourceArchive} from './archive-transport.mjs';
 import {createOriginalLinkSuccessorSourceArchives,readOriginalLinkSuccessorArchiveSource} from './successor-source-archives.mjs';
-import {replayOriginalLinkRawSourceArchives,readOriginalLinkRawArchiveWorkerSources} from './raw-source-archive-workers.mjs';
+import {canOverlapOriginalLinkRawSourcePreparation,prepareOriginalLinkRawArchiveBatch,replayOriginalLinkRawSourceArchives,readOriginalLinkRawArchiveWorkerSources} from './raw-source-archive-workers.mjs';
 import {freezeOriginalLinkRawData,readOriginalLinkRawFreezeWork} from './raw-data-freeze.mjs';
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
-import {ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, readOriginalLinkRawEmissionProducerSources, readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
-import {generateOriginalLinkRawConsumingEmission,readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
-import {prepareOriginalLinkRawBorrowedEmission,readOriginalLinkRawBorrowedProfile} from './raw-borrowed-emission.mjs';
+import {ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_EMISSION_BASELINE, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, readOriginalLinkRawEmissionProducerSources, readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
+import {generateOriginalLinkRawConsumingEmission,ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,prepareOriginalLinkRawConsumingEmission,readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
+import {ORIGINAL_LINK_RAW_BORROWED_RECEIPT,prepareOriginalLinkRawBorrowedEmission,readOriginalLinkRawBorrowedProfile} from './raw-borrowed-emission.mjs';
+import {readPortableSourceParameterStyles} from '../../js/scripts/portable-source-library-style.mjs';
+import {readOriginalRawColumnLoanStyles} from './raw-column-loan-styles.mjs';
 const {Link: CarrierLink, StreamParser: CarrierLinksParser} = await import(pathToFileURL(createRequire(new URL('../../js/package.json', import.meta.url)).resolve('links-notation')).href);
 
 // Actual immutable producer and source closure; no capability declaration substitutes for execution.
@@ -459,8 +461,7 @@ print!("{output}");}
 
 // Only immutable texts, their interface, and declaration identities escape this
 // scope. The checked surface/IR and duplicate artifact definitions are temporary.
-function prepareOriginalLinkRawSource({readProjectData, parseJavaScript, checkProgram, emitRust, emitJavaScript, tokenize}, profile) {
-  const prepared = prepareCurrentOriginalLinkRawEmission({readProjectData, parseJavaScript, checkProgram, emitRust});
+function prepareOriginalLinkRawSource(prepared, {emitJavaScript, tokenize}, profile) {
   const {historicalArtifact: artifact, program, rust} = prepared;
   assert.equal(artifact.version, 1); assert.equal(artifact.model, frozenNative.model); assert.equal(rust.definitions.length, frozenNative.definitionCount);
   assert.equal(textBytes(artifact.completeRust).length, frozenNative.sourceBytes); assert.equal(sha256(artifact.completeRust), frozenNative.sourceSha256);
@@ -471,9 +472,24 @@ function prepareOriginalLinkRawSource({readProjectData, parseJavaScript, checkPr
     declarationNames: emissionProfile.declarationNames, definitionCount: rust.definitions.length, preludeCount: rust.preludes.length});
 }
 
+/** Reuse the decoded artifact only when a fresh complete read matches its bytes. */
+export function createOriginalLinkRawEmissionArtifactReader(path) {
+  let previous;
+  return () => {
+    const bytes = readFileSync(path);
+    if (previous?.bytes.equals(bytes)) return previous.artifact;
+    const artifact = freezeOriginalLinkRawData(readStructuredDataLino(bytes.toString('utf8')));
+    previous = { bytes, artifact };
+    return artifact;
+  };
+}
+
+const readHistoricalEmissionArtifact = createOriginalLinkRawEmissionArtifactReader(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT);
+const readCurrentEmissionArtifact = createOriginalLinkRawEmissionArtifactReader(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT);
+
 function readOriginalLinkRawSelectedEmissionProfile(profile) {
-  const historicalArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, 'utf8'));
-  const currentArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, 'utf8'));
+  const historicalArtifact = readHistoricalEmissionArtifact();
+  const currentArtifact = readCurrentEmissionArtifact();
   const source = readFileSync(new URL('./raw-rules.mjs', import.meta.url), 'utf8');
   const selected = readOriginalLinkRawEmissionProfile(['consuming','borrowed consuming'].includes(profile) ? 'current' : profile, {historicalArtifact, currentArtifact, source,
     producerSources: readOriginalLinkRawEmissionProducerSources()});
@@ -482,6 +498,19 @@ function readOriginalLinkRawSelectedEmissionProfile(profile) {
   if (profile === 'consuming') return readOriginalLinkRawConsumingProfile(descriptor);
   if (profile === 'borrowed consuming') return readOriginalLinkRawBorrowedProfile(descriptor);
   return descriptor;
+}
+
+/** Prepare provisional archive inputs while the full producer checks run separately. */
+export function readOriginalLinkRawArchiveSources(read = readFileSync) {
+  const current = readStructuredDataLino(read(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, 'utf8')).completeRust;
+  const consuming = readStructuredDataLino(read(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT, 'utf8'));
+  const borrowed = readStructuredDataLino(read(ORIGINAL_LINK_RAW_BORROWED_RECEIPT, 'utf8'));
+  assert.equal(sha256(current), ORIGINAL_LINK_RAW_EMISSION_BASELINE.currentSha256);
+  assert.equal(sha256(consuming.completeRust), consuming.sourceSha256);
+  const parameters = readPortableSourceParameterStyles(consuming.completeRust, borrowed.options);
+  const source = readOriginalRawColumnLoanStyles(parameters.source).source;
+  assert.deepEqual({bytes: Buffer.byteLength(source), sha256: sha256(source)}, borrowed.source);
+  return [current, consuming.completeRust, source];
 }
 
 /** Complete source replay before allocating any observation-matrix state. */
@@ -590,14 +619,28 @@ export async function planOriginalLinkRawNative(environment = process.env, {emis
   const [{readProjectData}, {LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary}, {parseJavaScript}, {checkProgram}, {emitRust}, {emitJavaScript}, {tokenize}, fixtures, corpus, transport, rules, oldDecoder, oldProjector, textProjection] = await Promise.all([
     import('../../js/scripts/project-data.mjs'), import('../../js/src/index.js'), import('../../js/src/translation/javascript.js'), import('../../js/src/translation/check.js'), import('../../js/src/translation/emit-rust.js'), import('../../js/src/translation/emit-javascript.js'), import('../../js/src/translation/lexer.js'), import('./raw-fixtures.mjs'), import('./raw-corpus.mjs'), import('./raw-transport.mjs'), import('./raw-rules.mjs'), import('../rust-text-certificate-adapter/raw-identity.mjs'), import('./transport.mjs'), import('../rust-text-value-projection/model.mjs'),
   ]);
-  const preparedSource=prepareOriginalLinkRawSource({readProjectData,parseJavaScript,checkProgram,emitRust,emitJavaScript,tokenize},emissionProfile);
-  const successorSources=emissionProfile==='current'?await(async()=>{
-    const generated=await generateOriginalLinkRawConsumingEmission(true);
-    const borrowed=prepareOriginalLinkRawBorrowedEmission(generated.profile);
-    return[{source:generated.rust.text,profile:generated.profile},{source:borrowed.source,profile:borrowed.profile}];
-  })():[];
-  const sources=[preparedSource.source,...successorSources.map(row=>row.source)];
-  const receipts=await replayOriginalLinkRawSourceArchives(sources,environment);
+  const capturedSources = emissionProfile === 'current' && canOverlapOriginalLinkRawSourcePreparation(environment)
+    ? readOriginalLinkRawArchiveSources() : undefined;
+  const {batch:{preparedSource,successorSources,sources},receipts}=await prepareOriginalLinkRawArchiveBatch(async()=>{
+    if (capturedSources) {
+      const current = readOriginalLinkRawSelectedEmissionProfile('current');
+      const consuming = readOriginalLinkRawConsumingProfile(current);
+      const borrowed = prepareOriginalLinkRawBorrowedEmission(consuming);
+      assert.equal(sha256(capturedSources[0]), current.sourceSha256);
+      assert.equal(sha256(capturedSources[1]), consuming.sourceSha256);
+      assert.equal(capturedSources[2], borrowed.source);
+    }
+    const currentEmission = prepareCurrentOriginalLinkRawEmission({readProjectData, parseJavaScript, checkProgram, emitRust});
+    const preparedSource = prepareOriginalLinkRawSource(currentEmission, {emitJavaScript, tokenize}, emissionProfile);
+    const successorSources = [];
+    if (emissionProfile === 'current') {
+      const generated = await prepareOriginalLinkRawConsumingEmission(currentEmission);
+      assert.deepEqual(readOriginalLinkRawConsumingProfile(generated.artifact.predecessor), generated.profile);
+      const borrowed = prepareOriginalLinkRawBorrowedEmission(generated.profile);
+      successorSources.push({source: generated.rust.text, profile: generated.profile}, {source: borrowed.source, profile: borrowed.profile});
+    }
+    return {preparedSource, successorSources, sources: [preparedSource.source, ...successorSources.map(row => row.source)]};
+  },sources=>replayOriginalLinkRawSourceArchives(sources,environment),capturedSources);
   const replay=source=>{const index=sources.indexOf(source);assert.ok(index>=0);return receipts[index];};
   const sourceToken=emissionProfile==='current'
     ?successorSourceArchives.prepare({source:preparedSource.source,profile:preparedSource.emissionProfile},successorSources,replay):null;

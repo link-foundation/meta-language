@@ -6,7 +6,7 @@ import test from 'node:test';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { grammarSourceOf, importSource, sourceText } from '../scripts/import-native-grammars.mjs';
 import { nativeOracleKinds } from '../scripts/build-language-catalog.mjs';
-import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
+import { nativeRows, nativeProfileOracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 import { transformNativeSource } from '../scripts/native-grammar-transforms.mjs';
 import { applySourceContextPreference } from '../scripts/native-source-preferences.mjs';
 
@@ -63,7 +63,7 @@ test('CSharp pattern preferences reproduce all five CI failures and the frozen n
     assert.equal(corpus.find(item => item.file === file && item.title === title)?.source, source, title);
   }
   for (const { title, source, rows } of [...fixture.cases, ...fixture.controls]) {
-    const oracle = oracleSnapshot(source, fixture.language);
+    const oracle = nativeProfileOracleSnapshot(source, fixture.language);
     assert.equal(oracle.recovers, false, title ?? source);
     assert.deepEqual(oracle.rows, rows, title ?? source);
     const result = parser.parseTree(source);

@@ -170,7 +170,7 @@ pub(super) fn translate_binding_groups<'a>(
             decorators,
             &Context {
                 utf16_strings,
-                module_binding_scope: Some(module_scope.clone()),
+                module_binding_scope: Some(module_scope),
                 ..Context::default()
             },
             &literals,

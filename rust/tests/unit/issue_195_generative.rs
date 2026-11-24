@@ -30,6 +30,7 @@ use super::generative_support::{
     apply_text_edit, generate_inputs, property_problems, random_edit, relation_applies,
     relation_holds, relation_transform, seed_sources,
 };
+use super::issue_195_conformance::fixture_oracle_tool_matches;
 use super::issue_195_observations::{GENERATIVE_FIXTURE, Observation, record};
 use super::native_recovery_records::NativeRecovery;
 
@@ -144,7 +145,10 @@ fn issue_195_generative_fixtures_record_their_seed_and_oracle_and_the_seed_regen
         &fs::read_to_string(lock_path).expect("grammar lock"),
     )
     .expect("grammar lock Links data");
-    assert_eq!(manifest["oracle"]["tool"], lock["treeSitterCli"]);
+    assert!(fixture_oracle_tool_matches(
+        &manifest["oracle"]["tool"],
+        &lock
+    ));
     assert_eq!(
         text(&manifest["inputs"], "reproducers.json"),
         sha256(read("reproducers.json"))

@@ -252,5 +252,8 @@ fn native_scheme_trees_keep_every_byte() {
 fn pinned_scheme_oracle_gives_the_fixture() {
     // The oracle is a development dependency since the native grammar
     // replaced it as the default Scheme parse.
-    oracle_agrees(&tree_sitter_scheme::LANGUAGE.into(), &fixture());
+    oracle_agrees(
+        &super::issue_195_native_grammar_rows::pinned_oracle("Scheme"),
+        &fixture(),
+    );
 }

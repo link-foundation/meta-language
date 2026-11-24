@@ -9,7 +9,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { nativeOracleKinds } from './build-language-catalog.mjs';
-import { oracleSnapshot, nativeRows } from './native-grammar-rows.mjs';
+import { nativeProfileOracleSnapshot, nativeRows } from './native-grammar-rows.mjs';
 import { corpusCases, sourceText } from './import-native-grammars.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -25,7 +25,7 @@ export function nativeScannerProfileFixture(language) {
   const projection = { ...spec, oracleKinds: nativeOracleKinds(grammar) };
   const text = tree => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
   const matches = spec.matches.map(source => {
-    const oracle = oracleSnapshot(source, spec.language);
+    const oracle = nativeProfileOracleSnapshot(source, spec.language);
     assert.equal(oracle.recovers, false, source);
     const native = parser.parseTree(source);
     assert.equal(native.ok, true, source);
@@ -35,7 +35,7 @@ export function nativeScannerProfileFixture(language) {
     return { source, rows: oracle.rows };
   });
   const rejections = spec.rejections.map(source => {
-    assert.equal(oracleSnapshot(source, spec.language).recovers, true, source);
+    assert.equal(nativeProfileOracleSnapshot(source, spec.language).recovers, true, source);
     assert.equal(parser.parseTree(source).ok, false, source);
     const native = parser.parseTree(source, { errorRecovery: true });
     assert.equal(native.rejection.reason, 'recovered', source);

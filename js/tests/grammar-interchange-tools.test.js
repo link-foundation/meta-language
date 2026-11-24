@@ -17,7 +17,8 @@ const fixture = readProjectData(new URL('../../parity/fixtures/grammar-interchan
 for (const entry of fixture.cases) {
   test(`${entry.id} executes the independent target and reimports its actual AST`, () => {
     const result = checkIndependentGrammarCycle(entry, peggy);
-    assert.equal(result.targetVersion, '5.1.0');
+    const version = selectPeggyOptimizerAssertion({ runtimeVersion: peggy.VERSION });
+    assert.equal(result.targetVersion, version.activeVersion);
     assert.deepEqual(result.failures, []);
     assert.ok(result.observations.some(({ target }) => target.accepted && target.tree.children.length === 2), 'target actions constructed the word nodes');
     assert.equal(result.mutation.originalWitnessRejectedByTarget, true);

@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { grammarSourceOf, importSource } from './import-native-grammars.mjs';
-import { nativeRows, oracleSnapshot } from './native-grammar-rows.mjs';
+import { nativeRows, nativeProfileOracleSnapshot } from './native-grammar-rows.mjs';
 
 const read = file => readProjectData(new URL(`../../${file}`, import.meta.url));
 const argument = process.argv.indexOf('--fixture');
@@ -25,7 +25,7 @@ const projection = read('parity/fixtures/native-grammars/csharp-profile.json');
 const corpus = read('parity/fixtures/native-grammars/csharp-profile-corpus.json').cases;
 const text = tree => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
 const snapshot = entry => {
-  const oracle = oracleSnapshot(entry.source, fixture.language);
+  const oracle = nativeProfileOracleSnapshot(entry.source, fixture.language);
   assert.equal(oracle.recovers, false, entry.title ?? entry.source);
   const parsed = parser.parseTree(entry.source);
   assert.equal(parsed.ok, true, entry.title ?? entry.source);

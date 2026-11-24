@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
+import {restoreCiIntegrationSource} from './ci-integration-source-history.mjs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
@@ -119,7 +120,8 @@ export function verifyProgramStringHostRegistrationHistory(packet){
     exactFields(row,['owner','declaration','path','bytes','sha256','certificate']);
     assert.deepEqual({owner:row.owner,declaration:row.declaration,path:row.path},PROGRAM_STRING_REGISTRATIONS[index]);
     assert.equal(result.get(row.owner).current.split(row.declaration+'\n').length,2,'one actual owned module registration');
-    const bytes=readFileSync(new URL(row.path,root));
+    const current=readFileSync(new URL(row.path,root),'utf8');
+    const bytes=Buffer.from(restoreCiIntegrationSource(current,row.path,'dependencies'));
     assert.deepEqual(programStringHostRegistrationPin(bytes),{bytes:row.bytes,sha256:row.sha256});
     verifyGitArtifactCertificate(row.certificate,bytes,{revision:PROGRAM_STRING_REGISTRATION_REVISION,path:row.path});
   }

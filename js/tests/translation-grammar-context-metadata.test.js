@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {generateGrammarContextSourceMetadata,checkGrammarContextMetadataPredecessor} from '../../experiments/grammar-context-source-metadata/generate.mjs';
 import {restoreGrammarContextMetadataHistory} from '../scripts/grammar-context-metadata-history.mjs';
+import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
@@ -14,7 +15,9 @@ test('current metadata retains complete certified predecessors and every origina
   const packet=generateGrammarContextSourceMetadata({check:true});
   assert.equal(packet.sources.length,32);
   for(const row of packet.sources){
-    const actual=readFileSync(new URL(row.file,root),'utf8');assert.deepEqual(pin(actual),row.current);
+    const actual=readFileSync(new URL(row.file,root),'utf8');
+    const current=pin(actual).sha256===row.current.sha256?actual:restoreDependencyWorkflowSource(actual,row.file);
+    assert.deepEqual(pin(current),row.current);
     verifyGitArtifactCertificate(row.certificate,Buffer.from(row.sourceText),{revision:packet.revision,path:row.file});
     assert.equal(restoreGrammarContextMetadataHistory(actual,row.file),row.sourceText);
     assert.equal(restoreGrammarContextMetadataHistory(actual+'\n# changed\n',row.file),actual+'\n# changed\n');

@@ -639,7 +639,7 @@ pub fn ml_accept_resource_description_language_loop19(
                     {
                         let ml_index10_2 = ml_index10.add(&super::ml::Big::from_i128(1));
                         {
-                            ml_index10 = ml_index10_2.clone();
+                            ml_index10 = ml_index10_2;
                             continue;
                         }
                     }
@@ -690,8 +690,8 @@ pub fn ml_accept_resource_description_language_loop18(
                             {
                                 let ml_s20 = super::ml_accept_resource_description_language_loop19(
                                     singleton_3,
-                                    ml_values10.clone(),
-                                    ml_index10.clone(),
+                                    ml_values10,
+                                    ml_index10,
                                 );
                                 match ml_s20 {
                                     super::MlAcceptResourceDescriptionLanguageLoop19Result::MlAcceptResourceDescriptionLanguageLoop19Done => {
@@ -707,7 +707,7 @@ pub fn ml_accept_resource_description_language_loop18(
                                                             super::MlAcceptResourceDescriptionLanguageLoop18Result::MlAcceptResourceDescriptionLanguageLoop18Return(false)
                                                         } else {
                                                             {
-                                                                (part, singletons) = (part_3, singletons_2.clone());
+                                                                (part, singletons) = (part_3, singletons_2);
                                                                 continue;
                                                             }
                                                         }

@@ -394,7 +394,7 @@ pub fn ml_transcode_link_network_binary_loop6(
                 {
                     let index_2 = (index + 1f64);
                     {
-                        (output, index) = (output_2.clone(), index_2);
+                        (output, index) = (output_2, index_2);
                         continue;
                     }
                 }
@@ -435,7 +435,7 @@ pub fn ml_transcode_link_network_binary_loop10(
                 {
                     let index_2 = (index + 1f64);
                     {
-                        (output, index) = (output_2.clone(), index_2);
+                        (output, index) = (output_2, index_2);
                         continue;
                     }
                 }
@@ -476,7 +476,7 @@ pub fn ml_transcode_link_network_binary_loop14(
                 {
                     let index_2 = (index + 1f64);
                     {
-                        (output, index) = (output_2.clone(), index_2);
+                        (output, index) = (output_2, index_2);
                         continue;
                     }
                 }
@@ -511,7 +511,7 @@ pub fn ml_transcode_link_network_binary_loop15(
                 {
                     let index_2 = (index + 1f64);
                     {
-                        (output, index) = (output_2.clone(), index_2);
+                        (output, index) = (output_2, index_2);
                         continue;
                     }
                 }
@@ -553,7 +553,7 @@ pub fn ml_transcode_link_network_binary_loop16(
                             {
                                 let index_2 = (index + 1f64);
                                 {
-                                    (output, cursor, index) = (output_2.clone(), cursor_2, index_2);
+                                    (output, cursor, index) = (output_2, cursor_2, index_2);
                                     continue;
                                 }
                             }
@@ -594,23 +594,20 @@ pub fn ml_transcode_link_network_binary_loop12(
                         {
                             let output_4 = if binary {
                                 {
-                                    let output_2 = output.concat(
-                                        &super::render_link_network_binary_field(length, binary),
-                                    );
-                                    output_2.clone()
+                                    output.concat(&super::render_link_network_binary_field(
+                                        length, binary,
+                                    ))
                                 }
                             } else {
                                 {
                                     let index = 0f64;
                                     {
-                                        let output_3 =
-                                            super::ml_transcode_link_network_binary_loop15(
-                                                binary,
-                                                output.clone(),
-                                                length,
-                                                index,
-                                            );
-                                        output_3.clone()
+                                        super::ml_transcode_link_network_binary_loop15(
+                                            binary,
+                                            output.clone(),
+                                            length,
+                                            index,
+                                        )
                                     }
                                 }
                             };
@@ -618,19 +615,14 @@ pub fn ml_transcode_link_network_binary_loop12(
                                 let index_2 = 0f64;
                                 {
                                     let ml_s11 = super::ml_transcode_link_network_binary_loop16(
-                                        input,
-                                        binary,
-                                        output_4.clone(),
-                                        cursor_2,
-                                        length,
-                                        index_2,
+                                        input, binary, output_4, cursor_2, length, index_2,
                                     );
                                     match ml_s11 {
                                         super::MlTranscodeLinkNetworkBinaryLoop16Result::MlTranscodeLinkNetworkBinaryLoop16Done(output_5, cursor_3) => {
                                             {
                                                 let text_2 = (text + 1f64);
                                                 {
-                                                    (output, cursor, text) = (output_5.clone(), cursor_3, text_2);
+                                                    (output, cursor, text) = (output_5, cursor_3, text_2);
                                                     continue;
                                                 }
                                             }
@@ -704,14 +696,14 @@ pub fn ml_transcode_link_network_binary_loop11(
                                                             if binary {
                                                                 {
                                                                     let output_3 = output_2.concat(&super::render_link_network_binary_field(identity, binary));
-                                                                    super::MlTranscodeLinkNetworkBinaryJoin13::MlTranscodeLinkNetworkBinaryJoin13Next(output_3.clone(), cursor_3)
+                                                                    super::MlTranscodeLinkNetworkBinaryJoin13::MlTranscodeLinkNetworkBinaryJoin13Next(output_3, cursor_3)
                                                                 }
                                                             } else {
                                                                 {
                                                                     let index = 0f64;
                                                                     {
-                                                                        let output_4 = super::ml_transcode_link_network_binary_loop14(binary, output_2.clone(), identity, index);
-                                                                        super::MlTranscodeLinkNetworkBinaryJoin13::MlTranscodeLinkNetworkBinaryJoin13Next(output_4.clone(), cursor_3)
+                                                                        let output_4 = super::ml_transcode_link_network_binary_loop14(binary, output_2, identity, index);
+                                                                        super::MlTranscodeLinkNetworkBinaryJoin13::MlTranscodeLinkNetworkBinaryJoin13Next(output_4, cursor_3)
                                                                     }
                                                                 }
                                                             }
@@ -723,7 +715,7 @@ pub fn ml_transcode_link_network_binary_loop11(
                                             }
                                         }
                                     } else {
-                                        super::MlTranscodeLinkNetworkBinaryJoin13::MlTranscodeLinkNetworkBinaryJoin13Next(output_2.clone(), cursor_2)
+                                        super::MlTranscodeLinkNetworkBinaryJoin13::MlTranscodeLinkNetworkBinaryJoin13Next(output_2, cursor_2)
                                     };
                                     match ml_s13 {
                                         super::MlTranscodeLinkNetworkBinaryJoin13::MlTranscodeLinkNetworkBinaryJoin13Next(output_5, cursor_4) => {
@@ -737,7 +729,7 @@ pub fn ml_transcode_link_network_binary_loop11(
                                                 {
                                                     let entry_2 = (entry + 1f64);
                                                     {
-                                                        (output, cursor, entry) = (output_5.clone(), cursor_4, entry_2);
+                                                        (output, cursor, entry) = (output_5, cursor_4, entry_2);
                                                         continue;
                                                     }
                                                 }

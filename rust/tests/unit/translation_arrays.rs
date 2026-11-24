@@ -489,6 +489,10 @@ fn retained_modern_javascript_array_contract_executes_every_original_input() {
 }
 
 // Same original input and old value-mode diagnostic; native execution is CI only.
+#[expect(
+    clippy::literal_string_with_formatting_args,
+    reason = "Preserve literal JavaScript source passed to the JavaScript runtime or translator"
+)]
 fn assert_modern_array_identity_translation(source: &str, previous_message: &str) {
     use super::issue_195_translation_pairs::run;
     use meta_language::translation::{

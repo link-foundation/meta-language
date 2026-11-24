@@ -115,13 +115,13 @@ test('ANTLR context authenticates actual paired source bytes, primary URLs and t
 });
 
 test('Peggy optimizer context uses the installed manifest and refuses runtime, dependency and lock drift', () => {
-  const actual = selectPeggyOptimizerAssertion({ runtimeVersion: '5.1.0' });
+  const actual = selectPeggyOptimizerAssertion({ runtimeVersion: '5.1.1' });
   assert.deepEqual([actual.minimum, actual.maximum, actual.includeMinimum, actual.includeMaximum],
-    ['5.1.0', '5.1.0', true, true]);
+    ['5.1.1', '5.1.1', true, true]);
   assert.equal(actual.sourcePolicy, 'js/node_modules/peggy/package.json');
   assert.equal(actual.sourcePolicySha256, sha256(readFileSync(new URL('../../' + actual.sourcePolicy, import.meta.url))));
-  assert.throws(() => selectPeggyOptimizerAssertion({ runtimeVersion: '5.1.1' }), /executing Peggy version differs/u);
-  for (const version of ['5.0.9', '5.1.1', '5.2.0', 'latest', '05.1.0']) {
+  assert.throws(() => selectPeggyOptimizerAssertion({ runtimeVersion: '5.1.0' }), /executing Peggy version differs/u);
+  for (const version of ['5.0.9', '5.1.2', '5.2.0', 'latest', '05.1.0']) {
     withVersionFixture(({ root, writeManifest }) => {
       writeManifest('js/node_modules/peggy/package.json', { name: 'peggy', version });
       assert.throws(() => selectPeggyOptimizerAssertion({ root }), /uncovered active version|invalid 3-coordinate release/u);

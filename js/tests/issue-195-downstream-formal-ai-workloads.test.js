@@ -12,6 +12,7 @@ import { tmpdir } from 'node:os';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { test } from 'node:test';
 import { readProjectData } from '../scripts/project-data.mjs';
+import { restoreDependencyWorkflowSource } from '../scripts/dependency-workflow-source-history.mjs';
 
 import {
   FORMAL_AI_PROBE_ASSERTIONS,
@@ -361,8 +362,11 @@ test('the workload runner bounds the formal-ai cargo build and reports its progr
   assert.match(runner, /metaLanguagePackages\.length === 1/u);
   assert.match(runner, /resolution\.manifestPath\?\.startsWith\(resolution\.unpackedDirectory\)/u);
 
-  const job = parseWorkflow(readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8'))
-    .find(entry => entry.id === 'formal-ai-workload-parts');
+  const file = '.github/workflows/ci.yml';
+  const workflow = readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+  const workloadJob = (source) => parseWorkflow(source).find(entry => entry.id === 'formal-ai-workload-parts');
+  const job = workloadJob(workflow);
+  const originalJob = workloadJob(restoreDependencyWorkflowSource(workflow, file));
   const names = job.steps.map(step => step.name);
   const identify = job.steps.find(step => step.name === 'Identify the exact Formal AI build cache');
   const restore = job.steps.find(step => step.name === 'Restore Formal AI build outputs');
@@ -374,7 +378,11 @@ test('the workload runner bounds the formal-ai cargo build and reports its progr
   assert.ok(names.indexOf(restore.name) < names.indexOf(execute.name));
   assert.ok(names.indexOf(execute.name) < names.indexOf(save.name));
   assert.ok(names.indexOf(save.name) < names.indexOf(cleanup.name));
-  assert.match(identify.text, /runner\.os.*runner\.arch.*rust1\.99\.0-opt3-debug0-incremental0/u);
+  assert.match(originalJob.steps.find(step => step.name === identify.name).text,
+    /runner\.os.*runner\.arch.*rust1\.99\.0-opt3-debug0-incremental0/u);
+  assert.match(job.steps.find(step => step.name === 'Setup Rust').text, /rust-toolchain@1\.99\.1/u);
+  assert.match(identify.text, /runner\.os.*runner\.arch.*rust1\.99\.1-opt3-debug0-incremental0/u);
+  assert.match(identify.run, /grep -Fx 'release: 1\.99\.1'/u);
   assert.match(identify.text, /hashFiles\('parity\/fixtures\/formal-ai-workloads\.lino'/u);
   assert.match(identify.run, /sha256sum --check/u);
   assert.match(identify.run, /compiler_identity="\$\(rustc -vV\)"/u);

@@ -7,6 +7,7 @@ import {captureGitArtifactCertificate} from '../../../../js/scripts/capture-git-
 import {verifyGitArtifactCertificate} from '../../../../js/scripts/git-object-certificate.mjs';
 import {checkProjectData,writeProjectData} from '../../../../js/scripts/project-data.mjs';
 import {restoreNativeCompatibilitySourceHistory} from '../../../../js/scripts/native-compatibility-source-history.mjs';
+import {restoreDependencyWorkflowSource} from '../../../../js/scripts/dependency-workflow-source-history.mjs';
 const root=new URL('../../../../',import.meta.url),revision='ab8881173efbb657ef139518b34de2ff910cdbe7';
 const sources=[
   "js/tests/support/ci-node-runtime-history.js",
@@ -32,8 +33,9 @@ export function generateEvidenceTranslationNamingHistory({check=false}={}) {
     const original=captureGitArtifactCertificate(revision,file);
     verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});
     const sourceText=original.blob.toString('utf8');assert.deepEqual(Buffer.from(sourceText),original.blob);
+    const current=restoreDependencyWorkflowSource(readFileSync(new URL(file,root),'utf8'),file);
     return{file,commit:revision,...pin(original.blob),sourceText,certificate:original.certificate,
-      current:pin(readFileSync(new URL(file,root)))};
+      current:pin(current)};
   });
   const packet={schemaVersion:1,revision,sources,
     boundary:'Original complete source definitions retain their Git membership and every byte. Expanded current source views have separately qualified identities. Source preservation establishes neither meaning equivalence nor native execution.'};

@@ -13,6 +13,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: true
@@ -33,19 +37,51 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Update the lockfiles within the declared ranges
+        id: update
+        continue-on-error: true
         run: |
-          (cd js && npm update --ignore-scripts)
-          (cd rust && cargo update)
+          status=0
+          npm --prefix js update --ignore-scripts 2>&1 | tee js/dependency-update.log || status=1
+          for manifest in rust/Cargo.toml rust/web/Cargo.toml; do
+            cargo update --manifest-path "$manifest" 2>&1 | tee -a js/dependency-update.log || status=1
+          done
+          exit "$status"
+
+      - name: Report available updates from npm and Cargo
+        id: outdated
+        continue-on-error: true
+        run: |
+          status=0
+          npm --prefix js outdated --json > js/dependency-outdated.log || npm_status=$?
+          cat js/dependency-outdated.log
+          node -e 'const report = JSON.parse(require("node:fs").readFileSync("js/dependency-outdated.log")); if (report.error) process.exitCode = 1;' || status=1
+          test "${npm_status:-0}" -le 1 || status=1
+          if cargo install cargo-outdated --locked 2>&1 | tee -a js/dependency-outdated.log; then
+            for manifest in rust/Cargo.toml rust/web/Cargo.toml; do
+              cargo outdated --root-deps-only --exit-code 1 --manifest-path "$manifest" 2>&1 | tee -a js/dependency-outdated.log || status=1
+            done
+          else
+            status=1
+          fi
+          for manifest in rust/Cargo.toml rust/web/Cargo.toml; do
+            cargo update --dry-run --manifest-path "$manifest" 2>&1 | tee -a js/dependency-outdated.log || status=1
+          done
+          if rg '^\s+(Updating |Adding |Removing |Downgrading )' js/dependency-outdated.log | rg 'v[0-9]'; then
+            status=1
+          fi
+          exit "$status"
 
       - name: Refresh the dependency audit from the registries
         id: audit
@@ -65,6 +101,8 @@ jobs:
           name: dependency-refresh-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             js/dependency-refresh.log
+            js/dependency-update.log
+            js/dependency-outdated.log
             parity/dependency-inventory.lino
             docs/dependency-audit.md
           if-no-files-found: error
@@ -73,11 +111,26 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+          UPDATE_OUTCOME: ${{ steps.update.outcome }}
+          OUTDATED_OUTCOME: ${{ steps.outdated.outcome }}
         run: |
           printf 'Live dependency audit outcome: **%s**. See the retained report and refresh PR for repairs. Required PR dependency checks remain unchanged.\n' "$AUDIT_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Lockfile refresh outcome: **%s**.\n' "$UPDATE_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Lockfile update probe outcome: **%s**.\n' "$OUTDATED_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
           if [ "$AUDIT_OUTCOME" != success ]; then
             echo '::warning::The live dependency audit reported failures. Its retained findings require repair; no PR or delivery gate is waived.'
           fi
+
+      - name: Regenerate dependency history and acceptance fixtures
+        run: |
+          npm --prefix js ci --ignore-scripts
+          if ! git diff --quiet HEAD -- rust/Cargo.lock rust/Cargo.toml; then
+            node experiments/grammar-outcome-network/native-transport/diagnostic-order/generate.mjs --write
+            node js/scripts/generate-ci-integration-source-history.mjs
+          fi
+          node js/scripts/generate-dependency-workflow-source-history.mjs
+          npm --prefix js run acceptance:issue-195:refresh
+          node js/scripts/check-issue-195-acceptance.mjs --scope-baseline HEAD
 
       - name: Open or update the refresh pull request
         env:
@@ -97,7 +150,17 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git switch --create "$BRANCH"
           git commit --all --message "chore(deps): scheduled dependency refresh ($(date -u +%F))"
-          git push --force origin "$BRANCH"
+          status=0
+          git ls-remote --exit-code origin "refs/heads/$BRANCH" > /dev/null || status=$?
+          case "$status" in
+            0)
+              git fetch --no-tags origin "refs/heads/$BRANCH"
+              git merge --strategy=ours --no-edit FETCH_HEAD
+              ;;
+            2) ;;
+            *) exit "$status" ;;
+          esac
+          git push origin "HEAD:refs/heads/$BRANCH"
           body="$RUNNER_TEMP/dependency-refresh-pr.md"
           cat > "$body" <<EOF
           Lockfile updates within the declared ranges and the refreshed dependency audit in docs/dependency-audit.md.
@@ -112,6 +175,12 @@ jobs:
           else
             gh pr edit "$existing" --body-file "$body"
           fi
+
+      - name: Fail the unresolved live audit
+        if: ${{ !cancelled() && steps.audit.outcome == 'failure' }}
+        run: |
+          echo '::error::The live dependency audit failed. Review the retained audit and apply the dependency repairs.'
+          exit 1
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}

@@ -8,6 +8,7 @@ import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certific
 import {readProjectData,serializeProjectData,writeProjectData,checkProjectData} from '../../js/scripts/project-data.mjs';
 import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {restoreGlobalGrammarContextSource} from '../global-grammar-context-reuse/current-source.mjs';
+import {restoreDependencyWorkflowSource} from '../../js/scripts/dependency-workflow-source-history.mjs';
 
 const root=new URL('../../',import.meta.url),revision='abde6ee604b914a895f23525946fab2234109e86';
 const output='parity/self-translation/grammar-context-source-metadata.lino';
@@ -78,7 +79,9 @@ export function generateGrammarContextSourceMetadata({check=false}={}) {
   const model=readProjectData(new URL('parity/self-translation/private-output-test-model.lino',root));
   const artifacts=[model.receipt];
   const rows=[...sources,...artifacts].map(file=>{
-    const{blob,certificate}=captureGitArtifactCertificate(revision,file),actual=readFileSync(new URL(file,root));
+    const{blob,certificate}=captureGitArtifactCertificate(revision,file),currentBytes=readFileSync(new URL(file,root));
+    const currentText=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(currentBytes);
+    const actual=Buffer.from(restoreDependencyWorkflowSource(currentText,file));
     verifyGitArtifactCertificate(certificate,blob,{revision,path:file});
     assert.deepEqual(Buffer.from(blob.toString()),blob);assert.deepEqual(Buffer.from(actual.toString()),actual);
     if(artifacts.includes(file)){

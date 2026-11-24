@@ -220,5 +220,8 @@ fn native_json5_trees_keep_every_byte() {
 fn pinned_json5_oracle_gives_the_fixture() {
     // The oracle is a development dependency since the native grammar
     // replaced it as the default JSON5 parse.
-    oracle_agrees(&tree_sitter_json5_orchard::LANGUAGE.into(), &fixture());
+    oracle_agrees(
+        &super::issue_195_native_grammar_rows::pinned_oracle("JSON5"),
+        &fixture(),
+    );
 }

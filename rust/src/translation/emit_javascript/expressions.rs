@@ -108,14 +108,14 @@ impl JavaScriptEmitter<'_> {
             }
             Node::Call { func, args } => {
                 if let Some(external) = self.program.external(func) {
+                    use crate::translation::external_emission_rules::{
+                        ml_string::Text, render_java_script_external_call,
+                    };
                     let kind = match external {
                         crate::translation::surface::External::Function { .. } => "fn",
                         crate::translation::surface::External::Constant { .. } => "const",
                     };
                     let args = self.exprs(args)?.join(", ");
-                    use crate::translation::external_emission_rules::{
-                        ml_string::Text, render_java_script_external_call,
-                    };
                     let rendered = render_java_script_external_call(
                         &Text::from_text(kind),
                         &Text::from_text(func),

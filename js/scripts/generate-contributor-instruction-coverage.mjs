@@ -1,15 +1,16 @@
-// Capture the two immutable instruction revisions and their reviewed coverage.
+// Capture the immutable instruction revisions and their reviewed coverage.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {readContributorInstructionUnits,CONTRIBUTOR_INSTRUCTION_COVERAGE_FILE} from './contributor-instruction-coverage.mjs';
-import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {checkProjectData,readProjectData,writeProjectData} from './project-data.mjs';
 
 const root=new URL('../../',import.meta.url);
 const originalRevision='f0ae00412047227ccfb4826c30608841d16ea7a6';
 const compactRevision='e0d407019196e5ea72e85c7b10afa09407108066';
+const pauseRevision='dcc75929c983ffa8d59fcd5a9204b9130152312d';
 const digest=value=>createHash('sha256').update(value).digest('hex');
 
 export function generateContributorInstructionCoverage({check=false}={}) {
@@ -42,6 +43,14 @@ export function generateContributorInstructionCoverage({check=false}={}) {
       ...(index===3?{authorizedCorrection:digest(requestSource)}:{})})),
     additions:[{unit:ids[5],authority:digest(versionSource)}],
     boundary:'This is a Root-reviewed exhaustive correspondence of all 25 original bullets and three surrounding instruction paragraphs to the shortened shared contract, with the explicitly authorized assertion correction and added version bounds. The original sources and every heading/context are independently authenticated. Checks enforce retained wording, source coverage and measured concision; they do not prove arbitrary English equivalence or a globally optimal word count. CLAUDE.md was absent at the preceding Git revision; its new single reference does not claim a reduction against an unavailable earlier file. AGENTS.md and the vision remain authoritative.'};
+  const {issue} = readProjectData(new URL('docs/case-studies/issue-248/evidence.lino', root));
+  assert.equal(digest(issue.body), issue.sha256);
+  const {certificate, blob} = captureGitArtifactCertificate(pauseRevision, 'AGENTS.md');
+  policy.automatedTranslationPause = {
+    unit: ids[9],
+    authority: {url: issue.url, body: issue.body, sha256: issue.sha256},
+    instructions: {text: blob.toString('utf8'), certificate},
+  };
   const file=new URL(CONTRIBUTOR_INSTRUCTION_COVERAGE_FILE,root);
   if(check)checkProjectData(file,policy);else writeProjectData(file,policy);
   return policy;
@@ -50,5 +59,5 @@ export function generateContributorInstructionCoverage({check=false}={}) {
 if(process.argv[1]===fileURLToPath(import.meta.url)){
   assert.ok(process.argv.slice(2).every(value=>value==='--check'));
   generateContributorInstructionCoverage({check:process.argv.includes('--check')});
-  console.log('Contributor coverage: 28 complete original units and 20 reviewed current units captured automatically.');
+  console.log('Contributor coverage: 28 complete original units, 20 reviewed compact units and one issue #248 revision captured automatically.');
 }

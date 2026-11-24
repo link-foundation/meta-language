@@ -38,6 +38,8 @@ mod link_network_binary_record_rules;
 mod link_network_binary_rules;
 mod lino_grammar;
 mod lino_parser;
+#[allow(clippy::float_cmp)]
+mod lino_reference_literal_rules;
 pub mod lino_serialization;
 pub mod mixed_regions;
 mod natural_language;
@@ -262,6 +264,8 @@ pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, Networ
 pub use link_network_binary::{
     BinaryLinksError, BinaryLinksOptions, decode_link_network_binary, encode_link_network_binary,
 };
+/// The Links Notation types and parser version used by this crate.
+pub use links_notation;
 pub use lino_parser::LinksNotationReading;
 pub use lino_serialization::LinoSerializationError;
 pub use mixed_regions::{

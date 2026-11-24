@@ -4,6 +4,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import test from 'node:test';
 import {readProjectData} from '../scripts/project-data.mjs';
+import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';
 import {generateOriginalNativeNumberObservations} from '../../experiments/grammar-outcome-network/native-transport/inverse/generate-original-number-observations.mjs';
 import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
 import {DecoratorSet} from '../src/decorators.js';
@@ -90,7 +91,7 @@ test('original number control fixtures retain independent variants exact payload
   assert.deepEqual(fixture.observations.map(row=>row.unsignedDecimal),['0',null,'1152921504606846976',null,null,null]);
   assert.deepEqual(fixture.observations.map(row=>[row.signed,row.unsigned,row.floating]),[
     [true,true,false],[true,false,false],[true,true,false],[false,false,true],[false,false,true],[false,false,true]]);
-  assert.deepEqual(pin(readFileSync(new URL('rust/Cargo.lock',root))),fixture.numberVersions.lockSource);
+  assert.deepEqual(pin(restoreDependencyWorkflowSource(readFileSync(new URL('rust/Cargo.lock',root),'utf8'),'rust/Cargo.lock')),fixture.numberVersions.lockSource);
   assert.match(fixture.boundary,/not actual native execution/u);
 });
 

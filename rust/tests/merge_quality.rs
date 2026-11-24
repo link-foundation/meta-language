@@ -28,6 +28,18 @@ mod issue_195_observations;
 
 use issue_195_observations::{Observation, record};
 
+fn pinned_oracle(language: &str) -> tree_sitter::Language {
+    let grammar = &meta_language::oracle_grammar_provenance(language)[0];
+    native_source_oracles::baseline(&grammar.id, &grammar.version)
+        .unwrap_or_else(|| {
+            panic!(
+                "unregistered {language} oracle {} {}",
+                grammar.id, grammar.version
+            )
+        })
+        .into()
+}
+
 /// The system allocator, counting the live heap bytes and their peak.
 struct CountingAllocator;
 
@@ -144,11 +156,7 @@ fn natives() -> Vec<Native> {
             "hcl",
             Some(|| tree_sitter_hcl::LANGUAGE.into())
         ),
-        native!(
-            "native-dart",
-            "dart",
-            Some(|| tree_sitter_dart::LANGUAGE.into())
-        ),
+        native!("native-dart", "dart", Some(|| pinned_oracle("Dart"))),
         native!(
             "native-nix",
             "nix",
@@ -164,11 +172,7 @@ fn natives() -> Vec<Native> {
             "cpp",
             Some(|| tree_sitter_cpp::LANGUAGE.into())
         ),
-        native!(
-            "native-sql",
-            "sql",
-            Some(|| tree_sitter_sequel::LANGUAGE.into())
-        ),
+        native!("native-sql", "sql", Some(|| pinned_oracle("sql-ansi"))),
         native!("native-c", "c", Some(|| tree_sitter_c::LANGUAGE.into())),
         native!("native-csv", "csv", None),
         native!(
@@ -202,11 +206,7 @@ fn natives() -> Vec<Native> {
             "json",
             Some(|| tree_sitter_json::LANGUAGE.into())
         ),
-        native!(
-            "native-json5",
-            "json5",
-            Some(|| tree_sitter_json5_orchard::LANGUAGE.into())
-        ),
+        native!("native-json5", "json5", Some(|| pinned_oracle("JSON5"))),
         // The Lean oracle is a vendored grammar private to the crate, not a
         // development dependency, so its Rust row measures the native side.
         native!("native-lean", "lean", None),
@@ -223,13 +223,9 @@ fn natives() -> Vec<Native> {
         native!(
             "native-powershell",
             "powershell",
-            Some(|| tree_sitter_powershell::LANGUAGE.into())
+            Some(|| pinned_oracle("PowerShell"))
         ),
-        native!(
-            "native-erlang",
-            "erlang",
-            Some(|| tree_sitter_erlang::LANGUAGE.into())
-        ),
+        native!("native-erlang", "erlang", Some(|| pinned_oracle("Erlang"))),
         native!(
             "native-toml",
             "toml",
@@ -268,7 +264,7 @@ fn natives() -> Vec<Native> {
         native!(
             "native-proto",
             "proto",
-            Some(|| tree_sitter_proto::LANGUAGE.into())
+            Some(|| pinned_oracle("Protocol Buffers"))
         ),
         native!(
             "native-racket",
@@ -284,11 +280,7 @@ fn natives() -> Vec<Native> {
         // the crate.
         native!("native-rocq", "rocq", None),
         native!("native-rust", "rust", None),
-        native!(
-            "native-scheme",
-            "scheme",
-            Some(|| tree_sitter_scheme::LANGUAGE.into())
-        ),
+        native!("native-scheme", "scheme", Some(|| pinned_oracle("Scheme"))),
         native!(
             "native-solidity",
             "solidity",

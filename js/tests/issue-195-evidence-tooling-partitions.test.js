@@ -11,7 +11,8 @@ import {restoreToolingPartitionHistory} from './support/tooling-partition-histor
 
 const root=new URL('../../',import.meta.url);
 const history=readProjectData(new URL('parity/fixtures/tooling-partition-history.lino',root));
-const read=file=>restoreCiRepairSourceHistory(file,restoreSchedulingSourceHistory(file,readFileSync(new URL(file,root),'utf8')));
+const read=(file,revision)=>restoreCiRepairSourceHistory(file,restoreSchedulingSourceHistory(file,
+  restoreDependencyWorkflowSource(readFileSync(new URL(file,root),'utf8'),file,revision)));
 
 test('four required tooling cells retain every current file exactly once and every original command and deadline',()=>{
   generateToolingPartitionHistory({check:true});
@@ -35,6 +36,12 @@ test('four required tooling cells retain every current file exactly once and eve
   assert.equal(new Set(cells.flat()).size,files.length);assert.deepEqual(cells.flat().sort(),files);
   assert.ok(cells.flat().includes('issue-195-evidence-tooling-partitions.test.js'));
   assert.ok(cells.flat().includes('issue-195-evidence-link-foundation.test.js'));
+  const measured=readProjectData(new URL('parity/fixtures/ci-45112870920-tooling-costs.lino',root));
+  assert.deepEqual(measured.logs.map(log=>log.partition),[1,2,3,4]);
+  const duration=new Map(measured.entries.map(row=>[row.file.slice('js/tests/'.length),row.milliseconds]));
+  const peak=assignments=>Math.max(...assignments.map(cell=>cell.reduce((sum,file)=>sum+(duration.get(file)??0),0)));
+  const originalCells=cells.map((_,index)=>files.filter((_,offset)=>offset%cells.length===index));
+  assert.ok(peak(cells)<peak(originalCells),'the busiest cell has fewer observed milliseconds');
 });
 
 test('partial duplicate mixed and unsupported tooling cells refuse without hiding unrelated gate edits',()=>{
@@ -66,7 +73,8 @@ test('tooling partition adapters reconstruct both complete preceding raw guards 
       "  const workflow = restoreRawContractPartitionHistory(await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8'));",
       "\nimport {restoreRawContractPartitionHistory} from './support/raw-contract-partition-history.js';\n"],
   ]){
-    const source=read(file);assert.equal(source.split(after).length,2);assert.equal(source.split(insertion).length,2);
+    const source=read(file,dependencyWorkflowHistoricalPredecessors[file]);
+    assert.equal(source.split(after).length,2);assert.equal(source.split(insertion).length,2);
     assert.equal(source.replace(insertion,'').replace(after,before),previous(file));
   }
 });
@@ -74,3 +82,4 @@ test('tooling partition adapters reconstruct both complete preceding raw guards 
 import {restoreCiRepairSourceHistory} from '../scripts/ci-repair-source-history.mjs';
 
 import {restoreSchedulingSourceHistory} from '../scripts/scheduling-source-history.mjs';
+import {dependencyWorkflowHistoricalPredecessors,restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';

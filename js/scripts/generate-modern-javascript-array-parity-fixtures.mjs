@@ -5,6 +5,7 @@ import {existsSync,readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {parseNative} from '../src/native-grammar-parser.js';
 import {tokenize} from '../src/translation/lexer.js';
+import {restoreCiIntegrationSource} from './ci-integration-source-history.mjs';
 import {checkProjectData,readProjectData,writeProjectData,serializeProjectData} from './project-data.mjs';
 
 const root=new URL('../../',import.meta.url);
@@ -25,6 +26,7 @@ export const MODERN_ARRAY_CASE_IDS=Object.freeze(['original-array-corpus','origi
  'original-array-hole-refusal','original-for-in-refusal','supplementary-string-length','observable-array-absence']);
 export const MODERN_ARRAY_IN_BOUNDS='the translation agrees with the source on executions whose array reads are in bounds; JavaScript reads undefined at an index outside an array, where the target aborts';
 const digest=value=>createHash('sha256').update(value).digest('hex');
+const certifiedInput=path=>restoreCiIntegrationSource(readFileSync(new URL(path,root),'utf8'),path,'dependencies');
 const field=(node,name)=>{const found=node.children.filter(child=>child.field===name);assert.equal(found.length,1,`one ${name} field is required`);return found[0].node;};
 const namedChildren=node=>node.children.filter(child=>child.node.named&&!child.node.isExtra).map(child=>child.node);
 function literal(node,bytes){
@@ -87,7 +89,7 @@ export function buildModernArrayParityFixture({historicalSource}={}){
  assert.equal(digest(historicalSource),historicalSha256,'the complete Root-authenticated historical source stays immutable');
  assert.equal(Buffer.byteLength(historicalSource),5228);
  const contract=readFileSync(new URL(MODERN_ARRAY_CONTRACT_FILE,root));assert.equal(digest(contract),MODERN_ARRAY_CONTRACT_SHA256);
- const bases=currentProfiles.map(([path,sha256])=>{const source=originalIdentitySourceBody(readFileSync(new URL(path,root),'utf8'),path);assert.equal(digest(source),sha256,'every original test body remains byte exact');return {path,source,sha256,bytes:Buffer.byteLength(source)};});
+ const bases=currentProfiles.map(([path,sha256])=>{const source=originalIdentitySourceBody(certifiedInput(path),path);assert.equal(digest(source),sha256,'every original test body remains byte exact');return {path,source,sha256,bytes:Buffer.byteLength(source)};});
  const originals=readOriginalJavaScriptInputs(bases[0].source);assert.equal(originals.length,9);assert.equal(new Set(originals).size,9);
  const oldLiterals=tokenize(historicalSource,'Rust').tokens.filter(token=>token.kind==='string').map(token=>token.value);
  for(const source of originals)assert.ok(oldLiterals.includes(source),'the complete original input also occurs in the historical native test');
@@ -120,7 +122,7 @@ export function buildModernArrayParityFixture({historicalSource}={}){
  fixture.identityCorrection={model:'retained array identity expectation correction 1',implementation:identityImplementation,
   versions:{npm:'[1.0.0,1.0.1)',crate:'[1.0.0,1.0.1)',Node:'>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0'},
   previous:{fixture:oldIdentityFixturePin,row:previousRow,admitted:6,refused:5},current:{admitted:7,refused:4},
-  sourceEpochs:currentProfiles.map(([path])=>{const source=readFileSync(new URL(path,root));return{path,bytes:source.length,sha256:digest(source)};}),
+  sourceEpochs:currentProfiles.map(([path])=>{const source=certifiedInput(path);return{path,bytes:Buffer.byteLength(source),sha256:digest(source)};}),
   basis:'The identical original array owner compares true in JavaScript. The source-qualified shared reference policy preserves that identity in Rust; explicit referenceSemantics:false still retains the original value-mode refusal. Case IDs, order, target sets, historicalNative and original sourceProfiles remain unchanged.'};
  const inverse={...fixture,cases:fixture.cases.map((row,index)=>index===5?fixture.identityCorrection.previous.row:row)};delete inverse.identityCorrection;
  assert.equal(serializeProjectData(inverse,MODERN_ARRAY_FIXTURE_FILE),before,'the entire old fixture reconstructs byte exactly');

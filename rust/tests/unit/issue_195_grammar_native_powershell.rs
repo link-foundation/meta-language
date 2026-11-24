@@ -40,7 +40,10 @@ fn native_powershell_focused_trees_match_oracle_and_preserve_every_byte() {
     let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
-    oracle_agrees(&tree_sitter_powershell::LANGUAGE.into(), &fixture);
+    oracle_agrees(
+        &super::issue_195_native_grammar_rows::pinned_oracle("PowerShell"),
+        &fixture,
+    );
     for case in cases(&fixture, "matches") {
         let tree = parse(&parser, source(case)).expect("the native grammar accepts the source");
         assert_eq!(
@@ -118,7 +121,7 @@ fn native_powershell_upstream_corpus_matches_the_independent_oracle() {
     let corpus: Value = super::project_data::read_project_data(CORPUS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
-    let language = tree_sitter_powershell::LANGUAGE.into();
+    let language = super::issue_195_native_grammar_rows::pinned_oracle("PowerShell");
     let inputs = corpus["cases"].as_array().unwrap();
     assert_ne!(inputs.as_slice(), &[] as &[Value]);
     let mut failures = Vec::new();

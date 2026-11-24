@@ -39,7 +39,7 @@ fn actual_external_bindings_emit_calls_and_reads_through_both_semantic_codecs() 
         "uncovered Node {}",
         version.stdout
     );
-    let script = r#"
+    let script = r"
 import {runInNewContext} from 'node:vm';
 import {selfTranslationSignatures} from './js/src/self-translation.js';
 import {parseJavaScript} from './js/src/translation/javascript.js';
@@ -54,7 +54,7 @@ const javascript=emitJavaScript(program).text;
 const original=runInNewContext(scope+'\n'+source+'\nselected();');
 const actual=runInNewContext(scope+'\n'+javascript+'\nselected();');
 process.stdout.write(structuredDataToLino({javascript,original,actual}));
-"#;
+";
     for name in ["increment", "String", "_value", "$increment", "limit"] {
         let provider = if name == "limit" {
             "export const limit=7;"
@@ -74,7 +74,7 @@ process.stdout.write(structuredDataToLino({javascript,original,actual}));
         assert_eq!(externals.len(), 1, "{name}");
         match &mut externals[0] {
             External::Function { name: binding, .. } | External::Constant { name: binding, .. } => {
-                *binding = name.to_owned()
+                *binding = name.to_owned();
             }
         }
         let context = ModuleContext {

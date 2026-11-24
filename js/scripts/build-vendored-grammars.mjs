@@ -3,9 +3,10 @@
 // in rust/Cargo.lock, so both runtimes parse with byte-identical generated
 // parsers. The oracle grammars of the languages a native grammar parses are
 // built into js/oracles/grammars, which the npm package does not ship. Requires `cargo fetch` (for crate sources) and the tree-sitter CLI
-// 0.27.0, which downloads the WASI SDK that `tree-sitter build --wasm` uses.
+// pinned in the grammar lock, which downloads the WASI SDK used for WebAssembly.
 //
 //   node js/scripts/build-vendored-grammars.mjs [--only id,id] [--jobs N]
+//   node js/scripts/build-vendored-grammars.mjs --only id,id --refresh-external-assets
 //   node js/scripts/build-vendored-grammars.mjs --check   # verify lock only
 //   node js/scripts/build-vendored-grammars.mjs --notice  # refresh licenses and NOTICE.md
 //   node js/scripts/build-vendored-grammars.mjs --regenerate  # after a CLI update: replace the
@@ -24,6 +25,9 @@ import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
 import { ORACLE_GRAMMAR_DIRECTORY, PACKAGED_GRAMMAR_DIRECTORY, grammarDirectory, grammarFile } from './grammar-files.mjs';
 import { externalGrammarDirectory, readExternalGrammarAsset } from './external-grammar-cache.mjs';
 import { readProjectData, resolveProjectDataPath, writeProjectData } from './project-data.mjs';
+import { compileGrammarWebAssembly, compressGrammarWebAssembly } from './compile-grammar-webassembly.mjs';
+
+export { ensureGrammarConfig } from './compile-grammar-webassembly.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -31,6 +35,7 @@ const vendorDir = join(root, PACKAGED_GRAMMAR_DIRECTORY);
 const oracleDir = join(root, ORACLE_GRAMMAR_DIRECTORY);
 const lockPath = join(vendorDir, 'grammar-lock.json');
 const rustLockPath = join(root, 'rust/src/data/grammar-lock.json');
+const externalAssetPath = join(root, 'parity/grammars/external-assets.lino');
 
 /**
  * Grammar id -> Rust crate and the parser directory inside the crate, or the
@@ -49,8 +54,8 @@ export const GRAMMAR_SOURCES = Object.freeze({
     oracle: true,
     vendored: 'rust/vendor/tree-sitter-cmake',
     upstream: 'uyha/tree-sitter-cmake',
-    version: 'v0.7.5',
-    revision: 'e997bd0b275ca525ce9befecedf5299031183661',
+    version: 'v0.7.6',
+    revision: 'a3ec2b2144daf7132e7ee824d8cab9610523d10f',
     // The external scanner starts with no bracket open instead of reading
     // uninitialised memory, so error recovery is the same on every platform.
     patch: 'rust/vendor/tree-sitter-cmake/scanner-state.patch',
@@ -161,8 +166,6 @@ export const GRAMMAR_SOURCES = Object.freeze({
   zig: { crate: 'tree-sitter-zig', dir: '.', oracle: true },
 });
 
-// zlib writes a zero mtime, so identical wasm always yields identical archives.
-const compressWasm = (wasm) => gzipSync(wasm, { level: 9 });
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
 export async function cargoLockVersions() {
@@ -210,7 +213,7 @@ SOFTWARE.
 async function licenseText(crateDir) {
   for (const name of ['LICENSE', 'LICENSE-MIT', 'LICENSE.md', 'LICENSE.txt']) {
     const path = join(crateDir, name);
-    if (existsSync(path)) return readFile(path, 'utf8');
+    if (existsSync(path)) return (await readFile(path, 'utf8')).trimEnd() + '\n';
   }
   const manifestPath = join(crateDir, 'Cargo.toml');
   if (!existsSync(manifestPath)) return null;
@@ -229,36 +232,6 @@ Repository: ${field('repository') ?? 'not declared'}
 Copyright (c) ${holders}
 
 ${MIT_TERMS}`;
-}
-
-// Some published crates omit tree-sitter.json, which the CLI needs to name the
-// wasm module. The exported `tree_sitter_<name>` symbol is authoritative.
-export async function ensureGrammarConfig(grammarDir) {
-  if (existsSync(join(grammarDir, 'tree-sitter.json'))) return;
-  const parser = await readFile(join(grammarDir, 'src/parser.c'), 'utf8');
-  const name = /(?:TS_PUBLIC|extern)[^\n]*\btree_sitter_(\w+)\s*\(\s*void\s*\)/.exec(parser)?.[1];
-  if (!name) throw new Error(`cannot find the exported language symbol in ${grammarDir}`);
-  const config = {
-    grammars: [{ name, scope: `source.${name}`, path: '.', 'file-types': [] }],
-    metadata: { version: '0.0.0' },
-  };
-  await writeFile(join(grammarDir, 'tree-sitter.json'), JSON.stringify(config));
-}
-
-// A scanner that includes a sibling grammar's shared header (TypeScript/TSX
-// use `../../common/scanner.h`) gets a byte-identical local copy, so the wasm
-// build reads nothing outside the grammar's `src`.
-async function localizeSharedIncludes(grammarDir) {
-  const scannerPath = join(grammarDir, 'src/scanner.c');
-  if (!existsSync(scannerPath)) return;
-  const scanner = await readFile(scannerPath, 'utf8');
-  let localized = scanner;
-  for (const [directive, relative] of scanner.matchAll(/#include "(\.\.\/[^"]+)"/g)) {
-    const name = `shared_${relative.split('/').pop()}`;
-    await cp(join(grammarDir, 'src', relative), join(grammarDir, 'src', name));
-    localized = localized.replace(directive, `#include "${name}"`);
-  }
-  if (localized !== scanner) await writeFile(scannerPath, localized);
 }
 
 export async function grammarSource(id, versions) {
@@ -349,6 +322,26 @@ async function applyWasmPatch(source, crate) {
   await run('git', ['apply', join(root, source.wasmPatch)], { cwd: crate });
 }
 
+async function externalBuild(source, id, cli, wasm, archive) {
+  const crate = `${source.crate}-${source.version}`;
+  const lock = await readFile(join(root, 'rust/Cargo.lock'), 'utf8');
+  const entry = lock.split('[[package]]').find(block => block.includes(`\nname = "${source.crate}"\n`)
+    && block.includes(`\nversion = "${source.version}"\n`)
+    && block.includes('\nsource = "registry+https://github.com/rust-lang/crates.io-index"\n'));
+  const checksum = /^checksum = "([a-f0-9]{64})"$/mu.exec(entry ?? '')?.[1];
+  if (!checksum) throw new Error(`Rust does not lock an authenticated crates.io source for ${crate}`);
+  const url = `https://static.crates.io/crates/${source.crate}/${crate}.crate`;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`failed to download ${url}: HTTP ${response.status}`);
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (sha256(bytes) !== checksum) throw new Error(`crate archive checksum mismatch: ${crate}`);
+  return {
+    group: 'wasm', bytes: archive.length, sha256: sha256(archive), encoding: 'gzip',
+    decodedBytes: wasm.length, decodedSha256: sha256(wasm),
+    build: { crate, directory: source.dir, id, cli, url, bytes: bytes.length, sha256: checksum },
+  };
+}
+
 async function buildOne(id, versions, treeSitter, options) {
   const source = await grammarSource(id, versions);
   // Build from a scratch copy so the cargo registry sources stay untouched.
@@ -362,27 +355,15 @@ async function buildOne(id, versions, treeSitter, options) {
       await cp(source.crateDir, join(work, 'crate'), { recursive: true });
       if (source.wasmPatch) await applyWasmPatch(source, join(work, 'crate'));
     }
-    const grammarDir = join(work, 'crate', source.dir);
-    await localizeSharedIncludes(grammarDir);
-    await ensureGrammarConfig(grammarDir);
-    if (!existsSync(join(grammarDir, 'src/grammar.json'))) {
-      // tree-sitter-lean commits no grammar.json. The CLI reads only the name
-      // from it; without one it would evaluate grammar.js, so a stub with the
-      // name is enough.
-      await writeFile(join(grammarDir, 'src/grammar.json'), JSON.stringify({ name: id, rules: {} }));
+    const wasm = await compileGrammarWebAssembly(work, join('crate', source.dir), id, [treeSitter]);
+    const archive = compressGrammarWebAssembly(wasm);
+    if (!options.refreshAssets) {
+      const destination = externalGrammarDirectory(grammarDirectory(source));
+      await writeFile(join(destination, `${id}.wasm.gz`), archive);
     }
-    const output = join(work, `${id}.wasm`);
-    await run(treeSitter, ['build', '--wasm', '-o', output, grammarDir], {
-      cwd: work,
-      maxBuffer: 64 * 1024 * 1024,
-    });
-    const wasm = await readFile(output);
-    const destination = externalGrammarDirectory(grammarDirectory(source));
-    await mkdir(destination, { recursive: true });
-    await writeFile(join(destination, `${id}.wasm.gz`), compressWasm(wasm));
     const license = await licenseText(source.vendored ? join(work, 'crate') : source.crateDir);
     if (license) await writeFile(join(root, grammarFile(source, `${id}.LICENSE`)), license);
-    return {
+    const entry = {
       id,
       ...(source.oracle ? { oracle: true } : {}),
       ...(source.vendored
@@ -397,6 +378,10 @@ async function buildOne(id, versions, treeSitter, options) {
       wasmSha256: sha256(wasm),
       license: license ? `${id}.LICENSE` : null,
     };
+    const asset = options.refreshAssets
+      ? { ...await externalBuild(source, id, options.cli, wasm, archive), upstream: entry }
+      : undefined;
+    return { entry, asset };
   } finally {
     await rm(work, { recursive: true, force: true });
   }
@@ -527,12 +512,21 @@ async function main() {
   const jobsIndex = args.indexOf('--jobs');
   const jobs = jobsIndex >= 0 ? Number(args[jobsIndex + 1]) : 3;
   const treeSitter = process.env.TREE_SITTER_CLI ?? 'tree-sitter';
-  const { stdout: cliVersion } = await run(treeSitter, ['--version']);
+  const cliVersion = (await run(treeSitter, ['--version'])).stdout.trim().split(/\s+/u).slice(0, 2).join(' ');
+  const cli = /^tree-sitter (\d+\.\d+\.\d+)$/u.exec(cliVersion)?.[1];
+  if (!cli) throw new Error(`expected an exact Tree-sitter CLI version, received ${cliVersion}`);
+  const refreshAssets = args.includes('--refresh-external-assets');
 
   await mkdir(vendorDir, { recursive: true });
   await mkdir(oracleDir, { recursive: true });
   const ids = Object.keys(GRAMMAR_SOURCES).filter((id) => !only || only.has(id));
+  if (refreshAssets && (!only || ids.length !== only.size || ids.some((id) => {
+    const source = GRAMMAR_SOURCES[id];
+    return !source.crate || source.wasmPatch;
+  }))) throw new Error('select unpatched registry grammars with --only when refreshing external assets');
   const grammars = { ...(previous?.grammars ?? {}) };
+  const external = refreshAssets ? readProjectData(externalAssetPath) : null;
+  const assets = new Map();
   const queue = [...ids];
   const failures = [];
   await Promise.all(
@@ -541,7 +535,11 @@ async function main() {
         const id = queue.shift();
         const started = Date.now();
         try {
-          grammars[id] = await buildOne(id, versions, treeSitter, { regenerate: args.includes('--regenerate') });
+          const { entry, asset } = await buildOne(id, versions, treeSitter, {
+            regenerate: args.includes('--regenerate'), refreshAssets, cli,
+          });
+          grammars[id] = entry;
+          if (asset) assets.set(grammarFile(entry, `${id}.wasm.gz`), asset);
           console.log(`built ${id} in ${((Date.now() - started) / 1000).toFixed(1)}s`);
         } catch (error) {
           failures.push(id);
@@ -551,11 +549,24 @@ async function main() {
     }),
   );
 
+  if (failures.length) {
+    console.error(`failed grammars: ${failures.join(', ')}`);
+    process.exit(1);
+  }
+  if (external) {
+    external.previousAssets ??= {};
+    for (const [path, asset] of [...assets].sort(([a], [b]) => a.localeCompare(b))) {
+      const prior = external.assets[path];
+      if (prior && prior.sha256 !== asset.sha256) (external.previousAssets[path] ??= []).push(prior);
+      external.assets[path] = asset;
+    }
+    writeProjectData(externalAssetPath, external);
+  }
   const sorted = Object.fromEntries(Object.entries(grammars).sort(([a], [b]) => a.localeCompare(b)));
   const lock = {
     description:
       'Grammar crates pinned by rust/Cargo.lock and their WebAssembly builds used by the JavaScript runtime.',
-    treeSitterCli: cliVersion.trim(),
+    treeSitterCli: cliVersion,
     treeSitterRuntime: {
       rust: versions.get('tree-sitter'),
       javascript: JSON.parse(await readFile(join(root, 'js/node_modules/web-tree-sitter/package.json'), 'utf8')).version,
@@ -563,10 +574,6 @@ async function main() {
     grammars: sorted,
   };
   await writeLock(lock);
-  if (failures.length) {
-    console.error(`failed grammars: ${failures.join(', ')}`);
-    process.exit(1);
-  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

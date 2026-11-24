@@ -336,8 +336,8 @@ pub fn ml_find_default_parameter_reference_loop8(
                                 {
                                     let parameter_index = 0f64;
                                     {
-                                        let ml_s22 = crate::translation::frontend_rules::ml_find_default_parameter_reference_loop10(parameters.clone(), at, value.clone(), parameter_index);
-                                        match ml_s22.clone() {
+                                        let ml_s22 = crate::translation::frontend_rules::ml_find_default_parameter_reference_loop10(parameters.clone(), at, value, parameter_index);
+                                        match ml_s22 {
                                             crate::translation::frontend_rules::MlFindDefaultParameterReferenceLoop10Result::MlFindDefaultParameterReferenceLoop10Done => {
                                                 crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin9::MlFindDefaultParameterReferenceJoin9Next
                                             }
@@ -350,7 +350,7 @@ pub fn ml_find_default_parameter_reference_loop8(
                             } else {
                                 crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin9::MlFindDefaultParameterReferenceJoin9Next
                             };
-                            match ml_s21.clone() {
+                            match ml_s21 {
                                 crate::translation::frontend_rules::MlFindDefaultParameterReferenceJoin9::MlFindDefaultParameterReferenceJoin9Next => {
                                     {
                                         let at_2 = (at + 1f64);
@@ -488,7 +488,7 @@ pub fn ml_regular_expression_end_loop11(
                         } else {
                             crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index, escaped, character_class)
                         };
-                        match ml_s23.clone() {
+                        match ml_s23 {
                             crate::translation::frontend_rules::MlRegularExpressionEndJoin12::MlRegularExpressionEndJoin12Next(index_4, escaped_4, character_class_4) => {
                                 {
                                     let index_5 = (index_4 + 1f64);
@@ -525,7 +525,7 @@ pub fn ml_find_binding_run_end_loop14(mut terms: Vec<String>, mut end: f64) -> f
                 }) && !(match (term.clone(), String::from("lexical_declaration")) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
-                })) && !(match (term.clone(), String::from("export_statement")) {
+                })) && !(match (term, String::from("export_statement")) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
                 })) {
@@ -630,7 +630,7 @@ pub fn ml_accept_module_binding_scope_loop16(
                 }) && !(match (term.clone(), String::from("lexical_declaration")) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
-                })) && !(match (term.clone(), String::from("export_statement")) {
+                })) && !(match (term, String::from("export_statement")) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
                 })) {

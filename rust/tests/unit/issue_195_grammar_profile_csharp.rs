@@ -14,6 +14,12 @@ const PATTERN_REGRESSIONS: &str =
 const PATTERN_CONTEXT_REGRESSIONS: &str =
     include_str!("../../../parity/fixtures/native-grammars/csharp-pattern-context-ci.lino");
 
+fn oracle_language() -> tree_sitter::Language {
+    native_source_oracles::baseline("csharp", "0.23.5")
+        .expect("the CSharp profile baseline is registered")
+        .into()
+}
+
 #[test]
 fn csharp_profile_enclosing_pattern_contexts_match_shared_ci_snapshots() {
     let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
@@ -21,7 +27,7 @@ fn csharp_profile_enclosing_pattern_contexts_match_shared_ci_snapshots() {
         super::project_data::read_project_data(PATTERN_CONTEXT_REGRESSIONS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
-    let language = tree_sitter_c_sharp::LANGUAGE.into();
+    let language = oracle_language();
     assert_eq!(cases(&regressions, "cases").len(), 3);
     for case in cases(&regressions, "cases") {
         let (expected, recovers) = oracle_rows(&language, source(case));
@@ -40,7 +46,7 @@ fn csharp_profile_pattern_ci_sources_and_neighboring_contexts_match_shared_snaps
     let regressions: Value = super::project_data::read_project_data(PATTERN_REGRESSIONS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
-    let language = tree_sitter_c_sharp::LANGUAGE.into();
+    let language = oracle_language();
     assert_eq!(cases(&regressions, "cases").len(), 5);
     assert_eq!(cases(&regressions, "controls").len(), 19);
     for case in cases(&regressions, "cases")
@@ -65,7 +71,7 @@ fn csharp_profile_focused_trees_match_the_independent_oracle() {
     let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
-    oracle_agrees(&tree_sitter_c_sharp::LANGUAGE.into(), &fixture);
+    oracle_agrees(&oracle_language(), &fixture);
     for case in cases(&fixture, "matches") {
         let tree = parse(&parser, source(case)).expect("native accepts focused source");
         assert_eq!(Value::Array(rows.rows(&tree, source(case))), case["rows"]);
@@ -94,7 +100,7 @@ fn csharp_profile_upstream_corpus_matches_the_independent_oracle() {
     let corpus: Value = super::project_data::read_project_data(CORPUS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
-    let language = tree_sitter_c_sharp::LANGUAGE.into();
+    let language = oracle_language();
     let inputs = corpus["cases"].as_array().unwrap();
     assert_ne!(inputs.as_slice(), [] as [Value; 0]);
     let mut failures = Vec::new();

@@ -99,6 +99,11 @@ test('Agda oracle assertions select only exact registered scanner profiles and r
     const changed=structuredClone(policy);mutate(changed.assertions.find(row=>row.id==='agda-released-wasm-oracle').expectations[0]);
     assert.throws(()=>selectAgdaReleasedOracleAssertion({registry:{policy:changed,sha256:'changed'}}));
   }
+  const changed=structuredClone(policy);
+  changed.assertions.find(row=>row.id==='agda-tree-sitter-runtime').expectations.pop();
+  const unsupported={policy:changed,sha256:'changed'};
+  assert.throws(()=>selectAgdaOracleAssertion({registry:unsupported}),/uncovered active version/u);
+  assert.throws(()=>selectAgdaReleasedOracleAssertion({registry:unsupported}),/uncovered active version/u);
 });
 
 test('Agda optional universe arguments respect declared layout boundaries and the independently captured complete CI tree',()=>{

@@ -19,6 +19,13 @@ export const AGDA_HISTORICAL_FIXTURE = Object.freeze({
   sha256: 'b3ff7b43cdf4ba617ac2b19f47cb927c404eab48b38e0c6152a82e5379a1b18f',
 });
 
+function selectAgdaTreeSitterRuntime(registry, runtimeVersion, oracleToolVersion) {
+  const policies = registry.policy.assertions.filter(policy => policy.id === 'agda-tree-sitter-runtime');
+  assert.equal(policies.length, 1, 'one Agda runtime assertion policy is required');
+  const selected = selectVersionedAssertion(policies[0], runtimeVersion);
+  assert.equal(oracleToolVersion, selected.expected, 'the oracle tool version matches the active Tree-sitter runtime profile');
+}
+
 /** Select a singleton from actual locked versions and authenticated source bytes. */
 export function selectAgdaOracleAssertion({ root = repository, registry = readAssertionVersionPolicy(root) } = {}) {
   const policies = registry.policy.assertions.filter(policy => policy.id === 'agda-corrected-layout-oracle');
@@ -35,14 +42,14 @@ export function selectAgdaOracleAssertion({ root = repository, registry = readAs
     patchSha256: digest(patchBytes), sourceManifestSha256: digest(manifestBytes) };
   assert.deepEqual(actual, selected.expected, 'the active complete scanner profile matches its registered exact source pins');
   const lock = readFileSync(join(root, 'rust/Cargo.lock'), 'utf8');
-  for (const [name, version] of [['tree-sitter-agda', active[1]], ['tree-sitter', actual.treeSitter]]) {
+  const runtime = JSON.parse(readFileSync(join(root, 'js/node_modules/web-tree-sitter/package.json'), 'utf8'));
+  assert.equal(runtime.name, 'web-tree-sitter');
+  selectAgdaTreeSitterRuntime(registry, runtime.version, actual.treeSitter);
+  for (const [name, version] of [['tree-sitter-agda', active[1]], ['tree-sitter', runtime.version]]) {
     const records = lock.split('[[package]]').filter(record => record.includes(`\nname = "${name}"\n`));
     assert.equal(records.length, 1, 'the actual Cargo oracle/runtime lock identity is unique');
     assert.ok(records[0].includes(`\nversion = "${version}"\n`), 'the actual Cargo version matches the selected profile');
   }
-  const runtime = JSON.parse(readFileSync(join(root, 'js/node_modules/web-tree-sitter/package.json'), 'utf8'));
-  assert.equal(runtime.name, 'web-tree-sitter');
-  assert.equal(runtime.version, actual.treeSitter, 'the executing JavaScript oracle runtime matches the pinned Tree-sitter version');
   return { assertionPolicy: policies[0].id, expectation: selected.id, activeVersion: active[1],
     minimum: selected.minimum, maximum: selected.maximum,
     includeMinimum: selected.includeMinimum, includeMaximum: selected.includeMaximum,
@@ -58,9 +65,14 @@ export function selectAgdaReleasedOracleAssertion({ root = repository, registry 
   const lock = readStructuredDataLino(readFileSync(join(root, 'js/src/vendor/grammars/grammar-lock.lino'), 'utf8'));
   const grammar = lock.grammars.agda;
   const selected = selectVersionedAssertion(policies[0], grammar.version);
+  const runtime = JSON.parse(readFileSync(join(root, 'js/node_modules/web-tree-sitter/package.json'), 'utf8'));
+  assert.equal(runtime.name, 'web-tree-sitter');
+  assert.equal(runtime.version, lock.treeSitterRuntime.javascript);
+  const { treeSitter, ...releasedArtifact } = selected.expected;
+  selectAgdaTreeSitterRuntime(registry, runtime.version, treeSitter);
   assert.deepEqual({ profile: 'released-wasm', crate: grammar.crate, version: grammar.version,
-    treeSitter: lock.treeSitterRuntime.javascript, parserSha256: grammar.parserSha256,
-    wasmSha256: grammar.wasmSha256 }, selected.expected, 'the historical oracle remains its exact released artifact');
+    parserSha256: grammar.parserSha256, wasmSha256: grammar.wasmSha256 }, releasedArtifact,
+  'the historical oracle remains its exact released artifact');
   return selected;
 }
 

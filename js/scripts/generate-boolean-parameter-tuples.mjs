@@ -9,16 +9,23 @@ import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.
 import {readBooleanParameterTupleStyle,readBooleanParameterTupleCallStyle} from './boolean-parameter-tuple-style.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
+import {restoreDependencyWorkflowSource} from './dependency-workflow-source-history.mjs';
 
 const root=new URL('../../',import.meta.url),revision='25e6361f2e31e09f98f78b3c973f242bdf88e31c';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
+
+export function restoreBooleanParameterTupleCaller(source, file) {
+  return restoreCurrentNativeHostSource(restoreDependencyWorkflowSource(source, file), file);
+}
+
 export function generateBooleanParameterTuples({check=false}={}) {
   const models=[];
   for(const [name,styleFile,callerFile,qualified]of [
     ['require_self_translation_layout_envelope','parity/self-translation/self-translation-layout-rules-decorators.lino','rust/src/self_translation.rs','crate::translation::self_translation_layout_rules::require_self_translation_layout_envelope'],
     ['read_owned_outcome_native_number_kind','parity/self-translation/owned-outcome-number-kind-rules-decorators.lino','rust/tests/unit/grammar_outcome_number_kind_rules.rs','rules::read_owned_outcome_native_number_kind'],
   ]){
-    const styles=DecoratorSet.fromLino(readFileSync(new URL(styleFile,root),'utf8'));
+    const styleSource=readFileSync(new URL(styleFile,root),'utf8');
+    const styles=DecoratorSet.fromLino(restoreDependencyWorkflowSource(styleSource,styleFile));
     const actions=styles.decorators.flatMap(row=>row.actions),selected=actions.filter(row=>row.from.includes('fn '+name+'(')&&row.to.includes('ml_boolean_parameters'));
     assert.equal(selected.length,1);const action=selected[0],packed=readBooleanParameterTupleStyle(action.from,name);
     assert.equal(packed.source,action.to);assert.equal(packed.groups.length,1);
@@ -26,7 +33,7 @@ export function generateBooleanParameterTuples({check=false}={}) {
     const edited=readBooleanParameterTupleCallStyle(original,qualified,packed.groups);
     const current=execFileSync('rustfmt',['--edition','2024','--config','skip_children=true','--emit','stdout'],{input:edited.source,encoding:'utf8',maxBuffer:1024*1024,timeout:15000});
     const file=new URL(callerFile,root),actual=readFileSync(file,'utf8');
-    const historical=actual===original||actual===current?actual:callerFile==='rust/src/self_translation.rs'?restoreCurrentNativeHostSource(actual,callerFile):actual;
+    const historical=actual===original||actual===current?actual:restoreBooleanParameterTupleCaller(actual,callerFile);
     if(check)assert.equal(historical,current);
     else if(actual===original)writeFileSync(file,current);
     else assert.equal(historical,current,'unknown caller edits refuse; a historical tuple writer preserves every current successor byte');

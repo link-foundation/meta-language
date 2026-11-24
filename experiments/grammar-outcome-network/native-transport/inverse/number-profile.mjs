@@ -6,8 +6,8 @@ import {readOwnedOutcomeNativeNumberKind} from './number-kind-rules.mjs';
 
 export function readOwnedOutcomeNativeNumberProfile(inputs) {
   const compilerProfile=readOutcomeCompilerProfile(inputs);
-  const version='1.0.151'; // The compiler reader checks this exact locked package.
-  assert.ok(compilerProfile.dependency.package_id.endsWith('#serde_json@'+version));
+  // The compiler reader checks the exact locked package and its linked unit.
+  const version=compilerProfile.dependency.package_id.split('#serde_json@')[1];
   const arbitraryPrecision=compilerProfile.dependency.features.includes('arbitrary_precision');
   assert.equal(readOwnedOutcomeNativeNumberKind(true,version,arbitraryPrecision,false,false,true),'floating point',
     'uncovered native JSON number representation; arbitrary_precision requires its own source model');

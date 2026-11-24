@@ -13,6 +13,7 @@ import { readProjectData, writeProjectData } from './project-data.mjs';
 import {
   ISSUE_195_SOURCE_REGISTER_PATH,
   appendAssertionPolicyInstructionSources,
+  appendDependencyUpgradeSources,
   compareWithLiveDiscussion,
   fetchLiveDiscussion,
   refreshRegister,
@@ -27,6 +28,7 @@ const args = new Set(process.argv.slice(2));
 let register = readProjectData(registerPath);
 if (args.has('--update')) {
   register = await appendAssertionPolicyInstructionSources(register, { root });
+  register = appendDependencyUpgradeSources(register, ISSUE_195_SOURCES);
   register = refreshRegister(register, await fetchLiveDiscussion());
   register.reconciledAt = new Date().toISOString().slice(0, 10);
   writeProjectData(registerPath, register);

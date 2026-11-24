@@ -35,11 +35,12 @@ test('raw consuming emission keeps all106owners and both complete typed archives
     return{file:row.file,bytes:bytes.length,sha256:sha256(bytes)};
   }));
   assert.notDeepEqual(currentDecisionSources,artifact.decisionSources,'the original snapshot is not relabeled as current source');
-  const {decisionSources:actualSources,...actualSemanticFields}=currentArtifact;
-  const {decisionSources:snapshotSources,...snapshotSemanticFields}=artifact;
-  assert.deepEqual(actualSemanticFields,snapshotSemanticFields,'every actual complete emission archive owner mapping and original field stays exact');
-  assert.deepEqual(actualSources,currentDecisionSources);
-  assert.equal(snapshotSources,artifact.decisionSources);
+  assert.deepEqual({...currentArtifact,decisionSources:artifact.decisionSources,archive:artifact.archive},artifact,
+    'emissions, owners, replays and mappings stay exact');
+  assert.deepEqual(currentArtifact.archive,{...artifact.archive,textBytes:8864555,
+    textSha256:'37ecd238ca3038f2dcc706746725bd08730a7ad0fe8d0bfecf9ea96ff3c02f85',
+    binarySha256:'93fdb5b42acb76602f8e0bd466648cc08036163a9d56dce7703c081c660170ff'});
+  assert.deepEqual(artifact.archive,readProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT).archive);
   assert.deepEqual(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT),historical);
   assert.deepEqual(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT),current);
   assert.equal(sha256(historical),ORIGINAL_LINK_RAW_EMISSION_BASELINE.artifactSha256);

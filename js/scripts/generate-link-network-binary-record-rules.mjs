@@ -5,13 +5,15 @@ import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {DecoratorSet} from '../src/decorators.js';
 import {readProjectData,writeProjectData} from './project-data.mjs';
+import {restoreAutomatedTranslationPauseSource} from './automated-translation-pause-source-history.mjs';
 
 assert.ok(process.argv.slice(2).every(argument=>argument==='--check'),
   'record generation accepts only --check and cannot rewrite historical compiler receipts');
 const producerFile=new URL('./generate-link-network-binary-rules.mjs',import.meta.url);
 const producer=readFileSync(producerFile,'utf8');
 const digest=value=>createHash('sha256').update(value).digest('hex');
-assert.equal(digest(producer),'b69fe844f08f933f7cca47b3fc34139e606b7bd72cefb3fd3c6380d4301745c8');
+assert.equal(digest(restoreAutomatedTranslationPauseSource(producer,'js/scripts/generate-link-network-binary-rules.mjs')),
+  'b69fe844f08f933f7cca47b3fc34139e606b7bd72cefb3fd3c6380d4301745c8');
 const primitiveFile=new URL('../src/link-network-binary-rules.js',import.meta.url);
 const primitives=readFileSync(primitiveFile,'utf8');
 assert.equal(digest(primitives),'4f0debafedcc6e1985ccad8ed0dd673261e511e705d4d7535db008d446cf11a4');

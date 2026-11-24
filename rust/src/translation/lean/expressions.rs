@@ -136,7 +136,7 @@ impl LeanParser<'_> {
             result = pattern(
                 SPatternNode::NatAdd {
                     inner: Box::new(result),
-                    add: amount.value.clone(),
+                    add: amount.value,
                 },
                 Some(self.span_to_next(&token)),
             );

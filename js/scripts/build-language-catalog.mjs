@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { parseGrammarLinks } from '../src/grammar-links.js';
 import { readGrammarLicense } from './grammar-files.mjs';
 import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { nativeOracleBaseline, nativeOracleBaselineRustSource } from './native-oracle-baselines.mjs';
 import { checkProjectData, readProjectData, readProjectFileBytes, writeProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -54,7 +55,11 @@ export function buildLanguageCatalog(inventory, lock, sourceRegister = readProje
       const native = inventory.nativeGrammars?.[id];
       if (!native) throw new Error(`${language.name} uses undeclared native grammar ${id}`);
       grammars = [{ id, version: native.version, parserSha256: sha256(readFileSync(join(root, native.grammar))) }];
-      oracleGrammars = lockedGrammars;
+      const baseline = nativeOracleBaseline(grammars[0]);
+      if (baseline && !lockedGrammars.some((grammar) => grammar.id === baseline.grammar.id)) {
+        throw new Error(`${language.name} no longer declares the ${baseline.grammar.id} grammar`);
+      }
+      oracleGrammars = lockedGrammars.map((grammar) => grammar.id === baseline?.grammar.id ? { ...baseline.grammar } : grammar);
     }
     if (language.builtinGrammar) {
       const id = language.builtinGrammar;
@@ -184,7 +189,8 @@ async function main() {
   const [inventory, lock] = [inventoryPath, lockPath].map(path => readProjectData(path));
   const text = formatLanguageCatalog(buildLanguageCatalog(inventory, lock));
   const files = [...CATALOG_PATHS.map((path) => [path, text]), ...nativeGrammarCopies(inventory),
-    [join(root, 'rust/src/data/native-grammar-texts.rs'), nativeGrammarRustSource(inventory)]];
+    [join(root, 'rust/src/data/native-grammar-texts.rs'), nativeGrammarRustSource(inventory)],
+    [join(root, 'rust/oracles/native-source-oracles/baselines.rs'), nativeOracleBaselineRustSource()]];
   if (process.argv.includes('--check')) {
     const stale = [];
     for (const [path, wanted] of files) {

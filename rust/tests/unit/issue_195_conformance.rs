@@ -189,6 +189,25 @@ fn region_problems(language: &str, entry: &Value, host: &Value) -> (Vec<String>,
     (problems, tree)
 }
 
+pub(super) fn fixture_oracle_tool_matches(recorded: &Value, lock: &Value) -> bool {
+    if recorded == &lock["treeSitterCli"] {
+        return true;
+    }
+    let path = repository_path("parity/grammars/native-oracle-baselines.lino");
+    let baseline: Value = super::project_data::read_project_data(
+        &fs::read_to_string(path).expect("native oracle baselines"),
+    )
+    .expect("native oracle baselines Links data");
+    let profile = &baseline["fixtureOracle"];
+    recorded == &profile["recorded"]
+        && lock["treeSitterCli"] == profile["active"]
+        && profile["parsers"]
+            .as_object()
+            .expect("fixture oracle parser identities")
+            .iter()
+            .all(|(id, digest)| &lock["grammars"][id]["parserSha256"] == digest)
+}
+
 #[test]
 fn issue_195_conformance_fixtures_record_their_provenance_and_match_their_pinned_inputs() {
     let manifest = read_json("manifest.json");
@@ -200,7 +219,10 @@ fn issue_195_conformance_fixtures_record_their_provenance_and_match_their_pinned
         &fs::read_to_string(lock_path).expect("grammar lock"),
     )
     .expect("grammar lock Links data");
-    assert_eq!(manifest["oracle"]["tool"], lock["treeSitterCli"]);
+    assert!(fixture_oracle_tool_matches(
+        &manifest["oracle"]["tool"],
+        &lock
+    ));
     for input in ["cases.json", "error-recovery.json"] {
         assert_eq!(
             text(&manifest["inputs"], input),

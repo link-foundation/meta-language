@@ -19,6 +19,7 @@ import {simplifyRustOptionIdentityMatches} from '../scripts/reviewed-rust-branch
 import {readRustLibraryItems} from '../scripts/rust-library-packaging.mjs';
 import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
 import {readMutableArrayFrontendSourceHistory} from '../scripts/javascript-mutable-array-frontend-source-history.mjs';
+import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';
 
 test('scalar declaration styles borrow actual token strings and preserve all other source owners',()=>{
   const input=readFileSync(new URL('../src/translation/frontend-rules.js',import.meta.url),'utf8');
@@ -284,14 +285,19 @@ test('temporal-binding column decisions retain local closure and module-capture 
 });
 
 test('current Boolean styles transport only the historical uniquely bound temporary and preserve every original record byte',()=>{
-  const data=readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino',import.meta.url),'utf8');
-  assert.equal(createHash('sha256').update(data.slice(0,778522)).digest('hex'),
+  const file='parity/self-translation/frontend-rules-decorators.lino';
+  const data=readFileSync(new URL('../../'+file,import.meta.url),'utf8');
+  const original=restoreDependencyWorkflowSource(data,file);
+  assert.equal(createHash('sha256').update(original.slice(0,778522)).digest('hex'),
     '3078e31556afef9341fa3bdae9ab1b45be924e84039165b773229ee7006fef25',
     'the complete historical decorator file remains an exact byte prefix');
   const decorators=DecoratorSet.fromLino(data);
   const historical=decorators.decorators.find(definition=>definition.id==='reviewed-boolean-helper-styles');
   const recorded=decorators.decorators.find(definition=>definition.id===frontendCurrentBooleanNativeStyleId);
   assert.ok(historical);assert.ok(recorded);
+  const originalDecorators=DecoratorSet.fromLino(original);
+  assert.deepEqual(historical,originalDecorators.decorators.find(definition=>definition.id===historical.id));
+  assert.deepEqual(recorded,originalDecorators.decorators.find(definition=>definition.id===recorded.id));
   assert.equal(recorded.actions.length,1);
   const [action]=recorded.actions;
   assert.deepEqual(readFrontendCurrentBooleanStyleCorrections(action.from,historical),recorded.actions,

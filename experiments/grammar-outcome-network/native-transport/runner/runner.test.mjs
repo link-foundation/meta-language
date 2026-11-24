@@ -2,11 +2,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {EventEmitter} from 'node:events';
-import {copyFileSync,mkdtempSync,mkdirSync,readFileSync,realpathSync,writeFileSync} from 'node:fs';
+import {copyFileSync,mkdtempSync,mkdirSync,readFileSync,realpathSync,rmSync,symlinkSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
-import {requireNativeCI,runOverlay,runBounded} from './run.mjs';
+import {readFrozenRunnerModules,requireNativeCI,runOverlay,runBounded} from './run.mjs';
 import {createOverlayPlan,frozenSourceBytes,sha256} from './plan.mjs';
 import {publicationEdit,replayPublication} from './generate-publication.mjs';
 import {overlayPolicy} from './policy.mjs';
@@ -72,6 +72,29 @@ test('publication edits retain the complete original and refuse a changed origin
   assert.throws(()=>replayPublication(original,{...edit,removed:'unrelated'}),/exact publication source interval/u);
   assert.throws(()=>replayPublication(original,{...edit,end:original.length+1}));
   assert.equal(replayPublication(original,publicationEdit(original,original)),original);
+});
+
+test('the frozen overlay requires its original dependency manifests and an owned installation',t=>{
+  const temporary=realpathSync(mkdtempSync(join(tmpdir(),'meta-language-b95-frozen-dependencies-contract-')));
+  t.after(()=>rmSync(temporary,{recursive:true,force:true}));
+  const installation=join(temporary,'js'),modules=join(installation,'node_modules');
+  mkdirSync(modules,{recursive:true});
+  const lock=join(installation,'package-lock.json');
+  const files=['package.json','package-lock.json'].map(manifest=>{
+    const source=Buffer.from('{"name":"frozen"}\n');
+    writeFileSync(join(installation,manifest),source);
+    return {path:'js/'+manifest,bytes:source.length,sha256:sha256(source)};
+  });
+  const plan={inventory:{files}};
+  assert.equal(readFrozenRunnerModules(plan,temporary,installation),modules);
+  assert.throws(()=>readFrozenRunnerModules(plan,temporary),/frozen JavaScript installation required/u);
+  assert.throws(()=>readFrozenRunnerModules(plan,temporary,tmpdir()),/inside CI scratch/u);
+  writeFileSync(lock,'{"name":"active"}\n');
+  assert.throws(()=>readFrozenRunnerModules(plan,temporary,installation),/frozen dependency input hash.*package-lock/u);
+  writeFileSync(lock,'{"name":"frozen"}\n');
+  rmSync(modules,{recursive:true});
+  symlinkSync(temporary,modules,'dir');
+  assert.throws(()=>readFrozenRunnerModules(plan,temporary,installation),/owned frozen JavaScript modules/u);
 });
 
 test('output overflow retains the bounded prefix and reports a failed process contract',async()=>{

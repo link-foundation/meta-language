@@ -3,7 +3,9 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
+import {restoreAutomatedTranslationPauseSource} from '../scripts/automated-translation-pause-source-history.mjs';
 import {generateRawOracleContractPartitions} from '../scripts/generate-raw-oracle-contract-partitions.mjs';
+import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';
 import {restoreRawOracleContractPartitionHistory} from '../scripts/raw-oracle-contract-partition-history.mjs';
 import {createOriginalLinkRawContractPartition} from '../../experiments/original-link-complete-table-projection/raw-contract-partitions.mjs';
 import {parseNative} from '../src/native-grammar-parser.js';
@@ -70,16 +72,23 @@ test('the entire current test source retains every original call body hash and a
 
 test('two required raw contract cells preserve complete commands limits and the preceding whole workflow',()=>{
   const {history}=generateRawOracleContractPartitions({check:true}),path='.github/workflows/js.yml';
-  const currentSource=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  const liveSource=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  const currentSource=restoreAutomatedTranslationPauseSource(liveSource,path);
   const previousSource=history.sources.find(row=>row.path===path).source;
-  assert.equal(restoreRawOracleContractPartitionHistory(currentSource,path),previousSource);
-  const previous=parseWorkflow(previousSource),current=parseWorkflow(currentSource);
+  assert.equal(restoreRawOracleContractPartitionHistory(liveSource,path),previousSource);
+  const previous=parseWorkflow(previousSource),current=parseWorkflow(restoreDependencyWorkflowSource(currentSource,path));
   assert.equal(current.length,previous.length);
   const before=previous.find(row=>row.id==='package-checks'),after=current.find(row=>row.id==='package-checks');
   assert.equal(after.steps.length,before.steps.length+1);
   const old=before.steps.find(row=>row.name==='Run complete original link raw native oracle contracts');
   const plan=after.steps.find(row=>row.name===old.name);
   const schema=after.steps.find(row=>row.name==='Run complete original link raw schema and consumer contracts');
+  const actual=parseWorkflow(currentSource).find(row=>row.id==='package-checks');
+  const rawContractHeader=actual.header
+    .replace(" || matrix.generated_slice == 'third' && ' / third'",'')
+    .replace('          - group: generated\n            generated_slice: third\n','');
+  assert.equal(rawContractHeader,after.header);
+  for(const step of [schema,plan])assert.deepEqual(actual.steps.find(row=>row.name===step.name),step);
   assert.equal(plan.text.replace("\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'plan'",''),old.text);
   assert.equal(schema.text.replace("\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'schema'",'')
     .replace('Run complete original link raw schema and consumer contracts',old.name)
@@ -87,11 +96,16 @@ test('two required raw contract cells preserve complete commands limits and the 
   assert.match(after.header,/^    timeout-minutes: 10$/mu);assert.match(after.header,/fail-fast: false/u);
   assert.equal(after.header.replace('          - group: source-model-raw-schema\n            generated_slice: first\n',''),before.header);
   for(const oldJob of previous){
-    const actual=current.find(row=>row.id===oldJob.id);
-    if(oldJob.id!=='package-checks')assert.deepEqual(actual,oldJob);
-    else for(const step of oldJob.steps.filter(row=>row.name!==old.name))assert.equal(actual.steps.find(row=>row.name===step.name).text,step.text);
+    const historicalJob=current.find(row=>row.id===oldJob.id);
+    if(oldJob.id!=='package-checks')assert.deepEqual(historicalJob,oldJob);
+    else for(const step of oldJob.steps.filter(row=>row.name!==old.name))assert.equal(historicalJob.steps.find(row=>row.name===step.name).text,step.text);
   }
-  for(const value of [currentSource+'\n# changed\n',currentSource.replace('timeout-minutes: 10','timeout-minutes: 11')]){
+  const livePackageChecks=parseWorkflow(liveSource).find(row=>row.id==='package-checks');
+  assert.equal(livePackageChecks.steps.find(row=>row.name===schema.name).text,schema.text);
+  assert.equal(livePackageChecks.steps.find(row=>row.name===plan.name).text,
+    plan.text.replace("matrix.group == 'source-model-raw'",
+      "matrix.group == 'source-model-raw' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true'"));
+  for(const value of [liveSource+'\n# changed\n',liveSource.replace('timeout-minutes: 10','timeout-minutes: 11')]){
     assert.equal(restoreRawOracleContractPartitionHistory(value,path),value);
   }
 });

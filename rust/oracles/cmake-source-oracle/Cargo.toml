@@ -7,7 +7,7 @@ license = "MIT"
 description = "Development oracle for the pinned vendored CMake grammar"
 
 [dependencies]
-tree-sitter-language = "0.1.8"
+tree-sitter-language = "0.1.9"
 
 [build-dependencies]
 cc = "1"

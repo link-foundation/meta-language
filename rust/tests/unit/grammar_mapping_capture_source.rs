@@ -2,9 +2,25 @@
 use meta_language::{DecoratorLevel, DecoratorRecord, DecoratorSet};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
+use std::path::Path;
+use std::sync::OnceLock;
 
 const FIXTURE_PATH: &str = "parity/fixtures/grammar-selection-json-string.lino";
 const FIXTURE_SHA256: &str = "ee8105fd4aa66df19feb1abd20d1012f696abb712cbd339d5e2816f60fcfaba9";
+const DEPENDENCY_CAPTURES: [(&str, &str); 3] = [
+    (
+        "parity/language-grammar-inventory.lino",
+        "ec9f4efb0e9ef936114e09823981352f6db13700",
+    ),
+    (
+        "parity/fixtures/default-cst-expected.lino",
+        "bb6722e623fabc6a8be8ce6c0c5a4679602f1711",
+    ),
+    (
+        "parity/fixtures/native-default-cst-expected.lino",
+        "ec9f4efb0e9ef936114e09823981352f6db13700",
+    ),
+];
 
 fn sha256(bytes: impl AsRef<[u8]>) -> String {
     Sha256::digest(bytes)
@@ -14,6 +30,47 @@ fn sha256(bytes: impl AsRef<[u8]>) -> String {
             write!(hexadecimal, "{byte:02x}").expect("writing into a String succeeds");
             hexadecimal
         })
+}
+
+fn dependency_capture(root: &Path, relative: &str, mut bytes: Vec<u8>) -> Vec<u8> {
+    static CAPTURES: OnceLock<Vec<Value>> = OnceLock::new();
+    let captures = CAPTURES.get_or_init(|| {
+        let archive: Value = meta_language::project_data::read_project_data_file(
+            root.join("parity/self-translation/dependency-workflow-source-history.lino"),
+        )
+        .unwrap();
+        assert_eq!(archive["schemaVersion"], 2);
+        archive["sources"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|row| {
+                DEPENDENCY_CAPTURES
+                    .iter()
+                    .any(|(file, revision)| row["file"] == *file && row["revision"] == *revision)
+            })
+            .cloned()
+            .collect()
+    });
+    assert_eq!(captures.len(), DEPENDENCY_CAPTURES.len());
+    let row = captures.iter().find(|row| row["file"] == relative).unwrap();
+    assert_eq!(Value::from(bytes.len()), row["currentBytes"]);
+    assert_eq!(sha256(&bytes), row["currentDigest"].as_str().unwrap());
+    let edit = &row["edit"];
+    let offset = usize::try_from(edit["offset"].as_u64().unwrap()).unwrap();
+    let length = usize::try_from(edit["length"].as_u64().unwrap()).unwrap();
+    let end = offset.checked_add(length).unwrap();
+    assert!(end <= bytes.len());
+    bytes.splice(offset..end, edit["predecessor"].as_str().unwrap().bytes());
+    assert_eq!(
+        Value::from(bytes.len()),
+        row["certificate"]["blob"]["bytes"]
+    );
+    assert_eq!(
+        sha256(&bytes),
+        row["certificate"]["blob"]["sha256"].as_str().unwrap()
+    );
+    bytes
 }
 
 pub fn original_capture(relative: &str, bytes: Vec<u8>) -> Vec<u8> {
@@ -27,6 +84,12 @@ pub fn original_capture(relative: &str, bytes: Vec<u8>) -> Vec<u8> {
     assert_eq!(profile["historicalFixture"]["sha256"], FIXTURE_SHA256);
     let fixture_bytes = std::fs::read(root.join(FIXTURE_PATH)).unwrap();
     assert_eq!(sha256(&fixture_bytes), FIXTURE_SHA256);
+    if DEPENDENCY_CAPTURES
+        .iter()
+        .any(|(file, _)| *file == relative)
+    {
+        return dependency_capture(&root, relative, bytes);
+    }
     let originals = profile["sources"]
         .as_array()
         .unwrap()

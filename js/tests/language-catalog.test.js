@@ -1,4 +1,4 @@
-import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+import { checkProjectData, readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -10,6 +10,7 @@ import {
   formatLanguageCatalog,
   nativeGrammarRustSource,
 } from '../scripts/build-language-catalog.mjs';
+import { nativeOracleBaseline } from '../scripts/native-oracle-baselines.mjs';
 import { GRAMMAR_LOCK } from '../src/programming-language-parser.js';
 import {
   LANGUAGE_CATALOG,
@@ -32,13 +33,16 @@ test('the Rust native grammar embedding is generated for every inventory entry',
 });
 
 test('language catalog is generated from the inventory and shipped identically to Rust', async () => {
-  const generated = formatLanguageCatalog(buildLanguageCatalog(inventory, GRAMMAR_LOCK));
-  const shipped = await readFile(resolveProjectDataPath(new URL('../src/data/language-catalog.json', import.meta.url)), 'utf8');
+  const catalog = buildLanguageCatalog(inventory, GRAMMAR_LOCK);
+  const generated = formatLanguageCatalog(catalog);
+  const javascriptCatalog = new URL('../src/data/language-catalog.json', import.meta.url);
+  const shipped = await readFile(resolveProjectDataPath(javascriptCatalog), 'utf8');
   const rust = await readFile(
     resolveProjectDataPath(new URL('../../rust/src/data/language-catalog.json', import.meta.url)),
     'utf8',
   );
-  assert.deepEqual(readProjectData(new URL('../src/data/language-catalog.json', import.meta.url)), JSON.parse(generated));
+  assert.deepEqual(readProjectData(javascriptCatalog), JSON.parse(generated));
+  assert.equal(checkProjectData(javascriptCatalog, catalog), true);
   assert.equal(rust, shipped);
   assert.deepEqual(
     LANGUAGE_CATALOG.languages.map(({ name }) => name),
@@ -143,9 +147,13 @@ test('grammar provenance names the locked grammar versions and parser digests', 
       const text = await readFile(resolveProjectDataPath(new URL(`../../${declared.grammar}`, import.meta.url)));
       assert.equal(provenance[0].version, declared.version);
       assert.equal(provenance[0].parserSha256, createHash('sha256').update(text).digest('hex'));
+      const baseline = nativeOracleBaseline(provenance[0]);
       assert.deepEqual(
         languageEntry(language.name).oracleGrammars.map(({ id, version, parserSha256 }) => [id, version, parserSha256]),
-        language.grammars.map((id) => [id, GRAMMAR_LOCK.grammars[id].version, GRAMMAR_LOCK.grammars[id].parserSha256]),
+        language.grammars.map((id) => {
+          const { version, parserSha256 } = baseline?.grammar.id === id ? baseline.grammar : GRAMMAR_LOCK.grammars[id];
+          return [id, version, parserSha256];
+        }),
         language.name,
       );
       continue;

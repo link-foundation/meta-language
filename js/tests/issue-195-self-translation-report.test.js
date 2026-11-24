@@ -1,12 +1,55 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { compareRustDefinitions, createModuleContext, measureSelfTranslationModule, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
+import { automatedTranslationTest } from './support/automated-translation-test.js';
+import { compareRustDefinitions, createModuleContext, measureReportModules, measureSelfTranslationModule, partitionReportModules, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
 import { createReportMeasurementWorker } from '../scripts/self-translation-report-worker-host.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
+import { partitionGroupFiles, partitionMeasuredWorkloads, partitionTests, testFiles } from '../scripts/test-groups.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 import { selfTranslate } from '../src/self-translation.js';
 
-test('one CI measurement worker preserves full source coverage, hashes and both independent comparisons', async () => {
+test('report scheduling retains every source across eight balanced shards', () => {
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45080642295-report-costs.lino', import.meta.url));
+  const elapsed = new Map(costs.entries.map(row => [row.file, row.milliseconds]));
+  const files = [...elapsed.keys()].sort();
+  const shards = partitionMeasuredWorkloads(files, 8, { costs });
+  assert.equal(costs.logs.length, 8);
+  assert.deepEqual(shards.flat().sort(), files);
+  const loads = shards.map(shard => shard.reduce((sum, file) => sum + elapsed.get(file), 0));
+  assert.ok(Math.max(...loads) < 1_500_000, 'recorded costs leave a margin in the existing deadline');
+});
+
+test('report scheduling separates shard 2 import and measurement work while keeping every module', () => {
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45080642295-report-costs.lino', import.meta.url));
+  const files = costs.entries.map(row => row.file).sort();
+  const previous = partitionMeasuredWorkloads(files, 8, { costs });
+  const expected = previous.map(shard => [...shard]);
+  for (const [module, destination] of [
+    ['js/src/grammar-emitters/antlr.js', 7],
+    ['js/src/program-translation.js', 7],
+    ['js/src/translation/emit-rust.js', 8],
+  ]) {
+    const old = expected.find(shard => shard.includes(module));
+    old.splice(old.indexOf(module), 1);
+    expected[destination - 1].push(module);
+  }
+  const shards = partitionReportModules(files);
+  assert.deepEqual(shards, expected.map(shard => shard.sort()));
+  assert.deepEqual(shards.flat().sort(), files);
+});
+
+test('translation scheduling retains every test across six balanced shards', () => {
+  const files = partitionTests(testFiles()).groups.translation;
+  const shards = Array.from({ length: 6 }, (_, index) => partitionGroupFiles(files, `${index + 1}/6`));
+  assert.deepEqual(shards.flat().sort(), files);
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45080642295-translation-costs.lino', import.meta.url));
+  const elapsed = new Map(costs.entries.map(row => [row.file, row.milliseconds]));
+  const loads = shards.map(shard => shard.reduce((sum, file) => sum + (elapsed.get('js/tests/' + file) ?? 0), 0));
+  assert.ok(Math.max(...loads) < 600_000, 'balance the observed workload within the existing deadline');
+});
+
+test('one CI measurement worker preserves full source coverage, hashes and both independent comparisons', automatedTranslationTest, async () => {
   const module = 'js/src/translation/primitive-value-rules.js';
   const context = { moduleDirectory: [], imports: {} };
   const decoratorsText = readFileSync(new URL('../../parity/self-translation/decorators.lino', import.meta.url), 'utf8');
@@ -27,7 +70,38 @@ test('one CI measurement worker preserves full source coverage, hashes and both 
   } finally { await worker.close(); }
 });
 
-test('report import resolution checks callable candidates and avoids dependencies of carried classes', () => {
+test('two report measurements retain complete results and failures in source order', async () => {
+  const modules = ['first', 'second', 'third', 'fourth'].map(name => `js/src/${name}.js`);
+  const resolved = [];
+  const finished = [];
+  const { promise, resolve } = Promise.withResolvers();
+  const context = path => {
+    resolved.push(`js/src/${path}`);
+    return { path };
+  };
+  const firstWorker = async (module, { path }) => {
+    await promise;
+    finished.push(module);
+    return { path };
+  };
+  const secondWorker = async (module, { path }) => {
+    finished.push(module);
+    if (module === modules[1]) throw new Error('retained measurement failure');
+    if (module === modules[3]) resolve();
+    return { path };
+  };
+  const results = await measureReportModules(modules, context, [firstWorker, secondWorker]);
+  assert.deepEqual(resolved, modules);
+  assert.deepEqual(finished, [modules[1], modules[2], modules[3], modules[0]]);
+  assert.deepEqual(results, [
+    { module: modules[0], row: { path: 'first.js' } },
+    { module: modules[1], error: 'retained measurement failure' },
+    { module: modules[2], row: { path: 'third.js' } },
+    { module: modules[3], row: { path: 'fourth.js' } },
+  ]);
+});
+
+test('report import resolution checks callable candidates and avoids dependencies of carried classes', async (testContext) => {
   const modules = new Map([
     ['consumer.js', "import { Box } from './class.js';import { plus as add } from './provider.js';export function twice(value){return add(value,value);}"],
     ['class.js', "import { hidden } from './unused.js';export class Box { read(){return hidden();} }"],
@@ -39,9 +113,11 @@ test('report import resolution checks callable candidates and avoids dependencie
   assert.deepEqual(context.imports['./class.js'], []);
   assert.deepEqual(context.imports['./provider.js'].map(signature => signature.name), ['plus']);
   assert.equal(reads.includes('unused.js'), false);
-  const source = modules.get('consumer.js');
-  const translation = selfTranslate(source, 'JavaScript', 'Rust', context);
-  assert.equal(translation.items.find(item => source.slice(item.start, item.end).includes('function twice')).status, 'translated');
+  await testContext.test('the resolved callable enables actual translation', automatedTranslationTest, () => {
+    const source = modules.get('consumer.js');
+    const translation = selfTranslate(source, 'JavaScript', 'Rust', context);
+    assert.equal(translation.items.find(item => source.slice(item.start, item.end).includes('function twice')).status, 'translated');
+  });
 });
 
 test('lexical report headers agree with independent grammar headers despite opaque and nested syntax', () => {
@@ -78,7 +154,7 @@ test('self-translation report compares each function independently', () => {
   assert.equal(standalone.identical, 0);
 });
 
-test('self-translation report accounts for actual translated, carried and UTF-8 comment source bytes', () => {
+test('self-translation report accounts for actual translated, carried and UTF-8 comment source bytes', automatedTranslationTest, () => {
   const source = '\r\n// café 😀\r\nexport function add(a, b) { return a + b; }\n\nclass Unsupported {}\n';
   const translation = selfTranslate(source, 'JavaScript', 'Rust');
   const coverage = sourceCoverage(source, translation.items);

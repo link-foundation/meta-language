@@ -125,6 +125,9 @@ Historical source guards authenticate the complete current module before
 inverting recorded, disjoint byte intervals and checking every predecessor byte.
 Original source hashes, receipt edges, assertions and refusal cases stay exact;
 current translation behavior uses current imports and independent controls.
+The dependency refresh archive stores each complete Git commit and tree once.
+Each historical source records its path through those objects and verifies the
+reconstructed bytes against the original Git blob.
 Naming extraction retains every actual current source name. Scoped historical
 inventory views may additionally recover names from complete independently
 certified predecessors, with explicit revision and archive provenance. Current
@@ -1493,6 +1496,13 @@ comments, blank lines or the spelling of a quote, the native lossless LiNo
 grammar ([`js/src/lino-grammar.js`](../js/src/lino-grammar.js),
 [`rust/src/lino_grammar.rs`](../rust/src/lino_grammar.rs)) keeps it in the
 concrete syntax tree.
+With Links Notation 0.31.8 the CST preserves the written form of versioned
+reference literals and exposes their decoded UTF-8 values. A malformed literal
+with a reserved prefix produces a recovery node. Comments are found in the
+original source, including where a quoted reference follows a closed group or
+another delimited reference. The 0.22.0 oracle interpreted the `#` in
+`(a)"b #c"` as a comment. The retained input now expects `b #c` following the
+[upstream boundary fix](https://github.com/link-foundation/links-notation/issues/377).
 
 The upstream findings of
 [relative-meta-logic](https://github.com/link-foundation/relative-meta-logic/pull/184)
@@ -2080,20 +2090,26 @@ argument to exactly one actual Cargo compiler artifact, rather than combining
 different feature units of the same dependency. The receipt records complete
 stream hashes, selected artifact metadata and the executed primitive width.
 The current format profile selects Cargo and the actually invoked Rust compiler
-`>=1.90.0 <1.100.0` and the locked JSON
-dependency `>=1.0.151 <1.0.152`; uncovered versions and ambiguous bindings refuse.
+`>=1.90.0 <1.100.0` or `>=1.100.0 <1.100.1`, and the locked JSON dependency
+`>=1.0.151 <1.0.152` or `>=1.0.154 <1.0.155`. Uncovered versions and ambiguous
+bindings refuse.
 These observations require successful CI execution. Historical compiler logs and
 synthetic selectors establish source and transport controls only; number variant
 reconstruction and native DTO equality remain separate obligations.
 
 Native number representation selection now has one complete JavaScript decision
-module and its automatically generated Rust library. Its explicit model covers
-`serde_json >=1.0.151 <1.0.152` without `arbitrary_precision`; unknown profiles
-and contradictory native predicates refuse. Positive integers may satisfy both
-signed and unsigned admission, and retain the unsigned representation. A separate
-adapter binds this selection to the exact checked compiler artifact and refuses
-its unsupported precision feature without combining unrelated feature units.
-The 160 declared-profile controls, lossless source round trip and source-free
+module and its automatically generated Rust library. Both supported `serde_json`
+ranges use the same native predicates and 64-bit accessors without
+`arbitrary_precision`. The [1.0.154 source](https://docs.rs/serde_json/1.0.154/src/serde_json/number.rs.html)
+changes only the 32-bit floating conversion in the Number implementation compared
+with [1.0.151](https://docs.rs/serde_json/1.0.151/src/serde_json/number.rs.html).
+Unknown profiles and contradictory native predicates refuse. Positive integers
+may satisfy both signed and unsigned admission and retain the unsigned
+representation. A separate adapter binds this selection to the exact checked
+compiler artifact and refuses its unsupported precision feature without
+combining unrelated feature units.
+The original 160 declared-profile controls, 96 additional version-bound controls,
+lossless source round trip and source-free
 Links text/binary reloads establish selector behavior only. They do not capture
 an original native number, authenticate caller-supplied logs as a live execution,
 or reconstruct an owned DTO. Exact decimals, floating bits and source occurrence
@@ -2647,6 +2663,28 @@ Prefer pinned original encoded downloads before reconstruction from raw source,
 preserving mirror order within each group. Reconstruction checks the raw decoded
 pins before compression and retains the exact encoded pins afterward. Different
 compression implementations can produce different bytes from the same source.
+An updated registry grammar without a historical binary distribution is built
+from the crates.io archive locked by Rust. Acquisition checks the archive against
+its pinned size and checksum, runs the exact Tree-sitter CLI in a temporary
+directory, and verifies both WebAssembly representations before caching. The
+manifest preserves the superseded distribution receipts.
+
+Each native grammar is checked against the exact Tree-sitter release used to
+derive its rules and fixtures. When that upstream grammar changes independently,
+the native grammar version selects its oracle from
+`parity/grammars/native-oracle-baselines.lino`. JavaScript loads the authenticated
+historical WebAssembly. Rust test builds compile the same release's authenticated
+crate archive with distinct parser and scanner symbols. The current releases
+retain independent positive and recovery tree checks against their rebuilt
+WebAssembly, and the public default trees retain their native grammar checks.
+Dart 0.3.0 gives documentation comments a distinct kind, PowerShell 0.26.6
+changes the command-name span in the mixed-case switch fixture, Scheme 0.25.0
+accepts the empty bytevector rejection fixture, and SQL 0.3.13 changes the
+aggregate-query tree. The earlier release assertions still apply to the native
+port versions derived from those releases.
+The opt-in C# scanner profile retains its 0.23.5 oracle and complete corpus
+comparisons. The catalog's 0.24.0 grammar is checked independently, including
+its named slice-pattern node in the historical list-pattern source.
 
 CI provisions required inputs before checks and artifact construction. Temporary
 compiled fallback assets can still accompany an installed artifact while the
@@ -2674,6 +2712,11 @@ Compatibility changes are resolved rather than kept behind obsolete pins. As the
 native grammars replace external parsers, the production parser dependencies
 (tree-sitter, web-tree-sitter and the vendored grammar binaries) are removed.
 Independent oracles are kept only in their test and development role.
+Existing conformance and generative fixtures keep the Tree-sitter CLI version
+that produced their expected trees. The 0.27.0 fixtures remain applicable with
+the 0.27.2 grammar lock while all six parser digests, including the two
+mixed-language hosts, match the original lock. An unregistered CLI or changed
+parser identity requires a separately verified oracle.
 A recorded compatibility reason explains a stale item but does not complete its
 upgrade. Delivery evidence separately checks that retained dependencies,
 transitive resolutions, tools, actions, images and version-coupled artifacts are
@@ -2687,13 +2730,29 @@ that a tree-sitter release pins. Every holder must itself be delivered, and an
 external holder must be at its newest release. A pin behind its newest
 compatible release is stale, as is anything built from it. In CI the delivery
 gate retains the complete current-dependency policy. Pull request checks use
-the recorded pre-merge audit. The scheduled registry refresh runs only on main
-as a non-blocking live report: it preserves the actual audit outcome, complete
-log and refreshed audit artifact, and opens or updates the repair PR even when
-new upstream releases leave unresolved findings. The PR body and job summary
-retain those findings; required offline PR and delivery gates still fail until
-the applicable dependency problems are repaired. An unavailable registry cannot
-be presented as a current audit.
+the recorded pre-merge audit. A direct dependency in the JavaScript package,
+Rust crate, Rust oracle crates or Rust web package that falls behind its stable
+release must link an open GitHub blocker from its pin. Cargo records it with
+`# blocked: https://github.com/owner/repository/issues/number` on each affected
+dependency line. The JSON package manifest records it in `dependencyBlockers`,
+keyed by dependency section and package name, with the exact `requirement` and
+the `issue` URL. The registry refresh verifies that the issue is open in the
+dependency's GitHub repository and records it in the audit. A closed, missing,
+or unrelated blocker fails the freshness check. The scheduled report runs
+`npm outdated`, `cargo outdated --root-deps-only --exit-code 1`, and
+`cargo update --dry-run` for both Rust locks.
+The scheduled registry refresh runs only on main as a non-blocking live report.
+It preserves the actual audit outcome, complete log and refreshed audit artifact.
+It opens or updates the repair PR even when new upstream releases leave unresolved
+findings. An unresolved live audit fails the scheduled job after this reporting
+and repair attempt. When the Rust dependency inputs change, the refresh regenerates
+the exact diagnostic dependency profile and certifies the corresponding source
+history before checking acceptance fingerprints. It always regenerates the
+dependency history and acceptance fixture fingerprints and checks the ledger
+against the committed scope before pushing. The PR body and job summary retain
+those findings. Required offline PR and
+delivery gates fail until the applicable dependency problems are repaired. An
+unavailable registry cannot be presented as a current audit.
 
 ## Acceptance and evidence
 
@@ -2758,9 +2817,11 @@ hashes, and checks the selected range independently of the incoming test name.
 Missing or forged version context is an error. These bounded bindings do not
 establish version coverage for assertions that have not yet been registered.
 Agda oracle profiles separately select exact released WebAssembly and corrected
-scanner source identities within the registered 1.3.3 singleton range. Their
-fixture derivation authenticates source, patch, runtime and policy hashes;
-authored expected rows remain separate from execution observations.
+scanner source identities within the registered 1.3.3 singleton range. The
+runtime policy selects Tree-sitter 0.27.0 or 0.27.2 while retaining the 0.27.0
+oracle tool, released WebAssembly, and corrected scanner source pins. Fixture
+derivation authenticates source, patch and policy hashes. The focused tests
+compare the same expected rows against the selected runtime.
 
 - Native merged grammars run against pinned **independent** ANTLR, tree-sitter
   and official parser, compiler and prover corpora, and against real projects,
@@ -2883,6 +2944,28 @@ Cleaning regenerable caches is separate from removing obsolete production
 architecture.
 
 ## JavaScript first and self-translation
+
+[Issue #248](https://github.com/link-foundation/meta-language/issues/248) pauses
+required automated translation until the maintainer resumes it. During the
+pause, contributors may hand-port JavaScript-first batches between the supported
+languages. A manual port follows the same observable behavior contract and uses
+shared fixtures, native tests and the language feature inventory. Keep the
+automated translator, its checks, and its complete acceptance scope available.
+Skipped execution produces no translation evidence. Normal CI continues scoped
+JavaScript and Rust checks, grammar generation, candidate packaging and
+downstream validation. The complete acceptance path remains available on opt-in.
+Pre-merge and release-delivery evidence use Rust 1.99.1, within the frozen
+compiler range `>=1.90.0 <1.100.0`. The post-merge report uses Rust 1.100.0.
+Complete JavaScript and Rust test jobs share the exact Node 24.22.3 release
+within the frozen JavaScript oracle range `>=22.15.0 <23 || >=24 <25`.
+Live dependency and publication checks use the current audited Node release.
+
+[PR #249 feedback](https://github.com/link-foundation/meta-language/pull/249#issuecomment-7127808977)
+also pauses Windows and macOS CI. During the pause GitHub schedules only Linux
+native and clean consumer jobs, including when automated translation is enabled.
+The native shard policy retains every platform, suite, filter and physical shard,
+and the strict acceptance gate continues to require all three consumer and native
+platforms. The aggregate verifies scheduled jobs against the exact run attempt.
 
 The review of [Router PR #761](https://github.com/link-assistant/router/pull/761)
 at revision `e2ceac6071d90514fb1a37b3fe5964433d61c402` records its source
@@ -3020,11 +3103,12 @@ predecessor sources and independent body and source inverses accompany the
 correspondence. This changes the internal library ABI, keeps the checked source
 algorithm intact and disables no lint. Native validation remains CI work.
 
-The port is done by meta-language itself. A self-translation tool, a library
+The long-term porting workflow uses meta-language itself. A self-translation tool, a library
 API and a CLI command in both packages, reads JavaScript or TypeScript into
 meta-language links and writes Rust, and reads Rust and writes JavaScript or
-TypeScript. Code it cannot translate yet is a gap in the translator, not
-something to write by hand. Meta-language's own source is its main acceptance
+TypeScript. Code it cannot translate yet remains a gap in the translator,
+including when a manual port implements equivalent behavior during the pause.
+Meta-language's own source is its main acceptance
 corpus:
 
 - JavaScript → links → JavaScript and Rust → links → Rust are byte-identical;
@@ -3649,11 +3733,60 @@ missing or duplicate registrations and native admission in a JavaScript-only
 profile refuse. This follows CI 39489000471, which completed all three source
 archives and constructed its observation plan before the unchanged deadline.
 Successful timing and full native execution still require corrected-commit CI.
+The complete raw planning cell uses the checked-in native Rust grammar and
+does not provision external grammar assets. With memory for the parent and
+three bounded archive workers and a spare CPU for emission, the workers can
+start on the complete stored sources while generation runs. The planner admits
+the receipts only after all three regenerated source texts match the replayed
+inputs byte for byte. On smaller runners, generation precedes source replay.
+The current and consuming emissions share one checked source program. The
+consuming emitter still checks every definition after both typed archive
+reloads and verifies the complete generated profile against the stored bytes.
+In [run 45276612669](https://github.com/link-foundation/meta-language/actions/runs/45276612669/job/138109543491),
+the planner passed all seven contracts before the ten-minute job expired during
+teardown. Checkout used nearly two minutes. The first repair fetched full commit
+and tree history with Git's `blob:none` filter and materialized every current
+file. Git fetched historical blobs on demand during fresh merge checks or source
+authentication. The complete planner, cleanup and ten-minute deadline still apply.
+The subsequent [blobless run](https://github.com/link-foundation/meta-language/actions/runs/45303012723/job/138190375005)
+also passed all seven contracts and reached the job deadline. The checkout
+took 117 seconds. Each profile check now rereads both complete Lino artifacts
+and reuses their immutable decoded data only when the current bytes match.
+Changed bytes are decoded again. The complete profile verifier, producer
+source reads, and pre- and post-execution comparisons still run at their
+original boundaries.
+
+In [run 45332829639](https://github.com/link-foundation/meta-language/actions/runs/45332829639/job/138300719168),
+the planner replayed all three complete source archives and constructed all 383
+vectors. Checkout took 126 seconds, and the deadline interrupted the contract
+assertions. The planner checkout now also defers the retained logs under
+`dev/log/` and the naming concepts and source-bindings inventories. These
+22 files occupied 269,472,856 bytes in the worktree. Planner sources, the checked-in
+Rust grammar, and the historical receipts remain available to the same commands.
+The focused checkout test uses a genuinely blobless clone, merges an advanced
+base, and retrieves the deferred historical bytes by commit.
+
+The two canonical relative-array and continuation history packets are decoded
+from the same complete bytes checked against their original SHA-256 pins. The
+bootstrap reader produces structures identical to the general reader for the
+22 MB of retained input, including all 34 full source records. In the bounded
+Node 22 comparison, combined decoding took 21.3 seconds with the bootstrap
+reader and 30.8 seconds with the general reader. The historical source
+certificates preserve both original reader sources and their predecessors.
+
+The generated-slice guard checks the exact sparse patterns and reverses those
+checkout lines before checking the original package schedule digest. The separate
+raw-planning guard checks the active filter, complete ancestry and fresh-merge command.
+The earlier checkout change exposed the need for this inverse in the
+[hosted workflow checksum](https://github.com/link-foundation/meta-language/actions/runs/45303012723/job/138139941669).
+
 The complete tooling test group likewise has four required physical cells after
-its measured fifteen-minute cancellation. The existing modulo file partitioner
-assigns every current test file exactly once; all commands, assertions, flags,
-deadlines and aggregate prerequisites remain intact. Historical workflow checks
-recover their exact original inputs through a separate checked matrix inverse.
+its measured fifteen-minute cancellation. Workloads with unchanged source bytes
+use advisory durations from their retained CI logs. Changed or unsampled files
+use a size estimate. The partitioner assigns every current test file exactly
+once and keeps the commands, assertions, flags, deadlines and aggregate
+prerequisites intact. Historical workflow checks recover their exact original
+inputs through a separate checked matrix inverse.
 An exact native checked-program mismatch keeps its original rejection and adds
 a bounded first differing field path. Declaration-list archive failures retain
 their actual original input in the failure message. Neither diagnostic accepts,
@@ -3688,19 +3821,24 @@ authenticate the old Git blobs and replay only reviewed runner changes, with
 separate complete helper and verifier hashes. These transport and source checks
 cannot supply successful native observations or a performance result.
 
-Package validation runs nine required logical check groups across ten parallel
-jobs: native imports, native fixtures, grammar, contracts, generated code and
-source models, complete original-link tables, binary candidates and raw graph
-preflight. The
-generated group has two physical slices. The first retains the literal-edit
-rule, fixture and experiment triplet, owned local container checks, strict public
-declaration consumers and the reviewed generated-stage migration refresh. The
-second retains every remaining generated check, including both compiler-feedback
-producers and their single upload. All checks execute exactly once in their
-original relative order;
-each runner keeps the same setup and ten-minute deadline. Distinct concurrency
-identities prevent sibling cancellation. All six earlier check-context names
-remain, and the additional generated slice has its own name. The
+The initial package validation split ran nine required logical check groups
+across ten parallel jobs: native imports, native fixtures, grammar, contracts,
+generated code and source models, complete original-link tables, binary
+candidates and raw graph preflight. That split gave the generated group two
+physical slices. The first ran the literal-edit rule, fixture and experiment
+triplet, owned local container checks, strict public declaration consumers and
+the reviewed generated-stage migration refresh. The second ran every remaining
+generated check, including both compiler-feedback producers and their single
+upload. All checks executed exactly once in their original relative order. Each
+runner kept the same setup and ten-minute deadline. Distinct concurrency
+identities prevented sibling cancellation. The split preserved the six earlier
+check-context names and named the additional generated slice. After the second
+slice reached its ten-minute deadline, package validation added a third
+required generated slice for the JavaScript Unit, owned Rust module and text
+projection experiments, occurrence-position checks and reviewed stage migration
+refresh. All twelve checks keep their original commands and relative order.
+Both compiler-feedback producers and their single upload stay on the second slice.
+Each slice uses the same setup and deadline. The
 source-model group executes the new raw-binding and complete text-certificate
 checks, isolated owned-certificate adapters, original-identity and role
 projection checks, complete String-symbol and eleven-table projection checks,
@@ -3768,10 +3906,11 @@ Import and export candidate discovery uses the shared lexer, retaining opaque
 literals and nested scopes. Unsupported lexical identifiers or syntax use the
 original grammar scan. Every candidate signature still requires checked
 translation; this optimization cannot supply an unchecked signature.
-In CI one JavaScript worker measures a module while the coordinator resolves
-the following module's imports. Contexts and results travel as LiNo records;
-completed rows retain their original order. Local reports remain sequential,
-and CI keeps the same report deadlines and verification gates.
+In CI up to two JavaScript workers measure one module each while the coordinator
+resolves imports in source order. The worker count stays within the available
+parallelism. Contexts and results travel as LiNo records, and completed rows
+retain their original order. Local reports remain sequential, and CI keeps the
+same report deadlines and verification gates.
 
 The initial translation, native grammar and conformance test groups run in disjoint CI file
 partitions. Their union retains every original file exactly once, and each job
@@ -3793,12 +3932,59 @@ file must occur exactly once in the complete scope union before the logical
 suite can supply evidence. Missing, mixed, stale, failed or altered partitions
 refuse. Original sixty-minute evidence deadlines, compiler checks, commands,
 artifact paths, toolchain pins and all other workflow bytes remain unchanged.
-Historical guard views retain the certified original fifteen-scope workflow;
-independent current controls check the complete six-partition workflow inverse.
-Capture and merge explicitly select six partitions; the transport's historical
-three-part API remains separately checked. Complete original workflow bytes stay
-authenticated for historical controls, and independent controls inspect the
-actual current six-way matrix, feedback cohort and native artifact uploads.
+Historical guard views retain the certified original fifteen-scope workflow and
+verify the complete inverse for the later six-partition workflow.
+The translation and conformance test jobs each moved to eight partitions after
+[run 45098181978](https://github.com/link-foundation/meta-language/actions/runs/45098181978)
+hit their fifteen-minute job deadline. Translation uses measured workloads to
+assign each file once. Capture and merge explicitly select all eight exact
+partitions. Each four-way conformance partition is the union of its two
+successors. Complete original workflow bytes authenticate the historical
+three- and six-part translation transport controls and the four-part
+conformance controls. The certified workflow checks cover the eight-way matrices,
+feedback cohort and native artifact uploads.
+After [run 45159625352](https://github.com/link-foundation/meta-language/actions/runs/45159625352)
+exhausted the eighth translation job's deadline, the schedule moved the
+self-translation test file to shard five and the owned original-number test
+file to shard seven. Both files accounted for about 130 seconds each in that
+job's output intervals. The two destination jobs had room for these workloads
+in that run and in the preceding successful translation matrix. The eight
+feedback partitions, test file union and fifteen-minute deadline stay exact.
+All three affected jobs passed on the next run. Its fourth translation job
+reached the deadline after 234 passing assertions, five short of its preceding
+result. The schedule now balances all eight partitions with the largest elapsed
+output intervals and reported test durations observed across three runs. The
+[recorded costs](../parity/fixtures/ci-45186623729-translation-wall-costs.lino)
+cover all 299 file identities and retain the two deadline logs as partial timing
+inputs. Each scheduled load totals about 582 seconds using these costs. The
+regression enforces a 600-second advisory budget and complete eight-way coverage.
+The six evidence partitions keep their original assignment.
+
+The second tooling partition in that run reached the deadline after 115
+passing tests and one conditional skip. The same partition number passed in
+the two earlier runs. Changes to an unmeasured test's size estimate moved
+several more expensive files into that partition. The four tooling partitions
+now use [elapsed and reported costs](../parity/fixtures/ci-45186623729-tooling-wall-costs.lino)
+from six archived jobs. The packet includes measured durations with matching
+source hashes for 93 of 94 files, and the scheduler estimates any changed or
+unmeasured file by size. It places those files before the measured workloads
+so small files with uncertain costs are distributed while all four shards
+have capacity. The archived replay peaks at 586.565 seconds with the
+generated-slice guard repair, below the existing 600-second advisory budget.
+The complete four-partition test union and fifteen-minute deadline still apply.
+[Tooling schedule replay](../experiments/ci-workload-costs/compare-tooling-unmeasured-placement.mjs)
+
+The seventh translation job in run 45276612669 spent 218 seconds in setup and
+reached its fifteen-minute deadline after 236 passing assertions. The preceding
+job with the same file assignment passed all 260 assertions.
+[Timed-out job](https://github.com/link-foundation/meta-language/actions/runs/45276612669/job/138049949159)
+
+Ten required translation jobs share the complete file set using the recorded
+costs. The feedback merge requires all ten exact-commit partitions. The timing
+experiment checks a 500-second advisory test budget. The workflow regression
+verifies the complete file union and the fifteen-minute deadline and uses the
+authenticated eight-partition predecessor. Translation evidence uses six
+partitions. Conformance uses eight jobs.
 
 A separate JavaScript test group checks these published reports after all
 report shards finish. It uses the producers' exact checkout and source hashes,

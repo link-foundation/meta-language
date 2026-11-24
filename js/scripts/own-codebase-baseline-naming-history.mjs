@@ -2,10 +2,15 @@
 // Actual current names are extracted separately by the unchanged naming policy.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+import {existsSync,readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {
+  ciIntegrationHistoryPath, ciIntegrationNamingSources, ciIntegrationParents, restoreCiIntegrationSource,
+} from './ci-integration-source-history.mjs';
+import {dependencyWorkflowHistoricalPredecessors, dependencyWorkflowHistoryPath, dependencyWorkflowPredecessors, restoreDependencyWorkflowSource} from './dependency-workflow-source-history.mjs';
+import { nativeRepairNamingSources, restoreAutomatedTranslationPauseSource } from './automated-translation-pause-source-history.mjs';
 const policy={
   "schemaVersion": 1,
   "model": "own codebase baseline historical naming 1",
@@ -73,10 +78,9 @@ const pin=bytes=>({bytes:Buffer.byteLength(bytes),sha256:digest(bytes)});
 function exactKeys(value,keys){assert.ok(value&&typeof value==='object'&&!Array.isArray(value));assert.deepEqual(Object.keys(value).sort(),keys.slice().sort());}
 let additionalSnapshot,originalSnapshot;
 
-/** Return a detached copy; callers cannot change the trusted source anchors. */
-export function readOwnCodebaseHistoricalNamingPolicy(){
+function readAdditionalSourceViews(){
   const text=readFileSync(new URL('../../parity/naming/array-identity-historical-inventories.lino',import.meta.url),'utf8');
-  if(additionalSnapshot?.text===text)return{...structuredClone(policy),additionalSourceViews:structuredClone(additionalSnapshot.value)};
+  if(additionalSnapshot?.text===text)return additionalSnapshot.value;
   additionalSnapshot=undefined;
   const additional=readBootstrapStructuredDataLino(text);
   exactKeys(additional,['schemaVersion','model','revision','sources','views','boundary']);
@@ -100,8 +104,13 @@ export function readOwnCodebaseHistoricalNamingPolicy(){
     assert.equal(typeof view.inventory,'string');assert.ok(Array.isArray(view.names)&&view.names.length>0);
     for(const row of view.names){exactKeys(row,['name','record']);assert.equal(typeof row.name,'string');assert.equal(typeof row.record,'string');}
   }
-  additionalSnapshot={text,value:structuredClone(additional)};
-  return{...structuredClone(policy),additionalSourceViews:additional};
+  additionalSnapshot={text,value:additional};
+  return additional;
+}
+
+/** Return detached copies; callers cannot change the trusted source anchors. */
+export function readOwnCodebaseHistoricalNamingPolicy(){
+  return {...structuredClone(policy),additionalSourceViews:structuredClone(readAdditionalSourceViews())};
 }
 
 /** Validate the compact complete source projection without loading the large archive. */
@@ -140,13 +149,16 @@ export function readOwnCodebaseHistoricalNamingSources(){
   return structuredClone(originalSnapshot.value);
 }
 
-/** Supplement only two original inventories after authenticating current modules. */
+/** Supplement current inventories after authenticating complete source predecessors. */
 export function extractOwnCodebaseHistoricalNames(root,inventories,history=readOwnCodebaseHistoricalNamingSources()){
   verifyOwnCodebaseHistoricalNamingSources(history);
   assert.deepEqual(pin(readFileSync(resolve(root,policy.driver.file))),policy.driver.current,'the entire naming driver has its reviewed additive source view');
   const names=[];
   for(const view of history.views){
-    assert.deepEqual(pin(readFileSync(resolve(root,view.file))),view.current,'unknown complete current source cannot acquire historical naming authority');
+    const actual=readFileSync(resolve(root,view.file),'utf8');
+    const actualPin=pin(actual);
+    const boundPin=actualPin.sha256===view.current.sha256?actualPin:pin(restoreDependencyWorkflowSource(actual,view.file));
+    assert.deepEqual(boundPin,view.current,`unknown complete current source cannot acquire historical naming authority: ${view.file}`);
     const entries=inventories.filter(entry=>entry.inventory===view.inventory&&entry.files.length===1&&entry.files[0]===view.file);
     assert.equal(entries.length,1,'one unchanged actual historical inventory extractor');
     const entry=entries[0],found=[...new Set(entry.extract(view.predecessor.source,view.file))].map(name=>({name,record:entry.recordOf(name)}));
@@ -157,16 +169,27 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
       archive:'parity/naming/own-codebase-baseline-naming-history.lino',
       boundary:'Historical definitions keep their original identities. Every actual current inventory row is retained separately; changed source owners have distinct qualified records.'}})));
   }
-  const additional=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;
+  const additional=readAdditionalSourceViews();
   for(const view of additional.views){
     const source=additional.sources.find(row=>row.file===view.file&&row.predecessor.revision===view.revision);
     const entries=inventories.filter(entry=>entry.inventory===view.inventory&&entry.files.includes(view.file));
     if(entries.length===0)continue;
     assert.equal(entries.length,1,'the same actual extractor owns the additional historical names');
-    assert.deepEqual(pin(readFileSync(resolve(root,view.file))),source.current,'the selected root retains every complete actual source byte');
+    const actual=readFileSync(resolve(root,view.file),'utf8');
+    const actualPin=pin(actual);
+    let boundPin=actualPin.sha256===source.current.sha256?actualPin:pin(restoreDependencyWorkflowSource(actual,view.file));
+    if(boundPin.sha256!==source.current.sha256&&Object.hasOwn(dependencyWorkflowHistoricalPredecessors,view.file)){
+      boundPin=pin(restoreDependencyWorkflowSource(actual,view.file,dependencyWorkflowHistoricalPredecessors[view.file]));
+    }
+    if (boundPin.sha256 !== source.current.sha256) boundPin=pin(restoreAutomatedTranslationPauseSource(actual,view.file));
+    for (const parent of ['dependencies', 'translationPause']) {
+      if (boundPin.sha256 === source.current.sha256) break;
+      boundPin = pin(restoreCiIntegrationSource(actual, view.file, parent));
+    }
+    assert.deepEqual(boundPin,source.current,`the selected root retains every complete actual source byte: ${view.file}`);
     const entry=entries[0],found=[...new Set(entry.extract(source.predecessor.source,view.file))]
       .map(name=>({name,record:entry.recordOf(name)}));
-    const current=new Set(entry.extract(readFileSync(resolve(root,view.file),'utf8'),view.file));
+    const current=new Set(entry.extract(actual,view.file));
     for(const row of view.names){
       assert.ok(found.some(candidate=>candidate.name===row.name&&candidate.record===row.record),'an unchanged extractor must derive each original name and identity');
       assert.equal(current.has(row.name),false,'actual current names stay in the separate current inventory');
@@ -174,6 +197,91 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
         kind:'complete certified historical source',revision:view.revision,path:view.file,
         bytes:source.predecessor.bytes,sha256:source.predecessor.sha256,
         archive:'parity/naming/array-identity-historical-inventories.lino',boundary:additional.boundary}});
+    }
+  }
+  for(const entry of inventories.filter(inventory=>inventory.inventory.startsWith('B70 physical field source view names for ')
+    ||inventory.inventory==='B61 actual lexical binding source names for js/tests/translation-frontend-rule-styles.test.js'
+    ||inventory.inventory==='B64 authenticated raw emission source names for experiments/original-link-complete-table-projection/raw-native-observations.mjs')){
+    for(const file of entry.files.filter(file=>Object.hasOwn(dependencyWorkflowPredecessors,file))){
+      const current=readFileSync(resolve(root,file),'utf8');
+      const predecessor=restoreDependencyWorkflowSource(current,file);
+      if(current===predecessor)continue;
+      const active=new Set(entry.extract(current,file));
+      const previous=[...new Set(entry.extract(predecessor,file))].filter(name=>!active.has(name));
+      const sourceView={kind:'complete certified historical source',revision:dependencyWorkflowPredecessors[file],path:file,
+        ...pin(predecessor),archive:dependencyWorkflowHistoryPath,
+        boundary:'Retain the original naming evidence for exact reviewed dependency source successors.'};
+      names.push(...previous.map(name=>({inventory:entry.inventory,file,name,record:entry.recordOf(name),sourceView:{...sourceView}})));
+    }
+  }
+  const baseline = 'ec9f4efb0e9ef936114e09823981352f6db13700';
+  for (const [file, revision, sourceInventory = 'B70 physical field source view names'] of [
+    ['js/scripts/contributor-instruction-coverage.mjs', baseline],
+    ['js/scripts/current-ci-repair-source-history.mjs', baseline],
+    ['js/scripts/generate-contributor-instruction-coverage.mjs', baseline],
+    ['js/scripts/generate-raw-oracle-contract-partitions.mjs', baseline],
+    ['js/scripts/grammar-test-partition-history.mjs', baseline],
+    ['js/scripts/own-codebase-baseline-naming-history.mjs', baseline],
+    ['js/scripts/own-codebase-test-registration-history.mjs', baseline],
+    ['js/scripts/raw-oracle-contract-partition-history.mjs', baseline],
+    ['js/scripts/rust-test-shards.mjs', baseline],
+    ['js/scripts/test-groups.mjs', baseline],
+    ['js/scripts/scheduling-source-history.mjs', '15745ffcd322c48bdd537ccb48a5f7c9deb96917'],
+    ['js/scripts/tooling-frozen-source-history.mjs', '269c48e497280025271ade3765f808b2f372d1b6'],
+    ['js/tests/cache-fresh-merge-dependencies.test.js', baseline],
+    ['js/tests/issue-195-evidence-contributor-instructions.test.js', baseline],
+    ['js/tests/issue-195-evidence-formal-ai-partitions.test.js', baseline],
+    ['js/tests/issue-195-evidence-node-dependency.test.js', baseline],
+    ['js/tests/issue-195-evidence-node-test-placement.test.js', baseline],
+    ['js/tests/issue-195-evidence-translation-partition-conservation.test.js', baseline],
+    ['js/tests/test-groups.test.js', baseline],
+    ['js/tests/grammar-embedded-region-rules.test.js', baseline, 'B60 recursive default region source names'],
+    ['js/scripts/formal-ai-partition-bundles.mjs', baseline, 'B63 actual source names'],
+    ['js/scripts/formal-ai-workload-partitions.mjs', baseline, 'B63 actual source names'],
+    ['js/scripts/issue-195-formal-ai-workloads.mjs', baseline, 'B63 actual source names'],
+    ['js/tests/issue-195-evidence-formal-ai-partitions.test.js', baseline, 'B63 actual source names'],
+    ['js/tests/issue-195-formal-ai-partitions.test.js', baseline, 'B63 actual source names'],
+    ['js/tests/link-network-binary.test.js', baseline],
+    ...nativeRepairNamingSources.map(file => [file, baseline, file === 'rust/src/translation/grammar_lexer_rules/part_4.rs'
+      ? 'B59 parser token exclusion source names' : 'B70 physical field source view names']),
+  ]) {
+    const inventory = sourceInventory + ' for ' + file;
+    const entry = inventories.find(candidate => candidate.inventory === inventory && candidate.files.includes(file));
+    const input = resolve(root, file);
+    if (!entry || !existsSync(input)) continue;
+    const current = readFileSync(input, 'utf8');
+    const previous = restoreAutomatedTranslationPauseSource(current, file, revision);
+    if (previous === current) continue;
+    const currentNames = new Set(entry.extract(current, file));
+    for (const name of new Set(entry.extract(previous, file))) {
+      if (currentNames.has(name)) continue;
+      names.push({ inventory, file, name, record: entry.recordOf(name), sourceView: {
+        kind: 'complete certified historical source', revision, path: file,
+        ...pin(previous), archive: 'parity/self-translation/automated-translation-pause-source-history.lino',
+        boundary: 'The pre-pause definition retains its own identity and the current inventory is checked separately.',
+      } });
+    }
+  }
+  for (const [file, sourceInventory] of Object.entries(ciIntegrationNamingSources)) {
+    const inventory = sourceInventory + ' for ' + file;
+    const entry = inventories.find(candidate => candidate.inventory === inventory && candidate.files.includes(file));
+    const input = resolve(root, file);
+    if (!entry || !existsSync(input)) continue;
+    const current = readFileSync(input, 'utf8');
+    const previous = restoreCiIntegrationSource(current, file, 'dependencies');
+    if (previous === current) continue;
+    const retained = new Set([
+      ...entry.extract(current, file),
+      ...names.filter(row => row.file === file && row.inventory === inventory).map(row => row.name),
+    ]);
+    const sourceView = {
+      kind: 'complete certified historical source', revision: ciIntegrationParents.dependencies, path: file,
+      ...pin(previous), archive: ciIntegrationHistoryPath,
+      boundary: 'Keep the existing definition from the exact dependency branch source alongside current definitions.',
+    };
+    for (const name of new Set(entry.extract(previous, file))) {
+      if (retained.has(name)) continue;
+      names.push({ inventory, file, name, record: entry.recordOf(name), sourceView: { ...sourceView } });
     }
   }
   return names;

@@ -22,6 +22,10 @@ export {
 
 const SOURCE_LABELS = Object.freeze({
   issue: 'Issue #195',
+  dependencyUpgradeIssue: 'Issue #197 dependency and release requirements',
+  dependencyConsumerTracking: 'Formal AI dependency tracking',
+  treeSitterConsumerResolution: 'Downstream Tree-sitter patch compatibility',
+  npmConsumerResolution: 'Downstream JavaScript parser versions',
   remainingScope: 'Issue #199: remaining implementation and delivery',
   clarification: 'Full-support clarification',
   acceptanceGate: 'Executable acceptance-gate clarification',

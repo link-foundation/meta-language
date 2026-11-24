@@ -223,7 +223,8 @@ export function validateFormalAiWorkloadPartition(envelope, fixture, expected, f
       fail('missing independently pinned full workload expectations');
     }
     const report = envelope.result;
-    const grounding = formalAiWorkloadPartitionGroundingProblems(report, fixture);
+    const translationPaused = expected.translationPaused === true;
+    const grounding = formalAiWorkloadPartitionGroundingProblems(report, fixture, { translationPaused });
     if (grounding.length) fail(grounding.join('\n'));
     equal(report.fixtureSha256, expected.identity.fixtureSha256, 'report fixture differs from the actual pinned bytes');
     equal(report.fixture, FORMAL_AI_WORKLOAD_FIXTURE, 'report logical fixture identity changed');
@@ -234,8 +235,11 @@ export function validateFormalAiWorkloadPartition(envelope, fixture, expected, f
     for (const name of ['CARGO_PROFILE_DEV_DEBUG', 'CARGO_PROFILE_TEST_DEBUG']) {
       equal(envelope.build.profileEnvironment[name], expected.profile[name] ?? '0', `actual ${name} differs from the original bounded profile`);
     }
-    if (typeof envelope.build.compiler !== 'string' ||
-        envelope.build.compiler.split(/\r?\n/u).filter((line) => line === 'release: 1.99.0').length !== 1) fail('missing actual pinned rustc -vV identity');
+    if (!/^\d+\.\d+\.\d+$/u.test(expected.rustVersion ?? '') || typeof envelope.build.compiler !== 'string') {
+      fail('missing actual pinned rustc -vV identity');
+    }
+    equal(envelope.build.compiler.split(/\r?\n/u).filter((line) => line.startsWith('release: ')),
+      [`release: ${expected.rustVersion}`], 'actual rustc -vV release differs from the producer workflow pin');
     for (const [runtime, part] of [['npm', report.npm], ['crate', report.crate]]) {
       const candidate = expected.candidates[runtime];
       equal({ file: part.checksum.artifact, sha256: part.checksum.sha256 },
@@ -281,7 +285,8 @@ export function validateFormalAiWorkloadPartition(envelope, fixture, expected, f
       };
     });
     equal(javascriptTests, report.npm.tests, 'JavaScript report differs from actual terminal events');
-    if (javascriptTests.length !== expected.javascriptWorkloads || javascriptTests.some((entry) => entry.file === null || entry.outcome !== 'passed') ||
+    const validOutcome = (outcome) => outcome === 'passed' || (translationPaused && outcome === 'skipped');
+    if (javascriptTests.length !== expected.javascriptWorkloads || javascriptTests.some((entry) => entry.file === null || !validOutcome(entry.outcome)) ||
         new Set(javascriptTests.map(({ file, name }) => JSON.stringify([file, name]))).size !== javascriptTests.length) fail('JavaScript workload identities are missing, duplicate or unsuccessful');
     equal(report.npm.workloadFiles, workloadFiles(fixture, 'javascript'), 'JavaScript workload scope changed');
     const javascriptProbe = reader.data(evidence.javascriptProbe.file);
@@ -375,7 +380,7 @@ export function mergeFormalAiWorkloadPartitions(parts, fixture, expected) {
     report.crate.counts = countOutcomes(report.crate.tests);
     report.crate.exit = 0;
     for (const runtime of ['javascript', 'rust']) {
-      const result = validateFormalAiWorkloadReport(report, fixture, runtime);
+      const result = validateFormalAiWorkloadReport(report, fixture, runtime, { translationPaused: expected.translationPaused === true });
       equal(result.observed, [...FORMAL_AI_WORKLOAD_ASSERTIONS], `unchanged complete ${runtime} validator refused the merged report`);
     }
     return { problems: [], report, provenance: {

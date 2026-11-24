@@ -94,6 +94,20 @@ function verifyApplicabilitySource(sources, descriptor) {
   return { ...descriptor };
 }
 
+function verifyHistoricalTypeComparison(sources, descriptor) {
+  const current = {
+    file: descriptor.file,
+    bytes: 5713,
+    sha256: '1a3734ab013c272abf01fd9df60066081e32a79c40c344a129fe383277d4743d',
+  };
+  verifyApplicabilitySource(sources, current);
+  const source = sources[current.file].toString('utf8');
+  const guard = 'left != null && right != null && acceptTypeIdentity';
+  assert.equal(source.split(guard).length, 2, 'the optional comparison has one recorded guard');
+  const previous = Buffer.from(source.replace(guard, 'acceptTypeIdentity'));
+  return verifyApplicabilitySource({ [descriptor.file]: previous }, descriptor);
+}
+
 function verifyCollectionArchiveReceiptRefresh(sources, descriptor) {
   const refresh = ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH;
   assert.deepEqual(descriptor, refresh.previous, 'only the exact recorded artifact has a receipt successor');
@@ -201,6 +215,9 @@ export function verifyOriginalLinkRawEmissionProducerApplicability(producerSourc
   let receiptRefresh;
   const sources = currentDescriptors.map(row => {
     const bytes = producerSources[row.file];
+    if (row.file === 'js/src/translation/types.js' && Buffer.isBuffer(bytes) && applicabilityDigest(bytes) !== row.sha256) {
+      return verifyHistoricalTypeComparison(producerSources, row);
+    }
     if (row.file === ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH.current.file
       && Buffer.isBuffer(bytes) && applicabilityDigest(bytes) !== row.sha256) {
       const successor = verifyCollectionArchiveReceiptRefresh(producerSources, row);

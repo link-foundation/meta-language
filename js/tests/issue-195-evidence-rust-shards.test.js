@@ -309,9 +309,14 @@ test('supplemental physical cells preserve original native oracle, doctest and e
   assert.equal(originalPolicy.freshMergeShards, 8);
   assert.match(jobs.get('fresh-merge').header, /physical_shard: \[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16\]/u);
   const caller = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
-  assert.match(caller, /acceptance:[\s\S]*?needs: \[js, rust,/u);
-  assert.match(caller, /attempts\/\$GITHUB_RUN_ATTEMPT\/jobs\?per_page=100/u);
-  assert.match(caller, /rust-test-shards.mjs --verify/u);
+  const acceptance = parseWorkflow(caller).find(job => job.id === 'acceptance');
+  assert.match(acceptance.header, /needs: \[changes, js, rust,/u);
+  const admission = acceptance.steps.find(step => step.name === 'Identify admitted Rust physical profiles');
+  assert.match(admission.text, /attempts\/\$GITHUB_RUN_ATTEMPT\/jobs\?per_page=100/u);
+  assert.match(admission.text, /inputs\.automated_translation/u);
+  const union = acceptance.steps.find(step => step.name === 'Require the complete authenticated Rust test union');
+  assert.match(union.text, /rust-test-shards\.mjs --verify/u);
+  assert.match(union.text, /inputs\.automated_translation/u);
   const fresh = readFileSync(new URL('../../rust/scripts/simulate-fresh-merge.sh', import.meta.url), 'utf8');
   assert.match(fresh, /if \[ "\$\{META_LANGUAGE_SHARD_INDEX:-1\}" = 1 \]; then[\s\S]*?--doc[\s\S]*?--examples --no-run/u);
   assert.equal([...fresh.matchAll(/--config 'profile\.test\.package\.meta-language\.[^']+'/gu)].length, 3);

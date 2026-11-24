@@ -1,10 +1,6 @@
 MIT License
 
-The `tree-sitter-scheme` Cargo manifest declares `license = "MIT"` but ships
-no license file; this notice reproduces the MIT terms for its authors.
-Repository: https://github.com/6cdh/tree-sitter-scheme
-
-Copyright (c) 6cdh
+Copyright (c) 2022 6cdh
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

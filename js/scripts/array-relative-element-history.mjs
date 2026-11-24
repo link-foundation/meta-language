@@ -1,8 +1,8 @@
 // Historical source views preserve every predecessor assertion independently.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
-import {readProjectData,serializeProjectData} from './project-data.mjs';
+import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
+import {readProjectFileBytes,serializeProjectData} from './project-data.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {restoreContinuationHistoricalSource} from './continuation-source-history.mjs';
 import {restoreReferenceIdentityHistoricalSource} from './reference-identity-source-history.mjs';
@@ -15,8 +15,8 @@ const digest=value=>createHash('sha256').update(value).digest('hex');
 let history;
 function arrayRelativeElementHistory() {
   if(!history){
-    const bytes=readFileSync(historyFile);assert.equal(digest(bytes),historyHash,'the complete reviewed relative array source history remains exact');
-    history=readProjectData(historyFile);assert.equal(history.schemaVersion,1);
+    const bytes=readProjectFileBytes(historyFile);assert.equal(digest(bytes),historyHash,'the complete reviewed relative array source history remains exact');
+    history=readBootstrapStructuredDataLino(bytes.toString('utf8'));assert.equal(history.schemaVersion,1);
   }
   return history;
 }

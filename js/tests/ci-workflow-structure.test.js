@@ -2999,7 +2999,7 @@ test('release queue assertion correction retains the complete failed input and e
   assert.equal(digest(evidence.original.source), evidence.original.sha256);
   const {before, after} = evidence.correction;
   assert.equal(evidence.original.source.split(before).length, 2);
-  const current = read(evidence.original.path);
+  const current = restoreDependencyWorkflowSource(read(evidence.original.path), evidence.original.path);
   assert.equal(current, evidence.original.source.replace(before, after), 'only the wrong expected queue expression changes');
   assert.equal(current.replace(after, before), evidence.original.source, 'every original assertion and input is retained');
   assert.equal(digest(current), evidence.correction.proposedSha256);
@@ -3011,3 +3011,5 @@ test('release queue assertion correction retains the complete failed input and e
 import { restoreGeneratedPackageOwnerHistory } from './support/generated-package-owner-history.js';
 
 import {restoreCiNodeRuntimeHistory} from './support/ci-node-runtime-history.js';
+
+import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';

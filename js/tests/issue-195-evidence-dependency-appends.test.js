@@ -3,11 +3,13 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import test from 'node:test';
+import {ciIntegrationParents} from '../scripts/ci-integration-source-history.mjs';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {collectDependencies,checkInventory} from '../scripts/dependency-inventory.mjs';
 import {readDependencyInventoryAppendHistory,verifyDependencyInventoryAppends,
-  readNodeDependencyInventoryOriginalView,restoreNodeDependencyInventoryTestSource} from '../scripts/dependency-inventory-append-history.mjs';
-import {generateDependencyInventoryAppendHistory} from '../scripts/generate-dependency-inventory-append-history.mjs';
+  readDependencyInventoryBeforeRefresh,readNodeDependencyInventoryOriginalView,
+  restoreNodeDependencyInventoryTestSource} from '../scripts/dependency-inventory-append-history.mjs';
+import {collectDependencyDeclarationsBeforeRefresh,generateDependencyInventoryAppendHistory} from '../scripts/generate-dependency-inventory-append-history.mjs';
 import {structuredDataToLino,readStructuredDataLino} from '../src/structured-data-links.js';
 
 const root=new URL('../../',import.meta.url);
@@ -16,7 +18,9 @@ const declarations=()=>collectDependencies(fileURLToPath(root));
 
 test('every current dependency declaration remains checked while the complete original inventory is reconstructed',()=>{
   generateDependencyInventoryAppendHistory({check:true});
-  const inventory=actual(),declared=declarations(),history=readDependencyInventoryAppendHistory();
+  assert.deepEqual(checkInventory(actual(),declarations()),[]);
+  const inventory=readDependencyInventoryBeforeRefresh(),history=readDependencyInventoryAppendHistory();
+  const declared=collectDependencyDeclarationsBeforeRefresh(inventory);
   assert.deepEqual(checkInventory(inventory,declared),[]);
   const original=verifyDependencyInventoryAppends(inventory,declared);
   assert.equal(original.items.length,745);
@@ -38,7 +42,8 @@ test('every current dependency declaration remains checked while the complete or
 });
 
 test('historical inventory selection refuses changed old facts missing declarations and forged append identities',()=>{
-  const original=actual(),declared=declarations(),history=readDependencyInventoryAppendHistory();
+  const original=readDependencyInventoryBeforeRefresh(),history=readDependencyInventoryAppendHistory();
+  const declared=collectDependencyDeclarationsBeforeRefresh(original);
   const mutations=[value=>{value.items[0].evidence='altered';},value=>{value.auditDate='2026-10-07';},
     value=>{[value.items[0],value.items[1]]=[value.items[1],value.items[0]];},
     value=>{value.items.splice(1,1);},value=>{value.items.push(structuredClone(value.items[0]));}];
@@ -49,6 +54,19 @@ test('historical inventory selection refuses changed old facts missing declarati
   for(const mutate of mutations){const changed=structuredClone(original);mutate(changed);assert.throws(()=>verifyDependencyInventoryAppends(changed,declared));}
   const forged=structuredClone(history);forged.inventory.source+=' ';
   assert.throws(()=>verifyDependencyInventoryAppends(original,declared,forged));
+  const revision=ciIntegrationParents.translationPause;
+  const pinnedWorkflowInventory=readStructuredDataLino(execFileSync('git', ['--no-replace-objects', 'show',
+    revision+':parity/dependency-inventory.lino'], {cwd:root,encoding:'utf8',maxBuffer:2*1024*1024}));
+  const pinnedWorkflowDeclarations=collectDependencyDeclarationsBeforeRefresh(pinnedWorkflowInventory,revision);
+  assert.deepEqual(checkInventory(pinnedWorkflowInventory,pinnedWorkflowDeclarations),[]);
+  assert.equal(structuredDataToLino(verifyDependencyInventoryAppends(pinnedWorkflowInventory,pinnedWorkflowDeclarations)),history.inventory.source);
+  const changedInventory=structuredClone(pinnedWorkflowInventory),changedDeclarations=structuredClone(pinnedWorkflowDeclarations);
+  for(const items of [changedInventory.items,changedDeclarations]){
+    items.find(row=>row.id==='action dtolnay/rust-toolchain@1.99.0').declaredIn.push('.github/workflows/unreviewed.yml');
+  }
+  assert.deepEqual(checkInventory(changedInventory,changedDeclarations),[]);
+  assert.throws(()=>verifyDependencyInventoryAppends(changedInventory,changedDeclarations),
+    /the Rust workflow is the only added declaration for the pinned action/u);
   const reloaded=readStructuredDataLino(structuredDataToLino(history));
   assert.equal(structuredDataToLino(verifyDependencyInventoryAppends(original,declared,reloaded)),history.inventory.source);
 });

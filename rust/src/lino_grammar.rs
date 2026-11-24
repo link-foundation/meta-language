@@ -2,7 +2,7 @@
 //!
 //! The recursive descent below mirrors, rule for rule and with the same
 //! ordered choices, backtracking, indentation side effects and depth limit, the
-//! official links-notation 0.22 PEG grammar (`links-notation/src/grammar.pegjs`)
+//! official links-notation PEG grammar (`links-notation/src/grammar.pegjs`)
 //! as the official `Parser` reads a document: comments are blanked first
 //! (`links-notation/src/comments.js`) and quoted references follow
 //! `links-notation/src/quotes.js`. Every document the official parser accepts
@@ -29,6 +29,7 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::builtin_grammar::{GrammarNode, fill_extras, propagate_errors};
+use crate::lino_reference_literal_rules::advance_reference_literal;
 
 /// How deep `LiNo` links may nest: every parenthesized group and every
 /// indentation level is one level. The official parsers of every runtime
@@ -38,20 +39,21 @@ pub const LINO_MAX_DEPTH: usize = 64;
 /// Parses `text` into the built-in `LiNo` grammar CST.
 pub fn parse_lino_cst(text: &str) -> GrammarNode {
     let bytes = text.as_bytes();
-    let comments = comment_ranges(bytes);
-    let blanked = blank_ranges(bytes, &comments);
-    let mut references = DelimitedReferences::new(&blanked);
+    let blanked = links_notation::comments::strip_comments(text);
+    let blanked = blanked.as_bytes();
+    let comments = comment_ranges(bytes, blanked);
+    let mut references = DelimitedReferences::new(bytes);
     let mut children = Vec::new();
     let mut position = 0;
     while position < blanked.len() {
-        let mut parser = LinoGrammarParser::new(&blanked, position, &mut references);
+        let mut parser = LinoGrammarParser::new(blanked, position, &mut references);
         let document = parser.document();
         children.extend(document.links);
         let Some(error_start) = document.error_start else {
             break;
         };
-        let error_end = line_end(&blanked, error_start);
-        children.push(error_node(&blanked, error_start, error_end));
+        let error_end = line_end(blanked, error_start);
+        children.push(error_node(blanked, error_start, error_end));
         position = error_end;
     }
     let mut root = GrammarNode::node("lino_document", 0, bytes.len(), children);
@@ -416,8 +418,28 @@ impl<'a, 'r> LinoGrammarParser<'a, 'r> {
         ))
     }
 
-    // reference = quotedReference / simpleReference
+    // A versioned reference literal reserves its prefix even when malformed.
     fn reference(&mut self) -> Option<GrammarNode> {
+        let start = self.position;
+        if self.text.get(start) == Some(&b'~')
+            && let Some(prefix) = reference_literal_prefix_end(&self.text[start..])
+        {
+            let mut state = 3.0;
+            for (offset, &byte) in self.text[start + prefix..].iter().enumerate() {
+                state = advance_reference_literal(state, f64::from(byte));
+                if state >= 4.0 {
+                    let end = start + prefix + offset + 1;
+                    let literal = std::str::from_utf8(&self.text[start..end]).ok()?;
+                    links_notation::decode_reference_literal(literal).ok()?;
+                    self.position = end;
+                    return Some(GrammarNode::node("reference", start, end, Vec::new()));
+                }
+                if state < 0.0 {
+                    break;
+                }
+            }
+            return None;
+        }
         self.quoted_reference().or_else(|| self.simple_reference())
     }
 
@@ -588,15 +610,11 @@ const fn check_depth(levels: usize) -> Result<(), NestingTooDeep> {
 /// The `(start, end)` ranges of the comments of `text`: a `#` that opens a
 /// token starts a comment that runs to the end of its line, and a `#` inside
 /// a token or a quoted reference is an ordinary character.
-fn comment_ranges(text: &[u8]) -> Vec<(usize, usize)> {
+fn comment_ranges(text: &[u8], blanked: &[u8]) -> Vec<(usize, usize)> {
     let mut ranges = Vec::new();
-    let mut references = DelimitedReferences::new(text);
     let mut position = 0;
     while position < text.len() {
-        let byte = text[position];
-        if is_quote(byte) && follows(text, position, b" \t\n\r(:") {
-            position += references.length_at(position).unwrap_or(1);
-        } else if byte == b'#' && follows(text, position, b" \t\n\r") {
+        if text[position] == b'#' && blanked[position] == b' ' {
             let start = position;
             position = line_end(text, position);
             ranges.push((start, position));
@@ -607,17 +625,19 @@ fn comment_ranges(text: &[u8]) -> Vec<(usize, usize)> {
     ranges
 }
 
-fn follows(text: &[u8], position: usize, allowed: &[u8]) -> bool {
-    position == 0 || allowed.contains(&text[position - 1])
-}
-
-/// `text` with every byte of the given ranges replaced by a space.
-fn blank_ranges(text: &[u8], ranges: &[(usize, usize)]) -> Vec<u8> {
-    let mut blanked = text.to_vec();
-    for &(start, end) in ranges {
-        blanked[start..end].fill(b' ');
+/// The end of the reserved prefix, where it occurs at a reference boundary.
+pub fn reference_literal_prefix_end(text: &[u8]) -> Option<usize> {
+    let mut state = 0.0;
+    for (position, &byte) in text.iter().enumerate() {
+        state = advance_reference_literal(state, f64::from(byte));
+        if state >= 3.0 {
+            return Some(position + 1);
+        }
+        if state < 0.0 {
+            break;
+        }
     }
-    blanked
+    None
 }
 
 // ---- Quoted references, as `links-notation/src/quotes.js` reads them --------

@@ -17,6 +17,7 @@ for (const value of [history.before, history.after]) {
 
 export function restoreGeneratedPackageOwnerHistory(source) {
   assert.equal(typeof source, 'string');
+  source = restoreDependencyWorkflowSource(source, '.github/workflows/js.yml');
   let original = source.includes('node-version: 24.22.0') ? restoreCiNodeRuntimeHistory(source) : source;
   for (const change of history.changes) {
     assert.equal(original.split(change.after).length, 2, 'each current complete check has exactly one admitted physical owner');
@@ -29,3 +30,4 @@ export function restoreGeneratedPackageOwnerHistory(source) {
 }
 
 import {restoreCiNodeRuntimeHistory} from './ci-node-runtime-history.js';
+import {restoreDependencyWorkflowSource} from '../../scripts/dependency-workflow-source-history.mjs';

@@ -1,5 +1,11 @@
 # Self-translation
 
+Automated translation is currently opt-in in CI. Contributors may write manual
+ports for supported languages and verify behavior with shared fixtures and
+native checks. The [vision](vision.md#javascript-first-and-self-translation)
+defines the policy. The [issue #248 case study](case-studies/issue-248/README.md)
+describes the workflow switch and verification.
+
 Self-translation ports meta-language's own modules between JavaScript,
 TypeScript and Rust with meta-language itself. Both packages have the same
 library API and the same CLI command, and their results are the same byte for
@@ -182,8 +188,10 @@ the generic translation and by the translation with the shared emitter
 [decorators](decorators.md) of `parity/self-translation/decorators.lino`
 (`--decorators` names another set), so the report shows how much of the
 difference the decorators close. The whole of `js/src` takes over an hour on
-one runner, so `--shard K/N` measures one of N shards that hold about the same
-number of source bytes, and `--list` prints a shard's modules. CI's
+one runner, so `--shard K/N` measures one of N shards, and `--list` prints a
+shard's modules. The eight CI shards use source-bound timing estimates and
+adjust assignments for observed import resolution and measurement costs.
+Other shard counts use source bytes. CI's
 `Self-Translation Report` jobs in `ci.yml` run eight shards beside the
 JavaScript tests. Each shard publishes its part of the report in
 its job summary and as a `self-translation-report-<sha>-<shard>` artifact.
@@ -203,6 +211,14 @@ the providers' checked translated-export signatures and each module's directory
 to both measurements. It caches source reads, signatures and dependency contexts
 within a shard. Missing providers, unsupported exports and unresolved cycles
 retain the translator's carried-item diagnostics.
+
+In CI run [45133354161](https://github.com/link-foundation/meta-language/actions/runs/45133354161),
+shard 2 spent 999 seconds resolving its first module's imports and another 281
+seconds resolving the program translator's imports. The report assigns
+`grammar-emitters/antlr.js` and `program-translation.js` to shard 7 and
+`translation/emit-rust.js` to shard 8. These assignments preserve the
+catalog's traversal of cyclic imports. Those jobs finished in 16 and 21
+minutes, respectively, within the 30-minute deadline.
 
 The same measurements retain each item's exact range, concrete syntax term and
 actual translation error. Report-only diagnostic capture preserves the ordinary

@@ -151,6 +151,10 @@ fn grammar_provenance_names_the_locked_grammar_versions_and_digests() {
     let lock: Value =
         super::project_data::read_project_data(&repository_file("rust/src/data/grammar-lock.json"))
             .expect("grammar lock is valid JSON");
+    let baselines = super::project_data::read_project_data(&repository_file(
+        "parity/grammars/native-oracle-baselines.lino",
+    ))
+    .expect("native oracle baseline register is valid");
     let inventory = inventory();
     for language in inventory["languages"].as_array().expect("languages") {
         let name = language["name"].as_str().expect("name");
@@ -165,8 +169,7 @@ fn grammar_provenance_names_the_locked_grammar_versions_and_digests() {
         let builtin = language["builtinGrammar"].as_str();
         expected.extend(builtin.map(str::to_string));
         assert_eq!(ids, expected, "{name}");
-        // A language a native grammar parses keeps its locked tree-sitter
-        // grammars as oracles.
+        // The catalog keeps the exact independent oracle of each native port.
         let oracle_ids: Vec<&str> = oracle_grammar_provenance(name)
             .iter()
             .map(|grammar| grammar.id.as_str())
@@ -181,7 +184,17 @@ fn grammar_provenance_names_the_locked_grammar_versions_and_digests() {
             "{name}"
         );
         for grammar in oracle_grammar_provenance(name) {
-            let locked = &lock["grammars"][&grammar.id];
+            let baseline = native.and_then(|id| baselines["baselines"].get(id));
+            let locked = baseline
+                .filter(|baseline| baseline["grammar"]["id"] == grammar.id.as_str())
+                .map_or(&lock["grammars"][&grammar.id], |baseline| {
+                    assert_eq!(
+                        baseline["nativeVersion"],
+                        provenance[0].version.as_str(),
+                        "{name} baseline version"
+                    );
+                    &baseline["grammar"]
+                });
             assert_eq!(
                 grammar.version,
                 locked["version"].as_str().expect("version")

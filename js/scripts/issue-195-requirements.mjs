@@ -12,7 +12,14 @@ export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 
 export const ISSUE_195_SOURCES = Object.freeze({
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
+  dependencyUpgradeIssue: 'https://github.com/link-foundation/meta-language/issues/197',
+  dependencyConsumerTracking: 'https://github.com/link-foundation/meta-language/issues/197#issuecomment-5887340274',
+  treeSitterConsumerResolution: 'https://github.com/link-foundation/meta-language/issues/197#issuecomment-6382129935',
+  npmConsumerResolution: 'https://github.com/link-foundation/meta-language/issues/197#issuecomment-6878955660',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
+  automatedTranslationPause: 'https://github.com/link-foundation/meta-language/issues/248',
+  dependencyPullRequestCiPause: 'https://github.com/link-foundation/meta-language/pull/249#issuecomment-7127808977',
+  relatedPullRequestCiPause: 'https://github.com/link-foundation/meta-language/pull/250#issuecomment-7127536709',
   clarification:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
   acceptanceGate:

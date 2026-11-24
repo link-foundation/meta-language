@@ -32,8 +32,8 @@ const packagePath = join(root, 'js/node_modules/web-tree-sitter');
 
 const SOURCE = Object.freeze({
   upstream: 'tree-sitter/tree-sitter',
-  version: '0.27.0',
-  revision: '6070dbfefd326bd735e5683eb128cc1b57dad0c0',
+  version: '0.27.2',
+  revision: '3fb7be49145acfb07e33b61ed5689e2b6771b2e9',
   // crates/loader/emscripten-version at the pinned revision.
   emscripten: '4.0.15',
   patch: 'js/src/vendor/web-tree-sitter/utf8-input.patch',

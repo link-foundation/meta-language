@@ -28,6 +28,7 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join, posix, relative, resolve, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { availableParallelism } from 'node:os';
 import { isMainThread } from 'node:worker_threads';
 import { readProjectData, writeProjectData } from './project-data.mjs';
 
@@ -41,6 +42,17 @@ import { summarizeRetainedSelfTranslationPhases, retainedSelfTranslationPhaseMar
 import {partitionMeasuredWorkloads} from './test-groups.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const reportSchedulingFile = new URL('../../parity/fixtures/ci-45080642295-report-costs.lino', import.meta.url);
+// CI run 45133354161 showed that the historical timings attributed blocked
+// worker completions to the wrong module. Shard 2 spent another 281 seconds
+// resolving the program translator's imports after the shared cold start.
+// Move that import graph and two large translations to jobs with headroom,
+// preserving the catalog's traversal of cyclic imports.
+const reportShardAssignments = [
+  ['js/src/grammar-emitters/antlr.js', 7],
+  ['js/src/program-translation.js', 7],
+  ['js/src/translation/emit-rust.js', 8],
+];
 const STATUSES = ['translated', 'carried', 'comment'];
 const DEFAULT_DECORATORS = 'parity/self-translation/decorators.lino';
 // The native codec keeps pattern graph scope admission in this component.
@@ -87,10 +99,33 @@ function listSourceModules() {
 }
 
 /**
- * The K-th measured-cost shard; every complete current source appears once.
+ * CI uses the eight measured shards. Other shard counts balance source bytes.
  */
 function shardOf(files, index, count) {
-  return partitionMeasuredWorkloads(files,count)[index-1];
+  if (count === 8 && files.length >= count) {
+    return partitionReportModules(files)[index - 1];
+  }
+  const loads = Array(count).fill(0);
+  const shards = Array.from({ length: count }, () => []);
+  const sized = files.map((file) => ({ file, size: readFileSync(join(root, file)).length }));
+  sized.sort((a, b) => b.size - a.size || a.file.localeCompare(b.file));
+  for (const { file, size } of sized) {
+    const target = loads.indexOf(Math.min(...loads));
+    loads[target] += size;
+    shards[target].push(file);
+  }
+  return shards[index - 1].sort();
+}
+
+export function partitionReportModules(files) {
+  const shards = partitionMeasuredWorkloads(files, 8, { costs: readProjectData(reportSchedulingFile) });
+  for (const [module, destination] of reportShardAssignments) {
+    const source = shards.find(shard => shard.includes(module));
+    if (!source || source === shards[destination - 1]) continue;
+    source.splice(source.indexOf(module), 1);
+    shards[destination - 1].push(module);
+  }
+  return shards.map(shard => shard.sort());
 }
 
 function selectedModules(replayPlan) {
@@ -475,6 +510,30 @@ function verifyPublishedReports(directory, commit) {
 }
 
 
+/** Resolve contexts in catalog order and retain one complete result per module. */
+export async function measureReportModules(modules, context, measurements, progress = () => {}) {
+  assert.ok(measurements.length > 0);
+  const results = Array(modules.length);
+  let next = 0;
+  await Promise.all(measurements.map(async measure => {
+    for (let index = next++; index < modules.length; index = next++) {
+      const module = modules[index];
+      const started = performance.now();
+      try {
+        progress(`self-translation report: resolving ${module}`);
+        const moduleContext = context(posix.relative('js/src', module));
+        progress(`self-translation report: measuring ${module} (imports ${Math.round(performance.now() - started)} ms)`);
+        const row = await measure(module, moduleContext);
+        results[index] = { module, row };
+        progress(`self-translation report: recorded ${module} (${Math.round(performance.now() - started)} ms)`);
+      } catch (error) {
+        results[index] = { module, error: String(error?.message ?? error) };
+      }
+    }
+  }));
+  return results;
+}
+
 async function main() {
   if (process.argv.includes('--verify-reports')) {
     try {
@@ -512,38 +571,22 @@ async function main() {
     const file = join(root, 'js/src', module);
     return existsSync(file) && module.endsWith('.js') ? readFileSync(file, 'utf8') : null;
   });
-  const worker = process.env.CI === 'true' ? createReportMeasurementWorker(decoratorsText) : null;
-  let pending = null;
-  const finish = async () => {
-    if (!pending) return;
-    const { module, started, result } = pending;
-    pending = null;
-    const outcome = await result;
-    if (outcome.error) failures.push({ module, error: outcome.error });
-    else {
-      rows.push(outcome.row);
-      console.error(`self-translation report: recorded ${module} (${Math.round(performance.now() - started)} ms)`);
-    }
-  };
+  const workerCount = process.env.CI === 'true' ? Math.min(2, availableParallelism(), selected.length) : 0;
+  const workers = [];
   try {
-    for (const module of selected) {
-      const started = performance.now();
-      console.error(`self-translation report: resolving ${module}`);
-      try {
-        const moduleContext = context(posix.relative('js/src', module));
-        // Resolve this context while the preceding module is being measured.
-        // Complete results in their original source order before starting another.
-        await finish();
-        console.error(`self-translation report: measuring ${module} (imports ${Math.round(performance.now() - started)} ms)`);
-        pending = { module, started, result: worker
-          ? worker.measure(module, moduleContext).then(row => ({ row }), error => ({ error: String(error?.message ?? error) }))
-          : Promise.resolve({ row: measureSelfTranslationModule(module, decorators, moduleContext) }) };
-      } catch (error) {
-        failures.push({ module, error: String(error?.message ?? error) });
-      }
+    for (let index = 0; index < workerCount; index += 1) {
+      workers.push(createReportMeasurementWorker(decoratorsText));
     }
-    await finish();
-  } finally { await worker?.close(); }
+    const measurements = workers.length
+      ? workers.map(worker => worker.measure)
+      : [(module, moduleContext) => measureSelfTranslationModule(module, decorators, moduleContext)];
+    for (const result of await measureReportModules(selected, context, measurements, console.error)) {
+      if ('error' in result) failures.push(result);
+      else rows.push(result.row);
+    }
+  } finally {
+    await Promise.all(workers.map(worker => worker.close()));
+  }
   mkdirSync(outDir, { recursive: true });
   const data = {
     schemaVersion: 1,

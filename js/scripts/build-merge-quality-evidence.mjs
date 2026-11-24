@@ -35,14 +35,11 @@ import { arch, cpus, platform } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
-import { gunzipSync } from 'node:zlib';
 
 import { Parser } from 'web-tree-sitter';
 
-import { compileGrammar, languageEntry, parseGrammarLinks } from '../src/index.js';
-import { loadGrammarLanguage } from '../src/grammar-tiering.js';
-import { grammarFile } from './grammar-files.mjs';
-import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { compileGrammar, parseGrammarLinks } from '../src/index.js';
+import { oracleLanguage } from './native-grammar-rows.mjs';
 import { checkProjectData, readProjectData, resolveProjectDataPath, writeProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -360,16 +357,6 @@ export function renderMergeQualityDocument(report, measurements) {
 }
 
 // --- Measurement ---------------------------------------------------------
-
-const LOCK = readProjectData(new URL('../src/vendor/grammars/grammar-lock.json', import.meta.url));
-
-/** The pinned tree-sitter grammar that is the oracle of `language`. */
-function oracleLanguage(language) {
-  const entry = languageEntry(language);
-  const id = (entry.oracleGrammars ?? entry.grammars)[0].id;
-  const file = grammarFile(LOCK.grammars[id], `${id}.wasm.gz`);
-  return loadGrammarLanguage(gunzipSync(readExternalGrammarAsset(file)));
-}
 
 /** Milliseconds of a pass of `parse` over `sources`, after a pass to warm up. */
 function timed(sources, parse) {

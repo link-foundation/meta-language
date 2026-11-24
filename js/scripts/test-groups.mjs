@@ -19,17 +19,31 @@ import {readProjectData,writeProjectData} from './project-data.mjs';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const schedulingFile=new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino',import.meta.url);
+const translationSchedulingFile=new URL('../../parity/fixtures/ci-45080642295-translation-costs.lino',import.meta.url);
+const translationWallSchedulingFile = new URL('../../parity/fixtures/ci-45186623729-translation-wall-costs.lino', import.meta.url);
+const toolingSchedulingFile = new URL('../../parity/fixtures/ci-45186623729-tooling-wall-costs.lino', import.meta.url);
+const toolingPauseTests = new Map([
+  ['issue-195-evidence-automated-translation-pause.test.js', 3],
+  ['issue-195-evidence-automated-translation-rollout.test.js', 4],
+]);
 const schedulingRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
+const workloadRevisions=new Map([
+ [39615628279,schedulingRevision],
+ [45080642295,'016ed6eed0c376a682299dd6463533a620a6a36f'],
+ [45112870920,'f1d961d1a9d72bd4e6c99178d20e0aadb0415b63'],
+ [45186623729, '897b1f6b2ff7df5e094ca5d420b9c6e0057ef030'],
+]);
 const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 
-/** Largest observed workload first; source changes use a byte-size estimate.
+/** Balance observed durations and estimate changed or unsampled files by size.
  * Timing samples only choose owners. They never establish test completion. */
-export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
+export function partitionMeasuredWorkloads(files,count,{readSource,costs,prioritizeUnmeasured=false,retainObservedCost=false}={}){
  assert.ok(Number.isSafeInteger(count)&&count>0&&count<=files.length);
  assert.equal(new Set(files).size,files.length,'workload source identities are unique');
  const measured=costs??readProjectData(schedulingFile);
  assert.equal(measured.schemaVersion,1);assert.equal(measured.model,'observed CI workload scheduling costs 1');
- assert.equal(measured.run,39615628279);assert.equal(measured.revision,schedulingRevision);
+ assert.ok(workloadRevisions.has(measured.run),'costs identify a recorded CI run');
+ assert.equal(measured.revision,workloadRevisions.get(measured.run));
  assert.ok(Array.isArray(measured.entries)&&measured.entries.length<=2048);
  const known=new Map();
  for(const row of measured.entries){
@@ -41,10 +55,19 @@ export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
  const rates=measured.entries.map(row=>row.milliseconds/row.bytes).sort((a,b)=>a-b);
  assert.ok(rates.length>0);const rate=rates[Math.floor(rates.length/2)];
  const read=readSource??(file=>readFileSync(path.join(packageRoot,'..',file)));
- const workloads=files.map(file=>{const bytes=Buffer.from(read(file)),row=known.get(file);
-  const exact=row&&row.bytes===bytes.length&&row.sha256===schedulingDigest(bytes);
-  return {file,milliseconds:exact?row.milliseconds:Math.max(1,Math.ceil(bytes.length*rate))};});
- workloads.sort((a,b)=>b.milliseconds-a.milliseconds||a.file.localeCompare(b.file));
+ const workloads = files.map(file => {
+  const bytes = Buffer.from(read(file));
+  const row = known.get(file);
+  const measured = row !== undefined && row.bytes === bytes.length && row.sha256 === schedulingDigest(bytes);
+  const estimated = Math.max(1, Math.ceil(bytes.length * rate));
+  const previous = retainObservedCost ? row?.milliseconds ?? 0 : 0;
+  return { file, measured, milliseconds: measured ? row.milliseconds : Math.max(estimated, previous) };
+ });
+ workloads.sort((left, right) => {
+  // Spread uncertain inputs before measured files compete for the remaining time.
+  if (prioritizeUnmeasured && left.measured !== right.measured) return Number(left.measured) - Number(right.measured);
+  return right.milliseconds - left.milliseconds || left.file.localeCompare(right.file);
+ });
  const loads=Array(count).fill(0),shards=Array.from({length:count},()=>[]);
  for(const row of workloads){const owner=loads.indexOf(Math.min(...loads));loads[owner]+=row.milliseconds;shards[owner].push(row.file);}
  assert.deepEqual(shards.flat().sort(),[...files].sort(),'every entire workload has exactly one owner');
@@ -151,9 +174,27 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
-  // Only the measured general-grammar cohort changes owners. Native and
-  // historical modulo cohorts retain their independent exact partition rules.
+  // Balance cohorts with observed file durations at the recorded widths.
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
+  if ([6, 8, 10].includes(count) && files.includes('translation-native-library-receipt-history.test.js')) {
+    const costs = readProjectData(count === 6 ? translationSchedulingFile : translationWallSchedulingFile);
+    // Use the previous duration as a scheduling floor while changed tests await new CI measurements.
+    return partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), count, {
+      costs, retainObservedCost: count === 8,
+    })[index - 1]
+      .map(file => file.slice('js/tests/'.length));
+  }
+  if (count === 4 && files.includes('issue-195-evidence-tooling-partitions.test.js')) {
+    const costs = readProjectData(toolingSchedulingFile);
+    const established = files.filter(file => !toolingPauseTests.has(file));
+    const preservePauseOwners = established.length >= count;
+    const measured = preservePauseOwners ? established : files;
+    const partitions = partitionMeasuredWorkloads(measured.map(file => `js/tests/${file}`), count, {
+      costs, prioritizeUnmeasured: true, retainObservedCost: true,
+    });
+    const selected = partitions[index - 1].map(file => file.slice('js/tests/'.length));
+    return preservePauseOwners ? [...selected, ...files.filter(file => toolingPauseTests.get(file) === index)].sort() : selected;
+  }
   return files.filter((_, offset) => offset % count === index - 1);
 }
 

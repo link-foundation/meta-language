@@ -6,6 +6,7 @@ import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {tokenize} from '../src/translation/lexer.js';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreDependencyWorkflowSource} from './dependency-workflow-source-history.mjs';
 import {readOwnCodebaseTestRegistrationHistory,restoreOwnCodebaseTestRegistrationClassifier} from './own-codebase-test-registration-history.mjs';
 const root=new URL('../../',import.meta.url);
 export const TOOLING_FROZEN_SOURCE_REVISION='7881e1e6f83818e0b25b77e1b3ab15c2d51ca9f3';
@@ -14,7 +15,7 @@ export const CRITICAL_DELIVERY_SOURCE_HISTORY={path:'parity/self-translation/cri
 export const CURRENT_CONVERSATION_SOURCE={path:'js/scripts/issue-195-conversation-requirements.mjs',bytes:72335,
   sha256:'fa1bda21f330724dce2bda4d068fbb7758e0dcb45d4494044171138721e088f2'};
 const policyPath='parity/self-translation/tooling-frozen-source-history.lino';
-const policySha256='83bbc27757f467f73c70f8dad5074c70a46414455a4602f6c25b48879017cf47';
+const policySha256='8b602ac07193d0e927cb29ec0314f93af9bab6ec592ee5474f875814e3086790';
 export const toolingFrozenSourcePin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const exactKeys=(value,keys)=>{assert.ok(value&&typeof value==='object'&&!Array.isArray(value));assert.deepEqual(Object.keys(value).sort(),keys.slice().sort());};
 
@@ -30,6 +31,10 @@ export const TOOLING_FROZEN_HOSTS=[
       after:"    const registered = historicalRegistration.registrations.find(row => row.file === file);\n    assert.deepEqual(after, ['ci-cancellation-investigation', ...laterAdditions, rocqStem].some(stem => file === `${stem}.test.js`) ? ['tooling'] : registered ? [registered.group] : before, file);\n"},
     {before:"  assert.ok(files.includes(`${rocqStem}.test.js`), 'the new Rocq controls are an actual discovered test file');\n",
       after:"  for (const registration of historicalRegistration.registrations) {\n    assert.ok(files.includes(registration.file), 'each later registered test is an actual discovered file');\n    const actual = partitionTests([registration.file]);\n    assert.deepEqual(actual.unassigned, []);assert.deepEqual(actual.ambiguous, []);\n    assert.deepEqual(actual.groups[registration.group], [registration.file]);\n  }\n  assert.ok(files.includes(`${rocqStem}.test.js`), 'the new Rocq controls are an actual discovered test file');\n"},
+    {before:"test('modern array provenance keeps exact checkout bytes with automatic Windows line endings enabled', () => {\n  const fixture = readProjectData(path.join(root, 'parity/fixtures/modern-javascript-array-parity.lino'));\n  const sources = [fixture.contract, ...fixture.sourceProfiles,\n",
+      after:"test('modern array provenance keeps exact checkout bytes with automatic Windows line endings enabled', async () => {\n  const fixture = readProjectData(path.join(root, 'parity/fixtures/modern-javascript-array-parity.lino'));\n  const {buildModernArrayParityFixture}=await import('../scripts/generate-modern-javascript-array-parity-fixtures.mjs');\n  assert.deepEqual(fixture,buildModernArrayParityFixture({historicalSource:fixture.historicalNative.source}),\n    'the normal source inverse checks every original profile byte and the complete prior fixture');\n  const sources = [fixture.contract, ...fixture.sourceProfiles.map(source=>{\n    const current=fixture.identityCorrection.sourceEpochs.find(row=>row.path===source.path);\n    assert.ok(current,'each original source path retains its complete current checkout profile');return current;\n  }),\n"},
+    {before:"    if (source !== fixture.contract) {\n      const marker = Buffer.from(",
+      after:"    if (source !== fixture.contract && !fixture.identityCorrection.sourceEpochs.includes(source)) {\n      const marker = Buffer.from("},
   ]},
   {path:'experiments/critical-delivery/generate-source-history.mjs',previous:{bytes:2791,sha256:'f327f499381454eeb8180e31f67b55fcfb4f1aa622d9501080ba8152bc8aa68f'},changes:[
     {before:"import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';\n",
@@ -138,7 +143,7 @@ export function verifyToolingFrozenSourceHistory(packet){
 export function readToolingFrozenSourceHistory(){
   const bytes=readFileSync(new URL(policyPath,root));assert.equal(toolingFrozenSourcePin(bytes).sha256,policySha256);
   const packet=readBootstrapStructuredDataLino(bytes.toString('utf8'));
-  for(const row of verifyToolingFrozenSourceHistory(packet))assert.equal(readFileSync(new URL(row.path,root),'utf8'),row.current);
+  for(const row of verifyToolingFrozenSourceHistory(packet))assert.equal(restoreDependencyWorkflowSource(readFileSync(new URL(row.path,root),'utf8'),row.path),row.current);
   return packet;
 }
 
@@ -146,6 +151,7 @@ export function readToolingFrozenSourceHistory(){
  * this packet. A selected unknown successor cannot acquire an older guard view. */
 export function restoreToolingFrozenHostSource(source,file){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');
+  source=restoreDependencyWorkflowSource(source,file);
   if(!TOOLING_FROZEN_HOSTS.some(row=>row.path===file))return source;
   const packet=readToolingFrozenSourceHistory(),row=packet.hosts.find(candidate=>candidate.path===file);
   assert.ok(row);if(source===row.source)return source;

@@ -11,6 +11,7 @@
 //
 //   node js/scripts/generate-default-cst-expectations.mjs          # write
 //   node js/scripts/generate-default-cst-expectations.mjs --check  # verify
+//   node js/scripts/generate-default-cst-expectations.mjs --language Scala
 //   TREE_SITTER_CLI=tree-sitter node js/scripts/generate-default-cst-expectations.mjs --cli
 //
 // A row is [depth, field, kind, named, startByte, endByte, flags] in
@@ -474,13 +475,19 @@ function compareOutput(label, expected, actual) {
 
 // ---- output ------------------------------------------------------------------
 
-async function generate() {
+async function generate(selected) {
   const inventory = readProjectData(inventoryPath);
+  const previous = selected.size ? readProjectData(expectedPath) : null;
   const lock = grammarLock;
   const webTreeSitter = JSON.parse(await readFile(join(root, 'js/node_modules/web-tree-sitter/package.json'), 'utf8')).version;
-  const result = {};
+  const result = { ...previous?.languages };
+  for (const name of selected) {
+    if (!inventory.languages.some((language) => language.name === name && language.grammars)) {
+      throw new Error(`no Tree-sitter grammar registered for ${name}`);
+    }
+  }
   for (const language of inventory.languages) {
-    if (!language.grammars) continue;
+    if (!language.grammars || (selected.size && !selected.has(language.name))) continue;
     result[language.name] = {
       grammars: Object.fromEntries(await Promise.all(language.grammars.map(async (id) => [id, {
         version: lock.grammars[id].version,
@@ -496,8 +503,12 @@ async function generate() {
   }
   // The shared embedded-language fixtures: each advertised host -> target
   // path with a recovery source and every spelling that selects the target.
-  const embeddedFixtures = {};
+  const embeddedFixtures = { ...previous?.embeddedFixtures };
   for (const fixture of readProjectData(evidencePath).embedded) {
+    const key = `${fixture.host} -> ${fixture.target}`;
+    const existing = embeddedFixtures[key];
+    if (existing && !selected.has(fixture.parseLanguage) && !selected.has(canonicalLanguage(inventory, fixture.target))
+      && [existing.positive, existing.recovery, ...existing.spellings].every(({ embedded }) => embedded.every(({ language }) => !selected.has(language)))) continue;
     const host = inventory.languages.find(({ name }) => name === fixture.parseLanguage);
     const trees = async (text) => ({
       sourceSha256: sha256(text),
@@ -506,7 +517,7 @@ async function generate() {
     });
     const spellings = [];
     for (const spelling of fixture.spellings) spellings.push(await trees(spelling));
-    embeddedFixtures[`${fixture.host} -> ${fixture.target}`] = {
+    embeddedFixtures[key] = {
       positive: await trees(fixture.source),
       recovery: await trees(fixture.recoverySource),
       spellings,
@@ -526,7 +537,7 @@ async function generate() {
   };
 }
 
-async function crossCheck(expected, treeSitter) {
+async function crossCheck(treeSitter, selected) {
   const inventory = readProjectData(inventoryPath);
   const versions = await cargoLockVersions();
   const scratch = makeScratchDirectory('default-cst-cli-');
@@ -535,7 +546,7 @@ async function crossCheck(expected, treeSitter) {
   const checked = [];
   try {
     for (const language of inventory.languages) {
-      if (!language.grammars) continue;
+      if (!language.grammars || (selected.size && !selected.has(language.name))) continue;
       const id = language.grammars[0];
       if (!directories.has(id)) directories.set(id, await cliGrammarDirectory(id, versions, scratch));
       for (const kind of ['positive', 'recovery']) {
@@ -557,29 +568,40 @@ async function crossCheck(expected, treeSitter) {
 
 async function main() {
   const args = process.argv.slice(2);
-  const expected = await generate();
-  if (args.includes('--cli')) {
+  const selected = new Set();
+  let check = false;
+  let cli = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+    if (argument === '--check') check = true;
+    else if (argument === '--cli') cli = true;
+    else if (argument === '--language' && args[index + 1] && !args[index + 1].startsWith('--')) selected.add(args[++index]);
+    else throw new Error(`unknown or incomplete argument: ${argument}`);
+  }
+  const expected = await generate(selected);
+  if (cli) {
     const treeSitter = process.env.TREE_SITTER_CLI ?? 'tree-sitter';
-    const { problems, checked } = await crossCheck(expected, treeSitter);
+    const { problems, checked } = await crossCheck(treeSitter, selected);
     if (problems.length) {
       console.error(problems.join('\n'));
       process.exit(1);
     }
-    console.log(`tree-sitter CLI agrees on ${checked.length} trees (Markdown: block grammar)`);
+    const markdown = !selected.size || selected.has('Markdown') ? ' (Markdown: block grammar)' : '';
+    console.log(`tree-sitter CLI agrees on ${checked.length} trees${markdown}`);
   }
-  if (args.includes('--check')) {
+  if (check) {
     try {
       checkProjectData(expectedPath, expected);
     } catch {
       console.error('parity/fixtures/default-cst-expected.json is stale; run node js/scripts/generate-default-cst-expectations.mjs');
       process.exit(1);
     }
-    console.log(`default CST expectations match for ${Object.keys(expected.languages).length} languages`);
+    console.log(`default CST expectations match for ${selected.size || Object.keys(expected.languages).length} languages`);
     return;
   }
-  if (!args.includes('--cli')) {
+  if (!cli) {
     writeProjectData(expectedPath, expected);
-    console.log(`wrote ${Object.keys(expected.languages).length} languages to parity/fixtures/default-cst-expected.json`);
+    console.log(`wrote ${selected.size || Object.keys(expected.languages).length} languages to parity/fixtures/default-cst-expected.json`);
   }
 }
 

@@ -9,6 +9,7 @@ import {readRustSourceItems} from '../../../../js/scripts/generate-private-outpu
 import {readSourceTextRustBlock} from '../../../../js/scripts/source-text-byte-library-style.mjs';
 import {readNativeSourceByteRange} from '../../../../js/scripts/native-source-byte-ranges.mjs';
 import {parseCargoLock} from '../../../../js/scripts/dependency-inventory.mjs';
+import {restoreDependencyWorkflowSource} from '../../../../js/scripts/dependency-workflow-source-history.mjs';
 import {tokenize} from '../../../../js/src/translation/lexer.js';
 import {DecoratorSet} from '../../../../js/src/decorators.js';
 import {checkProjectData,writeProjectData} from '../../../../js/scripts/project-data.mjs';
@@ -183,7 +184,10 @@ import {restoreCurrentCiRepairSource} from '../../../../js/scripts/current-ci-re
 
 export function generateOriginalNativeNumberObservations({check=false}={}) {
   const lockSource=readFileSync(new URL('rust/Cargo.lock',root),'utf8'),packages=parseCargoLock(lockSource).filter(row=>row.name==='serde_json');
-  assert.equal(packages.length,1);assert.equal(packages[0].version,'1.0.151','uncovered native number expectation dependency version');
+  assert.equal(packages.length,1);
+  assert.ok(['1.0.151','1.0.154'].includes(packages[0].version),'uncovered native number expectation dependency version');
+  const originalLock=restoreDependencyWorkflowSource(lockSource,'rust/Cargo.lock');
+  assert.deepEqual(parseCargoLock(originalLock).filter(row=>row.name==='serde_json').map(row=>row.version),['1.0.151']);
   const result=buildOriginalNativeNumberObservations();
   const styleFile=new URL('../../../../parity/self-translation/original-native-number-observation-decorators.lino',import.meta.url);
   if(check)assert.equal(readFileSync(styleFile,'utf8'),result.decorators.toLino());else writeFileSync(styleFile,result.decorators.toLino());
@@ -207,7 +211,7 @@ export function generateOriginalNativeNumberObservations({check=false}={}) {
     return{wireOccurrence:occurrences[index],signed:index<3,unsigned:index===0||index===2,floating:index>=3,
       signedDecimal:index<3?BigInt(value).toString():null,unsignedDecimal:index===0||index===2?BigInt(value).toString():null,floatingBits:buffer.toString('hex')};
   });
-  const fixture={schemaVersion:1,numberVersions:{minimum:'1.0.151',maximumExclusive:'1.0.152',excludedFeature:'arbitrary_precision',lockSource:pin(lockSource)},
+  const fixture={schemaVersion:1,numberVersions:{minimum:'1.0.151',maximumExclusive:'1.0.152',excludedFeature:'arbitrary_precision',lockSource:pin(originalLock)},
     observations,expandedOccurrences:ordinal,
     boundary:'Independent explicit native variant expectations for one constructed six-number lexical array. These are test inputs and expected observations, not actual native execution. Primitive usize positions are excluded; original native predicates and payloads require CI execution.'};
   const receiptFile=new URL('../../../../parity/self-translation/original-native-number-observations.lino',import.meta.url);

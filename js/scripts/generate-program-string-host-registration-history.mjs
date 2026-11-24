@@ -1,5 +1,6 @@
 // Normal source membership capture only. This invokes no Rust compiler/test.
 import assert from 'node:assert/strict';
+import {restoreCiIntegrationSource} from './ci-integration-source-history.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
@@ -33,7 +34,8 @@ export function generateProgramStringHostRegistrationHistory({check=false}={}){
   });
   const registrations=PROGRAM_STRING_REGISTRATIONS.map(specification=>{
     const captured=captureGitArtifactCertificate(PROGRAM_STRING_REGISTRATION_REVISION,specification.path);
-    assert.deepEqual(captured.blob,readFileSync(new URL(specification.path,root)));
+    const current=readFileSync(new URL(specification.path,root),'utf8');
+    assert.deepEqual(captured.blob,Buffer.from(restoreCiIntegrationSource(current,specification.path,'dependencies')));
     return{...specification,...programStringHostRegistrationPin(captured.blob),certificate:captured.certificate};
   });
   const packet={schemaVersion:1,model:'program string host registration succession 1',revision:PROGRAM_STRING_REGISTRATION_REVISION,

@@ -88,8 +88,10 @@ function readOutcomeToolVersion(text,tool) {
   assert.equal(typeof text,'string');assert.ok(Buffer.byteLength(text)<=16384);
   assert.ok(['cargo','rustc'].includes(tool));
   const match=new RegExp('^'+tool+' (1)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*) \\([^\\r\\n]+\\)(?:\\r?\\n|$)','u').exec(text);
-  assert.ok(match&&Number(match[2])>=90&&Number(match[2])<100,'uncovered '+(tool==='cargo'?'Cargo':'Rust compiler')+' version; supported stable range is >=1.90.0 <1.100.0');
-  return match[1]+'.'+match[2]+'.'+match[3];
+  const version=match?.slice(1).join('.');
+  const range=version==='1.100.0'?'>=1.100.0 <1.100.1':Number(match?.[2])>=90&&Number(match?.[2])<100?'>=1.90.0 <1.100.0':null;
+  assert.ok(range,'uncovered '+(tool==='cargo'?'Cargo':'Rust compiler')+' version; supported stable ranges are >=1.90.0 <1.100.0 and >=1.100.0 <1.100.1');
+  return {version,range};
 }
 
 /** Select the linked dependency by its actual rustc --extern path, never a union. */
@@ -100,7 +102,9 @@ export function readOutcomeCompilerProfile({cargoVersion,rustcVersion,stdout,std
   for(const value of [stdout,stderr,lockSource])assert.ok(typeof value==='string'&&value.isWellFormed()&&Buffer.byteLength(value)<=8*1024*1024,'bounded complete compiler text required');
   assert.ok([32,64].includes(usizeBits),'uncovered observed native pointer width');
   const packages=parseCargoLock(lockSource).filter(row=>row.name==='serde_json');assert.equal(packages.length,1,'one exact locked JSON package');
-  const locked=packages[0];assert.equal(locked.version,'1.0.151','uncovered JSON dependency version; supported range is >=1.0.151 <1.0.152');
+  const locked=packages[0];
+  assert.ok(['1.0.151','1.0.154'].includes(locked.version),
+    'uncovered JSON dependency version; supported ranges are >=1.0.151 <1.0.152 and >=1.0.154 <1.0.155');
   const records=[];
   for(let start=0;start<stdout.length;){
     let end=stdout.indexOf('\n',start);if(end<0)end=stdout.length;
@@ -122,7 +126,8 @@ export function readOutcomeCompilerProfile({cargoVersion,rustcVersion,stdout,std
   assert.equal(dependency.target.src_path,posix.join(posix.dirname(dependency.manifest_path),'src/lib.rs'));
   assert.ok(Array.isArray(dependency.features)&&dependency.features.every(value=>typeof value==='string')&&new Set(dependency.features).size===dependency.features.length);
   assert.ok(dependency.features.includes('preserve_order'),'the actual compiled mapping-order feature is required');
-  return {schemaVersion:1,cargoVersion:version,rustcVersion:compilerVersion,usizeBits,versionBounds:{cargo:'>=1.90.0 <1.100.0',rustc:'>=1.90.0 <1.100.0',serdeJson:'>=1.0.151 <1.0.152'},
+  return {schemaVersion:1,cargoVersion:version.version,rustcVersion:compilerVersion.version,usizeBits,versionBounds:{cargo:version.range,rustc:compilerVersion.range,
+    serdeJson:locked.version==='1.0.151'?'>=1.0.151 <1.0.152':'>=1.0.154 <1.0.155'},
     inputs:{cargoVersion:pin(cargoVersion),rustcVersion:pin(rustcVersion),compilerStandardOutput:pin(stdout),compilerStandardError:pin(stderr),lockSource:pin(lockSource)},
     probe:structuredClone(probe),invocation,dependency:structuredClone(dependency),
     boundary:'Selected compiler artifact features and executed primitive width only. Native JSON number variants, DTO reconstruction, borrowed static resolution and physical CST ownership remain separate obligations.'};

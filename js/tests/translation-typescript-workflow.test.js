@@ -11,6 +11,7 @@ import {generateTranslationWorkflowHistory} from '../scripts/generate-translatio
 import {restoreTranslationWorkflowHistory} from './support/translation-workflow-history.js';
 import {captureTranslationTestFeedbackPartition,mergeTranslationTestFeedbackPartitions} from '../scripts/translation-test-feedback.mjs';
 import {readProjectData,writeProjectData} from '../scripts/project-data.mjs';
+import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const read=file=>readFileSync(new URL('../../'+file,import.meta.url),'utf8');
@@ -23,7 +24,8 @@ test('six bounded translation partitions retain every previous file once and pre
     assert.equal(restoreTranslationWorkflowHistory(current),row.sourceText);
     assert.equal(restoreTranslationWorkflowHistory(current+'\n# changed\n'),current+'\n# changed\n');
   }
-  const workflow=read('.github/workflows/js.yml');
+  const file='.github/workflows/js.yml';
+  const workflow=restoreDependencyWorkflowSource(read(file),file);
   const tests=parseWorkflow(workflow).find(job=>job.id==='tests');
   assert.match(tests.header,/timeout-minutes: 15/u);assert.match(tests.header,/fail-fast: false/u);
   const entries=[...tests.header.matchAll(/\{group: translation, partition: ([0-9]+), shards: ([0-9]+)\}/gu)]
