@@ -31,9 +31,9 @@ const workloadRevisions=new Map([
 ]);
 const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 
-/** Largest observed workload first; source changes use a byte-size estimate.
+/** Balance observed durations and estimate changed or unsampled files by size.
  * Timing samples only choose owners. They never establish test completion. */
-export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
+export function partitionMeasuredWorkloads(files,count,{readSource,costs,prioritizeUnmeasured=false}={}){
  assert.ok(Number.isSafeInteger(count)&&count>0&&count<=files.length);
  assert.equal(new Set(files).size,files.length,'workload source identities are unique');
  const measured=costs??readProjectData(schedulingFile);
@@ -51,10 +51,17 @@ export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
  const rates=measured.entries.map(row=>row.milliseconds/row.bytes).sort((a,b)=>a-b);
  assert.ok(rates.length>0);const rate=rates[Math.floor(rates.length/2)];
  const read=readSource??(file=>readFileSync(path.join(packageRoot,'..',file)));
- const workloads=files.map(file=>{const bytes=Buffer.from(read(file)),row=known.get(file);
-  const exact=row&&row.bytes===bytes.length&&row.sha256===schedulingDigest(bytes);
-  return {file,milliseconds:exact?row.milliseconds:Math.max(1,Math.ceil(bytes.length*rate))};});
- workloads.sort((a,b)=>b.milliseconds-a.milliseconds||a.file.localeCompare(b.file));
+ const workloads = files.map(file => {
+  const bytes = Buffer.from(read(file));
+  const row = known.get(file);
+  const measured = row !== undefined && row.bytes === bytes.length && row.sha256 === schedulingDigest(bytes);
+  return { file, measured, milliseconds: measured ? row.milliseconds : Math.max(1, Math.ceil(bytes.length * rate)) };
+ });
+ workloads.sort((left, right) => {
+  // Spread uncertain inputs before measured files compete for the remaining time.
+  if (prioritizeUnmeasured && left.measured !== right.measured) return Number(left.measured) - Number(right.measured);
+  return right.milliseconds - left.milliseconds || left.file.localeCompare(right.file);
+ });
  const loads=Array(count).fill(0),shards=Array.from({length:count},()=>[]);
  for(const row of workloads){const owner=loads.indexOf(Math.min(...loads));loads[owner]+=row.milliseconds;shards[owner].push(row.file);}
  assert.deepEqual(shards.flat().sort(),[...files].sort(),'every entire workload has exactly one owner');
@@ -168,9 +175,10 @@ export function partitionGroupFiles(files, shard = '1/1') {
     return partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), count, { costs })[index - 1]
       .map(file => file.slice('js/tests/'.length));
   }
-  if(count===4&&files.includes('issue-195-evidence-tooling-partitions.test.js')){
-    const costs=readProjectData(toolingSchedulingFile);
-    return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count,{costs})[index-1].map(file=>file.slice(9));
+  if (count === 4 && files.includes('issue-195-evidence-tooling-partitions.test.js')) {
+    const costs = readProjectData(toolingSchedulingFile);
+    return partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), count, { costs, prioritizeUnmeasured: true })[index - 1]
+      .map(file => file.slice('js/tests/'.length));
   }
   return files.filter((_, offset) => offset % count === index - 1);
 }

@@ -3723,6 +3723,12 @@ and tree history with Git's `blob:none` filter. Checkout loads every current
 file and Git fetches historical blobs on demand during fresh merge checks or
 source authentication. The complete planner, cleanup and ten-minute deadline
 still apply.
+
+The generated-slice guard reverses these exact checkout lines before checking
+the original package schedule digest. The separate raw-planning guard checks
+the active filter, complete ancestry and fresh-merge command.
+[Tooling shard 4 failure](https://github.com/link-foundation/meta-language/actions/runs/45303012723/job/138139941669)
+
 The complete tooling test group likewise has four required physical cells after
 its measured fifteen-minute cancellation. Workloads with unchanged source bytes
 use advisory durations from their retained CI logs. Changed or unsampled files
@@ -3910,8 +3916,12 @@ several more expensive files into that partition. The four tooling partitions
 now use [elapsed and reported costs](../parity/fixtures/ci-45186623729-tooling-wall-costs.lino)
 from six archived jobs. The packet includes measured durations with matching
 source hashes for 93 of 94 files, and the scheduler estimates any changed or
-unmeasured file by size. The complete four-partition test union and
-fifteen-minute deadline remain in effect.
+unmeasured file by size. It places those files before the measured workloads
+so small files with uncertain costs are distributed while all four shards
+have capacity. The archived replay peaks at 586.565 seconds with the
+generated-slice guard repair, below the existing 600-second advisory budget.
+The complete four-partition test union and fifteen-minute deadline still apply.
+[Tooling schedule replay](../experiments/ci-workload-costs/compare-tooling-unmeasured-placement.mjs)
 
 The seventh translation job in run 45276612669 spent 218 seconds in setup and
 reached its fifteen-minute deadline after 236 passing assertions. The preceding

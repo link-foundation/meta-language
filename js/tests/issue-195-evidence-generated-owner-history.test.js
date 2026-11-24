@@ -86,7 +86,16 @@ test('a third required generated slice keeps every command and feedback producer
   const thirdSlice = "matrix.generated_slice == 'third'";
   assert.deepEqual(checks.steps.filter(step => step.text.includes(thirdSlice)).map(step => step.name), moved);
   const previousHeader = checks.header.replace(extraCell, '').replace(extraLabel, '');
+  const rawCheckoutSetup = [
+    '          # Keep commit ancestry for fresh merge simulation and fetch old blobs on demand.',
+    "          filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}",
+    '',
+  ].join('\n');
   const previousSteps = checks.steps.map(step => {
+    if (step.name === '- uses: actions/checkout@v7') {
+      assert.equal(step.text.split(rawCheckoutSetup).length, 2, 'only raw planning uses the blobless checkout');
+      return step.text.replace(rawCheckoutSetup, '');
+    }
     if (!moved.includes(step.name)) return step.text;
     assert.equal(step.text.split(thirdSlice).length, 2);
     assert.ok(step.afterFailure);

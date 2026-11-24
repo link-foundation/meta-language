@@ -51,6 +51,26 @@ test('four tooling shards keep every file while balancing observed whole-file co
   assert.deepEqual(costs.logs.filter(log => !log.completed).map(log => log.job), [137733805955]);
 });
 
+test('tooling spreads changed and unmeasured files before balancing measured work', () => {
+  const sources = new Map([['slow.js', 'a'.repeat(100)], ['fast.js', 'b'.repeat(100)], ['changed.js', 'c'.repeat(100)]]);
+  const entries = [...sources].map(([file, source], index) => ({
+    file, bytes: Buffer.byteLength(source), sha256: createHash('sha256').update(source).digest('hex'),
+    milliseconds: [1_000, 600, 900][index],
+  }));
+  const costs = { schemaVersion: 1, model: 'observed CI workload scheduling costs 1', run: 39615628279,
+    revision: '8bc0ef9725388c7927acf1854870bf46f5e365be', entries };
+  sources.set('changed.js', 'c');
+  sources.set('unmeasured.js', 'dd');
+  const files = [...sources.keys()];
+  const options = { costs, readSource: file => sources.get(file) };
+  const unmeasuredOwners = shards => shards.filter(shard => shard.includes('changed.js') || shard.includes('unmeasured.js')).length;
+  assert.equal(unmeasuredOwners(partitionMeasuredWorkloads(files, 2, options)), 1);
+  const spread = partitionMeasuredWorkloads(files, 2, { ...options, prioritizeUnmeasured: true });
+  assert.equal(unmeasuredOwners(spread), 2);
+  assert.deepEqual(spread.flat().sort(), [...files].sort());
+  assert.deepEqual(spread, partitionMeasuredWorkloads([...files].reverse(), 2, { ...options, prioritizeUnmeasured: true }));
+});
+
 test('measured workload scheduling balances complete sources and rejects duplicate owners or malformed costs',()=>{
   const sources=new Map([['slow-a.js','a'],['slow-b.js','b'],['fast-a.js','c'],['fast-b.js','d']]);
   const entries=[300,290,10,10].map((milliseconds,index)=>{const [file,source]=[...sources][index];return{file,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex'),milliseconds};});
