@@ -8,7 +8,9 @@ import {readProjectData} from './project-data.mjs';
 import {structuredDataToLino,readStructuredDataLino} from '../src/structured-data-links.js';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {checkInventory,collectDependencies} from './dependency-inventory.mjs';
+import {restoreDependencyDeclaration} from './dependency-inventory-order.mjs';
 import {restoreOwnCodebaseTestRegistrationTestSource} from './own-codebase-test-registration-history.mjs';
+import {restoreVerificationPauseSource} from '../../experiments/issue-245/verification-pause-history.mjs';
 
 const file=new URL('../../parity/fixtures/dependency-inventory-append-history.lino',import.meta.url);
 const inventoryRevision='9ac3038132953e6a220bba6f06a3e6147d39836f';
@@ -22,6 +24,7 @@ export function readDependencyInventoryAppendHistory() {
 }
 
 export function restoreNodeDependencyInventoryTestSource(source) {
+  source=restoreVerificationPauseSource('js/tests/issue-195-evidence-node-dependency.test.js',source);
   const history=readDependencyInventoryAppendHistory();
   const original=history.test.source;
   let current=original;
@@ -46,7 +49,7 @@ export function verifyDependencyInventoryAppends(inventory,declarations,history)
   const before=readStructuredDataLino(history.inventory.source);
   assert.equal(before.items.length,745);
   assert.ok(inventory.items.length>=before.items.length);
-  const prefix={...inventory,items:inventory.items.slice(0,before.items.length)};
+  const prefix={...inventory,items:inventory.items.slice(0,before.items.length).map((row,index)=>restoreDependencyDeclaration(row,before.items[index]))};
   assert.equal(structuredDataToLino(prefix),history.inventory.source,'every complete original item, audit fact, order and alias stays exact');
   const ids=new Set(prefix.items.map(row=>row.id));
   for(const entry of inventory.items.slice(before.items.length)){

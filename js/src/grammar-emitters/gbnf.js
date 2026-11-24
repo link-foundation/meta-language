@@ -209,6 +209,7 @@ function sanitizeIdentifier(source) {
   }
   output = output.replace(/^-+|-+$/g, '');
   if (output === '') output = 'ml';
+  if (['false', 'null', 'true'].includes(output)) return `value-${output}`;
   return /^[A-Za-z]/.test(output) ? output : `ml-${output}`;
 }
 
@@ -239,10 +240,12 @@ function emitCharRange(start, end) {
 
 function emitCharClass(negated, items) {
   if (items.length === 0) throw unsupportedError(FORMAT, 'empty CharClass');
-  const content = items.map((item) => {
-    if (item.kind !== 'range') return escapeClassChar(item.value);
+  const content = items.map((item, index) => {
+    const next = items[index + 1];
+    const following = next?.kind === 'range' ? next.start : next?.value;
+    if (item.kind !== 'range') return escapeClassChar(item.value, following);
     validateRange('CharClass range', item.start, item.end);
-    return `${escapeClassChar(item.start)}-${escapeClassChar(item.end)}`;
+    return `${escapeClassChar(item.start)}-${escapeClassChar(item.end, following)}`;
   }).join('');
   return `[${negated ? '^' : ''}${content}]`;
 }
@@ -259,27 +262,33 @@ function validateRange(construct, start, end) {
 }
 
 function quoteTerminal(value) {
-  return `"${[...value].map(escapeStringChar).join('')}"`;
+  const characters = [...value];
+  const content = characters.map((character, index) => escapeStringChar(character, characters[index + 1]));
+  return `"${content.join('')}"`;
 }
 
 const COMMON_ESCAPES = { '\\': '\\\\', '\n': '\\n', '\r': '\\r', '\t': '\\t', '\b': '\\b', '\f': '\\f' };
 const STRING_ESCAPES = { ...COMMON_ESCAPES, '"': '\\"' };
-const CLASS_ESCAPES = { ...COMMON_ESCAPES, '[': '\\[', ']': '\\]', '-': '\\-', '^': '\\^' };
+const CLASS_ESCAPES = { ...COMMON_ESCAPES, '[': '\\[', ']': '\\]', '-': '\\-' };
 
-function escapeStringChar(character) {
-  return STRING_ESCAPES[character] ?? escapeControl(character);
+function escapeStringChar(character, following) {
+  return STRING_ESCAPES[character] ?? escapeControl(character, following);
 }
 
-function escapeClassChar(value) {
+function escapeClassChar(value, following) {
   const character = String(value);
-  return CLASS_ESCAPES[character] ?? escapeControl(character);
+  if (character === '^') return escapeHexadecimal(codePoint(character), following);
+  return CLASS_ESCAPES[character] ?? escapeControl(character, following);
 }
 
-function escapeControl(character) {
-  if (!/^\p{Cc}$/u.test(character)) return character;
-  const point = codePoint(character);
+function escapeControl(character, following) {
+  return /^\p{Cc}$/u.test(character) ? escapeHexadecimal(codePoint(character), following) : character;
+}
+
+function escapeHexadecimal(point, following) {
   const hex = point.toString(16).toUpperCase();
-  if (point <= 0xff) return `\\x${hex.padStart(2, '0')}`;
+  // XGrammar consumes all following hexadecimal digits after \x.
+  if (point <= 0xff && !/^[0-9A-Fa-f]/u.test(following ?? '')) return `\\x${hex.padStart(2, '0')}`;
   return point <= 0xffff ? `\\u${hex.padStart(4, '0')}` : `\\U${hex.padStart(8, '0')}`;
 }
 

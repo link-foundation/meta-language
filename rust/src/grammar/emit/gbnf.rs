@@ -348,6 +348,9 @@ fn sanitize_identifier(source: &str) -> String {
     if output.is_empty() {
         output.push_str("ml");
     }
+    if matches!(output.as_str(), "false" | "null" | "true") {
+        return format!("value-{output}");
+    }
     if !output.starts_with(|character: char| character.is_ascii_alphabetic()) {
         output.insert_str(0, "ml-");
     }
@@ -405,8 +408,8 @@ fn emit_case_insensitive_char(character: char) -> String {
         let lower = character.to_ascii_lowercase();
         let mut output = String::new();
         output.push('[');
-        push_escaped_class_char(&mut output, upper);
-        push_escaped_class_char(&mut output, lower);
+        push_escaped_class_char(&mut output, upper, false);
+        push_escaped_class_char(&mut output, lower, false);
         output.push(']');
         output
     } else {
@@ -418,8 +421,8 @@ fn emit_char_range(start: char, end: char) -> Result<String, GrammarEmitError> {
     validate_range("CharRange", start, end)?;
     Ok(format!(
         "[{}-{}]",
-        escaped_class_char(start),
-        escaped_class_char(end)
+        escaped_class_char(start, false),
+        escaped_class_char(end, false)
     ))
 }
 
@@ -433,22 +436,31 @@ fn emit_char_class(negated: bool, items: &[CharClassItem]) -> Result<String, Gra
     if negated {
         output.push('^');
     }
-    for item in items {
-        output.push_str(&emit_char_class_item(item)?);
+    for (index, item) in items.iter().enumerate() {
+        let following = items.get(index + 1).map(|item| match item {
+            CharClassItem::Char(value) | CharClassItem::Range(value, _) => *value,
+        });
+        output.push_str(&emit_char_class_item(
+            item,
+            following.is_some_and(|character| character.is_ascii_hexdigit()),
+        )?);
     }
     output.push(']');
     Ok(output)
 }
 
-fn emit_char_class_item(item: &CharClassItem) -> Result<String, GrammarEmitError> {
+fn emit_char_class_item(
+    item: &CharClassItem,
+    followed_by_hex_digit: bool,
+) -> Result<String, GrammarEmitError> {
     match item {
-        CharClassItem::Char(value) => Ok(escaped_class_char(*value)),
+        CharClassItem::Char(value) => Ok(escaped_class_char(*value, followed_by_hex_digit)),
         CharClassItem::Range(start, end) => {
             validate_range("CharClass range", *start, *end)?;
             Ok(format!(
                 "{}-{}",
-                escaped_class_char(*start),
-                escaped_class_char(*end)
+                escaped_class_char(*start, false),
+                escaped_class_char(*end, followed_by_hex_digit)
             ))
         }
     }
@@ -478,20 +490,24 @@ fn report_capture_loss(report: &mut EmitReport, label: Option<&String>) {
 fn quote_terminal(value: &str) -> String {
     let mut output = String::with_capacity(value.len() + 2);
     output.push('"');
-    for character in value.chars() {
-        push_escaped_string_char(&mut output, character);
+    let mut characters = value.chars().peekable();
+    while let Some(character) = characters.next() {
+        let followed_by_hex_digit = characters
+            .peek()
+            .is_some_and(|following| following.is_ascii_hexdigit());
+        push_escaped_string_char(&mut output, character, followed_by_hex_digit);
     }
     output.push('"');
     output
 }
 
-fn escaped_class_char(character: char) -> String {
+fn escaped_class_char(character: char, followed_by_hex_digit: bool) -> String {
     let mut output = String::new();
-    push_escaped_class_char(&mut output, character);
+    push_escaped_class_char(&mut output, character, followed_by_hex_digit);
     output
 }
 
-fn push_escaped_string_char(output: &mut String, character: char) {
+fn push_escaped_string_char(output: &mut String, character: char, followed_by_hex_digit: bool) {
     match character {
         '"' => output.push_str("\\\""),
         '\\' => output.push_str("\\\\"),
@@ -500,31 +516,36 @@ fn push_escaped_string_char(output: &mut String, character: char) {
         '\t' => output.push_str("\\t"),
         '\u{08}' => output.push_str("\\b"),
         '\u{0c}' => output.push_str("\\f"),
-        character if character.is_control() => push_hex_escape(output, character),
+        character if character.is_control() => {
+            push_hex_escape(output, character, followed_by_hex_digit)
+        }
         character => output.push(character),
     }
 }
 
-fn push_escaped_class_char(output: &mut String, character: char) {
+fn push_escaped_class_char(output: &mut String, character: char, followed_by_hex_digit: bool) {
     match character {
         '\\' => output.push_str("\\\\"),
         '[' => output.push_str("\\["),
         ']' => output.push_str("\\]"),
         '-' => output.push_str("\\-"),
-        '^' => output.push_str("\\^"),
+        '^' => push_hex_escape(output, character, followed_by_hex_digit),
         '\n' => output.push_str("\\n"),
         '\r' => output.push_str("\\r"),
         '\t' => output.push_str("\\t"),
         '\u{08}' => output.push_str("\\b"),
         '\u{0c}' => output.push_str("\\f"),
-        character if character.is_control() => push_hex_escape(output, character),
+        character if character.is_control() => {
+            push_hex_escape(output, character, followed_by_hex_digit)
+        }
         character => output.push(character),
     }
 }
 
-fn push_hex_escape(output: &mut String, character: char) {
+fn push_hex_escape(output: &mut String, character: char, followed_by_hex_digit: bool) {
     let code = character as u32;
-    if code <= 0xff {
+    // XGrammar consumes all following hexadecimal digits after \x.
+    if code <= 0xff && !followed_by_hex_digit {
         let _ = write!(output, "\\x{code:02X}");
     } else if code <= 0xffff {
         let _ = write!(output, "\\u{code:04X}");

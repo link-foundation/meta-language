@@ -8,6 +8,16 @@ name: Rust
 on:
   workflow_call:
     inputs:
+      cross_platform_checks:
+        description: Run the retained Windows and macOS checks
+        type: boolean
+        required: false
+        default: false
+      automated_translation:
+        description: Run the full automated translation checks
+        type: boolean
+        required: false
+        default: false
       native_test_inputs_changed:
         description: 'Registered native experiment or Links data changed'
         type: boolean
@@ -15,6 +25,16 @@ on:
         default: false
   workflow_dispatch:
     inputs:
+      cross_platform_checks:
+        description: Run the retained Windows and macOS checks
+        type: boolean
+        required: false
+        default: false
+      automated_translation:
+        description: Run the full automated translation checks
+        type: boolean
+        required: false
+        default: false
       release_mode:
         description: 'Manual release mode'
         required: true
@@ -175,6 +195,9 @@ jobs:
         run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === FRESH MERGE SIMULATION ===
+  # Keep 1.99 for the native test lanes and their shared check cache.
+  # Cargo 1.100 changes the harness and grammar artifact layout, and the
+  # frozen native assertions cover Rust and Cargo versions below 1.100.
   fresh-merge:
     name: Fresh Merge Simulation
     runs-on: ubuntu-latest
@@ -189,6 +212,7 @@ jobs:
       matrix:
         physical_shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     env:
+      META_LANGUAGE_AUTOMATED_TRANSLATION: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
       META_LANGUAGE_SHARD_PROFILE: fresh-merge
       META_LANGUAGE_SHARD_PLATFORM: ubuntu-latest
       META_LANGUAGE_SHARD_SUITE: all
@@ -199,7 +223,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.99.0
         with:
           components: rustfmt, clippy
 
@@ -225,7 +249,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             rust/target
-          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-check-1.99.0-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Simulate fresh merge with base branch
         env:
@@ -242,7 +266,7 @@ jobs:
           retention-days: 30
 
       - name: Retain authenticated fresh merge partition
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: rust-physical-fresh-merge-ubuntu-latest-all-${{ matrix.physical_shard }}-${{ github.sha }}
@@ -310,11 +334,13 @@ jobs:
         needs.detect-changes.outputs.toml-changed == 'true' ||
         needs.detect-changes.outputs.workflow-changed == 'true'
       )
+    outputs:
+      native_test_matrix: ${{ steps.native-test-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v7
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.99.0
 
       - name: Setup Node.js for independent grammar sources
         uses: actions/setup-node@v7
@@ -327,6 +353,13 @@ jobs:
         working-directory: js
         run: npm ci --ignore-scripts
 
+      - name: Select the active native test platforms
+        id: native-test-matrix
+        working-directory: ${{ github.workspace }}
+        env:
+          META_LANGUAGE_CROSS_PLATFORM_CHECKS: ${{ (inputs.cross_platform_checks || vars.META_LANGUAGE_CROSS_PLATFORM_CHECKS == 'true') }}
+        run: node js/scripts/rust-test-shards.mjs --test-matrix
+
       - name: Provision the pinned independent grammar sources
         working-directory: ${{ github.workspace }}
         run: node js/scripts/external-grammar-cache.mjs --group native-oracles --materialize
@@ -338,9 +371,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             rust/target
-          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-check-1.99.0-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-check-
+            ${{ runner.os }}-cargo-check-1.99.0-
 
       - name: Check every target with every feature
         run: node ../scripts/with-cache-cleanup.mjs --event build -- cargo check --locked --all-targets --all-features
@@ -377,8 +410,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The frozen compiler profile covers stable Rust and Cargo >=1.90.0 <1.100.0.
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.99.0
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -398,7 +432,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             rust/target
-          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-check-1.99.0-${{ hashFiles('**/Cargo.lock') }}
           fail-on-cache-miss: true
 
       - name: Release the restored build target before allocating isolated scratch
@@ -536,7 +570,8 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        # Match fresh-merge. Clippy 1.100 interprets grammar fixture text as format arguments.
+        uses: dtolnay/rust-toolchain@1.99.0
         with:
           components: rustfmt, clippy
 
@@ -565,9 +600,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             rust/target
-          key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-lint-1.99.0-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-lint-
+            ${{ runner.os }}-cargo-lint-1.99.0-
 
       - name: Check formatting
         run: cargo fmt --all -- --check
@@ -589,7 +624,7 @@ jobs:
         run: cargo check --no-default-features
 
       - name: Check the complete bulk translation rule source freshness
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         run: node js/scripts/check-bulk-translation-rules.mjs
 
@@ -674,356 +709,9 @@ jobs:
       )
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        suite: [grammar, inference, generative, translation, remaining]
-        include:
-          - suite: grammar
-            filters: grammar_
-          - suite: inference
-            filters: inference_ --skip grammar_
-          - suite: generative
-            filters: issue_195_generative --skip grammar_ --skip inference_
-          - suite: translation
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: remaining
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: grammar
-            physical_shard: 2
-            filters: grammar_
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: grammar
-            physical_shard: 3
-            filters: grammar_
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: grammar
-            physical_shard: 4
-            filters: grammar_
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 2
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 3
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 4
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: remaining
-            physical_shard: 2
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: remaining
-            physical_shard: 3
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: remaining
-            physical_shard: 4
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: macos-latest
-            logical_suite: grammar
-            physical_shard: 2
-            filters: grammar_
-          - suite: physical
-            os: macos-latest
-            logical_suite: grammar
-            physical_shard: 3
-            filters: grammar_
-          - suite: physical
-            os: macos-latest
-            logical_suite: grammar
-            physical_shard: 4
-            filters: grammar_
-          - suite: physical
-            os: macos-latest
-            logical_suite: grammar
-            physical_shard: 5
-            filters: grammar_
-          - suite: physical
-            os: macos-latest
-            logical_suite: grammar
-            physical_shard: 6
-            filters: grammar_
-          - suite: physical
-            os: macos-latest
-            logical_suite: grammar
-            physical_shard: 7
-            filters: grammar_
-          - suite: physical
-            os: macos-latest
-            logical_suite: grammar
-            physical_shard: 8
-            filters: grammar_
-          - suite: physical
-            os: macos-latest
-            logical_suite: translation
-            physical_shard: 2
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: macos-latest
-            logical_suite: translation
-            physical_shard: 3
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: macos-latest
-            logical_suite: translation
-            physical_shard: 4
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: macos-latest
-            logical_suite: translation
-            physical_shard: 5
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: macos-latest
-            logical_suite: translation
-            physical_shard: 6
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: macos-latest
-            logical_suite: translation
-            physical_shard: 7
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: macos-latest
-            logical_suite: translation
-            physical_shard: 8
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: macos-latest
-            logical_suite: remaining
-            physical_shard: 2
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: macos-latest
-            logical_suite: remaining
-            physical_shard: 3
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: macos-latest
-            logical_suite: remaining
-            physical_shard: 4
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: windows-latest
-            logical_suite: grammar
-            physical_shard: 2
-            filters: grammar_
-          - suite: physical
-            os: windows-latest
-            logical_suite: grammar
-            physical_shard: 3
-            filters: grammar_
-          - suite: physical
-            os: windows-latest
-            logical_suite: grammar
-            physical_shard: 4
-            filters: grammar_
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 2
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 3
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 4
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: remaining
-            physical_shard: 2
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: windows-latest
-            logical_suite: remaining
-            physical_shard: 3
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: windows-latest
-            logical_suite: remaining
-            physical_shard: 4
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 5
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 6
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 7
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 8
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 9
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 10
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 11
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 12
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 13
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 14
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 15
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: translation
-            physical_shard: 16
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: grammar
-            physical_shard: 5
-            filters: grammar_
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: grammar
-            physical_shard: 6
-            filters: grammar_
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: grammar
-            physical_shard: 7
-            filters: grammar_
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: grammar
-            physical_shard: 8
-            filters: grammar_
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 5
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 6
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 7
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 8
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 9
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 10
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 11
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 12
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 13
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 14
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 15
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: ubuntu-latest
-            logical_suite: translation
-            physical_shard: 16
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
-          - suite: physical
-            os: windows-latest
-            logical_suite: remaining
-            physical_shard: 5
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: windows-latest
-            logical_suite: remaining
-            physical_shard: 6
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: windows-latest
-            logical_suite: remaining
-            physical_shard: 7
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
-          - suite: physical
-            os: windows-latest
-            logical_suite: remaining
-            physical_shard: 8
-            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+      matrix: ${{ fromJSON(needs.check.outputs.native_test_matrix) }}
     env:
+      META_LANGUAGE_AUTOMATED_TRANSLATION: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
       META_LANGUAGE_SHARD_PROFILE: test
       META_LANGUAGE_SHARD_PLATFORM: ${{ matrix.os }}
       META_LANGUAGE_SHARD_SUITE: ${{ matrix.logical_suite || matrix.suite }}
@@ -1032,7 +720,8 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        # Match the versioned native behavior assertions in ci.yml.
+        uses: dtolnay/rust-toolchain@1.99.0
 
       - name: Setup Node.js for translated JavaScript tests
         uses: actions/setup-node@v7
@@ -1131,9 +820,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             rust/target
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-test-1.99.0-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-test-
+            ${{ runner.os }}-cargo-test-1.99.0-
 
       # Tests and doc tests run through the cleanup wrapper; examples are
       # only checked, not linked, so the target stays small.
@@ -1172,10 +861,25 @@ jobs:
         env:
           SUITE_FILTERS: ${{ matrix.filters }}
         # The filters are word-split on purpose: they are separate arguments.
-        run: node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --tests --verbose --config 'profile.test.package.meta-language.opt-level=3' --config 'profile.test.package.meta-language.debug-assertions=true' --config 'profile.test.package.meta-language.overflow-checks=true' -- $SUITE_FILTERS
+        run: |
+          if [ "$META_LANGUAGE_AUTOMATED_TRANSLATION" = false ]; then
+            export ISSUE_195_COMMIT="$(git rev-parse HEAD)"
+            mkdir -p "$GITHUB_WORKSPACE/issue-195-results"
+            export ISSUE_195_OBSERVATION_FILE="$GITHUB_WORKSPACE/issue-195-results/rust-test-observations.lino"
+          fi
+          node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --tests --verbose --config 'profile.test.package.meta-language.opt-level=3' --config 'profile.test.package.meta-language.debug-assertions=true' --config 'profile.test.package.meta-language.overflow-checks=true' -- $SUITE_FILTERS
+
+      - name: Retain scoped Rust assertions while translation is paused
+        if: ${{ !cancelled() && env.META_LANGUAGE_AUTOMATED_TRANSLATION != 'true' && hashFiles('issue-195-results/rust-test-observations.lino') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-245-rust-${{ matrix.os }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
+          path: issue-195-results/rust-test-observations.lino
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Run complete Rust text value source observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         env:
           CI: 'true'
@@ -1183,7 +887,7 @@ jobs:
         run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/rust-text-value-projection/native-observations.test.mjs
 
       - name: Retain complete Rust text value source observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: rust-text-value-projection-native-observations-${{ github.sha }}
@@ -1192,7 +896,7 @@ jobs:
           retention-days: 7
 
       - name: Run complete Rust raw binding source observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         env:
           CI: 'true'
@@ -1200,7 +904,7 @@ jobs:
         run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/rust-raw-binding-identifiers/native-observations.test.mjs
 
       - name: Retain complete Rust raw binding source observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: rust-raw-binding-identifiers-native-observations-${{ github.sha }}
@@ -1209,7 +913,7 @@ jobs:
           retention-days: 7
 
       - name: Run complete translated Rust text certificate observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         env:
           CI: 'true'
@@ -1217,7 +921,7 @@ jobs:
         run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/rust-text-certificate/native-observations.test.mjs
 
       - name: Retain complete translated Rust text certificate observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: rust-text-certificate-native-observations-${{ github.sha }}
@@ -1226,7 +930,7 @@ jobs:
           retention-days: 7
 
       - name: Run complete Rust raw binding rule observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         env:
           CI: 'true'
@@ -1234,7 +938,7 @@ jobs:
         run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/rust-raw-binding-certificate-adapter/native-observations.test.mjs
 
       - name: Retain complete Rust raw binding rule observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: rust-raw-binding-rules-native-observations-${{ github.sha }}
@@ -1243,7 +947,7 @@ jobs:
           retention-days: 7
 
       - name: Run complete Rust text certificate library observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         env:
           CI: 'true'
@@ -1251,7 +955,7 @@ jobs:
         run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/rust-text-certificate-library/native-observations.test.mjs
 
       - name: Retain complete Rust text certificate library observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: rust-text-certificate-library-native-observations-${{ github.sha }}
@@ -1260,7 +964,7 @@ jobs:
           retention-days: 7
 
       - name: Run complete original link identity observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         env:
           CI: 'true'
@@ -1268,7 +972,7 @@ jobs:
         run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/original-link-identity/native-observations.test.mjs
 
       - name: Retain complete original link identity observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: original-link-identity-native-observations-${{ github.sha }}
@@ -1277,7 +981,7 @@ jobs:
           retention-days: 7
 
       - name: Run complete original link symbol observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         env:
           CI: 'true'
@@ -1285,7 +989,7 @@ jobs:
         run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/original-link-symbol-projection/native-observations.test.mjs
 
       - name: Retain complete original link symbol observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: original-link-symbol-native-observations-${{ github.sha }}
@@ -1294,7 +998,7 @@ jobs:
           retention-days: 7
 
       - name: Run complete binary metadata buffer candidate observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         env:
           CI: 'true'
@@ -1302,7 +1006,7 @@ jobs:
         run: node scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 experiments/binary-metadata-buffer/native-observations.test.mjs
 
       - name: Retain complete binary metadata buffer candidate observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: binary-metadata-buffer-native-observations-${{ github.sha }}
@@ -1311,7 +1015,7 @@ jobs:
           retention-days: 7
 
       - name: Run complete original link table observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         env:
           CI: 'true'
@@ -1319,7 +1023,7 @@ jobs:
         run: node scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 experiments/original-link-complete-table-projection/native-observations.test.mjs
 
       - name: Retain complete original link table observations
-        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: original-link-complete-table-native-observations-${{ github.sha }}
@@ -1352,14 +1056,14 @@ jobs:
           retention-days: 30
 
       - name: Seal complete native partition results
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         env:
           META_LANGUAGE_SHARD_RESULT: ${{ job.status }}
         run: node js/scripts/rust-test-shards.mjs --finish
 
       - name: Retain TypeScript graph native observations
-        if: ${{ !cancelled() && hashFiles('issue-195-artifacts/typescript-typed-graph-native/**') != '' }}
+        if: ${{ !cancelled() && hashFiles('issue-195-artifacts/typescript-typed-graph-native/**') != '' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: typescript-typed-graph-test-${{ matrix.os }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
@@ -1370,7 +1074,7 @@ jobs:
       - name: Retain authenticated native partition
         id: native-partition-upload
         continue-on-error: true
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: rust-physical-test-${{ matrix.os }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
@@ -1379,7 +1083,7 @@ jobs:
           retention-days: 30
 
       - name: Retry authenticated native partition upload
-        if: ${{ !cancelled() && steps.native-partition-upload.outcome == 'failure' }}
+        if: ${{ !cancelled() && steps.native-partition-upload.outcome == 'failure' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/upload-artifact@v7
         with:
           name: rust-physical-test-${{ matrix.os }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
@@ -1407,6 +1111,7 @@ jobs:
       cancel-in-progress: true
     needs: [detect-changes, changelog, cargo-lock, check]
     if: |
+      (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') &&
       !cancelled() &&
       needs.cargo-lock.result == 'success' &&
       needs.check.result == 'success' &&
@@ -1423,7 +1128,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.99.0
 
       - name: Setup Node.js for raw source observations
         uses: actions/setup-node@v7
@@ -1484,6 +1189,7 @@ jobs:
       run:
         working-directory: rust
     if: |
+      (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') &&
       !cancelled() && needs.cargo-lock.result == 'success' && needs.check.result == 'success' && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
@@ -1582,7 +1288,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.99.0
         with:
           components: llvm-tools-preview
 

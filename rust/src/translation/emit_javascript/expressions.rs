@@ -107,15 +107,15 @@ impl JavaScriptEmitter<'_> {
                 unreachable!("only the Lean and Rocq emitters thread output")
             }
             Node::Call { func, args } => {
+                use crate::translation::external_emission_rules::{
+                    ml_string::Text, render_java_script_external_call,
+                };
                 if let Some(external) = self.program.external(func) {
                     let kind = match external {
                         crate::translation::surface::External::Function { .. } => "fn",
                         crate::translation::surface::External::Constant { .. } => "const",
                     };
                     let args = self.exprs(args)?.join(", ");
-                    use crate::translation::external_emission_rules::{
-                        ml_string::Text, render_java_script_external_call,
-                    };
                     let rendered = render_java_script_external_call(
                         &Text::from_text(kind),
                         &Text::from_text(func),

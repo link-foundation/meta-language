@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
+import {restoreVerificationPauseSource} from '../../experiments/issue-245/verification-pause-history.mjs';
 import {readNodeRuntimeComparison} from '../scripts/dependency-node-runtime.mjs';
 import {collectDependencies,ownStatus} from '../scripts/dependency-inventory.mjs';
 import {readProjectData,serializeProjectData} from '../scripts/project-data.mjs';
@@ -29,7 +30,7 @@ test('one-source Node reconciliation retains every unrelated audit fact and exac
     assert.equal(createHash('sha256').update(source.sourceText).digest('hex'),source.sha256);
   }
   const collector=history.sources.find(row=>row.file==='js/scripts/dependency-inventory.mjs');
-  const actual=readFileSync(new URL('../../'+collector.file,import.meta.url),'utf8');
+  const actual=restoreVerificationPauseSource(collector.file,readFileSync(new URL('../../'+collector.file,import.meta.url),'utf8'));
   assert.equal(actual,collector.sourceText.replace(history.before,history.after)+history.insertion);
   assert.equal(actual.replace(history.insertion,'').replace(history.after,history.before),collector.sourceText);
   const original=history.sources.find(row=>row.file==='parity/dependency-inventory.lino');
@@ -74,7 +75,8 @@ test('original Node dependency test discovery preserves all draft source and the
   const registrationHistory=readOwnCodebaseTestRegistrationHistory();
   assert.equal(registrationHistory.revision,'52132727d7ce158762a4499b7032a42a9f16f3c3');
   for(const row of registrationHistory.sources){
-    const current=readFileSync(new URL('../../'+row.file,import.meta.url));
+    const live=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');
+    const current=Buffer.from(restoreIssue245SourceSuccessor(row.file,restoreVerificationPauseSource(row.file,live)));
     assert.equal(current.length,row.current.bytes);
     assert.equal(createHash('sha256').update(current).digest('hex'),row.current.sha256);
   }
@@ -92,6 +94,7 @@ import {readNodeDependencyGeneratorRegistrationHistory,restoreNodeDependencyGene
 import {checkInventory} from '../scripts/dependency-inventory.mjs';
 import {readNodeDependencyInventoryOriginalView} from '../scripts/dependency-inventory-append-history.mjs';
 import {readOwnCodebaseTestRegistrationHistory,restoreOwnCodebaseTestRegistrationClassifier} from '../scripts/own-codebase-test-registration-history.mjs';
+import {restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 
 test('the new source placement generator is independently inventoried with every preceding entry intact',()=>{
   const history=readNodeDependencyGeneratorRegistrationHistory();

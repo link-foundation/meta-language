@@ -1,18 +1,23 @@
 //! Trigram language identification shared with the JavaScript runtime.
 //!
 //! This is franc's algorithm over `data/language-trigrams.lino`, which
-//! `js/scripts/build-language-identification.mjs` generates from franc-min
-//! together with the JavaScript copy. Both runtimes count Unicode scalar
-//! values, so they reach the same verdict for the same text.
+//! `js/scripts/build-language-identification.mjs` generates from franc-min,
+//! extra franc Cyrillic models, and CLDR alphabets. Both runtimes count
+//! Unicode scalar values and reach the same verdict for the same text.
 
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::OnceLock;
 
 use serde_json::Value;
 
+mod confidence;
+
 const LANGUAGE_TRIGRAMS_LINKS: &str = include_str!("data/language-trigrams.lino");
 const MAX_LENGTH: usize = 2048;
 const MAX_DIFFERENCE: usize = 300;
+const MINIMUM_LETTERS: usize = 3;
+const DEFAULT_CONFIDENCE: f64 = 0.06;
 
 /// Engine term recorded on identification annotations.
 pub const LANGUAGE_IDENTIFIER_TERM: &str = "identifier:trigram";
@@ -27,6 +32,8 @@ type LanguageModel = (String, HashMap<String, usize>);
 
 struct TrigramData {
     languages: HashMap<String, &'static str>,
+    cyrillic_languages: HashMap<String, String>,
+    cyrillic_alphabets: HashMap<String, String>,
     scripts: Vec<Script>,
     models: HashMap<String, Vec<LanguageModel>>,
 }
@@ -100,9 +107,250 @@ fn parse_trigram_data() -> TrigramData {
         .collect();
     TrigramData {
         languages,
+        cyrillic_languages: read_string_map(&value["cyrillicLanguages"]),
+        cyrillic_alphabets: read_string_map(&value["cyrillicAlphabets"]),
         scripts,
         models,
     }
+}
+
+fn read_string_map(value: &Value) -> HashMap<String, String> {
+    value
+        .as_object()
+        .expect("language data string map")
+        .iter()
+        .map(|(key, value)| {
+            (
+                key.clone(),
+                value.as_str().expect("language data string").to_owned(),
+            )
+        })
+        .collect()
+}
+
+/// A language and its evidence score between zero and one.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct LanguageIdentificationCandidate {
+    pub language: &'static str,
+    pub confidence: f64,
+}
+
+/// A continuous script region with half-open UTF-8 byte offsets.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LanguageIdentificationSpan {
+    pub script: &'static str,
+    pub start: usize,
+    pub end: usize,
+    pub language: Option<&'static str>,
+    pub candidates: Vec<LanguageIdentificationCandidate>,
+}
+
+/// Ranked candidates and script spans for the examined part of the input.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LanguageIdentification {
+    pub language: Option<&'static str>,
+    pub candidates: Vec<LanguageIdentificationCandidate>,
+    pub spans: Vec<LanguageIdentificationSpan>,
+}
+
+/// The confidence threshold was not a finite number between zero and one.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct InvalidLanguageConfidence;
+
+impl fmt::Display for InvalidLanguageConfidence {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("minimum confidence must be between zero and one")
+    }
+}
+
+impl std::error::Error for InvalidLanguageConfidence {}
+
+#[derive(Default)]
+struct ScriptRun {
+    script: &'static str,
+    start: usize,
+    end: usize,
+    characters: Vec<char>,
+    letters: usize,
+}
+
+#[derive(Default)]
+struct LanguageEvidence {
+    spans: Vec<LanguageIdentificationSpan>,
+    scores: Vec<LanguageIdentificationCandidate>,
+    letters: usize,
+}
+
+/// Ranks language evidence globally and within each continuous script span.
+/// The default threshold is used when `minimum_confidence` is `None`.
+///
+/// # Errors
+///
+/// Returns an error when the threshold is outside the closed interval from zero to one.
+pub fn rank_language_identification(
+    text: &str,
+    minimum_confidence: Option<f64>,
+) -> Result<LanguageIdentification, InvalidLanguageConfidence> {
+    let threshold = minimum_confidence.unwrap_or(DEFAULT_CONFIDENCE);
+    if !(0.0..=1.0).contains(&threshold) {
+        return Err(InvalidLanguageConfidence);
+    }
+
+    let data = trigram_data();
+    let mut evidence = LanguageEvidence::default();
+    let mut run: Option<ScriptRun> = None;
+    for (start, character) in text.char_indices().take(MAX_LENGTH) {
+        let script = data
+            .scripts
+            .iter()
+            .find(|script| in_ranges(u32::from(character), &script.ranges));
+        let Some(script) = script else {
+            if let Some(run) = &mut run
+                && run.characters.last() != Some(&' ')
+            {
+                run.characters.push(' ');
+            }
+            continue;
+        };
+        if let Some(current) = &run
+            && current.script != script.name
+        {
+            evidence.record(data, run.take().expect("current script span"), threshold);
+        }
+        let current = run.get_or_insert_with(|| ScriptRun {
+            script: &script.name,
+            start,
+            ..ScriptRun::default()
+        });
+        current.characters.push(character);
+        current.end = start + character.len_utf8();
+        current.letters += 1;
+    }
+    if let Some(current) = run {
+        evidence.record(data, current, threshold);
+    }
+    for candidate in &mut evidence.scores {
+        candidate.confidence /= score_number(evidence.letters);
+    }
+    sort_candidates(&mut evidence.scores);
+    Ok(LanguageIdentification {
+        language: select_language(&evidence.scores, threshold),
+        candidates: evidence.scores,
+        spans: evidence.spans,
+    })
+}
+
+impl LanguageEvidence {
+    fn record(&mut self, data: &'static TrigramData, mut run: ScriptRun, threshold: f64) {
+        if run.characters.last() == Some(&' ') {
+            run.characters.pop();
+        }
+        let candidates = rank_script(data, &run);
+        for candidate in &candidates {
+            let weighted = candidate.confidence * score_number(run.letters);
+            if let Some(total) = self
+                .scores
+                .iter_mut()
+                .find(|total| total.language == candidate.language)
+            {
+                total.confidence += weighted;
+            } else {
+                self.scores.push(LanguageIdentificationCandidate {
+                    confidence: weighted,
+                    ..*candidate
+                });
+            }
+        }
+        self.letters += run.letters;
+        self.spans.push(LanguageIdentificationSpan {
+            script: run.script,
+            start: run.start,
+            end: run.end,
+            language: select_language(&candidates, threshold),
+            candidates,
+        });
+    }
+}
+
+fn score_number(value: usize) -> f64 {
+    f64::from(u32::try_from(value).expect("bounded language evidence"))
+}
+
+fn rank_script(
+    data: &'static TrigramData,
+    run: &ScriptRun,
+) -> Vec<LanguageIdentificationCandidate> {
+    if run.letters < MINIMUM_LETTERS {
+        return Vec::new();
+    }
+    let Some(models) = data.models.get(run.script) else {
+        return data
+            .languages
+            .get(run.script)
+            .copied()
+            .map_or_else(Vec::new, |language| {
+                vec![LanguageIdentificationCandidate {
+                    language,
+                    confidence: 1.0,
+                }]
+            });
+    };
+
+    let trigrams = trigram_counts(&run.characters);
+    let maximum_distance = trigrams.len() * MAX_DIFFERENCE;
+    let cyrillic_letters = if run.script == "Cyrillic" {
+        clean_characters(&run.characters)
+    } else {
+        Vec::new()
+    };
+    let mut candidates = Vec::new();
+    for (code, model) in models {
+        if let Some(alphabet) = data.cyrillic_alphabets.get(code)
+            && cyrillic_letters
+                .iter()
+                .any(|&character| character != ' ' && !alphabet.contains(character))
+        {
+            continue;
+        }
+        let distance = trigram_distance(&trigrams, model);
+        if distance < maximum_distance {
+            let language = data
+                .languages
+                .get(code)
+                .copied()
+                .or_else(|| data.cyrillic_languages.get(code).map(String::as_str))
+                .expect("named language model");
+            candidates.push(LanguageIdentificationCandidate {
+                language,
+                confidence: confidence::trigram_confidence(
+                    score_number(distance),
+                    score_number(maximum_distance),
+                    score_number(run.letters),
+                ),
+            });
+        }
+    }
+    sort_candidates(&mut candidates);
+    candidates
+}
+
+fn sort_candidates(candidates: &mut [LanguageIdentificationCandidate]) {
+    candidates.sort_by(|left, right| right.confidence.total_cmp(&left.confidence));
+}
+
+fn select_language(
+    candidates: &[LanguageIdentificationCandidate],
+    threshold: f64,
+) -> Option<&'static str> {
+    let first = candidates.first()?;
+    if first.confidence < threshold
+        || candidates.get(1).is_some_and(|second| {
+            !confidence::minimum_language_lead(first.confidence, second.confidence)
+        })
+    {
+        return None;
+    }
+    Some(first.language)
 }
 
 /// Returns the canonical name of the supported natural language the text is
@@ -123,6 +371,7 @@ pub fn identify_language(text: &str) -> Option<&'static str> {
     let trigrams = trigram_counts(&characters);
     let (code, distance) = models
         .iter()
+        .filter(|(code, _)| data.languages.contains_key(code))
         .map(|(code, model)| (code, trigram_distance(&trigrams, model)))
         .fold(
             None,

@@ -2,7 +2,7 @@ import { Parser as WebTreeSitterParser } from 'web-tree-sitter';
 import './tree-sitter-runtime.js';
 
 import { isToken } from './builtin-grammar.js';
-import { canonicalLanguageName, languageEntry } from './language-catalog.js';
+import { canonicalLanguageName, languageEntry, LANGUAGE_CATALOG } from './language-catalog.js';
 import { parseLinoCst } from './lino-grammar.js';
 import { parsePdfCst } from './pdf-grammar.js';
 import { parseNaturalLanguageCst, parsePlainTextCst } from './text-grammar.js';
@@ -11,7 +11,7 @@ import { ByteRange, LinkFlags, Point, SourceSpan } from './primitives.js';
 import { loadGrammarLanguage } from './grammar-tiering.js';
 import { isNativeGrammar, nativeAdapter, parseNative } from './native-grammar-parser.js';
 import { sourceBoundaries } from './source-boundaries.js';
-import { readCompressedGrammarAsset } from './grammar-asset-path.js';
+import { hasCompressedGrammarAsset, readCompressedGrammarAsset } from './grammar-asset-path.js';
 import { readRuntimeProjectData } from './project-data-loader.js';
 
 const encoder = new TextEncoder();
@@ -36,6 +36,10 @@ export const GRAMMAR_LOCK = Object.freeze(
 // grammar-tiering.js for how grammar code is compiled.
 const GRAMMARS = new Map();
 
+function grammarAssetPath(id) {
+  return `js/src/vendor/grammars/${id}.wasm.gz`;
+}
+
 // The oracle grammars of the languages a native grammar parses are development
 // files the package does not ship, so their ids load nothing.
 function grammarLanguage(id) {
@@ -43,7 +47,7 @@ function grammarLanguage(id) {
   let language = GRAMMARS.get(id);
   if (!language) {
     const binary = readCompressedGrammarAsset(
-      `js/src/vendor/grammars/${id}.wasm.gz`,
+      grammarAssetPath(id),
       new URL(`${id}.wasm.gz`, GRAMMAR_DIRECTORY),
       GRAMMAR_LOCK.grammars[id].wasmSha256,
     );
@@ -51,6 +55,22 @@ function grammarLanguage(id) {
     GRAMMARS.set(id, language);
   }
   return language;
+}
+
+/** Availability of each catalog language's standalone default parser. */
+export function languageParserAvailability() {
+  return LANGUAGE_CATALOG.languages.map(({ name, grammars }) => {
+    const missingGrammarAssets = [];
+    for (const { id } of grammars) {
+      const pin = Object.hasOwn(GRAMMAR_LOCK.grammars, id) && GRAMMAR_LOCK.grammars[id];
+      if (!pin || pin.oracle || GRAMMARS.has(id)) continue;
+      const path = grammarAssetPath(id);
+      if (!hasCompressedGrammarAsset(path, new URL(`${id}.wasm.gz`, GRAMMAR_DIRECTORY))) {
+        missingGrammarAssets.push(path);
+      }
+    }
+    return { language: name, available: missingGrammarAssets.length === 0, missingGrammarAssets };
+  });
 }
 
 /** Ids of the grammars this process has loaded so far, in load order. */
@@ -95,9 +115,9 @@ export function parseProgrammingLanguage(text, language) {
   }
 
   const parsed = parseGrammarCst(text, canonical);
-  if (text.includes('\0')) {
-    // NUL is prohibited input: the root reports that it contains an error
-    // without relabeling the grammar's own nodes as ERROR.
+  if (canonical !== 'PDF' && text.includes('\0')) {
+    // The PDF grammar validates NUL in context. For other grammars the root
+    // reports prohibited NUL without relabeling the grammar's own nodes.
     parsed.tree.flags = new LinkFlags({ ...parsed.tree.flags, hasError: true });
     const retained = parsed.tokens.map(({ text: token }) => token).join('');
     if (text.startsWith(retained) && retained.length < text.length) {
@@ -195,9 +215,10 @@ function parseGrammarCst(text, canonical) {
   const builtin = { LiNo: parseLinoCst, PDF: parsePdfCst, txt: parsePlainTextCst }[canonical]
     ?? (languageEntry(canonical).family === 'natural' ? parseNaturalLanguageCst : undefined);
   if (builtin) {
+    const originalTree = builtin(text);
     const tokens = [];
-    const tree = builtinGrammarNode(builtin(text), text, boundaries, tokens);
-    return { canonical, rootTerm: tree.term, tokens, tree };
+    const tree = builtinGrammarNode(originalTree, text, boundaries, tokens);
+    return { canonical, rootTerm: tree.term, tokens, tree, originalTree: canonical === 'PDF' ? originalTree : undefined };
   }
   const id = languageEntry(canonical).grammars[0]?.id;
   if (id !== undefined && isNativeGrammar(id)) {
@@ -238,6 +259,12 @@ function parseGrammarCst(text, canonical) {
   pushGapNodes(trailing, adapter.endOffset(root), text.length, text, boundaries, tokens);
   parsed.delete();
   return publicRoot({ canonical, tokens, tree, leading, trailing }, text, boundaries);
+}
+
+export function parsedPdfContent(source, originalTree) {
+  const tokens = [];
+  const tree = builtinGrammarNode(originalTree, source, sourceBoundaries(source), tokens);
+  return { canonical: 'PDF', rootTerm: tree.term, tokens, tree };
 }
 
 // Preserves the original public Lean root while retaining the grammar's

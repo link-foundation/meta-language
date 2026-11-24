@@ -67,27 +67,22 @@ pub fn ml_read_declaration_deferred_binding_loop61(
                                         }
                                     }
                                 }
+                            } else if (part == "statement_block") && (field == "body") {
                                 {
-                                    self::MlReadDeclarationDeferredBindingLoop61Result::MlReadDeclarationDeferredBindingLoop61Return(Vec::<f64>::new())
-                                }
-                            } else {
-                                if (part == "statement_block") && (field == "body") {
+                                    let method_body_2 = method_body + 1f64;
                                     {
-                                        let method_body_2 = method_body + 1f64;
+                                        let ml_index52_4 =
+                                            ml_index52.add(&self::ml::Big::from_i128(1));
                                         {
-                                            let ml_index52_4 =
-                                                ml_index52.add(&self::ml::Big::from_i128(1));
-                                            {
-                                                (method_body, ml_index52) =
-                                                    (method_body_2, ml_index52_4);
-                                                continue;
-                                            }
+                                            (method_body, ml_index52) =
+                                                (method_body_2, ml_index52_4);
+                                            continue;
                                         }
                                     }
                                 }
-                                {
-                                    self::MlReadDeclarationDeferredBindingLoop61Result::MlReadDeclarationDeferredBindingLoop61Return(Vec::<f64>::new())
-                                }
+                            }
+                            {
+                                self::MlReadDeclarationDeferredBindingLoop61Result::MlReadDeclarationDeferredBindingLoop61Return(Vec::<f64>::new())
                             }
                         }
                     }
@@ -153,7 +148,7 @@ pub fn ml_read_declaration_deferred_binding_loop60(
                                                             } else {
                                                                 {
                                                                     let text = self::read_required_text_fact(texts, method_name_2);
-                                                                    if ((text.encode_utf16().count() as f64) == 0f64) || text.contains("\\") {
+                                                                    if ((text.encode_utf16().count() as f64) == 0f64) || text.contains('\\') {
                                                                         self::MlReadDeclarationDeferredBindingLoop60Result::MlReadDeclarationDeferredBindingLoop60Return(Vec::<f64>::new())
                                                                     } else {
                                                                         {

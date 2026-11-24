@@ -8,6 +8,7 @@ use super::structural::{
     join_choice, join_sequence, lower_repeat, negated_lookahead_set, repeat_bounds, wrap,
 };
 use super::{EmitReport, GrammarEmitError, finish_lines, unsupported_error};
+use crate::grammar::feature::FeatureExpr;
 use crate::grammar::feature_runtime::lexical_kernel;
 use crate::grammar::{
     CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind, import_antlr,
@@ -339,7 +340,16 @@ impl<'grammar> AntlrEmitter<'grammar> {
             GrammarExpr::Not(inner) => self.render_not(inner)?,
             GrammarExpr::Capture { label, expr } => self.render_capture(label.as_deref(), expr)?,
             GrammarExpr::Feature(feature) => {
-                return Err(unsupported_error(GrammarFormat::Antlr, feature.head()));
+                if self.grammar.source_format() == Some(GrammarFormat::Lark)
+                    && let FeatureExpr::Form(form) = feature.as_ref()
+                    && form.head == "token"
+                    && let Some(item) = form.expression("item")
+                {
+                    self.note("dropped the Lark regex token boundary");
+                    self.render(item)?
+                } else {
+                    return Err(unsupported_error(GrammarFormat::Antlr, feature.head()));
+                }
             }
         })
     }

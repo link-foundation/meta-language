@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { buildIssue195Manifest, evaluateIssue195Acceptance } from '../scripts/issue-195-acceptance-lib.mjs';
+import { DOCUMENT_TASK_CASES } from '../scripts/issue-195-delivery.mjs';
 import {
   buildEvidencePlan,
   evidenceGroupFor,
@@ -47,7 +48,10 @@ test('evidence plan covers every published-artifact verification exactly once', 
   const observed = plan.flatMap(({ cells }) => cells.map(({ cell }) => cell.testId));
 
   assert.deepEqual(observed.toSorted(), expected.toSorted());
-  assert.equal(observed.length, 8);
+  const taskIds = DOCUMENT_TASK_CASES.map(([id]) => `${id.toLowerCase()}-javascript-release-delivery`);
+  const npmIds = plan.find(({ group }) => group === 'delivery:npm').cells.map(({ cell }) => cell.testId);
+  assert.ok(taskIds.every(id => npmIds.includes(id)));
+  assert.equal(observed.filter(id => !taskIds.includes(id)).length, 8);
   assert.equal(new Set(observed).size, observed.length);
   assert.deepEqual(
     plan.map(({ group }) => group),

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -22,6 +23,8 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 import { compileRustTranslation } from './support/self-translation-rust.js';
 import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 import { selectVersionedAssertion } from '../scripts/assertion-version-ranges.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
+import { partitionMeasuredWorkloads } from '../scripts/test-groups.mjs';
 import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
@@ -389,18 +392,50 @@ test('languages are named by name or extension, and others are refused', () => {
   assert.throws(() => selfTranslate('x\n', 'python', 'rust'), SelfTranslationError);
 });
 
-test('the report splits the modules into shards of about the same size', () => {
+test('the report balances complete module shards by measured cost and falls back to byte size', () => {
   const script = path.join(root, 'js/scripts/generate-self-translation-report.mjs');
   const list = (...args) => execFileSync(process.execPath, [script, '--list', ...args], { encoding: 'utf8' }).trim().split('\n');
   const all = list();
   const shards = [1, 2, 3].map((shard) => list('--shard', `${shard}/3`));
   // Every module is in exactly one shard.
   assert.deepEqual(shards.flat().sort(), [...all].sort());
-  const bytes = (modules) => modules.reduce((sum, module) => sum + readFileSync(path.join(root, module)).length, 0);
-  const largest = Math.max(...all.map((module) => bytes([module])));
-  const sizes = shards.map(bytes);
-  // Largest first to the lightest shard keeps the shards within one module of each other.
-  assert.ok(Math.max(...sizes) - Math.min(...sizes) <= largest, String(sizes));
+  const costs = readProjectData(path.join(root, 'parity/fixtures/ci-39615628279-workload-costs.lino'));
+  const measured = new Map(costs.entries.map((entry) => [entry.file, entry]));
+  for (const run of [45076523061, 45104457483, 45215384144]) {
+    const report = readProjectData(path.join(root, `parity/fixtures/ci-${run}-report-workload-costs.lino`));
+    for (const entry of report.entries) measured.set(entry.file, entry);
+  }
+  const rates = [...measured.values()].map((entry) => entry.milliseconds / entry.bytes).sort((a, b) => a - b);
+  const rate = rates[Math.floor(rates.length / 2)];
+  const inputs = new Map(all.map((module) => [module, readFileSync(path.join(root, module))]));
+  const weighted = (module) => {
+    const source = inputs.get(module);
+    const entry = measured.get(module);
+    if (entry?.bytes === source.length && entry.sha256 === createHash('sha256').update(source).digest('hex')) {
+      return entry.milliseconds;
+    }
+    return Math.max(1, Math.ceil(source.length * rate));
+  };
+  function assertBalanced(partitions, weight) {
+    const largest = Math.max(...all.map(weight));
+    const loads = partitions.map((modules) => modules.reduce((sum, module) => sum + weight(module), 0));
+    assert.ok(Math.max(...loads) - Math.min(...loads) <= largest, String(loads));
+  }
+  assertBalanced(shards, weighted);
+  assert.deepEqual(shards, partitionMeasuredWorkloads(all, 3, {
+    readSource: (module) => inputs.get(module),
+    costs: { ...costs, entries: [...measured.values()] },
+  }));
+
+  const byteShards = partitionMeasuredWorkloads(all, 3, {
+    readSource: (module) => inputs.get(module),
+    costs: {
+      ...costs,
+      entries: [{ file: 'unselected-workload', bytes: 1, milliseconds: 1, sha256: '0'.repeat(64) }],
+    },
+  });
+  assert.deepEqual(byteShards.flat().sort(), [...all].sort());
+  assertBalanced(byteShards, (module) => inputs.get(module).length);
   assert.deepEqual(list('--modules', 'language-support.js,self-translation.js', '--shard', '2/2').length, 1);
   assert.throws(() => list('--shard', '3/2'), /--shard takes K\/N/u);
 });

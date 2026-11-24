@@ -8,6 +8,7 @@ import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { readSourceTextRustBlock } from './source-text-byte-library-style.mjs';
 import { tokenize } from '../src/translation/lexer.js';
 import { readAsciiTextPredicateLibraryStyles } from './ascii-text-predicate-library-style.mjs';
+import { larkEmitterSource, restoreIssue245Source } from '../../experiments/issue-245/source-history.mjs';
 
 const root = new URL('../../', import.meta.url);
 const sourcePath = 'js/src/translation/ascii-text-predicate-rules.js';
@@ -18,7 +19,7 @@ const decisions = ['acceptAsciiCharacterMethod', 'acceptRustAsciiCharacterOwner'
   'planRustAsciiTextQuery', 'planRustAsciiCharacterCallback'];
 const actualOwners = [
   ['rust/src/grammar/emit/tree_sitter_json.rs', 'is_identifier'],
-  ['rust/src/grammar/emit/lark.rs', 'is_terminal_name'],
+  [larkEmitterSource, 'is_terminal_name'],
 ];
 
 export function readAsciiTextPredicateSourceClosure() {
@@ -45,8 +46,11 @@ export function readAsciiTextPredicateSourceClosure() {
 }
 
 function actualDeclaration(path, name) {
-  const context = readFileSync(new URL(path, root), 'utf8');
+  const current = readFileSync(new URL(path, root), 'utf8');
+  const context = path === larkEmitterSource ? restoreIssue245Source(path, current) : current;
   const declaration = readSourceTextRustBlock(context, 'fn', name);
+  assert.equal(readSourceTextRustBlock(current, 'fn', name), declaration,
+    'the live grammar emitter retains the complete archived predicate');
   assert.ok(declaration.startsWith('fn ' + name + '('), 'retain the original ordinary function and all its parameter/body syntax');
   const tokens = tokenize(context, 'Rust').tokens;
   const found = tokens.filter((token, index) => token.value === 'fn' && tokens[index + 1]?.value === name);

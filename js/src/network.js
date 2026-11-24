@@ -1,7 +1,9 @@
 
 import {
+  languageParserAvailability,
   parseEmbeddedProgrammingLanguage,
   parseProgrammingLanguage,
+  parsedPdfContent,
 } from './programming-language-parser.js';
 import {
   ByteRange,
@@ -45,6 +47,12 @@ import {
 } from './translation/embedded-region-rules.js';
 import { acceptNetworkProjection, acceptNetworkProjectionLink } from './network-projection-rules.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
+import { projectVisibleDocumentText, readPackageRelationships } from './visible-document-text.js';
+import { hasZipHeader, readBinaryString, readWordprocessingPackage } from './open-packaging-conventions.js';
+import { binaryStringCoordinates } from './binary-string-source.js';
+import { readPdfDocument } from './pdf-document.js';
+import { parsePdfCst } from './pdf-grammar.js';
+import { sourceBoundaries } from './source-boundaries.js';
 import {
   CONCEPT_RECORDS,
   FORMER_CONCEPT_ID_VOCABULARY,
@@ -100,7 +108,27 @@ export class LinkNetwork {
   }
 
   static parse(text, language, configuration = ParseConfiguration.default()) {
+    if (canonicalLanguageName(language) === 'DOCX' && (text.startsWith('PK\x03\x04') || text.startsWith('PK\x05\x06'))) {
+      const network = new LinkNetwork();
+      network.insertTypedPoint(LinkType.Language, language);
+      const bytes = readBinaryString(text);
+      if (!bytes) {
+        const span = new SourceSpan(new ByteRange(0, encoder.encode(text).length));
+        network.insertSourceToken(language, text, span);
+        network.insertSyntaxNode(language, 'ERROR', [], { span, flags: LinkFlags.error() });
+        return network;
+      }
+      const coordinates = binaryStringCoordinates(bytes);
+      network.insertSourceToken(language, text, coordinates(0, bytes.length));
+      network._insertWordprocessingPackage(bytes, language, coordinates, configuration, 'binary-string');
+      return network;
+    }
     return LinkNetwork._parseWithLinks(text, language, configuration).network;
+  }
+
+  /** Lists the availability of standalone default parsers in catalog order. */
+  static languageParserAvailability() {
+    return languageParserAvailability();
   }
 
   /**
@@ -117,6 +145,15 @@ export class LinkNetwork {
     const network = new LinkNetwork();
     const { root: document } = network._insertProgrammingLanguage(parsed, language, configuration);
     network._attachEmbeddedRegions(document, text, language, configuration, parsed);
+    if (parsed.originalTree && text.includes('stream')) {
+      const coordinates = sourceBoundaries(text);
+      const span = (start, end) => {
+        const from = coordinates.get(start);
+        const to = coordinates.get(end);
+        return new SourceSpan(new ByteRange(from.byte, to.byte), new Point(from.row, from.column), new Point(to.row, to.column));
+      };
+      network._insertPdfDerivedDocuments(document, text, parsed.originalTree, span, configuration, 'binary-string');
+    }
     annotateNaturalLanguage(network, document, text, language);
     const links = parsed.canonical === 'LiNo' ? insertLinoSemantics(network, text, language) : [];
     return { network, links };
@@ -129,7 +166,7 @@ export class LinkNetwork {
   }
 
   /** Stores arbitrary file bytes without requiring UTF-8 decoding. */
-  static parseBytes(bytes, format) {
+  static parseBytes(bytes, format, configuration = ParseConfiguration.default()) {
     const network = new LinkNetwork();
     network.insertTypedPoint(LinkType.Language, format);
     const source = Uint8Array.from(bytes);
@@ -144,7 +181,92 @@ export class LinkNetwork {
       const encoded = [...chunk].map((byte) => byte.toString(16).padStart(2, '0')).join('');
       network.insertSourceToken(format, `bytes:${encoded}`, span);
     }
+    const coordinates = (start, end) => new SourceSpan(new ByteRange(start, end), new Point(0, start), new Point(0, end));
+    const language = canonicalLanguageName(format);
+    if (language === 'DOCX' && hasZipHeader(source)) {
+      network._insertWordprocessingPackage(source, format, coordinates, configuration, 'bytes');
+    } else if (language === 'PDF' && source.length > 0) {
+      const text = Buffer.from(source).toString('latin1');
+      const tree = parsePdfCst(text, true);
+      const errors = [];
+      const pending = [tree];
+      while (pending.length) {
+        const node = pending.pop();
+        if (node.isError || node.isMissing) errors.push(network.insertSyntaxNode(format, node.term, [], {
+          span: coordinates(node.start, node.end), flags: node.isMissing ? LinkFlags.missing() : LinkFlags.error(),
+        }));
+        if (node.hasError) pending.push(...node.children);
+      }
+      const document = network.insertSyntaxNode(format, 'pdf_file', errors, {
+        span: coordinates(0, source.length), flags: new LinkFlags({ hasError: tree.hasError }),
+      });
+      network._insertPdfDerivedDocuments(document, text, tree, coordinates, configuration, 'bytes');
+    }
     return network;
+  }
+
+  _insertPdfDerivedDocuments(container, source, tree, coordinates, configuration, encoding) {
+    const { streams, textRuns, errors } = readPdfDocument(source, tree, configuration.decodeDocumentStreams !== false);
+    for (const { source, tree, filter, data } of streams) {
+      const child = new LinkNetwork();
+      child._insertProgrammingLanguage(parsedPdfContent(source, tree), 'PDF', configuration);
+      this._insertDerivedDocument(container, 'content_stream', 'PDF', coordinates(data.start, data.end),
+        encoding, filter, child);
+    }
+    for (const run of textRuns) {
+      this.insertLink([container], new LinkMetadata({ linkType: LinkType.Semantic,
+        term: run.separated ? 'PDF text line' : 'PDF text run', language: 'PDF',
+        span: coordinates(run.start, run.end), definition: run.text }));
+    }
+    for (const error of errors) {
+      this.insertLink([container], new LinkMetadata({ linkType: LinkType.Object, term: 'ERROR', language: 'PDF',
+        named: true, span: coordinates(error.start, error.end), definition: error.message, flags: LinkFlags.error() }));
+    }
+  }
+
+  _insertDerivedDocument(container, term, language, span, encoding, compression, network, clean = true) {
+    return this.insertLink([container], new LinkMetadata({ linkType: LinkType.Document, term,
+      language, named: true, span, flags: clean ? LinkFlags.clean() : LinkFlags.error(),
+      definition: `derived document\n${encoding}\n${compression}\n${network.toLino()}` }));
+  }
+
+  _insertWordprocessingPackage(bytes, language, coordinates, configuration, encoding) {
+    const { parts, errors } = readWordprocessingPackage(bytes, text =>
+      readPackageRelationships(LinkNetwork._parseWithLinks(text, 'DOCX', configuration).network, text));
+    const recovery = errors.map(diagnostic => {
+      const span = coordinates(diagnostic.offset, diagnostic.end ?? Math.min(bytes.length, diagnostic.offset + 1));
+      return this.insertLink([], new LinkMetadata({ linkType: LinkType.Syntax, term: 'ERROR', language,
+        named: true, span, definition: diagnostic.error, flags: LinkFlags.error() }));
+    });
+    const parsedParts = parts.map(part => {
+      const { network } = LinkNetwork._parseWithLinks(part.text, 'DOCX', configuration);
+      return { ...part, network, clean: network.verifyFullMatch().isClean() };
+    });
+    const hasError = recovery.length > 0 || parsedParts.some(part => !part.clean);
+    const container = this.insertSyntaxNode(language, 'docx_package', recovery, {
+      span: coordinates(0, bytes.length), flags: new LinkFlags({ hasError }),
+    });
+    for (const part of parsedParts) {
+      this._insertDerivedDocument(container, part.name, 'DOCX', coordinates(part.start, part.end),
+        encoding, part.compression, part.network, part.clean);
+    }
+  }
+
+  /** Returns decoded documents and their encoded source ranges. */
+  derivedDocuments() {
+    const documents = [];
+    for (const link of this.links()) {
+      const { linkType, term, language, span, definition } = link.metadata();
+      if (linkType !== LinkType.Document || !span || !definition?.startsWith('derived document\n')) continue;
+      const encodingEnd = definition.indexOf('\n', 'derived document\n'.length);
+      const compressionEnd = definition.indexOf('\n', encodingEnd + 1);
+      if (encodingEnd === -1 || compressionEnd === -1) continue;
+      const encoding = definition.slice('derived document\n'.length, encodingEnd);
+      const compression = definition.slice(encodingEnd + 1, compressionEnd);
+      documents.push({ name: term, language, sourceRange: span.byteRange, encoding, compression,
+        network: LinkNetwork.fromLino(definition.slice(compressionEnd + 1)) });
+    }
+    return documents;
   }
 
   static parseFluent(text, language, configuration = ParseConfiguration.default()) {
@@ -699,6 +821,15 @@ export class LinkNetwork {
     return reconstructed.join('');
   }
 
+  /** Returns document text and a map to the original UTF-8 source ranges. */
+  visibleText(options = {}) {
+    return projectVisibleDocumentText(this, options);
+  }
+
+  visible_text(options = {}) {
+    return this.visibleText(options);
+  }
+
   /** Returns mixed-language regions discovered and parsed into this network. */
   embeddedRegions() {
     return this.links()
@@ -762,14 +893,31 @@ export class LinkNetwork {
   }
 
   capturedText(id) {
-    const link = this.link(id);
-    if (!link) {
-      return '';
+    const active = new Set();
+    const pending = [{ id }];
+    const pieces = [];
+    while (pending.length > 0) {
+      const { id: current, leaving } = pending.pop();
+      const link = this.link(current);
+      if (!link) continue;
+      const key = idKey(current);
+      if (leaving) {
+        active.delete(key);
+        continue;
+      }
+      if (active.has(key)) continue;
+      if (link.metadata().linkType === LinkType.SourceToken) {
+        pieces.push(link.metadata().term ?? '');
+        continue;
+      }
+      active.add(key);
+      pending.push({ id: current, leaving: true });
+      const references = link.references();
+      for (let index = references.length - 1; index >= 0; index -= 1) {
+        pending.push({ id: references[index] });
+      }
     }
-    if (link.metadata().linkType === LinkType.SourceToken) {
-      return link.metadata().term ?? '';
-    }
-    return link.references().map((reference) => this.capturedText(reference)).join('');
+    return pieces.join('');
   }
 
   _allocateId() {

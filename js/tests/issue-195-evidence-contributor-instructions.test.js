@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {CONTRIBUTOR_INSTRUCTION_COVERAGE_FILE,checkContributorInstructionCoverage,
+  countContributorInstructionWords,readContributorInstructionUnits,
   verifyContributorInstructionCoverage} from '../scripts/contributor-instruction-coverage.mjs';
 import {generateContributorInstructionCoverage} from '../scripts/generate-contributor-instruction-coverage.mjs';
 import {readStructuredDataLino,structuredDataToLino,encodeStructuredDataLinks,decodeStructuredDataLinks} from '../src/structured-data-links.js';
@@ -19,9 +20,10 @@ const policy=()=>readProjectData(new URL(CONTRIBUTOR_INSTRUCTION_COVERAGE_FILE,r
 
 test('the actual shortened contributor files preserve every original instruction and one shared authority',context=>{
   const result=checkContributorInstructionCoverage();
-  assert.deepEqual(result,{words:{original:927,agents:476,claude:6},originalUnits:28,reviewedUnits:20,
+  assert.deepEqual(result,{words:{original:927,agents:481,claude:6},originalUnits:28,reviewedUnits:20,
     coveredOriginalUnits:28,referenceTarget:'AGENTS.md'});
   const reviewed=policy();
+  assert.equal(countContributorInstructionWords(reviewed.sources.compactAgents.text),476);
   assert.equal(reviewed.coverage.filter(row=>row.source.kind==='bullet').length,25);
   assert.equal(reviewed.coverage.filter(row=>row.source.kind==='paragraph').length,3);
   assert.equal(reviewed.coverage.filter(row=>row.authorizedCorrection!==undefined).length,1);
@@ -33,14 +35,18 @@ test('the actual shortened contributor files preserve every original instruction
 
 test('deleting any whole obligation or replacing the shared authority cannot satisfy instruction conservation',()=>{
   const original=input(),reviewed=policy();
-  for(const unit of reviewed.currentUnits){
-    const agents=original.agents.replace(unit.source.text,'');assert.notEqual(agents,original.agents,unit.id);
-    assert.throws(()=>verifyContributorInstructionCoverage({...original,agents},reviewed),assert.AssertionError,unit.id);
+  const active=readContributorInstructionUnits(reviewed.automatedTranslationPause.instructions.text);
+  for(const [index,unit] of active.units.entries()){
+    const {id}=reviewed.currentUnits[index];
+    const agents=original.agents.replace(unit.text,'');assert.notEqual(agents,original.agents,id);
+    assert.throws(()=>verifyContributorInstructionCoverage({...original,agents},reviewed),assert.AssertionError,id);
   }
   for(const claude of ['',original.agents,original.claude.replace('AGENTS.md','OTHER.md'),original.claude+'Use another contract.\n']){
     assert.throws(()=>verifyContributorInstructionCoverage({...original,claude},reviewed),assert.AssertionError);
   }
   assert.throws(()=>verifyContributorInstructionCoverage({...original,agents:original.agents.replace('## Contract','## Optional contract')},reviewed));
+  assert.throws(()=>verifyContributorInstructionCoverage({...original,agents:reviewed.sources.compactAgents.text},reviewed),
+    /every complete reviewed instruction remains: JavaScript batches/u);
   assert.throws(()=>verifyContributorInstructionCoverage({...original,request:original.request.replace('wrong','all')},reviewed));
 });
 
@@ -60,6 +66,9 @@ test('instruction source capture is reproducible and forged authorities or omitt
   for(const mutate of [value=>{value.coverage.pop();},value=>{value.coverage[3].authorizedCorrection='0'.repeat(64);},
     value=>{value.currentUnits.pop();},value=>{value.sources.originalAgents.text+='extra\n';},
     value=>{value.sources.compactAgents.certificate.blob.sha256='0'.repeat(64);},
+    value=>{delete value.automatedTranslationPause;},value=>{value.automatedTranslationPause.unit='runtime parity';},
+    value=>{value.automatedTranslationPause.authority.body+='extra\n';},
+    value=>{value.automatedTranslationPause.instructions.text+='extra\n';},
     value=>{value.sources.sharedReference.certificate.revision='f'.repeat(40);}]){
     const changed=structuredClone(reviewed);mutate(changed);
     assert.throws(()=>verifyContributorInstructionCoverage(original,changed),assert.AssertionError);

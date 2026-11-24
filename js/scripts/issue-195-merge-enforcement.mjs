@@ -4,11 +4,19 @@ import { isDeepStrictEqual } from 'node:util';
 import { evaluateIssue195Acceptance } from './issue-195-acceptance-lib.mjs';
 
 export const FULL_REQUIREMENTS_CHECK = 'Full Requirements Aggregate';
-const RELEASE_REQUIREMENTS = Object.freeze([
+const RELEASE_ONLY_REQUIREMENTS = Object.freeze([
   'I195-DELIVERY-NPM-PUBLISHED',
   'I195-DELIVERY-CRATE-PUBLISHED',
   'I195-DELIVERY-RML-PUBLISHED',
   'I195-DOWNSTREAM-FORMAL-AI-PUBLISHED',
+]);
+const PUBLISHED_FEATURE_REQUIREMENTS = Object.freeze([
+  'I195-I230-NPM-HTML-TREE',
+  'I195-I244-NPM-FALLBACK-GRAMMAR-ASSETS',
+  'I195-I245-NPM-LANGUAGE-ANALYSIS',
+  'I195-I245-NPM-LOCATED-JSON',
+  'I195-I245-NPM-QUOTE-GROUNDING',
+  'I195-I245-NPM-TEXT-EXTRACTION',
 ]);
 
 /** Evidence may only describe the clean revision that actually executes it. */
@@ -63,13 +71,14 @@ function verifyDeliverySeparation(manifest, commit) {
   const preMerge = evaluateIssue195Acceptance(manifest, [], { checkpoint: 'pre-merge', commit });
   const release = evaluateIssue195Acceptance(manifest, [], { checkpoint: 'release-delivery', commit });
   const releaseRequirements = release.requirements.map(({ id }) => id).sort();
-  const passed = JSON.stringify(releaseRequirements) === JSON.stringify([...RELEASE_REQUIREMENTS].sort()) &&
-    !preMerge.requirements.some(({ id }) => RELEASE_REQUIREMENTS.includes(id)) &&
-    RELEASE_REQUIREMENTS.every((id) => {
-      const row = manifest.atomicRequirements.find((entry) => entry.id === id);
-      return row?.verifications.length > 0 && row.verifications.every((cell) =>
-        cell.checkpoint === 'release-delivery' && cell.assertions.length > 0);
-    }) && release.passed === false && release.requirements.every((row) =>
+  const preMergeRequirements = new Set(preMerge.requirements.map(({ id }) => id));
+  const preMergeTestIds = new Set(preMerge.requirements.flatMap(({ cells }) => cells.map(({ testId }) => testId)));
+  const passed = RELEASE_ONLY_REQUIREMENTS.every((id) => releaseRequirements.includes(id) && !preMergeRequirements.has(id)) &&
+    PUBLISHED_FEATURE_REQUIREMENTS.every((id) => releaseRequirements.includes(id) && preMergeRequirements.has(id)) &&
+    manifest.atomicRequirements.every(({ id, verifications }) => verifications.every((cell) => {
+      if (cell.checkpoint === 'release-delivery') return cell.assertions.length > 0 && !preMergeTestIds.has(cell.testId);
+      return !RELEASE_ONLY_REQUIREMENTS.includes(id);
+    })) && release.passed === false && release.requirements.every((row) =>
       !row.passed && row.cells.every((cell) => cell.reasons.includes('required result is missing')));
   return { passed, releaseRequirements, releaseEvidencePassed: release.passed };
 }

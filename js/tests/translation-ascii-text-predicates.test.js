@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { readSourceTextRustBlock } from '../scripts/source-text-byte-library-style.mjs';
 import { generateAsciiTextPredicateRules, readAsciiTextPredicateSourceClosure } from '../scripts/generate-ascii-text-predicate-rules.mjs';
+import { larkEmitterSource, restoreIssue245Source } from '../../experiments/issue-245/source-history.mjs';
 import { LinkNetwork, LinkType, encodeLinkNetworkBinary, decodeLinkNetworkBinary,
   createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks } from '../src/index.js';
 import { recheckLinkedTypedProgram } from '../src/typed-program-checked-projection.js';
@@ -121,11 +122,13 @@ test('both complete actual project helpers retain module hashes and independent 
     ['rust/src/grammar/emit/lark.rs', 'is_terminal_name'],
   ]);
   for (const owner of policy.originalDeclarations) {
-    const context = readFileSync(new URL(owner.path, root), 'utf8');
+    const current = readFileSync(new URL(owner.path, root), 'utf8');
+    const context = owner.path === larkEmitterSource ? restoreIssue245Source(owner.path, current) : current;
     assert.equal(context, owner.context);
     assert.equal(Buffer.byteLength(context), owner.bytes);
     assert.equal(digest(context), owner.sourceSha256);
     assert.equal(readSourceTextRustBlock(context, 'fn', owner.name), owner.declaration);
+    assert.equal(readSourceTextRustBlock(current, 'fn', owner.name), owner.declaration);
     assert.equal(digest(owner.declaration), owner.declarationSha256);
     assert.ok(owner.declaration.startsWith('fn ' + owner.name + '('));
     const expected = inputs.map(owner.name === 'is_identifier' ? expectedIdentifier : expectedTerminal);

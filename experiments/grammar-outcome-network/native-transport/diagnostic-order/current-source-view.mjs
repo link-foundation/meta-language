@@ -9,6 +9,8 @@ import {outcomeWirePolicy} from '../wire/wire-policy.mjs';
 import {deriveDiagnosticOrderDecorator,applyDiagnosticOrderDecorator,readJavaScriptDiagnosticOrders,javascriptPath,nativePath} from './generate.mjs';
 import {finalizeOutcomeSourceViews as finalizePredecessorSourceViews,checkOutcomeSourceViews as checkPredecessorSourceViews,applyFrozenOutcomeProducerCorrection} from './source-view.mjs';
 import {outcomeCrateRootPath,restoreOutcomeCrateRootSource,finalizeOutcomeCrateRootSourceView} from './crate-root-source-view.mjs';
+import {runtimeSourceFiles,restoreIssue245Source} from '../../../issue-245/source-history.mjs';
+import {readRustSourceItems} from '../../../../js/scripts/generate-private-output-test-model.mjs';
 export {applyFrozenOutcomeProducerCorrection};
 
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
@@ -16,6 +18,7 @@ const canonical=value=>serializeProjectData(value,'current-source-view.lino');
 const copy=value=>structuredClone(value);
 const diagnosticRows=new Map();
 const nativeOwnerProofs=new Map();
+const searchOwnerDeclarations=new Map();
 
 function readCurrentContextDiagnosticRows(source) {
   if(!diagnosticRows.has(source))diagnosticRows.set(source,readJavaScriptDiagnosticOrders(source));
@@ -33,9 +36,15 @@ function authenticateCurrentContextDecorator(decorator) {
  * original source profile. Every other historical source pin stays exact. */
 export function captureOutcomeSourceViews(root,decorator) {
   const checked=authenticateCurrentContextDecorator(decorator),historical=new Map();
-  const pins=[],currentPins=[],adaptations=[],contextSuccessors=[],crateRootSuccessors=[];
+  const pins=[],currentPins=[],adaptations=[],contextSuccessors=[],crateRootSuccessors=[],searchSuccessors=[];
   for(const[file,expected]of Object.entries(outcomeWirePolicy.pins)){
     const actual=readFileSync(resolve(root,file)),actualPin=pin(actual);let predecessor=actual;
+    if(actualPin.sha256!==expected&&runtimeSourceFiles.includes(file)){
+      const currentSource=actual.toString('utf8'),predecessorSource=restoreIssue245Source(file,currentSource);
+      predecessor=Buffer.from(predecessorSource);
+      assert.deepEqual(pin(predecessor),{bytes:predecessor.length,sha256:expected});
+      searchSuccessors.push({file,predecessorSource,currentSource});
+    }
     if(actualPin.sha256!==expected&&file===outcomeCrateRootPath){
       const current=restoreOutcomeCrateRootSource(file,actual.toString('utf8'));
       predecessor=Buffer.from(current.predecessor);
@@ -58,7 +67,7 @@ export function captureOutcomeSourceViews(root,decorator) {
     assert.equal(pin(original).sha256,expected,'all thirteen original source pins stay exact');
     historical.set(file,original);pins.push({file,...pin(original)});currentPins.push({file,...pin(predecessor)});
   }
-  return{historical,pins,currentPins,adaptations,contextSuccessors,crateRootSuccessors};
+  return{historical,pins,currentPins,adaptations,contextSuccessors,crateRootSuccessors,searchSuccessors};
 }
 
 function currentContextOwnerProof(successor,predecessorCapture,inputs,declarations) {
@@ -126,17 +135,68 @@ function checkContextSourceViews(inventory,decorator) {
 
 
 /** The crate-root successor wraps the complete preceding context profile; no original gate is broadened. */
-export function finalizeOutcomeSourceViews(capture,inputs,declarations) {
+function finalizeCrateRootSourceViews(capture,inputs,declarations) {
   const predecessor=finalizeContextSourceViews(capture,inputs,declarations),successors=capture.crateRootSuccessors??[];
   assert.ok(Array.isArray(successors)&&successors.length<=1);
   return successors.length?finalizeOutcomeCrateRootSourceView(predecessor,successors[0]):predecessor;
 }
 
-export function checkOutcomeSourceViews(inventory,decorator) {
+function checkCrateRootSourceViews(inventory,decorator) {
   const view=inventory.sourceViews;
   if(view?.schemaVersion!==3)return checkContextSourceViews(inventory,decorator);
   const predecessor=checkContextSourceViews({...inventory,sourceViews:view.predecessorView},decorator);
   const expected=finalizeOutcomeCrateRootSourceView(predecessor,view.crateRootSuccessor);
   assert.equal(canonical(view),canonical(expected),'complete original context and current crate-root source conservation');
+  return copy(expected);
+}
+
+function finalizeSearchSourceViews(predecessor,declarations,successors){
+  const currentPins=copy(predecessor.currentPins),verified=[];
+  const files=successors.map(row=>row.file);
+  assert.deepEqual(files,runtimeSourceFiles.filter(file=>files.includes(file)));
+  for(const {file,currentSource,predecessorSource}of successors){
+    assert.equal(restoreIssue245Source(file,currentSource),predecessorSource);
+    assert.notEqual(currentSource,predecessorSource);
+    const current=currentPins.find(row=>row.file===file);assert.ok(current);
+    assert.deepEqual({bytes:current.bytes,sha256:current.sha256},pin(predecessorSource));
+    Object.assign(current,pin(currentSource));
+    const selectedDeclarations=[];
+    const owners=declarations.filter(row=>row.file===file);
+    if(owners.length){
+      const currentSourcePin=pin(currentSource);
+      if(searchOwnerDeclarations.get(file)?.sha256!==currentSourcePin.sha256){
+        const bytes=Buffer.from(currentSource);
+        const parsed=readRustSourceItems(bytes);
+        const items=parsed.items.map(({name,kind,start,end})=>({name,kind,start,end,
+          source:bytes.subarray(start,end).toString('utf8')}));
+        searchOwnerDeclarations.set(file,{sha256:currentSourcePin.sha256,items});
+      }
+      const {items}=searchOwnerDeclarations.get(file);
+      for(const owner of owners){
+        const matches=items.filter(item=>item.name===owner.name&&item.kind===owner.kind);
+        assert.equal(matches.length,1);
+        const [item]=matches;
+        assert.equal(item.source,owner.source,'complete native transport declaration stays exact');
+        selectedDeclarations.push({name:owner.name,span:{start:item.start,end:item.end},sha256:owner.sha256});
+      }
+    }
+    verified.push({file,currentSource,predecessorSource,selectedDeclarations});
+  }
+  return {schemaVersion:4,profile:'current grammar search source views 1',historicalPins:copy(predecessor.historicalPins),
+    currentPins,predecessorView:predecessor,searchSuccessors:verified};
+}
+
+export function finalizeOutcomeSourceViews(capture,inputs,declarations){
+  const predecessor=finalizeCrateRootSourceViews(capture,inputs,declarations);
+  return capture.searchSuccessors?.length?finalizeSearchSourceViews(predecessor,declarations,capture.searchSuccessors):predecessor;
+}
+
+export function checkOutcomeSourceViews(inventory,decorator){
+  const view=inventory.sourceViews;
+  if(view?.schemaVersion!==4)return checkCrateRootSourceViews(inventory,decorator);
+  const predecessor=checkCrateRootSourceViews({...inventory,sourceViews:view.predecessorView},decorator);
+  assert.ok(view.searchSuccessors.length>0);
+  const expected=finalizeSearchSourceViews(predecessor,inventory.declarations,view.searchSuccessors);
+  assert.equal(canonical(view),canonical(expected),'complete original transport and current search source conservation');
   return copy(expected);
 }

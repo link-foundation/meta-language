@@ -7,21 +7,38 @@ import {restoreNativeCompatibilitySourceHistory} from './native-compatibility-so
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';
 import {restoreRawDescriptorHistoricalSource} from './raw-descriptor-historical-cohort.mjs';
+import {nativeNumberObservationSource,restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 
 const historyFile=new URL('../../parity/self-translation/ci-39389240046-historical-inputs.lino',import.meta.url);
 const historyHash='05e17bf81c6304f36411073ee4853798041e2764164c999ca93888870fb61560';
+const currentHistoryFile=new URL('../../parity/self-translation/ci-39389240046-current-historical-inputs.lino',import.meta.url);
+const currentHistoryHash='dec4e29c7a75e405e7679203130c6a454eea736274b01928dc0337a8c4a467a2';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
-let history;
+let history,currentHistory;
 
-/** Restore only an exact reviewed successor; existing historical gates reject others. */
-export function restoreContinuationHistoricalSource(source,file,profile) {
-  assert.equal(typeof source,'string');
-  if(profile==='relative array')source=restoreRawDescriptorHistoricalSource(source,file,'continuation historical input');
+export function readContinuationHistoricalArchive() {
   if(!history){
     const bytes=readFileSync(historyFile);assert.equal(pin(bytes).sha256,historyHash);
     history=readProjectData(historyFile);assert.equal(history.schemaVersion,1);
   }
-  const rows=history.sources.filter(row=>row.file===file&&row.profiles.includes(profile));
+  return history;
+}
+
+/** Restore only an exact reviewed successor; existing historical gates reject others. */
+export function restoreContinuationHistoricalSource(source,file,profile) {
+  assert.equal(typeof source,'string');
+  if(profile==='original number source ranges'&&file===nativeNumberObservationSource)
+    source=restoreIssue245SourceSuccessor(file,source);
+  if(profile==='relative array')source=restoreRawDescriptorHistoricalSource(source,file,'continuation historical input');
+  const archive=readContinuationHistoricalArchive();
+  if(!currentHistory){
+    const bytes=readFileSync(currentHistoryFile);assert.equal(pin(bytes).sha256,currentHistoryHash);
+    currentHistory=readProjectData(currentHistoryFile);assert.equal(currentHistory.schemaVersion,1);
+    assert.equal(currentHistory.revision,archive.revision);
+  }
+  const matches=row=>row.file===file&&row.profiles.includes(profile);
+  const successors=currentHistory.sources.filter(matches);
+  const rows=successors.length ? successors : archive.sources.filter(matches);
   assert.ok(rows.length<=1,'one complete historical input per profile');
   if(rows.length===0)return ['relative array','original number source ranges'].includes(profile)
     ?restoreCurrentCiRepairSource(source,file):source;

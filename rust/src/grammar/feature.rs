@@ -198,6 +198,7 @@ pub const OPERATION_FORMS: &[(&str, OperationCategory, FormFields)] = &[
     ("valid", CONDITION, &[("token", FieldType::Name)]),
     ("expected", CONDITION, &[("item", FieldType::Expression)]),
     ("next", CONDITION, &[("item", FieldType::Expression)]),
+    ("atStart", CONDITION, &[]),
     ("atEnd", CONDITION, &[]),
     ("equal", CONDITION, TWO_VALUES),
     ("less", CONDITION, TWO_VALUES),

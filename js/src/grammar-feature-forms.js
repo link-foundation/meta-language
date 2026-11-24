@@ -58,6 +58,7 @@ export const OPERATION_FORMS = Object.freeze({
   valid: ['condition', [['token', 'name']]],
   expected: ['condition', [['item', 'expression']]],
   next: ['condition', [['item', 'expression']]],
+  atStart: ['condition', []],
   atEnd: ['condition', []],
   equal: ['condition', [['left', 'value'], ['right', 'value']]],
   less: ['condition', [['left', 'value'], ['right', 'value']]],

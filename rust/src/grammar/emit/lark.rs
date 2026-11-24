@@ -8,6 +8,7 @@ use super::structural::{
     join_choice, join_sequence, negated_lookahead_set, snake_case, wrap,
 };
 use super::{EmitReport, GrammarEmitError, finish_lines, unsupported_error};
+use crate::grammar::feature::{FeatureExpr, UnicodeClassItem};
 use crate::grammar::{
     CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind, import_lark,
 };
@@ -308,9 +309,20 @@ impl<'grammar> LarkEmitter<'grammar> {
                 (String::new(), Precedence::Sequence)
             }
             GrammarExpr::Capture { label, expr } => self.render_capture(label.as_deref(), expr)?,
-            GrammarExpr::Feature(feature) => {
-                return Err(unsupported_error(GrammarFormat::Lark, feature.head()));
-            }
+            GrammarExpr::Feature(feature) => match feature.as_ref() {
+                FeatureExpr::UnicodeClass { negated, items } => (
+                    format!("/{}/", regex_unicode_class(*negated, items)?),
+                    Precedence::Atom,
+                ),
+                FeatureExpr::Form(form) if form.head == "token" => {
+                    let item = form.expression("item").ok_or_else(portable_regex_error)?;
+                    let terminal = format!("/{}/", regex_token_text(item)?);
+                    import_lark(&format!("start: {terminal}"))
+                        .map_err(|_| portable_regex_error())?;
+                    (terminal, Precedence::Atom)
+                }
+                _ => return Err(unsupported_error(FORMAT, feature.head())),
+            },
         })
     }
 
@@ -545,6 +557,113 @@ fn regex_literal_text(value: &str) -> String {
     output
 }
 
+fn portable_regex_error() -> GrammarEmitError {
+    unsupported_error(FORMAT, "token without a portable Lark regex")
+}
+
+fn regex_token_text(expression: &GrammarExpr) -> Result<String, GrammarEmitError> {
+    match expression {
+        GrammarExpr::Terminal(value) => Ok(regex_literal_text(value)),
+        GrammarExpr::Sequence(items) => {
+            let mut text = String::new();
+            for item in items {
+                text.push_str(&regex_token_text(item)?);
+            }
+            Ok(text)
+        }
+        GrammarExpr::CharClass { negated, items }
+            if !items.is_empty()
+                && items.iter().all(
+                    |item| !matches!(item, CharClassItem::Range(start, end) if start > end),
+                ) =>
+        {
+            let (text, _) = render_class(*negated, items);
+            Ok(text[1..text.len() - 1].to_owned())
+        }
+        GrammarExpr::Feature(feature) => match feature.as_ref() {
+            FeatureExpr::UnicodeClass { negated, items } => regex_unicode_class(*negated, items),
+            _ => Err(portable_regex_error()),
+        },
+        GrammarExpr::Optional(item)
+        | GrammarExpr::ZeroOrMore(item)
+        | GrammarExpr::OneOrMore(item)
+            if is_regex_scalar_atom(item) =>
+        {
+            let mut text = regex_token_text(item)?;
+            let quantifier = match expression {
+                GrammarExpr::Optional(_) => '?',
+                GrammarExpr::ZeroOrMore(_) => '*',
+                _ => '+',
+            };
+            text.push(quantifier);
+            Ok(text)
+        }
+        _ => Err(portable_regex_error()),
+    }
+}
+
+fn is_regex_scalar_atom(item: &GrammarExpr) -> bool {
+    match item {
+        GrammarExpr::CharClass { .. } => true,
+        GrammarExpr::Terminal(value) => value.chars().count() == 1,
+        GrammarExpr::Feature(feature) => {
+            matches!(feature.as_ref(), FeatureExpr::UnicodeClass { .. })
+        }
+        _ => false,
+    }
+}
+
+fn regex_unicode_class(
+    negated: bool,
+    items: &[UnicodeClassItem],
+) -> Result<String, GrammarEmitError> {
+    use UnicodeClassItem::{Category, Char, Range};
+    if matches!(items, [Category(category)] if category == "Nd") {
+        return Ok(if negated { "\\D" } else { "\\d" }.into());
+    }
+    let mut text = String::from(if negated { "[^" } else { "[" });
+    let mut remaining = items;
+    while let Some((item, rest)) = remaining.split_first() {
+        remaining = rest;
+        match item {
+            Char(value) => push_class_char(&mut text, *value),
+            Range(start, end) if start <= end => {
+                push_class_char(&mut text, *start);
+                text.push('-');
+                push_class_char(&mut text, *end);
+            }
+            Category(value) if value == "Nd" => text.push_str("\\d"),
+            Category(value) if value == "L" => {
+                let [Category(number), Char('_'), rest @ ..] = rest else {
+                    return Err(unsupported_error(
+                        FORMAT,
+                        "character class without a portable Lark regex",
+                    ));
+                };
+                if number != "N" {
+                    return Err(unsupported_error(
+                        FORMAT,
+                        "character class without a portable Lark regex",
+                    ));
+                }
+                if items.len() == 3 && negated {
+                    return Ok("\\W".into());
+                }
+                text.push_str("\\w");
+                remaining = rest;
+            }
+            _ => {
+                return Err(unsupported_error(
+                    FORMAT,
+                    "character class without a portable Lark regex",
+                ));
+            }
+        }
+    }
+    text.push(']');
+    Ok(text)
+}
+
 /// Renders a regex character class terminal.
 fn render_class(negated: bool, items: &[CharClassItem]) -> Rendered {
     let mut output = String::from(if negated { "/[^" } else { "/[" });
@@ -572,24 +691,20 @@ fn push_class_char(output: &mut String, character: char) {
     }
 }
 
-/// Pushes a character, escaping line breaks, tabs, controls, whitespace
-/// other than space, and characters outside the Basic Multilingual Plane.
+/// Pushes a character, escaping line breaks, tabs, controls, and whitespace
+/// other than space.
 fn push_plain_char(output: &mut String, character: char) {
     let code = u32::from(character);
     match character {
         '\n' => output.push_str("\\n"),
         '\r' => output.push_str("\\r"),
         '\t' => output.push_str("\\t"),
-        character
-            if character.is_control()
-                || (character.is_whitespace() && character != ' ')
-                || code > 0xFFFF =>
-        {
-            let _ = match code {
-                0..=0xFF => write!(output, "\\x{code:02X}"),
-                0x100..=0xFFFF => write!(output, "\\u{code:04X}"),
-                _ => write!(output, "\\U{code:08X}"),
-            };
+        character if character.is_control() || (character.is_whitespace() && character != ' ') => {
+            if code <= 0xFF {
+                let _ = write!(output, "\\x{code:02X}");
+            } else {
+                let _ = write!(output, "\\u{code:04X}");
+            }
         }
         character => output.push(character),
     }

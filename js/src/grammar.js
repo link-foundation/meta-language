@@ -365,6 +365,12 @@ function emitExpression(expression, names) {
     case 'charClass': return emitCharClass(expression);
     case 'regex': return `(${expression.value})`;
     case 'any': return '.';
+    case 'token': return `(${emitExpression(expression.item, names)})`;
+    case 'predicate':
+      if (expression.item.kind === 'empty' && expression.condition.operation === 'atStart') {
+        return '&{ return offset() === 0; }';
+      }
+      throw new Error(`unsupported grammar expression kind: ${expression.kind}`);
     default: throw new Error(`unsupported grammar expression kind: ${expression.kind}`);
   }
 }

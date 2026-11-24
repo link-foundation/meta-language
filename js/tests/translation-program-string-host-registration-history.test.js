@@ -7,6 +7,7 @@ import {generateProgramStringHostRegistrationHistory} from '../scripts/generate-
 import {restoreRequiredFieldNativeHostSource} from '../scripts/required-field-native-host-succession.mjs';
 import {restoreCurrentCiRepairSource} from '../scripts/current-ci-repair-source-history.mjs';
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
+import {readIssue245SourcePair,typedProgramCheckerSource} from '../../experiments/issue-245/source-history.mjs';
 import {PROGRAM_STRING_REGISTRATION_REVISION,PROGRAM_STRING_HOST_REVISION,PROGRAM_STRING_HOST_ARCHIVE,
   PROGRAM_STRING_REGISTRATION_CHANGES,PROGRAM_STRING_REGISTRATIONS,programStringHostRegistrationPin,
   replayProgramStringRegistrationChanges,verifyProgramStringHostRegistrationHistory,
@@ -125,4 +126,23 @@ test('the native emitter source view preserves both historical inputs and refuse
     assert.ok(source!==owner.sourceText&&source!==owner.proposed.source,'the original producer must still refuse this input');
   }
   for(const other of['rust/src/translation/unregistered_emitter.rs','unregistered.rs'])assert.equal(restoreProgramStringHostRegistrationSource(actual,other),actual);
+});
+
+test('the checked program host restores the archived proposal through its exact lint successor', () => {
+  const path = typedProgramCheckerSource;
+  const owner = readProjectData(new URL(PROGRAM_STRING_HOST_ARCHIVE.path, root)).sources.find(row => row.file === path);
+  assert.ok(owner);
+  const actual = readFileSync(new URL(path, root), 'utf8');
+  const transition = readIssue245SourcePair(path);
+  assert.equal(transition.current, actual);
+  assert.notEqual(transition.predecessor, actual);
+  const original = restoreCurrentCiRepairSource(actual, path);
+  assert.equal(original, owner.sourceText);
+  verifyGitArtifactCertificate(owner.certificate, Buffer.from(original), { revision: PROGRAM_STRING_HOST_REVISION, path });
+  assert.equal(restoreProgramStringHostRegistrationSource(actual, path), owner.proposed.source);
+  for (const source of [actual + '\n', actual.replace('read_reference_identity_comparison_error', 'unknown_checker')]) {
+    assert.notEqual(source, actual);
+    assert.equal(restoreProgramStringHostRegistrationSource(source, path), source);
+  }
+  assert.equal(restoreProgramStringHostRegistrationSource(actual, 'rust/src/typed_program_links/unknown.rs'), actual);
 });

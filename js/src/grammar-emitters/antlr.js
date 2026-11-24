@@ -239,6 +239,10 @@ class AntlrEmitter {
         return this.renderNot(expression.item);
       case 'capture':
         return this.renderCapture(expression.label ?? null, expression.item);
+      case 'token':
+        if (this.grammar.sourceFormat !== 'lark') throw unsupportedError(FORMAT, expression.kind);
+        this.note('dropped the Lark regex token boundary');
+        return this.render(expression.item);
       default:
         throw unsupportedError(FORMAT, expression.kind);
     }

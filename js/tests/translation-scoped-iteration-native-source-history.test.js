@@ -13,13 +13,17 @@ import {SCOPED_ITERATION_NATIVE_SOURCE,SCOPED_ITERATION_NATIVE_LOOP_SOURCE,pinSc
 import {readProjectData,serializeProjectData} from '../scripts/project-data.mjs';
 import {generateJavaScriptMutableArrayBindings} from '../scripts/generate-javascript-mutable-array-bindings.mjs';
 import {generateScopedIterationNativeHostSourceHistory} from '../scripts/generate-scoped-iteration-native-host-source-history.mjs';
+import {restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 const root=new URL('../../',import.meta.url),read=file=>readFileSync(new URL(file,root));
 
 test('source epoch controls select a covered Node runtime and keep the complete current and old declaration hosts',()=>{
   const[major,minor]=process.versions.node.split('.').map(Number);
   assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; >=22.15 <23 || >=24 <25 required');
   const packet=readScopedIterationNativeHostSourceHistory(),specification=SCOPED_ITERATION_NATIVE_SOURCE;
-  assert.equal(packet.current.source,read(specification.file).toString('utf8'));
+  const live=read(specification.file).toString('utf8');
+  assert.equal(restoreIssue245SourceSuccessor(specification.file,live),packet.current.source);
+  assert.equal(restoreScopedIterationNativeHostSource(live,specification.file,'required field native host'),packet.previous.source);
+  assert.equal(restoreScopedIterationNativeHostSource(live+'\n',specification.file,'required field native host'),live+'\n');
   assert.equal(packet.current.bytes-packet.previous.bytes,57);
   assert.equal(restoreScopedIterationNativeHostSource(packet.current.source,specification.file,'required field native host'),packet.previous.source);
   const old=readRequiredFieldNativeHostSuccession().sources.find(row=>row.file===specification.file);assert.ok(old);

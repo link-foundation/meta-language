@@ -4,7 +4,11 @@ use std::sync::Arc;
 
 use crate::configuration::ParseConfiguration;
 use crate::embedded_region_parser;
-use crate::language_catalog::{GrammarProvenance, grammar_provenance};
+use crate::language_catalog::{canonical_language_name, language_catalog};
+pub use crate::language_identification::{
+    InvalidLanguageConfidence, LanguageIdentification, LanguageIdentificationCandidate,
+    LanguageIdentificationSpan, rank_language_identification,
+};
 use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
 use crate::language_profile::LanguageProfile;
 use crate::link_flags::LinkFlags;
@@ -18,8 +22,25 @@ use crate::substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, VariableSubstitutionRule,
 };
 
+mod grammar_provenance;
+pub mod morphology;
+pub mod natural_language_values;
+pub mod text_location;
 mod trivia;
 mod verification;
+pub mod visible_document_text;
+
+/// Availability of a registered language's standalone default parser.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LanguageParserAvailability {
+    /// Canonical catalog name.
+    pub language: &'static str,
+    /// Whether the default parser is available in the runtime.
+    pub available: bool,
+    /// Unavailable runtime asset paths, in grammar order.
+    pub missing_grammar_assets: Vec<String>,
+}
+
 /// Stable identifier for a link inside a [`LinkNetwork`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct LinkId(pub(crate) u64);
@@ -309,6 +330,19 @@ impl LinkNetwork {
         output
     }
 
+    /// Lists standalone default parser availability in catalog order.
+    #[must_use]
+    pub fn language_parser_availability() -> Vec<LanguageParserAvailability> {
+        language_catalog()
+            .iter()
+            .map(|entry| LanguageParserAvailability {
+                language: &entry.name,
+                available: true,
+                missing_grammar_assets: Vec::new(),
+            })
+            .collect()
+    }
+
     /// Parses plain source text into a lossless token network.
     ///
     /// This is the default parse operation. It is lossless by construction; use
@@ -317,7 +351,11 @@ impl LinkNetwork {
     #[must_use]
     pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Self {
         let mut network = BuiltInLanguageParser.parse_source(text, language, configuration);
-        if text.contains('\0') {
+        let canonical = canonical_language_name(language);
+        let binary_document = canonical == Some("PDF")
+            || (canonical == Some("DOCX")
+                && visible_document_text::document_package::has_zip_header(text.as_bytes()));
+        if text.contains('\0') && !binary_document {
             let retained = network.reconstruct_text();
             if text.starts_with(&retained) && retained.len() < text.len() {
                 let span = SourceSpan::new(
@@ -352,8 +390,8 @@ impl LinkNetwork {
                 })
                 .map(Link::id);
             if let Some(root) = malformed_root {
-                // NUL is prohibited input: the root reports that it contains an
-                // error without relabeling the grammar's own nodes as ERROR.
+                // The PDF grammar validates NUL in context. For other grammars the
+                // root reports prohibited NUL without relabeling the grammar's nodes.
                 let flags = network
                     .link(root)
                     .map_or_else(LinkFlags::clean, |link| link.metadata().flags());
@@ -744,59 +782,6 @@ impl LinkNetwork {
     #[must_use]
     pub fn link(&self, id: LinkId) -> Option<&Link> {
         self.links.get(&id).map(Arc::as_ref)
-    }
-
-    /// Records the grammars that parse `language` by default as Grammar links
-    /// below its Language link: term `<id>@<version>`, definition
-    /// `sha256:<parser digest>`. Recording the same grammar twice is a no-op.
-    pub(crate) fn record_grammars(&mut self, language_link: LinkId, language: &str) {
-        for grammar in grammar_provenance(language) {
-            let term = format!("{}@{}", grammar.id, grammar.version);
-            let recorded = self.links().any(|link| {
-                link.metadata().link_type() == Some(LinkType::Grammar)
-                    && link.references() == [language_link]
-                    && link.metadata().term() == Some(term.as_str())
-            });
-            if !recorded {
-                self.insert_link(
-                    [language_link],
-                    LinkMetadata::new()
-                        .with_link_type(LinkType::Grammar)
-                        .with_named(true)
-                        .with_term(term)
-                        .with_definition(format!("sha256:{}", grammar.parser_sha256))
-                        .with_language(language),
-                );
-            }
-        }
-    }
-
-    /// Grammars recorded for the languages this network parsed, in insertion
-    /// order, as `(language, grammar)` pairs.
-    #[must_use]
-    pub fn parse_grammars(&self) -> Vec<(String, GrammarProvenance)> {
-        self.links()
-            .filter(|link| link.metadata().link_type() == Some(LinkType::Grammar))
-            .filter_map(|link| {
-                let [language_link] = link.references() else {
-                    return None;
-                };
-                let language = self.link(*language_link)?;
-                if language.metadata().link_type() != Some(LinkType::Language) {
-                    return None;
-                }
-                let (id, version) = link.metadata().term()?.split_once('@')?;
-                let parser_sha256 = link.metadata().definition()?.strip_prefix("sha256:")?;
-                Some((
-                    language.metadata().term()?.to_string(),
-                    GrammarProvenance {
-                        id: id.to_string(),
-                        version: version.to_string(),
-                        parser_sha256: parser_sha256.to_string(),
-                    },
-                ))
-            })
-            .collect()
     }
 
     /// Finds a self-description or named term link.

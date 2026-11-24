@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { captureGitArtifactCertificate } from './capture-git-artifact-certificate.mjs';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { tokenize } from '../src/translation/lexer.js';
 
@@ -58,8 +59,7 @@ export function readJavaScriptRecordParameterDeclaredOwners(source) {
   return names;
 }
 
-export function readOriginalJavaScriptRecordParameterDeclaration(path, name) {
-  const context = readFileSync(new URL(path, root), 'utf8');
+export function readOriginalJavaScriptRecordParameterDeclaration(path, name, context = readFileSync(new URL(path, root), 'utf8')) {
   const tokens = tokenize(context, 'JavaScript').tokens, stack = [], matching = new Map();
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
@@ -89,8 +89,14 @@ export function readOriginalJavaScriptRecordParameterDeclaration(path, name) {
 export async function generateJavaScriptRecordParameterRules({ check = false, native = false } = {}) {
   const sourceClosure = readJavaScriptRecordParameterSourceClosure();
   assert.deepEqual([...sourceClosure.inputs.at(-1).source.matchAll(/^export function (\w+)\(/gmu)].map(match => match[1]), decisions);
+  const pestEmitter = 'js/src/grammar-emitters/pest.js';
+  const revision = 'ec9f4efb0e9ef936114e09823981352f6db13700';
+  const { blob, certificate } = captureGitArtifactCertificate(revision, pestEmitter);
+  const historicalPestOwner = readOriginalJavaScriptRecordParameterDeclaration(pestEmitter, 'emitRepeat', blob.toString('utf8'));
+  assert.equal(historicalPestOwner.sourceSha256, 'b2796a76c7653979153632b97dcaaeb7868ad4663c7a76b53970e2becb9fc4ed');
   const policy = { schemaVersion: 1, model: 'ordered required JavaScript object parameter field projections 1', sourcePath, decisions, sourceClosure,
     originalDeclarations: owners.map(([path, name]) => readOriginalJavaScriptRecordParameterDeclaration(path, name)),
+    historicalDeclarations: [{ ...historicalPestOwner, revision, certificate }],
     assertionVersions: { Node: '>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0', Rust: '>=1.90.0 <1.100.0' },
     admission: 'Ordinary synchronous named function declarations, nonempty flat required identifier properties with aliases, fixed parameters and no initializer anywhere in the list. Actual lexical BoundNames are unique. The first body profile has no writes to any actual whole-list parameter name, captured writes, var declarations, parameter documentation tags or actual Use Strict Directive. Standard Map, Set and console normalization requires an unshadowed actual lexical/module/context owner; the original four decision interfaces remain unchanged.',
     observation: 'Actual checked receivers supply existing portable field meanings: represented record fields, String or Array length, and Map or Set size. Selection follows the actual checked owner and operation, never the property spelling alone. All actual arguments evaluate before callee entry; entry initializes each actual parameter/pattern binding in original order. One logical argument stays one argument. Present null fields remain values. Nonempty required field operations reject missing/nullish receivers through the existing checker. Source syntax/type inference alone establishes no accessor, proxy, inherited-field or unknown-external invocation owner.',

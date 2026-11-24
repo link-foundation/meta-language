@@ -6,6 +6,7 @@ import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {readProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {readIssue245SourcePair} from '../../experiments/issue-245/source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const revision="d01acb2e642e65781369c2c0e2d6a198f7e051a3";
 const hosts=[
@@ -86,15 +87,22 @@ export function generateBooleanDeclarationValueHosts({check=false}={}){
   assert.equal(digest(readFileSync(new URL(decisionSource.path,root))),decisionSource.sha256);
   for(const row of registrations)assert.equal(readFileSync(new URL(row.path,root),'utf8').split(row.declaration).length,2);
   // Validate every destination before the first possible source write.
-  for(const row of files){
+  const output=files.map(row=>{
     const file=new URL(row.path,root);
-    if(check)assert.equal(readFileSync(file,'utf8'),row.source,row.path);
+    let source=row.source;
+    if (row.path === hosts[0].path || row.path === hosts[2].path) {
+      const reviewed = readIssue245SourcePair(row.path);
+      assert.equal(reviewed.predecessor, row.source, 'the exact certified Boolean host precedes the Rust lint correction');
+      source = reviewed.current;
+    }
+    if(check)assert.equal(readFileSync(file,'utf8'),source,row.path);
     else if(existsSync(file)){
       const actual=readFileSync(file,'utf8');
-      assert.ok(actual===row.source||actual===row.predecessor,'unknown host source '+row.path);
+      assert.ok(actual===source||actual===row.source||actual===row.predecessor,'unknown host source '+row.path);
     }
-  }
-  if(!check)for(const row of files)writeFileSync(new URL(row.path,root),row.source);
+    return {file,source};
+  });
+  if(!check)for(const row of output)writeFileSync(row.file,row.source);
   return {archive,files};
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){

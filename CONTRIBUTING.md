@@ -62,8 +62,9 @@ cleanup and low-disk escalation, and records the scope in the cleanup receipt.
   links-network model internally.
 - Prefer explicit metadata links or typed metadata over side tables.
 - Add focused tests for each new behavior.
-- Keep Rust tests under `tests/`; CI rejects `#[test]`, `#[cfg(test)]`, and
-  `mod tests` markers under `src/`.
+- Keep Rust test bodies under `tests/`. When a test needs access to private
+  production values, a private `#[cfg(test)]` module in `src/` may point to
+  its Rust file under `tests/` using a relative `#[path]`.
 - Use Rust documentation comments for public APIs.
 - Keep generated experiments in `experiments/` and real usage examples in
   `examples/`.
@@ -125,10 +126,12 @@ and [`js/scripts/issue-195-oracle-mapping.mjs`](js/scripts/issue-195-oracle-mapp
 
 ## Development Order
 
-Work JavaScript first: draft and debug a whole batch of changes in JavaScript,
-then port the batch to Rust, by self-translation wherever the translator can do
-it. Grammars come from the automated pipeline, in bulk over every catalog
-language. Extend behavior through decorators stored as shared links data, not
+Draft and debug a whole batch in JavaScript first. During the temporary
+automated translation pause, port changes by hand where needed and verify the
+same behavior in each affected runtime. Keep the shared fixtures and language
+feature inventory current. The opt-in [self-translation checks](docs/self-translation.md)
+remain available. Grammars come from the automated pipeline, in bulk over every
+catalog language. Extend behavior through decorators stored as shared links data, not
 through special cases in host code. Make bulk changes and push once per batch.
 See [AGENTS.md](AGENTS.md#development-order) for the full rules.
 

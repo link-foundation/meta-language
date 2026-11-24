@@ -95,23 +95,23 @@ impl<'p> RustEmitter<'p> {
         for entry in &node.items {
             let mapping_start = self.state.mappings.len();
             let definition = self.declaration(entry)?;
-            if path.is_empty() {
-                if let Some(ownership) = &mut self.definition_ownership {
-                    let targets = self.state.mappings[mapping_start..]
-                        .iter()
-                        .map(|mapping| mapping.target.clone())
-                        .collect();
-                    ownership.blocks.push(super::OwnedDefinitionBlock {
-                        source: entry.full_name().to_owned(),
-                        kind: entry.kind(),
-                        source_span: entry.span(),
-                        definition_index: self.program.imports.len() + blocks.len(),
-                        definition: definition.clone(),
-                        mapping_start,
-                        mapping_end: self.state.mappings.len(),
-                        targets,
-                    });
-                }
+            if path.is_empty()
+                && let Some(ownership) = &mut self.definition_ownership
+            {
+                let targets = self.state.mappings[mapping_start..]
+                    .iter()
+                    .map(|mapping| mapping.target.clone())
+                    .collect();
+                ownership.blocks.push(super::OwnedDefinitionBlock {
+                    source: entry.full_name().to_owned(),
+                    kind: entry.kind(),
+                    source_span: entry.span(),
+                    definition_index: self.program.imports.len() + blocks.len(),
+                    definition: definition.clone(),
+                    mapping_start,
+                    mapping_end: self.state.mappings.len(),
+                    targets,
+                });
             }
             blocks.push(definition);
         }

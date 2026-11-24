@@ -127,8 +127,8 @@ element = { "<" ~ name ~ attribute* ~ ">" ~ document ~ "</" ~ name ~ ">" }
 attribute = { name ~ "=" ~ name }
 name = @{ ASCII_ALPHA+ }`);
   // grammars-v4's HTML grammar names its rules `htmlDocument`, `htmlElement`
-  // and `htmlAttribute`; they decompose the constructs differently, so only
-  // their names correspond.
+  // and `htmlAttribute`; these constructs match by name. The shared Pest
+  // character-class production has a separate structural proof.
   const prefixed = (prefix) => importPest(`${prefix}Document = { ${prefix}Element+ ~ EOI }
 ${prefix}Element = { "<" ~ tag ~ ${prefix}Attribute* ~ "/>" | "<" ~ tag ~ ">" ~ ${prefix}Element* ~ "</" ~ tag ~ ">" }
 ${prefix}Attribute = { tag ~ ("=" ~ tag)? }
@@ -137,16 +137,18 @@ tag = @{ ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }`);
     { id: 'native', language: 'HTML', precedence: 0, grammar: native },
     { id: 'grammars-v4', language: 'HTML', precedence: 1, grammar: prefixed(prefix) },
   ], { reconcile: true });
-  assert.deepEqual(
-    sharedRuleDecisions(merge('html').groups[0]).map(({ name, members, basis }) => [name, members, basis]),
-    ['document', 'element', 'attribute'].map((name) => [
+  const shared = prefix => sharedRuleDecisions(merge(prefix).groups[0]).map(({ name, members, basis }) => [name, members, basis]);
+  const ascii = ['ASCII_ALPHA', ['native:ASCII_ALPHA', 'grammars-v4:ASCII_ALPHA'], 'recursive-structural-bisimulation'];
+  assert.deepEqual(shared('html'), [
+    ...['document', 'element', 'attribute'].map((name) => [
       name,
       [`native:${name}`, `grammars-v4:html${name[0].toUpperCase()}${name.slice(1)}`],
       'name-correspondence',
     ]),
-  );
-  // Another prefix is part of the name, so nothing corresponds.
-  assert.deepEqual(sharedRuleDecisions(merge('xml').groups[0]), []);
+    ascii,
+  ]);
+  // A different prefix leaves just the shared character-class production.
+  assert.deepEqual(shared('xml'), [ascii]);
   observe(['sharedRulesNonZero'], 'the name tier strips a leading language name');
 });
 

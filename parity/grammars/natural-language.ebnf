@@ -6,7 +6,9 @@
 natural_language_document = { sentence } ;
 (* A sentence is the shortest text ending after a run of terminal
    punctuation, any closing punctuation or quotes, and the whitespace that
-   follows them; trailing text without terminal punctuation is a sentence. *)
+   follows them; trailing text without terminal punctuation is a sentence.
+   The executable abbreviation and decimal exceptions are generated from
+   native-text-specification.lino into native-text.lino. *)
 sentence    = { lexical }, terminal, { terminal }, { closing }, { ? White_Space ? }
             | { lexical } ;
 terminal    = "." | "!" | "?" | "।" | "。" | "؟" | "۔" | "！" | "？" ;

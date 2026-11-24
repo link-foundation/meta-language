@@ -331,8 +331,9 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     if (node.k === 'binary') {
       if (node.rounding !== undefined && !acceptProgramDivisionRounding(node.rounding)) throw new TypeError('a linked division has an unsupported rounding policy');
       same(node.left.type, node.right.type, 'binary operand types');
-      if (node.domain) same(node.domain, node.left.type, 'binary operation domain');
-      const referenceError = readReferenceIdentityComparisonError(node.op, node.left.type.kind, node.right.type.kind, node.left.type.reference === true, node.right.type.reference === true, sameType(node.left.type, node.right.type), node.domain !== undefined, node.domain?.reference === true, node.domain !== undefined && sameType(node.domain, node.left.type));
+      const hasDomain = node.domain !== undefined && node.domain !== null;
+      if (hasDomain) same(node.domain, node.left.type, 'binary operation domain');
+      const referenceError = readReferenceIdentityComparisonError(node.op, node.left.type.kind, node.right.type.kind, node.left.type.reference === true, node.right.type.reference === true, sameType(node.left.type, node.right.type), hasDomain, node.domain?.reference === true, hasDomain && sameType(node.domain, node.left.type));
       if (referenceError) throw new TypeError(referenceError);
       const comparison = ['eq', 'ne', 'lt', 'le', 'gt', 'ge'].includes(node.op);
       if (comparison && node.type.kind !== 'bool') throw new TypeError('a linked comparison does not return a boolean');

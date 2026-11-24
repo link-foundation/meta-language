@@ -12,7 +12,7 @@ test('the entire recorded dependency closure and actual generated ABI retain bot
   assert.deepEqual(result.artifact.replays.map(row => row.format), ['text', 'binary']);
   assert.equal(result.artifact.checkedNamedSourceInventory.length, result.artifact.inventory.length);
   assert.ok(result.artifact.libraryInterface.length >= result.policy.decisions.length);
-  for (const owner of result.policy.originalDeclarations) {
+  for (const owner of [...result.policy.originalDeclarations, ...result.policy.historicalDeclarations]) {
     const concrete = LinkNetwork.parse(owner.declaration, 'JavaScript');
     assert.ok(concrete.links().every(link => !link.metadata().flags.hasError && !link.metadata().flags.isMissing));
     for (const network of archives(concrete)) assert.deepEqual(Buffer.from(network.reconstructText()), Buffer.from(owner.declaration));

@@ -287,6 +287,7 @@ export class ParseConfiguration {
     embeddedRegionDepthLimit = readEmbeddedRegionDefaultLimit('depth'),
     embeddedRegionCountLimit = readEmbeddedRegionDefaultLimit('count'),
     embeddedRegionByteLimit = readEmbeddedRegionDefaultLimit('bytes'),
+    decodeDocumentStreams = true,
   } = {}) {
     for (const value of [embeddedRegionDepthLimit, embeddedRegionCountLimit, embeddedRegionByteLimit]) {
       if (typeof value !== 'number' || !acceptEmbeddedRegionLimit(value)) throw new RangeError('embedded region limits must be nonnegative safe integers');
@@ -297,6 +298,7 @@ export class ParseConfiguration {
     this.embeddedRegionDepthLimit = embeddedRegionDepthLimit;
     this.embeddedRegionCountLimit = embeddedRegionCountLimit;
     this.embeddedRegionByteLimit = embeddedRegionByteLimit;
+    this.decodeDocumentStreams = decodeDocumentStreams;
   }
 
   static default() {
@@ -317,6 +319,10 @@ export class ParseConfiguration {
 
   withAccessMode(accessMode) {
     return new ParseConfiguration({ ...this, accessMode });
+  }
+
+  withDocumentStreamDecoding(decodeDocumentStreams) {
+    return new ParseConfiguration({ ...this, decodeDocumentStreams });
   }
 
   /** Bounds default-CST attachment, independently of parser evaluation budgets. */

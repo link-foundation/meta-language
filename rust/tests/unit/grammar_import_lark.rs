@@ -1,6 +1,11 @@
+use meta_language::grammar::feature::{FeatureExpr, FeatureForm, FieldValue};
 use meta_language::{
-    CharClassItem, GrammarExpr, GrammarFormat, GrammarImportError, RuleKind, import_lark,
+    CharClassItem, FeatureParseOptions, GrammarExpr, GrammarFormat, GrammarImportError, RuleKind,
+    compile_feature_grammar, emit_lark, import_lark,
 };
+use serde_json::Value;
+
+use super::issue_195_observations::{Observation, record};
 
 #[test]
 fn imports_covering_lark_fixture() {
@@ -64,10 +69,12 @@ fn imports_covering_lark_fixture() {
     );
     assert_eq!(
         grammar.rule("trailer").expect("trailer").expr(),
-        &GrammarExpr::Capture {
-            label: Some("regex".to_string()),
-            expr: Box::new(GrammarExpr::Terminal("[a-z]+".to_string())),
-        }
+        &GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
+            "token",
+            vec![FieldValue::Expression(GrammarExpr::one_or_more(
+                GrammarExpr::char_class(false, [CharClassItem::Range('a', 'z')]),
+            ))],
+        )))
     );
     assert!(grammar.undefined_nonterminals().is_empty());
 }
@@ -112,4 +119,71 @@ fn unresolved_lark_import_reports_unsupported_error() {
             construct
         } if construct == "%import"
     ));
+}
+
+#[test]
+fn lark_regex_terminals_match_and_report_unsupported_source_positions() {
+    const FIXTURE: &str = "parity/fixtures/lark-regex-terminals.json";
+    const TEST: &str = "lark_regex_terminals_match_and_report_unsupported_source_positions";
+    let cases: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/lark-regex-terminals.lino"
+    ))
+    .expect("shared Lark regex fixture");
+    let observe = |id: &str, assertion: &str| {
+        record(&Observation {
+            requirement_id: id,
+            suffix: "behavior",
+            fixture_id: &id.to_ascii_lowercase(),
+            fixture_file: FIXTURE,
+            assertions: &[assertion],
+            test_name: TEST,
+        });
+    };
+    for (group, id, assertion) in [
+        (
+            "cases",
+            "I195-I233-LARK-REGEX-TERMINALS",
+            "regexTerminalsMatchTheirLanguage",
+        ),
+        (
+            "flags",
+            "I195-I233-LARK-REGEX-FLAGS",
+            "supportedRegexFlagsChangeMatching",
+        ),
+    ] {
+        for case in cases[group].as_array().expect("fixture cases") {
+            let source = case["source"].as_str().expect("Lark source");
+            let grammar = import_lark(source).expect("regex imports");
+            let (emitted, _) = emit_lark(&grammar).expect("regex emits");
+            let reimported = import_lark(&emitted).expect("regex reimports");
+            for grammar in [&grammar, &reimported] {
+                let parser = compile_feature_grammar(grammar, None, FeatureParseOptions::default())
+                    .expect("regex compiles");
+                for (key, expected) in [("accept", true), ("reject", false)] {
+                    for sample in case[key].as_array().expect("sample inputs") {
+                        let input = sample.as_str().expect("sample text");
+                        let result = parser
+                            .parse_tree(input.as_bytes(), &FeatureParseOptions::default())
+                            .expect("regex parse outcome");
+                        assert_eq!(result.ok, expected, "{source}: {input:?}");
+                    }
+                }
+            }
+        }
+        observe(id, assertion);
+    }
+
+    for case in cases["diagnostics"].as_array().expect("regex diagnostics") {
+        let source = case[0].as_str().expect("Lark source");
+        let diagnostic = case[1].as_str().expect("diagnostic");
+        let error = import_lark(source).expect_err("unsupported or malformed regex");
+        assert_eq!(
+            error.to_string(),
+            format!("lark import parse error: {diagnostic}")
+        );
+    }
+    observe(
+        "I195-I233-LARK-REGEX-DIAGNOSTICS",
+        "unsupportedRegexReportsSourceByte",
+    );
 }

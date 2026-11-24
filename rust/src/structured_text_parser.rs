@@ -44,7 +44,46 @@ pub fn parse_lino(text: &str, language: &str, configuration: ParseConfiguration)
 }
 
 pub fn parse_pdf(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {
-    parse_document(text, language, configuration, TextGrammar::Pdf)
+    let (mut network, document) = LinkNetwork::new_parse_document(text, language);
+    let source = Source {
+        text,
+        language,
+        lines: LineIndex::new(text),
+        offset: SpanOffset::zero(),
+        configuration,
+    };
+    let tree = parse_pdf_cst(text);
+    insert_grammar_node(&mut network, document, &source, &tree);
+    network.attach_embedded_regions(document, text, language, configuration);
+    if text.contains("stream") {
+        crate::link_network::visible_document_text::pdf_document::attach_pdf_content(
+            &mut network,
+            document,
+            text,
+            &tree,
+            |start, end| source.span(start, end),
+            configuration,
+            "binary-string",
+        );
+    }
+    network
+}
+
+pub(crate) fn pdf_content_network(
+    text: &str,
+    tree: &GrammarNode,
+    configuration: ParseConfiguration,
+) -> LinkNetwork {
+    let (mut network, document) = LinkNetwork::new_parse_document(text, "PDF");
+    let source = Source {
+        text,
+        language: "PDF",
+        lines: LineIndex::new(text),
+        offset: SpanOffset::zero(),
+        configuration,
+    };
+    insert_grammar_node(&mut network, document, &source, tree);
+    network
 }
 
 pub fn parse_natural(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {

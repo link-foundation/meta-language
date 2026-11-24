@@ -55,9 +55,7 @@ pub(super) fn read_binding(source: &str) -> Option<(u8, String)> {
     let selected = dependency_rules::read_deferred_binding(
         &facts.terms,
         &facts.fields,
-        &facts.parents,
-        &facts.starts,
-        &facts.ends,
+        (&facts.parents, &facts.starts, &facts.ends),
         &facts.texts,
         &facts.errors,
         source_number(source.len())?,
@@ -65,12 +63,10 @@ pub(super) fn read_binding(source: &str) -> Option<(u8, String)> {
     let [kind, at] = selected.as_slice() else {
         return None;
     };
-    let kind = if *kind == 1.0 {
-        1
-    } else if *kind == 2.0 {
-        2
-    } else {
-        return None;
+    let kind = match *kind {
+        1.0 => 1,
+        2.0 => 2,
+        _ => return None,
     };
     let at = crate::translation::frontend_rules::ml_array::number_index(*at)?;
     let node = facts.nodes.get(at)?;

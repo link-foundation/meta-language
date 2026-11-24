@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 
+use super::issue_195_observations::{Observation, record};
 use meta_language::{
     LinkNetwork, LinkType, ParseConfiguration, canonical_language_name, grammar_provenance,
     language_candidates_for_path, language_catalog, language_entry, language_for_path,
@@ -54,6 +55,36 @@ fn rust_ships_the_language_catalog_the_javascript_package_ships() {
         .map(|language| language["name"].as_str().expect("name"))
         .collect();
     assert_eq!(names, expected);
+}
+
+#[test]
+fn standalone_default_parsers_are_available_in_catalog_order() {
+    let availability = LinkNetwork::language_parser_availability();
+    let names: Vec<_> = availability.iter().map(|entry| entry.language).collect();
+    let inventory = inventory();
+    let catalog_names: Vec<_> = inventory["languages"]
+        .as_array()
+        .expect("languages")
+        .iter()
+        .map(|entry| entry["name"].as_str().expect("canonical name"))
+        .collect();
+    assert_eq!(names, catalog_names);
+    assert!(
+        availability
+            .iter()
+            .all(|entry| entry.available && entry.missing_grammar_assets.is_empty())
+    );
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-PARSER-AVAILABILITY",
+        suffix: "behavior",
+        fixture_id: "i195-grammar-parser-availability",
+        fixture_file: "parity/language-grammar-inventory.json",
+        assertions: &[
+            "languagesListedInCatalogOrder",
+            "standaloneAvailabilityMatchesAssets",
+        ],
+        test_name: "standalone_default_parsers_are_available_in_catalog_order",
+    });
 }
 
 #[test]

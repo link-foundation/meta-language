@@ -4,8 +4,10 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { LinkNetwork, LinkType } from '../src/index.js';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const { cases } = readProjectData(new URL('../../parity/fixtures/pdf-grammar-cases.json', import.meta.url));
+const streamFixtureFile = 'parity/fixtures/pdf-stream-null-characters.lino';
 
 /** The Syntax tree of a public PDF network as {term, field, named, flags, span, children}. */
 function syntaxTree(network) {
@@ -108,6 +110,29 @@ function leaves(node) {
 function terms(node) {
   return [node.term, ...node.children.flatMap(terms)];
 }
+
+test('PDF stream data preserves NUL bytes and errors point to invalid source', (context) => {
+  const { data, invalidSource, invalidToken, source } = readProjectData(new URL(`../../${streamFixtureFile}`, import.meta.url));
+  const network = LinkNetwork.parse(source, 'PDF');
+  const tree = syntaxTree(network);
+  assert.equal(network.reconstructText(), source);
+  assert.ok(network.verifyFullMatch().isClean());
+  const object = tree.children.find((child) => child.term === 'indirect_object');
+  const streamData = field(field(object, 'value'), 'data');
+  assert.equal(textOf(streamData, encoder.encode(source)), data);
+
+  const invalid = LinkNetwork.parse(invalidSource, 'PDF');
+  assert.equal(invalid.reconstructText(), invalidSource);
+  assert.ok(!invalid.verifyFullMatch().isClean());
+  const errors = leaves(syntaxTree(invalid)).filter((leaf) => leaf.flags.isError);
+  assert.deepEqual(errors.map((leaf) => textOf(leaf, encoder.encode(invalidSource))), [invalidToken]);
+  recordIssue195Observations({
+    requirementId: 'I195-GRAMMAR-PDF-STREAM-NULL-CHARACTERS', suffix: 'behavior',
+    fixtureId: 'i195-grammar-pdf-stream-null-characters', fixtureFile: streamFixtureFile,
+    assertions: ['streamBytesRetainedInDataSpan', 'streamBytesDoNotCauseRecovery', 'invalidNullCharacterHasErrorToken', 'sourcesReconstructExactly'],
+    testName: context.name,
+  });
+});
 
 test('the PDF grammar CST describes the indirect objects pdf-lib reads', () => {
   const seen = new Set();

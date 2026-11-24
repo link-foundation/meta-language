@@ -14,7 +14,9 @@ const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').up
 
 test('current repair artifacts and complete certified historical inputs have independently checked identities',()=>{
   const history=generateContinuationHistoricalInputs({check:true});
-  assert.equal(history.sources.length,10);
+  assert.equal(history.sources.length,11);
+  const supplement=readProjectData(new URL('parity/self-translation/ci-39389240046-current-historical-inputs.lino',root));
+  assert.deepEqual(supplement.sources.map(row=>row.file),['rust/Cargo.toml']);
   for(const row of history.sources){
     const actual=readFileSync(new URL(row.file,root),'utf8');
     const historical=restoreContinuationHistoricalAuthorInput(actual,row.file);

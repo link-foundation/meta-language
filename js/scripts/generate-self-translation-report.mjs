@@ -38,7 +38,7 @@ import { tokenize } from '../src/translation/lexer.js';
 import { createReportMeasurementWorker } from './self-translation-report-worker-host.mjs';
 import { rankSelfTranslationBlockers, requireReportSourcePath, validateSelfTranslationReplayPlan } from './self-translation-report-blockers.mjs';
 import { summarizeRetainedSelfTranslationPhases, retainedSelfTranslationPhaseMarkdown } from './self-translation-phase-summary.mjs';
-import {partitionMeasuredWorkloads} from './test-groups.mjs';
+import { partitionMeasuredWorkloads } from './test-groups.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
@@ -89,8 +89,19 @@ function listSourceModules() {
 /**
  * The K-th measured-cost shard; every complete current source appears once.
  */
-function shardOf(files, index, count) {
-  return partitionMeasuredWorkloads(files,count)[index-1];
+export function partitionSelfTranslationReportModules(files, count, { readSource } = {}) {
+  const baseline = readProjectData(join(root, 'parity/fixtures/ci-39615628279-workload-costs.lino'));
+  const entries = new Map(baseline.entries.map(row => [row.file, row]));
+  for (const [run, moduleCount] of [[45076523061, 364], [45104457483, 376], [45215384144, 381], [45296878458, 382]]) {
+    const measured = readProjectData(join(root, `parity/fixtures/ci-${run}-report-workload-costs.lino`));
+    assert.equal(measured.run, run);
+    assert.equal(measured.attempt, 2);
+    assert.equal(measured.schemaVersion, 1);
+    assert.equal(measured.entries.length, moduleCount);
+    assert.equal(new Set(measured.entries.map(row => requireReportSourcePath(row.file))).size, moduleCount);
+    for (const row of measured.entries) entries.set(row.file, row);
+  }
+  return partitionMeasuredWorkloads(files, count, { readSource, costs: { ...baseline, entries: [...entries.values()] } });
 }
 
 function selectedModules(replayPlan) {
@@ -101,7 +112,7 @@ function selectedModules(replayPlan) {
     console.error(`--shard takes K/N with 1 <= K <= N, not ${shard}`);
     process.exit(2);
   }
-  return shardOf(modules(replayPlan), Number(match[1]), Number(match[2]));
+  return partitionSelfTranslationReportModules(modules(replayPlan), Number(match[2]))[Number(match[1]) - 1];
 }
 
 /** The hand-written Rust module `module` corresponds to, or null. */

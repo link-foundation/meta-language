@@ -230,6 +230,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("accessModeIsMutable", "AccessMode::is_mutable", "method"),
     ("accessModeIsReadOnly", "AccessMode::is_read_only", "method"),
     ("accessModeLabel", "AccessMode::label", "method"),
+    (
+        "agreeWithNumber",
+        "link_network::morphology::agree_with_number",
+        "function",
+    ),
+    (
+        "analyzeMorphology",
+        "link_network::morphology::analyze_morphology",
+        "function",
+    ),
     ("analyzeProgram", "analyze_program", "function"),
     ("analyze_program", "analyze_program", "function"),
     ("asReadOnly", "LinkNetwork::as_read_only", "method"),
@@ -380,6 +390,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("emitGbnf", "emit_gbnf", "function"),
     ("emitGrammarLossless", "emit_grammar_lossless", "function"),
     ("emitJavascriptParser", "emit_javascript_parser", "function"),
+    (
+        "emitJsonSchema",
+        "grammar::json_document::emit_json_schema",
+        "function",
+    ),
     ("emitLark", "emit_lark", "function"),
     ("emitPeggy", "emit_peggy", "function"),
     ("emitPest", "emit_pest", "function"),
@@ -460,6 +475,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ),
     ("grammarProvenance", "grammar_provenance", "function"),
     ("idKey", "LinkId::as_u64", "method"),
+    (
+        "identifyLanguage",
+        "link_network::rank_language_identification",
+        "function",
+    ),
     ("importAbnf", "import_abnf", "function"),
     ("importAntlr", "import_antlr", "function"),
     ("importBnf", "import_bnf", "function"),
@@ -468,6 +488,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "importGrammarLossless",
         "import_grammar_lossless",
+        "function",
+    ),
+    (
+        "importJsonSchema",
+        "grammar::json_document::import_json_schema",
         "function",
     ),
     ("importLark", "import_lark", "function"),
@@ -499,6 +524,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "import_tree_sitter_json",
         "function",
     ),
+    ("inflect", "link_network::morphology::inflect", "function"),
     (
         "insertConceptRecord",
         "LinkNetwork::insert_concept_record",
@@ -512,6 +538,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("languageEntry", "language_entry", "function"),
     ("languageForPath", "language_for_path", "function"),
     ("languageSupport", "language_support", "function"),
+    ("locate", "link_network::text_location::locate", "function"),
     ("lowerGrammar", "lower_grammar", "function"),
     ("lowerGraphQL", "lower_graphql", "function"),
     ("lowerGraphQl", "lower_graphql", "function"),
@@ -548,6 +575,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("nativeGrammarSource", "native_grammar_source", "function"),
+    (
+        "naturalLanguageValues",
+        "link_network::natural_language_values::natural_language_values",
+        "function",
+    ),
     (
         "normalizedRuleDefinition",
         "normalized_rule_definition",
@@ -645,6 +677,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("reconstructGrammar", "reconstruct_grammar", "function"),
+    (
+        "recoverJson",
+        "grammar::json_document::recover_json",
+        "function",
+    ),
     ("rejectPredicateHost", "RejectPredicateHost", "type"),
     ("renameGrammarRule", "rename_grammar_rule", "function"),
     (
@@ -739,6 +776,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("translationContracts", "translation_contracts", "function"),
     ("validateGrammar", "validate", "function"),
     (
+        "validateJson",
+        "grammar::json_document::validate_json",
+        "function",
+    ),
+    (
         "verifyFormalConceptEquivalence",
         "verify_formal_concept_equivalence",
         "function",
@@ -751,6 +793,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "verifyResourceDescriptionGraphWitnesses",
         "verify_resource_description_graph_witnesses",
+        "function",
+    ),
+    (
+        "wordNgramOverlap",
+        "link_network::text_location::word_ngram_overlap",
         "function",
     ),
 ];

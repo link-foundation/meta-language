@@ -2,7 +2,7 @@
 
 [![JavaScript](https://github.com/link-foundation/meta-language/actions/workflows/js.yml/badge.svg)](https://github.com/link-foundation/meta-language/actions/workflows/js.yml)
 [![npm](https://img.shields.io/npm/v/meta-language?label=npm&style=flat)](https://www.npmjs.com/package/meta-language)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-blue.svg)](https://nodejs.org/)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D22-blue.svg)](https://nodejs.org/)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://unlicense.org/)
 
 JavaScript implementation of the `meta-language` links-network core. It is the
@@ -41,6 +41,86 @@ full delivery checklist and remaining fallback paths are tracked in
 [`../docs/issue-195-requirement-ledger.md`](../docs/issue-195-requirement-ledger.md).
 
 ## Usage
+
+The JavaScript package requires Node.js 22 or later. From a Git checkout, run
+these commands to install dependencies and provision the pinned WebAssembly
+grammars used by Markdown, YAML, Kotlin and other fallback parsers.
+
+```bash
+cd js
+npm ci
+npm run grammars:provision
+```
+
+The provisioning command verifies downloaded files against their recorded
+checksums and keeps them in the ignored `.external-grammars/` directory at the
+repository root. It needs no credentials. Release packaging stages those assets
+in the npm tarball for offline parsing after installation.
+
+Use `LinkNetwork.languageParserAvailability()` to check the current install.
+Each entry has `language`, `available` and `missingGrammarAssets`. For example,
+`LinkNetwork.languageParserAvailability().filter(({ available }) => !available)`
+lists standalone parsers that need additional assets. A document with embedded
+languages may also need the corresponding child parsers.
+
+### Read an HTML syntax tree
+
+`LinkNetwork.parse(html, 'HTML')` returns a lossless network. Find the `document`
+link of type `LinkType.Syntax` to start at the root of the HTML concrete syntax
+tree. `Link.references()` gives the child links in source order. Follow the
+references of type `LinkType.Syntax` to visit the tree.
+
+```js
+import { LinkNetwork, LinkType } from 'meta-language';
+
+const html = '<article lang="en">Café <em>au lait</em></article>';
+const network = LinkNetwork.parse(html, 'HTML');
+const bytes = new TextEncoder().encode(html);
+const decoder = new TextDecoder('utf-8', { ignoreBOM: true });
+const isSyntax = (link) => link.metadata().linkType === LinkType.Syntax;
+const document = network.links().find((link) =>
+  isSyntax(link) && link.metadata().language === 'HTML' &&
+  link.metadata().term === 'document');
+
+function readNode(link) {
+  const { term, span, flags } = link.metadata();
+  const { start, end } = span.byteRange;
+  return {
+    term,
+    span,
+    flags,
+    source: decoder.decode(bytes.subarray(start, end)),
+    children: link.references().map((id) => network.link(id)).filter(isSyntax).map(readNode),
+  };
+}
+
+const tree = readNode(document);
+```
+
+In this example `tree.children[0]` is an `element`. Its `start_tag` has a
+`tag_name` (`article`) and an `attribute` with an `attribute_name` (`lang`) and
+an `attribute_value` (`en`) inside `quoted_attribute_value`. The `text` and
+nested `element` links occur before the `end_tag`. Explicit self-closing tags
+use `self_closing_tag` and also retain their attributes. Delimiters appear as syntax
+nodes, and the network keeps source tokens for spacing. Use `flags` to inspect
+missing or recovered nodes.
+
+`span.byteRange` has an inclusive `start` and exclusive `end` in UTF-8 bytes.
+`span.start` and `span.end` are zero-based row and byte-column pairs. For a
+JavaScript string offset, decode the UTF-8 prefix up to the boundary and take
+its `.length`, which counts UTF-16 code units.
+
+The [document tasks example](../examples/deterministic-document-tasks.mjs)
+exercises this HTML tree alongside JSON validation and recovery, extraction,
+quote location, and English and Russian morphology. Pass the namespace from
+`import * as api from 'meta-language'` to `verifyDocumentTasks(api)` to run the
+same checks against an installed package.
+
+```js
+const stringOffset = (byteOffset) => decoder.decode(bytes.subarray(0, byteOffset)).length;
+```
+
+### Query and edit source
 
 ```js
 import {
@@ -127,6 +207,26 @@ Run with `--ml-check-theorems`, the program prints `theorem <name>: holds on the
 bounded domain` or fails, and the proof stays with the source kernel. A
 statement that holds on the bounded domain but not in general therefore passes
 the check while every kernel rejects it.
+
+## Identify languages in text
+
+```js
+import { identifyLanguage } from 'meta-language';
+
+const result = identifyLanguage('Привет! Bonjour tout le monde', { minimumConfidence: 0.06 });
+console.log(result.language); // French
+for (const { language, start, end } of result.spans) {
+  console.log(language, start, end); // Russian 0 12, French 14 35
+}
+```
+
+`candidates` lists languages from highest to lowest confidence. Confidence is
+a score from zero to one based on trigram evidence. `language` is `null` when
+the leading candidate falls below the threshold or two candidates score within
+three percent of each other. The default threshold is `0.06`. A span with fewer
+than three script letters has no candidates. Longer spans with sparse evidence
+can also be unknown. The detector examines up to 2,048 Unicode scalar values
+and reports half-open UTF-8 byte spans.
 
 ## Parity
 

@@ -8,8 +8,13 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import { verifyDocumentTasks } from '../../examples/deterministic-document-tasks.mjs';
+import * as publicApi from '../src/index.js';
 import {
+  DOCUMENT_TASK_CASES,
+  DOCUMENT_TASK_EXAMPLE,
   deliveryAssertions,
+  observedDocumentTask,
   supportedPlatformCoverage,
 } from '../scripts/issue-195-delivery.mjs';
 
@@ -69,6 +74,20 @@ function consumerReport(platform, overrides = {}) {
 
 const allPlatforms = () => delivery.supportedPlatforms.map((platform) => consumerReport(platform));
 
+test('the clean npm consumer example exercises the public document APIs', async () => {
+  const exampleSha256 = sha256(await readFile(path.join(root, DOCUMENT_TASK_EXAMPLE)));
+  const report = consumerReport('linux-x64');
+  report.npm.documentTasks = { exampleSha256, ...verifyDocumentTasks(publicApi, { checkGrammarAssets: true }) };
+  for (const [, , scenario] of DOCUMENT_TASK_CASES) {
+    assert.equal(observedDocumentTask(report, expected, context, exampleSha256, scenario), true);
+    assert.equal(observedDocumentTask(report, expected, context, '0'.repeat(64), scenario), false);
+    assert.equal(observedDocumentTask(report, { ...expected, npm: '0'.repeat(64) }, context, exampleSha256, scenario), false);
+  }
+  assert.equal(observedDocumentTask(report, expected, context, exampleSha256, 'missing'), false);
+  report.npm.offline.networkAttempts.push('example made a request');
+  assert.equal(observedDocumentTask(report, expected, context, exampleSha256, 'html'), false);
+});
+
 test('supported platforms are observed when every declared platform report passes', () => {
   for (const sides of [['npm'], ['crate'], ['npm', 'crate']]) {
     assert.deepEqual(supportedPlatformCoverage(allPlatforms(), sides, expected, context), {
@@ -76,6 +95,24 @@ test('supported platforms are observed when every declared platform report passe
       failures: [],
     });
   }
+});
+
+test('paused consumers still verify parses and programs without satisfying full delivery', () => {
+  const pausedDelivery = { ...delivery, translations: [] };
+  const pausedContext = { ...context, corpus: { ...corpus, delivery: pausedDelivery } };
+  const reports = allPlatforms();
+  assert.ok(delivery.translations.length > 0);
+  for (const report of reports) {
+    for (const side of ['npm', 'crate']) {
+      report[side].observations = { ...report[side].observations, translations: [] };
+    }
+    const checks = deliveryAssertions(report, ['npm', 'crate'], expected, pausedContext);
+    assert.equal(Object.values(checks).every(Boolean), true);
+    assert.equal(deliveryAssertions(report, ['npm', 'crate'], expected, context).offlineFirstParse, false);
+  }
+  assert.equal(supportedPlatformCoverage(reports, ['npm', 'crate'], expected, context).observed, false);
+  reports[0].crate.observations.programs[0].emitted = false;
+  assert.equal(deliveryAssertions(reports[0], ['npm', 'crate'], expected, pausedContext).offlineFirstParse, false);
 });
 
 test('a missing platform report leaves supported platforms unobserved', () => {

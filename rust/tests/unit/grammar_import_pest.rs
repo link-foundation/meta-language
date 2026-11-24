@@ -1,4 +1,48 @@
-use meta_language::{GrammarExpr, GrammarFormat, GrammarImportError, RuleKind, import_pest};
+use meta_language::grammar::{
+    feature_runtime::{FeatureParseOptions, GrammarSearchOptions, compile_feature_grammar},
+    parse_grammar_links, render_grammar_links,
+};
+use serde_json::Value;
+
+use super::issue_195_observations::{Observation, record};
+use meta_language::{
+    GrammarExpr, GrammarFormat, GrammarImportError, RuleKind, emit_pest, import_pest,
+};
+
+fn whitespace_between_items() -> GrammarExpr {
+    parse_grammar_links(
+        "(grammar (start skip))\n(rule skip silent (token (repeat0 (ref WHITESPACE))))",
+    )
+    .expect("whitespace form decodes")
+    .start_rule()
+    .expect("skip rule")
+    .expr()
+    .clone()
+}
+
+fn assert_accepts(grammar: &meta_language::Grammar, accepted: &[&str], rejected: &[&str]) {
+    let options = FeatureParseOptions::default();
+    let parser =
+        compile_feature_grammar(grammar, None, options.clone()).expect("imported grammar compiles");
+    for input in accepted {
+        assert!(
+            parser
+                .parse_tree(input.as_bytes(), &options)
+                .expect("parse outcome")
+                .ok,
+            "accepted {input:?}"
+        );
+    }
+    for input in rejected {
+        assert!(
+            !parser
+                .parse_tree(input.as_bytes(), &options)
+                .expect("parse outcome")
+                .ok,
+            "rejected {input:?}"
+        );
+    }
+}
 
 #[test]
 fn imports_arithmetic_pest_fixture() {
@@ -12,7 +56,15 @@ fn imports_arithmetic_pest_fixture() {
     );
     assert_eq!(
         grammar.rule_names(),
-        vec!["expr", "term", "factor", "number", "WHITESPACE"]
+        vec![
+            "expr",
+            "term",
+            "factor",
+            "number",
+            "WHITESPACE",
+            "ASCII_DIGIT",
+            "NEWLINE"
+        ]
     );
     assert_eq!(
         grammar.rule("number").expect("number rule").kind(),
@@ -24,22 +76,34 @@ fn imports_arithmetic_pest_fixture() {
     );
 
     let expr = grammar.rule("expr").expect("expr rule").expr();
+    let term = GrammarExpr::NonTerminal("term".to_string());
+    let skip = whitespace_between_items();
+    let operator = GrammarExpr::Choice {
+        ordered: true,
+        alternatives: vec![
+            GrammarExpr::Terminal("+".to_string()),
+            GrammarExpr::Terminal("-".to_string()),
+        ],
+    };
     assert_eq!(
         expr,
         &GrammarExpr::Sequence(vec![
-            GrammarExpr::NonTerminal("term".to_string()),
-            GrammarExpr::ZeroOrMore(Box::new(GrammarExpr::Sequence(vec![
-                GrammarExpr::Choice {
-                    ordered: true,
-                    alternatives: vec![
-                        GrammarExpr::Terminal("+".to_string()),
-                        GrammarExpr::Terminal("-".to_string()),
-                    ],
-                },
-                GrammarExpr::NonTerminal("term".to_string()),
-            ]))),
+            term.clone(),
+            skip.clone(),
+            GrammarExpr::optional(GrammarExpr::Sequence(vec![
+                operator.clone(),
+                skip.clone(),
+                term.clone(),
+                GrammarExpr::zero_or_more(GrammarExpr::Sequence(vec![
+                    skip.clone(),
+                    operator,
+                    skip,
+                    term
+                ]))
+            ])),
         ])
     );
+    assert_accepts(&grammar, &["2+3", "12 *\r\n(3 + 4)"], &["1 2", "2+", " 2"]);
 }
 
 #[test]
@@ -69,7 +133,9 @@ fn imports_json_pest_fixture() {
         grammar.rule("json").expect("json rule").expr(),
         &GrammarExpr::Sequence(vec![
             GrammarExpr::NonTerminal("SOI".to_string()),
+            whitespace_between_items(),
             GrammarExpr::NonTerminal("value".to_string()),
+            whitespace_between_items(),
             GrammarExpr::NonTerminal("EOI".to_string()),
         ])
     );
@@ -90,6 +156,11 @@ fn imports_json_pest_fixture() {
     assert_eq!(
         grammar.rule("any_value").expect("any_value rule").expr(),
         &GrammarExpr::AnyChar
+    );
+    assert_accepts(
+        &grammar,
+        &[" null ", "\"a b\"", "\t42.5\n"],
+        &["1 2", "true false"],
     );
 }
 
@@ -186,7 +257,7 @@ non_atomic = !{ "x" }
 }
 
 #[test]
-fn allows_pest_builtins_as_nonterminals() {
+fn resolves_pest_builtins_as_nonterminals() {
     let grammar = import_pest(r"start = { SOI ~ ASCII_DIGIT+ ~ EOI }").expect("builtins import");
 
     assert_eq!(
@@ -198,6 +269,89 @@ fn allows_pest_builtins_as_nonterminals() {
             ))),
             GrammarExpr::NonTerminal("EOI".to_string()),
         ])
+    );
+    assert!(grammar.undefined_nonterminals().is_empty());
+    assert_accepts(&grammar, &["2024"], &["", "٢", " 2024"]);
+}
+
+#[test]
+fn pest_built_in_rules_implicit_trivia_and_diagnostics() {
+    const FIXTURE: &str = "parity/fixtures/pest-built-ins.lino";
+    const TEST: &str = "pest_built_in_rules_implicit_trivia_and_diagnostics";
+    let cases: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/pest-built-ins.lino"
+    ))
+    .expect("shared pest fixture");
+    assert_eq!(cases["pestVersion"].as_str(), Some("2.9.2"));
+    let observe = |requirement_id: &str, assertions: &[&str]| {
+        record(&Observation {
+            requirement_id,
+            suffix: "behavior",
+            fixture_id: &requirement_id.to_ascii_lowercase(),
+            fixture_file: FIXTURE,
+            assertions,
+            test_name: TEST,
+        });
+    };
+    for group in ["builtinCases", "triviaCases"] {
+        for case in cases[group].as_array().expect("pest cases") {
+            let grammar =
+                import_pest(case[0].as_str().expect("pest source")).expect("pest grammar");
+            assert!(grammar.undefined_nonterminals().is_empty());
+            let restored =
+                parse_grammar_links(&render_grammar_links(&grammar)).expect("pest links restore");
+            let inputs = |index: usize| {
+                case[index]
+                    .as_array()
+                    .expect("pest inputs")
+                    .iter()
+                    .map(|source| source.as_str().expect("pest input"))
+                    .collect::<Vec<_>>()
+            };
+            assert_accepts(&restored, &inputs(1), &inputs(2));
+            let (emitted, _) = emit_pest(&restored).expect("pest emits");
+            let imported = import_pest(&emitted).expect("emitted pest imports");
+            assert_accepts(&imported, &inputs(1), &inputs(2));
+        }
+    }
+    let anchor = &cases["anchorSearch"];
+    let grammar =
+        import_pest(anchor["grammar"].as_str().expect("anchor grammar")).expect("pest imports");
+    let parser = compile_feature_grammar(&grammar, None, FeatureParseOptions::default())
+        .expect("pest grammar compiles");
+    let matches = parser
+        .find_all(
+            anchor["source"].as_str().expect("anchor search source"),
+            &GrammarSearchOptions::default(),
+        )
+        .expect("pest search");
+    let spans: Vec<_> = matches
+        .iter()
+        .map(|matched| [matched.span.start, matched.span.end])
+        .collect();
+    assert_eq!(serde_json::json!(spans), anchor["spans"]);
+    observe(
+        "I195-I234-PEST-BUILT-IN-RULES",
+        &["builtInRulesExecute", "anchorsUseAbsolutePositions"],
+    );
+    observe(
+        "I195-I234-PEST-IMPLICIT-TRIVIA",
+        &["implicitTriviaTracksAtomicContext"],
+    );
+    for case in cases["diagnostics"]
+        .as_array()
+        .expect("pest diagnostic cases")
+    {
+        let error =
+            import_pest(case[0].as_str().expect("pest source")).expect_err("pest import error");
+        assert_eq!(
+            error.to_string(),
+            case[1].as_str().expect("pest diagnostic")
+        );
+    }
+    observe(
+        "I195-I234-PEST-RULE-DIAGNOSTICS",
+        &["pestRuleDiagnosticsUseExactMessages"],
     );
 }
 

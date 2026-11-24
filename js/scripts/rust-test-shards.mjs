@@ -45,6 +45,28 @@ export function physicalShardCount(policy, profile, suite, platform = null) {
   return matches[0]?.shards ?? row.shards;
 }
 
+export function nativeTestPlatforms(policy, crossPlatformChecks) {
+  return crossPlatformChecks === 'false'
+    ? policy.platforms.filter(platform => platform === 'ubuntu-latest')
+    : policy.platforms;
+}
+
+export function nativeTestMatrix(policy, crossPlatformChecks = 'false') {
+  const include = [];
+  for (const platform of nativeTestPlatforms(policy, crossPlatformChecks)) {
+    for (const row of policy.suites) {
+      const filters = row.filters.join(' ');
+      include.push({os: platform, suite: row.name, filters});
+      const count = physicalShardCount(policy, 'test', row.name, platform);
+      for (let shard = 2; shard <= count; shard++) {
+        include.push({os: platform, suite: 'physical', logical_suite: row.name, physical_shard: shard, filters});
+      }
+    }
+  }
+  requireValue(include.length > 0, 'empty native test matrix');
+  return {include};
+}
+
 export function readHarnessInventory(output) {
   const names = output.split(/\r?\n/u).filter(line => line && !/^\d+ tests?, \d+ benchmarks?$/u.test(line)).map(line => {
     const match = /^(.*): (test|benchmark)$/u.exec(line);
@@ -116,6 +138,46 @@ export function matchesLogicalFilters(name, arguments_) {
   return (!positive.length || positive.some(filter => name.includes(filter))) && !skipped.some(filter => name.includes(filter));
 }
 
+// The ordinary and fresh-merge profiles share these libtest exclusions. The
+// strict evidence profile always inventories and executes its original scope.
+export function nativeTestArguments(arguments_, profile, automatedTranslation, inventory) {
+  if (automatedTranslation !== 'false' || !['test', 'fresh-merge'].includes(profile)) return arguments_;
+  const translationModules = /^(?:(?:self_)?translation(?:_|$)|issue_195_translation_|(?:semantic|program)_translation$)/u;
+  const translationModuleFilters = new Set(inventory.flatMap(({name}) =>
+    name.split('::').slice(0, -1).filter(module => translationModules.test(module)).map(module => `${module}::`)));
+  const translationTests = [
+    'issue_195_faithful_behavior::',
+    'issue_195_semantics_proof_preservation::', 'typescript_erasure::',
+    'typed_program_algebraic::', 'typed_program_number_projection::', 'typed_program_numeric_metadata::',
+    'typed_program_source_spans::decimal_and_exponent_source_offsets_recheck_without_changing_program_meaning',
+    'typed_program_links::assertion_propositions_preserve_owned_expression_and_quantified_binding_links',
+    'typed_program_links::linked_text_conversion_rejects_structured_operands_and_unmodeled_rust_display',
+    'typed_program_links::javascript_and_rust_sources_emit_from_reloaded_source_free_graphs',
+    'typed_program_links::native_index_model_emits_from_an_edited_source_free_graph',
+    'typed_program_links::operation_and_binding_edits_change_the_actual_linked_program',
+    'typed_program_links::declaration_retargeting_uses_owned_identity_and_checked_signatures',
+    'typed_program_links::malformed_literal_type_and_structural_edits_are_rejected_before_emission',
+    'typed_program_links::machine_integer_width_edits_return_a_diagnostic_before_emission',
+    'typed_program_links::linked_operation_and_rounding_edits_cannot_enter_target_source',
+    'typed_program_links::floating_point_special_spellings_cannot_become_undefined_identifiers',
+    'typed_program_links::constructor_immutability_flags_are_explicitly_refused_until_data_projection_is_supported',
+    'typed_program_tuples::source_free_tuple_programs_match_both_independent_originals_and_native_targets',
+    'typed_program_tuples::linked_tuple_literal_edit_changes_execution_without_source_replay',
+    'typed_program_tuples::malformed_tuple_layouts_indices_and_product_models_refuse_native_boundaries',
+    'typed_program_tuples::linked_zero_tuple_positions_accept_equivalent_numeric_spellings',
+    'typed_program_neutral_defaults::actual_checked_false_type_archives_reload_reencode_and_emit_the_original_observable_program',
+    'typed_program_record_projection::canonical_record_programs_keep_strict_checks_and_source_free_value_edits',
+    'rust_const_branch_functions::',
+    'program_string_representation::explicit_string_representation_preserves_boolean_presence_through_both_native_archives',
+    'shared_numeric_function_links::current_boolean_declarations_keep_actual_const_owners_truths_and_both_archives',
+    'four_language_conformance::all_twelve_translation_hooks_emit_reversible_target_native_source_envelopes',
+    'foundation_models::distinct_models_stay_distinct_and_translation_encodings_are_justified',
+    'grammar_outcome_preorder_rules::complete_owned_preorder_source_translates_without_carried_items_and_restores_exactly',
+    'grammar_outcome_source_type_rules::complete_source_type_algorithm_translates_without_carried_items_and_restores_exactly',
+  ];
+  return [...arguments_, ...[...translationModuleFilters, ...translationTests].flatMap(filter => ['--skip', filter])];
+}
+
 export function verifyHarnessExecution(receipt) {
   requireValue(receipt.allInventoryDigest === digest(JSON.stringify(receipt.allInventory)), 'changed unfiltered inventory');
   requireValue(JSON.stringify(receipt.allInventory.filter(row => matchesLogicalFilters(row.name, receipt.arguments))) === JSON.stringify(receipt.inventory), 'logical inventory differs from the complete native inventory');
@@ -129,19 +191,27 @@ export function verifyHarnessExecution(receipt) {
   requireValue(receipt.exitCode === 0 && receipt.signal === null && receipt.outcomes.every(row => row.outcome !== 'FAILED'), 'native test execution failed');
 }
 
-export async function executePhysicalHarness({binary, arguments: original, identity, shard, count, invoke}) {
-  const listed = await invoke(binary, [...original, '--list', '--format', 'terse'], true);
+export async function executePhysicalHarness({binary, arguments: original, identity, shard, count, invoke, automatedTranslation}) {
+  async function listCompleteInventory() {
+    const listing = await invoke(binary, ['--list', '--format', 'terse'], 'all');
+    requireValue(listing.exitCode === 0 && listing.signal === null, 'complete native inventory failed');
+    return listing;
+  }
+  const paused = automatedTranslation === 'false' && ['test', 'fresh-merge'].includes(identity.profile);
+  let allListed = paused ? await listCompleteInventory() : null;
+  const filters = nativeTestArguments(original, identity.profile, automatedTranslation,
+    allListed && readHarnessInventory(allListed.stdout));
+  const listed = await invoke(binary, [...filters, '--list', '--format', 'terse'], true);
   requireValue(listed.exitCode === 0 && listed.signal === null, 'native test inventory failed');
   const inventory = readHarnessInventory(listed.stdout);
-  const allListed = await invoke(binary, ['--list', '--format', 'terse'], 'all');
-  requireValue(allListed.exitCode === 0 && allListed.signal === null, 'complete native inventory failed');
+  allListed ??= await listCompleteInventory();
   const allInventory = readHarnessInventory(allListed.stdout);
   requireValue(!inventory.some(row => row.name === '__meta_language_empty_physical_partition__'), 'reserved partition identity');
   const selected = selectPhysicalTests(inventory, shard, count,
     identity.profile === 'evidence' ? readPhysicalShardPolicy().evidence.sharedScopes : null);
   // Empty harnesses remain actual executions, with an explicitly empty cell.
-  const actual = await invoke(binary, exactHarnessArguments(original, selected), false);
-  return {schemaVersion: 1, identity, binary: path.basename(binary), arguments: original,
+  const actual = await invoke(binary, exactHarnessArguments(filters, selected), false);
+  return {schemaVersion: 1, identity, binary: path.basename(binary), arguments: filters,
     inventory, inventoryDigest: digest(JSON.stringify(inventory)), allInventory, allInventoryDigest: digest(JSON.stringify(allInventory)), selected, shard, count,
     listingDigest: digest(listed.stdout),
     allListingDigest: digest(allListed.stdout),
@@ -280,7 +350,7 @@ async function runHarness(binary, arguments_) {
     return actual.exitCode ?? 1;
   }
   const receipt = await executePhysicalHarness({binary, arguments: arguments_, identity: current.identity,
-    shard: current.shard, count: current.count,
+    shard: current.shard, count: current.count, automatedTranslation: process.env.META_LANGUAGE_AUTOMATED_TRANSLATION,
     invoke: (binary, arguments_, listing) => invokeNative(binary, arguments_, listing, logPrefix)});
   writeReceipt(current.directory, name, receipt);
   if (receipt.exitCode !== 0 || receipt.signal !== null) return receipt.exitCode ?? 1;
@@ -317,7 +387,8 @@ function finish() {
   requireValue(process.env.META_LANGUAGE_SHARD_RESULT === 'success', 'physical job failed');
 }
 
-export function readShardAdmission(jobs, policy) {
+export function readShardAdmission(jobs, policy, crossPlatformChecks) {
+  const testPlatforms = nativeTestPlatforms(policy, crossPlatformChecks);
   const definitions = [['test', /^Rust \/ Test \(/u], ['coverage', /^Rust \/ Code Coverage \(/u], ['fresh-merge', /^Rust \/ Fresh Merge Simulation(?: \([1-9][0-9]*\))?$/u],
     ['evidence', /^Evidence Stage \(rust-suite(?: - [1-9][0-9]*\/[1-9][0-9]*)?\)$/u]];
   const profiles = [];
@@ -325,12 +396,12 @@ export function readShardAdmission(jobs, policy) {
     const active = jobs.filter(job => pattern.test(job.name) && job.conclusion !== 'skipped');
     if (!active.length) continue;
     const expected = ['evidence','fresh-merge'].includes(profile) ? physicalShardCount(policy, profile, 'all')
-      : (profile === 'test' ? policy.platforms : ['ubuntu-latest']).reduce((sum, platform) => sum
+      : (profile === 'test' ? testPlatforms : ['ubuntu-latest']).reduce((sum, platform) => sum
         + policy.suites.reduce((subtotal, row) => subtotal + physicalShardCount(policy, profile, row.name, platform), 0), 0);
     requireValue(active.length === expected, 'missing or duplicate scheduled physical jobs');
     const expectedNames = profile === 'evidence' ? Array.from({length: expected}, (_, index) => `Evidence Stage (rust-suite - ${index + 1}/${expected})`)
       : profile === 'fresh-merge' ? Array(expected).fill('Rust / Fresh Merge Simulation')
-      : (profile === 'test' ? policy.platforms : ['ubuntu-latest']).flatMap(platform => policy.suites.flatMap(row =>
+      : (profile === 'test' ? testPlatforms : ['ubuntu-latest']).flatMap(platform => policy.suites.flatMap(row =>
         Array(physicalShardCount(policy, profile, row.name, platform)).fill(profile === 'test' ? `Rust / Test (${platform}, ${row.name})` : `Rust / Code Coverage (${row.name})`)));
     let actualNames = active.map(job => job.name);
     if (profile === 'fresh-merge' && actualNames.some(name => name !== 'Rust / Fresh Merge Simulation')) {
@@ -345,11 +416,12 @@ export function readShardAdmission(jobs, policy) {
   return profiles;
 }
 
-export function verifyPhysicalShardUnion(groups, policy, {commit, run, attempt, profiles = ['test', 'coverage', 'fresh-merge']}) {
+export function verifyPhysicalShardUnion(groups, policy, {commit, run, attempt, profiles = ['test', 'coverage', 'fresh-merge'], crossPlatformChecks}) {
+  const testPlatforms = nativeTestPlatforms(policy, crossPlatformChecks);
   requireValue(Array.isArray(profiles) && profiles.every(profile => ['test', 'coverage', 'fresh-merge', 'evidence'].includes(profile))
     && new Set(profiles).size === profiles.length, 'unknown or duplicate admitted execution profiles');
   const expected = [];
-  for (const profile of ['test', 'coverage'].filter(profile => profiles.includes(profile))) for (const platform of profile === 'test' ? policy.platforms : ['ubuntu-latest']) {
+  for (const profile of ['test', 'coverage'].filter(profile => profiles.includes(profile))) for (const platform of profile === 'test' ? testPlatforms : ['ubuntu-latest']) {
     for (const row of policy.suites) for (let shard = 1; shard <= physicalShardCount(policy, profile, row.name, platform); shard++) expected.push([profile, platform, row.name, shard]);
   }
   if (profiles.includes('fresh-merge')) for (let shard = 1; shard <= physicalShardCount(policy,'fresh-merge','all'); shard++) expected.push(['fresh-merge', 'ubuntu-latest', 'all', shard]);
@@ -475,13 +547,17 @@ if (process.argv[1] && path.resolve(process.argv[1]) === script) {
     if (mode === '--configure') configure(arguments_[0] === '--shell');
     else if (mode === '--finish') finish();
     else if (mode === '--runner') process.exitCode = await runHarness(arguments_[0], arguments_.slice(1));
+    else if (mode === '--test-matrix') {
+      const matrix = nativeTestMatrix(readPhysicalShardPolicy(), process.env.META_LANGUAGE_CROSS_PLATFORM_CHECKS);
+      appendFileSync(process.env.GITHUB_OUTPUT, `matrix=${JSON.stringify(matrix)}\n`);
+    }
     else if (mode === '--admission') {
       const pages = JSON.parse(readFileSync(arguments_[0], 'utf8'));
-      const profiles = readShardAdmission(pages.flatMap(page => page.jobs), readPhysicalShardPolicy());
+      const profiles = readShardAdmission(pages.flatMap(page => page.jobs), readPhysicalShardPolicy(), process.env.META_LANGUAGE_CROSS_PLATFORM_CHECKS);
       appendFileSync(process.env.GITHUB_OUTPUT, `enabled=${profiles.length > 0}\nprofiles=${profiles.join(',')}\n`);
     }
     else if (mode === '--verify') console.log(verifyPhysicalShardDirectory(arguments_[0], {commit: process.env.GITHUB_SHA, run: process.env.GITHUB_RUN_ID,
-      attempt: process.env.GITHUB_RUN_ATTEMPT, profiles: (process.env.META_LANGUAGE_SHARD_EXPECTED_PROFILES ?? '').split(',').filter(Boolean)}));
-    else throw new Error('expected --configure, --runner, --finish or --verify');
+      attempt: process.env.GITHUB_RUN_ATTEMPT, crossPlatformChecks: process.env.META_LANGUAGE_CROSS_PLATFORM_CHECKS, profiles: (process.env.META_LANGUAGE_SHARD_EXPECTED_PROFILES ?? '').split(',').filter(Boolean)}));
+    else throw new Error('expected --configure, --runner, --finish, --test-matrix, --admission or --verify');
   } catch (error) {console.error(error.stack);process.exitCode = 1;}
 }

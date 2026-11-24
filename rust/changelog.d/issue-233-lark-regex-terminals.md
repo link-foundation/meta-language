@@ -1,0 +1,1 @@
+Lark imports recognize regular-expression terminals for numbers, identifiers, and whitespace. The portable subset supports case-insensitive ASCII patterns and dot-all matching. Unsupported regex syntax reports its byte position in the grammar.

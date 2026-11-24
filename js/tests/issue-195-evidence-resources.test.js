@@ -59,9 +59,9 @@ test('CI splits the Rust and JavaScript tests into matrix jobs with their own ti
   assert.deepEqual([...matrixGroups, ...reportGroups].sort(), Object.keys(TEST_GROUPS).sort());
   assert.equal(new Set([...matrixGroups, ...reportGroups]).size, matrixGroups.length + reportGroups.length);
   assert.match(javascript, /scripts\/test-groups\.mjs --run "\$TEST_GROUP"/u);
-  for (const [workflow, id, producer, condition] of [
-    [javascriptWorkflow, 'report-assertions', 'reports', /\n {4}if: \$\{\{ !cancelled\(\) && !inputs\.external_reports \}\}/u],
-    [acceptanceWorkflow, 'self-translation-report-validation', 'self-translation-report', /\n {4}if: \$\{\{ !cancelled\(\) && github\.event_name != 'release' \}\}/u],
+  for (const [workflow, file, id, producer, condition] of [
+    [javascriptWorkflow, 'js.yml', 'report-assertions', 'reports', /\n {4}if: \$\{\{ !cancelled\(\) && !inputs\.external_reports \}\}/u],
+    [acceptanceWorkflow, 'ci.yml', 'self-translation-report-validation', 'self-translation-report', /\n {4}if: \$\{\{ !cancelled\(\) && github\.event_name != 'release' \}\}/u],
   ]) {
     const reports = job(workflow, id);
     assert.deepEqual(needs(reports), [producer], `${id} waits for the complete report shards`);
@@ -76,7 +76,8 @@ test('CI splits the Rust and JavaScript tests into matrix jobs with their own ti
     const download = reports.indexOf('actions/download-artifact@');
     assert.ok(download >= 0, `${id} downloads the generated reports`);
     assert.ok(download < reports.indexOf('scripts/test-groups.mjs --run report-artifacts'));
-    assert.match(job(workflow, producer), /shard: \[1, 2, 3, 4, 5, 6, 7, 8\]/u);
+    const active = readFileSync(new URL(`../../${WORKFLOWS}/${file}`, import.meta.url), 'utf8');
+    assert.match(job(active, producer), /shard: \[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16\]/u);
   }
   // A standalone run validates its own reports; reusable CI supplies them to
   // its dedicated required job, so neither path repeats the report module work.

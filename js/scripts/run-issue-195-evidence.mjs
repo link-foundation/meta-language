@@ -21,7 +21,9 @@ import { buildIssue195Manifest } from './issue-195-acceptance-lib.mjs';
 import { measureCacheCleanup } from './issue-195-cache-evidence.mjs';
 import {
   DELIVERY_CONSUMER_ASSERTIONS,
+  DOCUMENT_TASK_CASES,
   deliveryAssertions,
+  observedDocumentTask,
   supportedPlatformCoverage,
 } from './issue-195-delivery.mjs';
 import { buildEvidencePlan, observedEvidenceForCell } from './issue-195-evidence-plan.mjs';
@@ -424,7 +426,19 @@ async function produceMergeEnforcementEvidence() {
       'live GitHub merge enforcement and separate release checkpoint inspection',
     );
   }
-  return { ...bundle(execution), artifacts: [relative(reportPath)] };
+  const rolloutPath = path.join(artifactsDirectory, 'automated-translation-rollout.lino');
+  const rollout = await runCommand('automated-translation-rollout', 'node', [
+    path.join(root, 'js/scripts/check-automated-translation-rollout.mjs'), rolloutPath,
+  ], { allowFailure: true });
+  if (rollout.ok) observe(
+    'i195-automated-translation-pause-open-pull-requests-tooling-behavior',
+    'everyOpenPullRequestRunsPausedWorkflow', 'eligible GitHub Actions rollout inspection',
+  );
+  return bundle(execution, rollout, {
+    commands: [],
+    artifacts: [relative(reportPath), relative(rolloutPath)],
+    failureLogs: [...(execution.ok ? [] : execution.artifacts), ...(rollout.ok ? [] : rollout.artifacts)],
+  });
 }
 
 /**
@@ -679,6 +693,13 @@ async function produceDeliveryEvidence(kind) {
   };
   const reportArtifacts = { commands: [], artifacts: reports.map(({ artifact }) => artifact) };
   const local = reports.find(({ file }) => file === localReport)?.report ?? null;
+  for (const [id, , scenario, assertion] of DOCUMENT_TASK_CASES) {
+    const testId = `${id.toLowerCase()}-javascript-${checkpoint}`;
+    const exampleSha256 = manifest.fixtureCatalog[cellsByTestId.get(testId).fixtureIds[0]].sha256;
+    if (observedDocumentTask(local, expected, deliveryContext, exampleSha256, scenario)) {
+      observe(testId, assertion, `${kind} npm document example on ${local.platform}: ${scenario}`);
+    }
+  }
   const groups = [];
   for (const deliveryPackage of ['npm', 'crate', 'rml']) {
     for (const runtime of ['javascript', 'rust']) {

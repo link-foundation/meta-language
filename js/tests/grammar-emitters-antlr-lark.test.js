@@ -272,7 +272,7 @@ test('lark emits native constructs verbatim', () => {
     '// items\n' +
     '?item.2: WORD | NUMBER ~ 2 | NUMBER ~ 1..3 | (WORD ~ 0..1)* |\n' +
     'trailer: /[a-z]+/\n' +
-    'WORD: /[^A-Z\\/\\]\\^\\x07\\U0001F600]/\n' +
+    'WORD: /[^A-Z\\/\\]\\^\\x07😀]/\n' +
     'NUMBER: /[0-9]/\n' +
     '_SEP: ";"\n' +
     'WS: /[ \\t]/\n' +
@@ -307,8 +307,8 @@ test('lark records every lowering', () => {
   ]);
   const { source, report, reimported } = roundTrip(g, emitLark, importLark);
   assert.equal(source,
-    'main: /(?i:a\\.b)/ | /[a-f]/ | /[\\x00-\\U0010FFFF]/ | TOK* | TOK+ | TOK ~ 3 TOK* | TOK ' +
-    '| /[^"]/ | TOK | TOK | /a\\/b\\n/ | /[xy]/ | /(?:)/ | /[\\x00-\\U0010FFFF]/ | ""\n' +
+    'main: /(?i:a\\.b)/ | /[a-f]/ | /[\\x00-\u{10FFFF}]/ | TOK* | TOK+ | TOK ~ 3 TOK* | TOK ' +
+    '| /[^"]/ | TOK | TOK | /a\\/b\\n/ | /[xy]/ | /(?:)/ | /[\\x00-\u{10FFFF}]/ | ""\n' +
     '// line one\n' +
     '// line two\n' +
     'TOK.3: main\n' +
@@ -412,6 +412,13 @@ test('lark sources round-trip with their rule structure and docs', async () => {
       [...g.rules.keys()].map((name) => docOf(g, name)), text);
     assert.deepEqual(report.lossy, []);
   }
+});
+
+test('ANTLR emission preserves Lark regex classes and reports the dropped token boundary', async () => {
+  const grammar = importLark(await fixture('lark/covering.lark'));
+  const { source, report } = roundTrip(grammar, emitAntlr, importAntlr);
+  assert.match(source, /trailer : \[a-z\]\+ ;/);
+  assert.ok(report.lossy.some((note) => note.includes('dropped the Lark regex token boundary')));
 });
 
 // Emitted by the Rust binary: `meta-language import-grammar --format <fmt> --to <target>`.

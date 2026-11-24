@@ -8,6 +8,25 @@
 
 import { createHash } from 'node:crypto';
 
+export const DOCUMENT_TASK_EXAMPLE = 'examples/deterministic-document-tasks.mjs';
+
+// The assertion names and report keys identify the same executed scenarios at
+// the candidate and publication checkpoints.
+export const DOCUMENT_TASK_CASES = [
+  ['I195-I245-NPM-LOCATED-JSON', 'documentTasks', 'json', 'jsonSchemaAndRecovery',
+    'Report syntax and schema errors with their original JSON CST links and byte spans. Apply only enabled repairs, then check the repaired document against both schema validation and the generated grammar.'],
+  ['I195-I245-NPM-TEXT-EXTRACTION', 'documentTasks', 'extraction', 'typedValuesAndGrammarMatches',
+    'Extract a monetary value and a grammar match from free text with exact source spans and a named capture.'],
+  ['I195-I245-NPM-QUOTE-GROUNDING', 'documentTasks', 'grounding', 'normalizedQuotesRetainSpans',
+    'Locate a quote through Unicode, quote, and dash normalization, retaining the original source span.'],
+  ['I195-I245-NPM-LANGUAGE-ANALYSIS', 'documentTasks', 'morphology', 'englishAndRussianLemmasAndLanguageIds',
+    'Identify English and Russian input and find the expected noun lemmas.'],
+  ['I195-I230-NPM-HTML-TREE', 'htmlPackageDelivery', 'html', 'htmlTreeAndSourceSpans',
+    'Read an HTML element, its attribute, its text and its nested element with exact byte and character positions through the documented public entry point.'],
+  ['I195-I244-NPM-FALLBACK-GRAMMAR-ASSETS', 'grammarAssetAvailability', 'fallbackGrammars', 'fallbackGrammarAssetsParseOffline',
+    'Report every standalone parser available after installation, then parse Markdown block and inline syntax, YAML, and Kotlin losslessly with exact syntax spans, offline and without a checkout grammar cache.'],
+];
+
 export const DELIVERY_CONSUMER_ASSERTIONS = [
   'cleanEnvironment',
   'exactArtifactChecksum',
@@ -76,6 +95,15 @@ export function deliveryAssertions(report, sides, expected, context) {
     assertion,
     agrees && checks.every((check) => check[assertion] === true),
   ]));
+}
+
+/** An installed example only counts with the authenticated input and artifact. */
+export function observedDocumentTask(report, expected, context, exampleSha256, scenario) {
+  const checks = deliveryAssertions(report, ['npm'], expected, context);
+  const observations = report?.npm?.documentTasks;
+  return Object.values(checks).every(Boolean) &&
+    observations?.exampleSha256 === exampleSha256 &&
+    observations?.[scenario] != null;
 }
 
 /**

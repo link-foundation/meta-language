@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {serializeProjectData} from './project-data.mjs';
+import {restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 const root=new URL('../../',import.meta.url);
 export const SCOPED_ITERATION_NATIVE_SOURCE=Object.freeze({
   file:'rust/src/translation/javascript/declarations.rs',
@@ -87,9 +88,10 @@ export function restoreScopedIterationNativeHostSource(source,file,reader){
     return row.previous.source;
   }
   if(file!==SCOPED_ITERATION_NATIVE_SOURCE.file||reader!=='required field native host')return source;
-  const actual=pinScopedIterationNativeSource(source),expected=SCOPED_ITERATION_NATIVE_SOURCE.current;
+  const historical=restoreIssue245SourceSuccessor(file,source);
+  const actual=pinScopedIterationNativeSource(historical),expected=SCOPED_ITERATION_NATIVE_SOURCE.current;
   if(actual.bytes!==expected.bytes||actual.sha256!==expected.sha256)return source;
-  const packet=readScopedIterationNativeHostSourceHistory();assert.equal(source,packet.current.source);
+  const packet=readScopedIterationNativeHostSourceHistory();assert.equal(historical,packet.current.source);
   return packet.previous.source;
 }
 

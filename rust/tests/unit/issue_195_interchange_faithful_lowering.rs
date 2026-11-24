@@ -148,12 +148,30 @@ fn issue_195_grammars_lower_into_an_executable_grammar_in_every_less_expressive_
         let lowering = lower_grammar(grammar, format, &GrammarLoweringOptions::default())
             .unwrap_or_else(|error| panic!("{label} lowers: {error}"));
         assert_eq!(lowering.status.as_str(), text(target, "status"), "{label}");
-        assert_eq!(lowering.executable, text(target, "executable"), "{label}");
+        let original = text(target, "executable");
+        // LLGuidance reads a supplementary range endpoint as a literal scalar.
+        let executable = if label == "lookahead:lowering lark" {
+            original.replace(
+                r"lowered3: /[\x00-\U0010FFFF]/",
+                "lowered3: /[\\x00-\u{10FFFF}]/",
+            )
+        } else {
+            original.to_owned()
+        };
+        assert_eq!(lowering.executable, executable, "{label}");
         assert_eq!(lowering.metadata, text(target, "metadata"), "{label}");
         assert_eq!(lowering.report.lossy, Vec::<String>::new(), "{label}");
         // The target's own importer reads the executable back as the lowered grammar.
         let import = grammar_importer(format).expect("importer");
-        let imported = import(text(target, "executable")).expect("executable imports");
+        let imported = import(&lowering.executable).expect("executable imports");
+        if executable != original {
+            let prior = import(original).expect("historical executable imports");
+            assert_eq!(
+                render_grammar_links(&imported),
+                render_grammar_links(&prior),
+                "{label}"
+            );
+        }
         assert_eq!(
             imported.rule_names(),
             lowering.grammar.rule_names(),

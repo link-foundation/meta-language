@@ -500,7 +500,7 @@ pub fn ml_accept_deferred_declaration_parameters_loop44(
                                 {
                                     let text = self::read_required_text_fact(texts, child);
                                     if ((((text.encode_utf16().count() as f64) == 0f64)
-                                        || text.contains("\\"))
+                                        || text.contains('\\'))
                                         || (text == "eval"))
                                         || (text == "arguments")
                                     {
@@ -515,7 +515,7 @@ pub fn ml_accept_deferred_declaration_parameters_loop44(
                                                     match ml_s41 {
                                                     self::MlAcceptDeferredDeclarationParametersLoop45Result::MlAcceptDeferredDeclarationParametersLoop45Done => {
                                                         {
-                                                            let names_2 = { let (ml_append_right, ml_append_left) = (vec![text.clone()], names); self::ml_array::append(ml_append_left, ml_append_right) };
+                                                            let names_2 = { let (ml_append_right, ml_append_left) = (vec![text], names); self::ml_array::append(ml_append_left, ml_append_right) };
                                                             {
                                                                 let ml_index42_3 = ml_index42.add(&self::ml::Big::from_i128(1));
                                                                 {
@@ -605,7 +605,7 @@ pub fn ml_read_declaration_deferred_binding_loop58(
                             {
                                 let text = self::read_required_text_fact(texts, child);
                                 if ((((text.encode_utf16().count() as f64) == 0f64)
-                                    || text.contains("\\"))
+                                    || text.contains('\\'))
                                     || (text == "eval"))
                                     || (text == "arguments")
                                 {

@@ -202,11 +202,11 @@ fn cargo_cache_keys_are_scoped_by_job() {
     for (job_name, expected_key) in [
         (
             "lint",
-            "key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}",
+            "key: ${{ runner.os }}-cargo-lint-1.99.0-${{ hashFiles('**/Cargo.lock') }}",
         ),
         (
             "check",
-            "key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}",
+            "key: ${{ runner.os }}-cargo-check-1.99.0-${{ hashFiles('**/Cargo.lock') }}",
         ),
         (
             "coverage",
@@ -232,7 +232,7 @@ fn cargo_cache_keys_are_scoped_by_job() {
         "Windows test cache should use a test registry key"
     );
     assert!(
-        test.contains("key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}"),
+        test.contains("key: ${{ runner.os }}-cargo-test-1.99.0-${{ hashFiles('**/Cargo.lock') }}"),
         "Unix test cache should use a test target key"
     );
     assert!(
@@ -363,6 +363,7 @@ fn workflow_propagates_cancellation_without_always_override() {
 ";
     let prerequisites = r"    needs: [detect-changes, changelog, cargo-lock, check]
     if: |
+      (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') &&
       !cancelled() &&
       needs.cargo-lock.result == 'success' &&
       needs.check.result == 'success' &&
@@ -467,6 +468,18 @@ fn workflow_propagates_cancellation_without_always_override() {
         workflow.replacen(
             execution,
             &execution.replace("--test-concurrency=1", "--test-concurrency=2"),
+            1,
+        ),
+        false,
+    ));
+    cases.push((
+        "removed translation opt-in",
+        workflow.replacen(
+            prerequisites,
+            &prerequisites.replace(
+                "      (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') &&\n",
+                "",
+            ),
             1,
         ),
         false,

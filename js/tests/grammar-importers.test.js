@@ -1,4 +1,5 @@
 import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -6,8 +7,10 @@ import test from 'node:test';
 
 import {
   GrammarImportError,
+  createGrammarParser,
   deserializeGrammar,
   emitPeggy,
+  emitPest,
   importAbnf,
   importBnf,
   importEbnf,
@@ -71,10 +74,7 @@ test('JavaScript imports every established Rust fixture for the five shared form
       )), 'utf8');
       const grammar = importers[format](source);
       assert.ok(grammar.startRule(), `${format}/${file} has a start rule`);
-      assert.equal(grammar.undefinedNonterminals().length, format === 'pest' ?
-        grammar.undefinedNonterminals().filter((name) =>
-          ['SOI', 'EOI', 'ASCII_DIGIT', 'NEWLINE'].includes(name)).length : 0,
-      `${format}/${file} only has permitted pest built-ins`);
+      assert.deepEqual(grammar.undefinedNonterminals(), [], `${format}/${file} resolves every rule`);
     }
   }
 });
@@ -148,6 +148,51 @@ range = @{ "y"{1,3} }
   });
   assert.throws(() => importPest('start = { PUSH("x") }'), /unsupported.*Push/i);
   assert.throws(() => importPest('start = { missing }'), /missing/);
+});
+
+const pestFixture = 'parity/fixtures/pest-built-ins.lino';
+const pestCases = readProjectData(new URL('../../' + pestFixture, import.meta.url));
+
+function observePest(requirementId, context, assertions) {
+  recordIssue195Observations({
+    requirementId, suffix: 'behavior', fixtureId: requirementId.toLowerCase(), fixtureFile: pestFixture,
+    assertions, testName: context.name,
+  });
+}
+
+function assertPestCases(cases) {
+  for (const [source, accepted, rejected] of cases) {
+    const grammar = importPest(source);
+    assert.deepEqual(grammar.undefinedNonterminals(), [], source);
+    const restored = deserializeGrammar(serializeGrammar(grammar));
+    const emitted = emitPest(restored).source;
+    for (const candidate of [restored, importPest(emitted)]) {
+      const parser = createGrammarParser(candidate);
+      for (const input of accepted) assert.equal(parser.parseTree(input).ok, true, `${source} accepts ${input}`);
+      for (const input of rejected) assert.equal(parser.parseTree(input).ok, false, `${source} rejects ${input}`);
+    }
+  }
+}
+
+test('pest resolves ASCII and pinned Unicode properties and matches absolute input edges', (context) => {
+  assert.equal(pestCases.pestVersion, '2.9.2');
+  assertPestCases(pestCases.builtinCases);
+  const { grammar, source, spans } = pestCases.anchorSearch;
+  const anchored = createGrammarParser(importPest(grammar));
+  assert.deepEqual(anchored.findAll(source).map(({ start, end }) => [start, end]), spans);
+  observePest('I195-I234-PEST-BUILT-IN-RULES', context, ['builtInRulesExecute', 'anchorsUseAbsolutePositions']);
+});
+
+test('pest reports consistent undefined and unsupported rule diagnostics', (context) => {
+  for (const [source, message] of pestCases.diagnostics) {
+    assert.throws(() => importPest(source), { name: 'GrammarImportError', message });
+  }
+  observePest('I195-I234-PEST-RULE-DIAGNOSTICS', context, ['pestRuleDiagnosticsUseExactMessages']);
+});
+
+test('pest inserts defined trivia between sequence and repetition items across rule calls', (context) => {
+  assertPestCases(pestCases.triviaCases);
+  observePest('I195-I234-PEST-IMPLICIT-TRIVIA', context, ['implicitTriviaTracksAtomicContext']);
 });
 
 test('tree-sitter JSON preserves fields, aliases, precedence, tokens, extras, and source order', () => {

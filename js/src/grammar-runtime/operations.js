@@ -120,7 +120,7 @@ export function evaluateValue(value, machine) {
 
 /**
  * Evaluates a condition operation to a boolean; `machine` adds `requested`,
- * `expected(expression)`, `lookahead(expression)` and `atEnd()`.
+ * `expected(expression)`, `lookahead(expression)`, `atStart()` and `atEnd()`.
  */
 export function evaluateCondition(condition, machine) {
   machine.step();
@@ -128,6 +128,7 @@ export function evaluateCondition(condition, machine) {
     case 'valid': return machine.requested === condition.token;
     case 'expected': return machine.expected(condition.item);
     case 'next': return machine.lookahead(condition.item);
+    case 'atStart': return machine.atStart();
     case 'atEnd': return machine.atEnd();
     case 'equal': {
       const left = evaluateValue(condition.left, machine);
@@ -204,16 +205,16 @@ export function runStatements(statements, machine) {
 export const OPERATION_CONTEXTS = Object.freeze({
   scanner: new Set([
     'advance', 'consume', 'skip', 'mark', 'emit', 'fail', 'if', 'while', 'push', 'pop', 'set', 'pushMode', 'popMode',
-    'setMode', 'valid', 'expected', 'next', 'atEnd', 'equal', 'less', 'greater', 'all', 'some', 'not', 'integer', 'text', 'variable',
+    'setMode', 'valid', 'expected', 'next', 'atStart', 'atEnd', 'equal', 'less', 'greater', 'all', 'some', 'not', 'integer', 'text', 'variable',
     'top', 'depth', 'column', 'matched', 'mode', 'length', 'uppercase', 'number', 'add', 'subtract', 'multiply',
   ]),
   action: new Set([
-    'fail', 'if', 'while', 'push', 'pop', 'set', 'pushMode', 'popMode', 'setMode', 'setAttribute', 'buildNode', 'atEnd',
+    'fail', 'if', 'while', 'push', 'pop', 'set', 'pushMode', 'popMode', 'setMode', 'setAttribute', 'buildNode', 'atStart', 'atEnd',
     'equal', 'less', 'greater', 'all', 'some', 'not', 'integer', 'text', 'variable', 'top', 'depth', 'column', 'matched',
     'mode', 'attribute', 'sumOf', 'fieldText', 'length', 'uppercase', 'number', 'add', 'subtract', 'multiply',
   ]),
   predicate: new Set([
-    'atEnd', 'equal', 'less', 'greater', 'all', 'some', 'not', 'integer', 'text', 'variable', 'top', 'depth', 'column',
+    'atStart', 'atEnd', 'equal', 'less', 'greater', 'all', 'some', 'not', 'integer', 'text', 'variable', 'top', 'depth', 'column',
     'matched', 'mode', 'length', 'uppercase', 'number', 'add', 'subtract', 'multiply',
   ]),
 });

@@ -1,13 +1,12 @@
 import { Grammar, GrammarBuilder } from '../grammar.js';
 import { parseError, unsupportedError } from './common.js';
 import {
-  CharStream,
   FORMAT,
   errorAt,
-  readEscape,
   tokenizeLark,
 } from './lark-lexer.js';
 import { decorateGrammar } from '../grammar-decorators.js';
+import { lowerLarkRegex } from './lark-regex.js';
 
 const SEQUENCE_ENDS = new Set(['newline', 'comment', 'pipe', 'rparen', 'rbracket']);
 
@@ -162,7 +161,7 @@ class LarkParser {
         return GrammarBuilder.literal(token.value);
       case 'regex':
         this.advance();
-        return lowerRegex(token.value, token.offset);
+        return lowerLarkRegex(token.value, token.flags, token.offset);
       case 'dot':
         this.advance();
         return GrammarBuilder.any();
@@ -276,63 +275,6 @@ class LarkParser {
 // not fit a safe JavaScript integer.
 function count(value) {
   return value <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(value) : value;
-}
-
-function lowerRegex(value, offset) {
-  const content = trivialRegexCharClass(value);
-  if (content === null) {
-    return GrammarBuilder.capture('regex', GrammarBuilder.literal(value));
-  }
-  return lowerCharSet(content, offset);
-}
-
-// A regex that is exactly one bracket expression lowers to a character class.
-function trivialRegexCharClass(value) {
-  if (!value.startsWith('[') || !value.endsWith(']') ||
-    hasUnescapedInnerClosingBracket(value)) return null;
-  return value.slice(1, -1);
-}
-
-function hasUnescapedInnerClosingBracket(value) {
-  const characters = Array.from(value);
-  let escaped = false;
-  for (let index = 1; index < characters.length; index += 1) {
-    if (index === characters.length - 1) return false;
-    const character = characters[index];
-    if (escaped) escaped = false;
-    else if (character === '\\') escaped = true;
-    else if (character === ']') return true;
-  }
-  return false;
-}
-
-function lowerCharSet(content, offset) {
-  const scanner = new CharStream(content);
-  const negated = scanner.peekChar() === '^';
-  if (negated) scanner.advanceChar();
-  const items = [];
-  while (!scanner.isEnd()) {
-    const start = readClassChar(scanner, offset);
-    if (scanner.peekChar() === '-' && scanner.peekChar(1) !== undefined) {
-      scanner.advanceChar();
-      const end = readClassChar(scanner, offset);
-      if (start.codePointAt(0) > end.codePointAt(0)) {
-        throw errorAt(offset, 'character class range start exceeds end');
-      }
-      items.push({ kind: 'range', start, end });
-    } else {
-      items.push({ kind: 'char', value: start });
-    }
-  }
-  if (items.length === 0) throw errorAt(offset, 'character class must not be empty');
-  return GrammarBuilder.charClass(items, negated);
-}
-
-function readClassChar(scanner, offset) {
-  const character = scanner.advanceChar();
-  if (character === undefined) throw errorAt(offset, 'unexpected end of character class');
-  if (character !== '\\') return character;
-  return readEscape(scanner, offset, 'unterminated character class escape', offset);
 }
 
 function finishSequence(items) {

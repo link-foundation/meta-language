@@ -74,11 +74,20 @@ test('issue 195 grammars lower into an executable grammar in every less expressi
     assert.equal(renderGrammarLinks(grammar), entry.links, label);
     const lowering = lowerGrammar(grammar, target.format);
     assert.equal(lowering.status, target.status, label);
-    assert.equal(lowering.executable, target.executable, label);
+    // The Lark decoder also has to work with LLGuidance, which reads the
+    // supplementary endpoint as a literal scalar.
+    const executable = label === 'lookahead:lowering lark'
+      ? target.executable.replace('lowered3: /[\\x00-\\U0010FFFF]/', 'lowered3: /[\\x00-\u{10FFFF}]/')
+      : target.executable;
+    assert.equal(lowering.executable, executable, label);
     assert.equal(lowering.metadata, target.metadata, label);
     assert.deepEqual(lowering.report.lossy, [], label);
     // The target's own importer reads the executable back as the lowered grammar.
-    const imported = grammarImporter(target.format)(target.executable);
+    const importTarget = grammarImporter(target.format);
+    const imported = importTarget(lowering.executable);
+    if (executable !== target.executable) {
+      assert.equal(renderGrammarLinks(imported), renderGrammarLinks(importTarget(target.executable)), label);
+    }
     assert.deepEqual(imported.ruleNames(), lowering.grammar.ruleNames(), label);
     assert.equal(imported.startRule()?.name, lowering.grammar.startRule().name, label);
     if (target.status === 'exact') {

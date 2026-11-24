@@ -9,3 +9,4 @@ export {
   importTreeSitterJson,
   importTreeSitterJson as import_tree_sitter_json,
 } from './grammar-importers/tree-sitter-json.js';
+export { importJsonSchema } from './grammar-importers/json-schema.js';

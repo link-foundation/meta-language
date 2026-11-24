@@ -7,7 +7,8 @@ import {fileURLToPath} from 'node:url';
 import test from 'node:test';
 import {extractNameInventory,NAME_INVENTORIES} from '../scripts/issue-195-naming.mjs';
 import {extractOwnCodebaseHistoricalNames,readOwnCodebaseHistoricalNamingPolicy,
-  readOwnCodebaseHistoricalNamingSources,verifyOwnCodebaseHistoricalNamingSources} from '../scripts/own-codebase-baseline-naming-history.mjs';
+  readOwnCodebaseHistoricalNamingSources,verificationPauseNamingInventories,
+  verifyOwnCodebaseHistoricalNamingSources} from '../scripts/own-codebase-baseline-naming-history.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 
@@ -38,8 +39,9 @@ test('historical naming retains complete certified definitions and every indepen
 
 test('unknown whole current naming sources and driver bytes cannot borrow historical authority',()=>{
   const history=readOwnCodebaseHistoricalNamingSources(),scratch=mkdtempSync(join(tmpdir(),'meta-language-own-naming-'));
-  const files=[...history.views.map(view=>view.file),history.driver.file,
-    ...readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews.views.map(row=>row.file)];
+  const files=[...new Set([...history.views.map(view=>view.file),history.driver.file,
+    ...readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews.views.map(row=>row.file),
+    ...Object.values(verificationPauseNamingInventories).flat()])];
   try{
     for(const file of files){const destination=join(scratch,file);mkdirSync(dirname(destination),{recursive:true});writeFileSync(destination,readFileSync(join(root,file)));}
     const expected=extractOwnCodebaseHistoricalNames(root,NAME_INVENTORIES,history);

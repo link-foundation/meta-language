@@ -7,7 +7,7 @@ import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import vm from 'node:vm';
 import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
-import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
+import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES} from './raw-schema-third-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from './raw-schema-fourth-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES, readOriginalLinkRawSchemaFifthContext, verifyOriginalLinkRawSchemaFifthExtensionClosure} from './raw-schema-fifth-extension-closure.mjs';
@@ -465,20 +465,53 @@ function prepareOriginalLinkRawSource({readProjectData, parseJavaScript, checkPr
   assert.equal(artifact.version, 1); assert.equal(artifact.model, frozenNative.model); assert.equal(rust.definitions.length, frozenNative.definitionCount);
   assert.equal(textBytes(artifact.completeRust).length, frozenNative.sourceBytes); assert.equal(sha256(artifact.completeRust), frozenNative.sourceSha256);
   const {source, ...emissionProfile} = readOriginalLinkRawEmissionProfile(profile, prepared);
+  const inputs = readRawEmissionProfileInputs(readFileSync);
+  if (inputs.historicalBytes.equals(Buffer.from(structuredDataToLino(artifact)))
+    && inputs.currentBytes.equals(Buffer.from(structuredDataToLino(prepared.currentArtifact)))
+    && inputs.sourceBytes.equals(Buffer.from(prepared.source))
+    && Object.entries(inputs.producerSources).every(([file, bytes]) => bytes.equals(prepared.producerSources[file]))) {
+    rememberCheckedEmissionProfile(profile, inputs.buffers, emissionProfile);
+  }
   const header = nativeInterface(source, tokenize), emitted = emitJavaScript(program);
   const target = emitted.mappings.find(row => row.kind === 'function' && row.source === 'checkOriginalLinkRawShape')?.target;
   return freeze({model: artifact.model, source, javascript: emitted.text, target, header, emissionProfile,
     declarationNames: emissionProfile.declarationNames, definitionCount: rust.definitions.length, preludeCount: rust.preludes.length});
 }
 
-function readOriginalLinkRawSelectedEmissionProfile(profile) {
-  const historicalArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, 'utf8'));
-  const currentArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, 'utf8'));
-  const source = readFileSync(new URL('./raw-rules.mjs', import.meta.url), 'utf8');
-  const selected = readOriginalLinkRawEmissionProfile(['consuming','borrowed consuming'].includes(profile) ? 'current' : profile, {historicalArtifact, currentArtifact, source,
-    producerSources: readOriginalLinkRawEmissionProducerSources()});
-  const {source: selectedSource, ...descriptor} = selected;
-  assert.equal(sha256(selectedSource), descriptor.sourceSha256);
+const checkedEmissionProfiles = new Map();
+
+function readRawEmissionProfileInputs(read) {
+  const historicalBytes = read(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT);
+  const currentBytes = read(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT);
+  const sourceBytes = read(new URL('./raw-rules.mjs', import.meta.url));
+  const producerSources = readOriginalLinkRawEmissionProducerSources(read);
+  return {historicalBytes, currentBytes, sourceBytes, producerSources,
+    buffers: [historicalBytes, currentBytes, sourceBytes, ...Object.values(producerSources)]};
+}
+
+function rememberCheckedEmissionProfile(profile, inputs, descriptor) {
+  Object.freeze(descriptor);
+  checkedEmissionProfiles.set(profile, {inputs: inputs.map(bytes => Buffer.from(bytes)), descriptor});
+  return descriptor;
+}
+
+// Every execution boundary rereads every file. Identical bytes can reuse the
+// successful decode and proof without parsing the complete archives again.
+export function readOriginalLinkRawSelectedEmissionProfile(profile, read = readFileSync) {
+  const originalProfile = ['consuming', 'borrowed consuming'].includes(profile) ? 'current' : profile;
+  const {historicalBytes, currentBytes, sourceBytes, producerSources, buffers} = readRawEmissionProfileInputs(read);
+  const checked = checkedEmissionProfiles.get(originalProfile);
+  let descriptor = checked?.descriptor;
+  if (!checked || !buffers.every((bytes, index) => bytes.equals(checked.inputs[index]))) {
+    const {source: selectedSource, ...verified} = readOriginalLinkRawEmissionProfile(originalProfile, {
+      historicalArtifact: readStructuredDataLino(historicalBytes.toString('utf8')),
+      currentArtifact: readStructuredDataLino(currentBytes.toString('utf8')),
+      source: sourceBytes.toString('utf8'),
+      producerSources,
+    });
+    assert.equal(sha256(selectedSource), verified.sourceSha256);
+    descriptor = rememberCheckedEmissionProfile(originalProfile, buffers, verified);
+  }
   if (profile === 'consuming') return readOriginalLinkRawConsumingProfile(descriptor);
   if (profile === 'borrowed consuming') return readOriginalLinkRawBorrowedProfile(descriptor);
   return descriptor;

@@ -143,10 +143,12 @@ pub fn accept_recursive_declaration_owned_publication(
     completed: f64,
     proofs: &[f64],
 ) -> bool {
-    if (((!(((members > 1f64) && ((members % 1f64) == 0f64))
-        && (members <= 9_007_199_254_740_991f64))
-        || !(((declarations > members) && ((declarations % 1f64) == 0f64))
-            && (declarations <= 9_007_199_254_740_991f64)))
+    if (((!((members > 1f64)
+        && ((members % 1f64) == 0f64)
+        && (members <= 9_007_199_254_740_991f64)
+        && (declarations > members)
+        && ((declarations % 1f64) == 0f64)
+        && (declarations <= 9_007_199_254_740_991f64)))
         || (signatures != members))
         || (completed != members))
         || ((proofs.len() as f64) != 7f64)
@@ -459,7 +461,7 @@ if ml_library_inequality_1 {
                                                                 self::MlReadDeclarationDeferredBindingJoin55::MlReadDeclarationDeferredBindingJoin55Next(name_4) => {
                                                                     {
                                                                         let actual_name = self::read_required_text_fact(texts, name_4);
-                                                                        if ((((actual_name.encode_utf16().count() as f64) == 0f64) || actual_name.contains("\\")) || (actual_name == "eval")) || (actual_name == "arguments") {
+                                                                        if ((((actual_name.encode_utf16().count() as f64) == 0f64) || actual_name.contains('\\')) || (actual_name == "eval")) || (actual_name == "arguments") {
                                                                             Vec::<f64>::new()
                                                                         } else {
                                                                             vec![if kind == "class_declaration" {

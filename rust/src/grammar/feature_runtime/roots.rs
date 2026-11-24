@@ -50,10 +50,11 @@ impl Executor<'_> {
         result: &Res,
         trailing: &[Rc<Tree>],
         several: bool,
+        end: usize,
     ) -> Tree {
         let ambiguous = several || result.ambiguous;
         if self.separator_taken.is_empty() {
-            return self.built_root(start_rule, &result.children, trailing, ambiguous);
+            return self.built_root(start_rule, &result.children, trailing, ambiguous, end);
         }
         let children = self.widen_tokens(&result.children, &[]);
         let widened = self.widen_tokens(trailing, &[]);
@@ -62,6 +63,7 @@ impl Executor<'_> {
             children.as_deref().unwrap_or(&result.children),
             widened.as_deref().unwrap_or(trailing),
             ambiguous,
+            end,
         )
     }
 
@@ -71,18 +73,19 @@ impl Executor<'_> {
         children: &[Rc<Tree>],
         trailing: &[Rc<Tree>],
         ambiguous: bool,
+        end: usize,
     ) -> Tree {
         match children {
             [only] if only.ty == TreeType::Node => {
                 let mut root = (**only).clone();
-                root.end = self.end;
+                root.end = end;
                 root.children = concat(&only.children, trailing);
                 root.ambiguous = only.ambiguous || ambiguous;
                 root
             }
             children => {
                 let kind = &self.program.rules[start_rule].node_kind;
-                let mut root = Tree::node(kind, self.begin, self.end, concat(children, trailing));
+                let mut root = Tree::node(kind, self.begin, end, concat(children, trailing));
                 root.ambiguous = ambiguous;
                 root
             }

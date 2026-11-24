@@ -6,6 +6,7 @@ import {LinkNetwork} from '../../js/src/network.js';
 import {LinkMetadata,LinkType,LinkFlags,SourceSpan,ByteRange,Point} from '../../js/src/primitives.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../../js/src/link-network-binary.js';
 import {readProjectData} from '../../js/scripts/project-data.mjs';
+import {readOriginalBinaryRuleProducer} from '../../js/scripts/reviewed-rust-source-styles.mjs';
 import {transcodeLinkNetworkBinary as previous} from './prior-rules.mjs';
 import {transcodeLinkNetworkBinary as candidate} from './candidate.mjs';
 
@@ -39,7 +40,9 @@ test('the candidate generation receipt binds the explicit native model, source, 
   assert.equal(receipt.candidateSourceSha256,gap.candidate.sha256);
   assert.equal(receipt.baselineSourceSha256,gap.baseline.sha256);
   assert.equal(receipt.baselineStylesSha256,gap.nativeGeneration.originalStylesSha256);
-  assert.equal(receipt.generatorSha256,digest('js/scripts/generate-link-network-binary-rules.mjs'));
+  const producer=readFileSync(new URL('js/scripts/generate-link-network-binary-rules.mjs',root),'utf8');
+  assert.equal(receipt.generatorSha256,createHash('sha256').update(readOriginalBinaryRuleProducer(producer)).digest('hex'));
+  assert.throws(()=>readOriginalBinaryRuleProducer(producer+'\n'));
   assert.equal(receipt.candidateStyleBuilderSha256,digest('js/scripts/binary-metadata-candidate-styles.mjs'));
   assert.equal(receipt.candidateStylesSha256,digest('experiments/binary-metadata-buffer/native-styles.lino'));
   assert.equal(receipt.generationPolicySha256,digest('experiments/binary-metadata-buffer/native-policy.lino'));

@@ -18,6 +18,7 @@ import {deriveTruthyProjectionSchema,verifyTruthyProjectionSchemaPacket,
  restoreTruthyProjectionHostSource,verifyTruthyProjectionHostSuccessors} from '../scripts/truthy-projection-schema.mjs';
 import {restoreCollectionSizeProjectionSchema,readCollectionSizeProjectionSchemaPacket,
  verifyCollectionSizeProjectionSchemaPacket} from '../scripts/collection-size-projection-schema.mjs';
+import {booleanProjectionCheckerSource,readIssue245SourcePair} from '../../experiments/issue-245/source-history.mjs';
 
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node);
@@ -132,7 +133,13 @@ test('normal Boolean projection successor preserves every complete predecessor a
 test('the complete current Boolean checker successors preserve the old packet and refuse forged source authority',()=>{
  const packet=generateTruthyProjectionHostSuccessors({check:true});
  for(const row of packet.sources){
-  const actual=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');assert.equal(actual,row.current.source);
+  const actual=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');
+  if(row.file===booleanProjectionCheckerSource){
+   const reviewed=readIssue245SourcePair(row.file);
+   assert.equal(reviewed.predecessor,row.current.source);
+   assert.equal(actual,reviewed.current);
+  }else assert.equal(actual,row.current.source);
+  assert.equal(restoreTruthyProjectionHostSource(row.current.source,row.file),row.previous.source);
   assert.equal(restoreTruthyProjectionHostSource(actual,row.file),row.previous.source);
   assert.equal(restoreTruthyProjectionHostSource(actual+'\n',row.file),actual+'\n');
   assert.equal(restoreTruthyProjectionHostSource(actual,'unregistered/source.js'),actual);

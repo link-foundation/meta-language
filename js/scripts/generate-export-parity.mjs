@@ -31,6 +31,13 @@ const rustItemsPath = path.join(root, 'rust/tests/unit/javascript_export_parity/
  * spells the item for the compiler where a generic needs its parameters.
  */
 export const OVERRIDES = Object.freeze({
+  identifyLanguage: { rust: 'link_network::rank_language_identification' },
+  importJsonSchema: { rust: 'grammar::json_document::import_json_schema' },
+  emitJsonSchema: { rust: 'grammar::json_document::emit_json_schema' },
+  validateJson: { rust: 'grammar::json_document::validate_json' },
+  recoverJson: { rust: 'grammar::json_document::recover_json' },
+  locate: { rust: 'link_network::text_location::locate' },
+  wordNgramOverlap: { rust: 'link_network::text_location::word_ngram_overlap' },
   importResourceDescriptionNTriples: { rust: 'import_resource_description_ntriples' },
   emitResourceDescriptionNTriples: { rust: 'emit_resource_description_ntriples' },
   readResourceDescriptionNTriplesSource: { rust: 'read_resource_description_ntriples_source' },

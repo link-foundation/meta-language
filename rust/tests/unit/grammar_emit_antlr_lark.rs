@@ -504,7 +504,7 @@ fn lark_emits_native_constructs_verbatim() {
          // items\n\
          ?item.2: WORD | NUMBER ~ 2 | NUMBER ~ 1..3 | (WORD ~ 0..1)* |\n\
          trailer: /[a-z]+/\n\
-         WORD: /[^A-Z\\/\\]\\^\\x07\\U0001F600]/\n\
+         WORD: /[^A-Z\\/\\]\\^\\x07😀]/\n\
          NUMBER: /[0-9]/\n\
          _SEP: \";\"\n\
          WS: /[ \\t]/\n\
@@ -567,8 +567,8 @@ fn lark_records_every_lowering() {
 
     assert_eq!(
         text,
-        "main: /(?i:a\\.b)/ | /[a-f]/ | /[\\x00-\\U0010FFFF]/ | TOK* | TOK+ | TOK ~ 3 TOK* | TOK \
-         | /[^\"]/ | TOK | TOK | /a\\/b\\n/ | /[xy]/ | /(?:)/ | /[\\x00-\\U0010FFFF]/ | \"\"\n\
+        "main: /(?i:a\\.b)/ | /[a-f]/ | /[\\x00-\u{10FFFF}]/ | TOK* | TOK+ | TOK ~ 3 TOK* | TOK \
+         | /[^\"]/ | TOK | TOK | /a\\/b\\n/ | /[xy]/ | /(?:)/ | /[\\x00-\u{10FFFF}]/ | \"\"\n\
          // line one\n\
          // line two\n\
          TOK.3: main\n\
@@ -783,11 +783,13 @@ fn cross_format_sources_keep_rule_structure() {
     let lark =
         import_lark(include_str!("../fixtures/grammar/lark/covering.lark")).expect("imports");
     let (text, report, _) = round_trip(&lark, emit_antlr, import_antlr);
+    assert!(text.contains("trailer : [a-z]+ ;"), "{text}");
     assert!(
-        text.contains("trailer : [a-z]+ ;") || text.contains("regex="),
-        "{text}"
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("dropped the Lark regex token boundary"))
     );
-    assert_ne!(report.lossy, [] as [String; 0]);
 }
 
 fn fixture_importer(format: &str) -> Importer {

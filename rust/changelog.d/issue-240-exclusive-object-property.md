@@ -1,0 +1,5 @@
+Generate JSON Schema `oneOf` objects with a shared layout when exactly one branch accepts the value of their differing finite property.
+Apply parent property, required-field and additional-property assertions to these objects.
+Count matching branches across combinations of finite field values, including absent optional fields.
+Use differing required property names to distinguish branches that share their property schemas.
+Apply each branch's property declarations and default when the declared names differ.

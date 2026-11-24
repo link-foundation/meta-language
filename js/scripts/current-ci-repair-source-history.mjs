@@ -1,3 +1,4 @@
+import {restoreVerificationPauseSource} from '../../experiments/issue-245/verification-pause-history.mjs';
 // Exact source views for the current CI repair; current execution stays separate.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -5,6 +6,7 @@ import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
+import {javascriptWorkflowSource,rustWorkflowSource,restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const file='parity/self-translation/ci-39422441941-repair-source-history.lino';
 const archiveSha256='5b50046591ff194808c3d151e3a41df7de1c677230995f3e7356e498a7f161c6';
@@ -16,6 +18,8 @@ let history;
  * complete independently pinned current source gets an original source view. */
 export function restoreCurrentCiRepairSource(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
+  source=restoreVerificationPauseSource(path,source);
+  if(path===javascriptWorkflowSource||path===rustWorkflowSource)source=restoreIssue245SourceSuccessor(path,source);
   source=restoreCurrentNativeHostSource(source,path);
   source=restoreBooleanValueGuardHistory(source,path);
   source=restoreRawPlanningWorkflowHistory(source,path);

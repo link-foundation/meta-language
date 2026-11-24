@@ -675,7 +675,10 @@ export class LinkFlags {
 }
 
 export class LinkMetadata {
+  linkType?: LinkTypeValue;
   term?: string;
+  language?: string;
+  named: boolean;
   static new(): LinkMetadata;
   definition?: string;
   span?: SourceSpan;
@@ -1116,9 +1119,42 @@ export function constructProgramFromFragments(
 /** A reference is its name; a link is its name or null followed by its values. */
 export type LinksNotationReading = string | [string | null, ...LinksNotationReading[]];
 
+export interface LanguageParserAvailability {
+  language: string;
+  available: boolean;
+  missingGrammarAssets: string[];
+}
+
+export interface VisibleDocumentTextOptions {
+  blockSeparator?: string;
+  decodeEntities?: boolean;
+  collapseWhitespace?: boolean;
+  nbsp?: 'space' | 'keep';
+  /** String placed before visible list items. The default is empty. */
+  listBullet?: string;
+}
+
+export interface VisibleDocumentTextSpan {
+  /** Offsets in the projected JavaScript string, in UTF-16 code units. */
+  textStart: number;
+  textEnd: number;
+  /** Offset range in the original document, in UTF-8 bytes. */
+  sourceStart: number;
+  sourceEnd: number;
+  kind: 'source' | 'reference' | 'whitespace' | 'separator' | 'bullet' | 'replacement';
+}
+
+export interface VisibleDocumentText {
+  text: string;
+  map: VisibleDocumentTextSpan[];
+  /** Returns a UTF-8 source range for a nonempty projected string interval. */
+  sourceRange(start: number, end: number): { start: number; end: number } | null;
+}
+
 export class LinkNetwork {
   constructor();
   static parse(text: string, language: string, configuration?: ParseConfiguration): LinkNetwork;
+  static languageParserAvailability(): LanguageParserAvailability[];
   static parseLinksNotation(
     text: string,
     configuration?: ParseConfiguration,
@@ -1140,7 +1176,7 @@ export class LinkNetwork {
     language: string,
     configuration?: ParseConfiguration,
   ): LinkNetwork;
-  static parseBytes(bytes: Uint8Array | ArrayLike<number>, format: string): LinkNetwork;
+  static parseBytes(bytes: Uint8Array | ArrayLike<number>, format: string, configuration?: ParseConfiguration): LinkNetwork;
   static parseFluent(
     text: string,
     language: string,
@@ -1183,6 +1219,7 @@ export class LinkNetwork {
   len(): number;
   queryLinks(query: LinkQuery): Link[];
   find(query: LinkQuery): QueryMatch[];
+  queryMatchesWith(query: LinkQuery, predicateHost: QueryPredicateHost): QueryMatch[];
   replace(matches: QueryMatch[], rule: ReplacementRule, options?: DecoratorOptions): ReplacementReport;
   applySubstitution(rule: SubstitutionRule): SubstitutionReport;
   applyLinkCliSubstitutionText(source: string): SubstitutionReport;
@@ -1190,6 +1227,16 @@ export class LinkNetwork {
   snapshot(version: number, provenance: string): NetworkSnapshot;
   verifyFullMatch(): VerificationReport;
   reconstructText(): string;
+  visibleText(options?: VisibleDocumentTextOptions): VisibleDocumentText;
+  visible_text(options?: VisibleDocumentTextOptions): VisibleDocumentText;
+  derivedDocuments(): Array<{
+    name: string;
+    language: string;
+    sourceRange: ByteRange;
+    encoding: 'bytes' | 'binary-string';
+    compression: string;
+    network: LinkNetwork;
+  }>;
   embeddedRegions(): EmbeddedRegion[];
   parseGrammars(): ParseGrammar[];
   embedded_regions(): EmbeddedRegion[];
@@ -1224,6 +1271,7 @@ export class ParseConfiguration {
     embeddedRegionDepthLimit?: number;
     embeddedRegionCountLimit?: number;
     embeddedRegionByteLimit?: number;
+    decodeDocumentStreams?: boolean;
   });
   readonly triviaAttachmentPolicy: string;
   readonly regionDetectionPolicy: RegionDetectionPolicyValue;
@@ -1232,11 +1280,13 @@ export class ParseConfiguration {
   readonly embeddedRegionDepthLimit: number;
   readonly embeddedRegionCountLimit: number;
   readonly embeddedRegionByteLimit: number;
+  readonly decodeDocumentStreams: boolean;
   static default(): ParseConfiguration;
   withTriviaAttachmentPolicy(policy: string): ParseConfiguration;
   withRegionDetectionPolicy(policy: RegionDetectionPolicyValue): ParseConfiguration;
   with_region_detection_policy(policy: RegionDetectionPolicyValue): ParseConfiguration;
   withAccessMode(mode: string): ParseConfiguration;
+  withDocumentStreamDecoding(enabled: boolean): ParseConfiguration;
   withEmbeddedRegionLimits(limits?: EmbeddedRegionLimits): ParseConfiguration;
 }
 
@@ -1252,6 +1302,12 @@ export class LinkQuery {
 export class QueryMatch {
   linkId: LinkId;
 }
+
+export type QueryPredicateHost = (
+  predicate: { name: string; arguments: Array<{ capture?: string; literal?: string }> },
+  captures: { first(name: string): LinkId | undefined },
+  network: LinkNetwork,
+) => boolean;
 
 export class ReplacementRule {
   static capturedText(captureName: string, replacementText: string): ReplacementRule;
@@ -1748,6 +1804,31 @@ export interface GrammarParser {
   /** A mapped success requires parseTree so its source-plane registry is retained. */
   parse(source: string | Uint8Array, options?: GrammarParserOptions): SyntaxTreeNode;
   parseTree(source: string | Uint8Array, options?: GrammarParserOptions): GrammarParseOutcome;
+  findAll(source: string, options?: GrammarSearchOptions): GrammarSearchMatch[];
+  /** Predicate host for #grammar-match? and the standard source text predicates. */
+  searchPredicate(options?: GrammarSearchOptions): QueryPredicateHost;
+}
+
+export interface GrammarSearchOptions {
+  rule?: string;
+  overlapping?: boolean;
+  wordBoundaries?: boolean;
+  matchPolicy?: 'leftmost-longest' | 'peg-first';
+  captures?: string[];
+}
+
+/** UTF-16 offsets into the original source string. */
+export interface GrammarSearchSpan {
+  start: number;
+  end: number;
+  text: string;
+}
+
+export interface GrammarSearchMatch extends GrammarSearchSpan {
+  /** The same UTF-8 CST coordinates that parseTree publishes. */
+  tree: SyntaxTreeNode;
+  captures: Record<string, GrammarSearchSpan[]>;
+  sourcePlanes?: GrammarSourcePlane[];
 }
 
 export class GrammarParseError extends Error {
@@ -1780,6 +1861,82 @@ export function compileGrammar(
   grammar: Grammar | NormalizedGrammar,
   options?: GrammarParserOptions,
 ): GrammarParser;
+export interface LanguageIdentificationCandidate {
+  readonly language: string;
+  readonly confidence: number;
+}
+
+export interface LanguageIdentificationSpan {
+  readonly script: string;
+  readonly start: number;
+  readonly end: number;
+  readonly language: string | null;
+  readonly candidates: readonly LanguageIdentificationCandidate[];
+}
+
+export interface LanguageIdentification {
+  readonly language: string | null;
+  readonly candidates: readonly LanguageIdentificationCandidate[];
+  readonly spans: readonly LanguageIdentificationSpan[];
+}
+
+export function identifyLanguage(
+  text: string,
+  options?: { readonly minimumConfidence?: number },
+): LanguageIdentification;
+
+export interface NaturalLanguageValue {
+  /** UTF-8 offsets into the original text. */
+  readonly start: number;
+  readonly end: number;
+  readonly term: string;
+}
+export function naturalLanguageValues(text: string, language: string): NaturalLanguageValue[];
+
+export interface MorphologyReading {
+  readonly lemma: string;
+  readonly upos: string;
+  readonly features: readonly string[];
+  readonly score: number;
+  readonly source: 'dictionary' | 'suffix' | 'shape' | 'identity';
+}
+export function analyzeMorphology(word: string, language?: string): MorphologyReading[];
+export function inflect(lemma: string, features: Readonly<Record<string, string>>, language?: string): string | undefined;
+export function agreeWithNumber(lemma: string, quantity: number, language?: string): string | undefined;
+
+export type TextNormalization = 'nfkc' | 'quotes' | 'dashes' | 'yo' | 'case' | 'softHyphen' | 'whitespace';
+
+export interface TextLocationRange {
+  readonly start: number;
+  readonly end: number;
+}
+
+export interface TextLocationUnit extends TextLocationRange {
+  readonly text: string;
+}
+
+export type TextLocationEdit =
+  | { readonly kind: 'insert'; readonly fragment: null; readonly source: TextLocationUnit }
+  | { readonly kind: 'delete'; readonly fragment: TextLocationUnit; readonly source: null }
+  | { readonly kind: 'replace'; readonly fragment: TextLocationUnit; readonly source: TextLocationUnit };
+
+export interface TextLocationMatch extends TextLocationUnit {
+  readonly normalizations: readonly TextNormalization[];
+  readonly distance: number;
+  readonly edits: readonly TextLocationEdit[];
+}
+
+export function locate(source: string | LinkNetwork, fragment: string, options?: {
+  readonly normalize?: readonly TextNormalization[];
+  readonly maxEdits?: number;
+  readonly unit?: 'grapheme' | 'word';
+}): TextLocationMatch[];
+
+export function wordNgramOverlap(left: string | LinkNetwork, right: string | LinkNetwork, options?: {
+  readonly normalize?: readonly TextNormalization[];
+  readonly size?: number;
+}): { readonly words: readonly string[]; readonly left: TextLocationRange; readonly right: TextLocationRange }[];
+
 export function parseWithGrammar(
   grammar: Grammar | NormalizedGrammar,
   source: string | Uint8Array,
@@ -1788,6 +1945,56 @@ export function parseWithGrammar(
 export function emitJavascriptParser(grammar: Grammar): string;
 export function serializeGrammar(grammar: Grammar): string;
 export function deserializeGrammar(source: string | NormalizedGrammar): Grammar;
+
+export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+/** A draft 2020-12 boolean schema or keyword map, including extension keywords. */
+export type JsonSchema = boolean | { [keyword: string]: unknown };
+export interface JsonSchemaIssue {
+  keyword: string;
+  pointer: string;
+  message: string;
+}
+export interface JsonDocumentIssue {
+  keyword: string;
+  pointer: string;
+  span: SourceSpan | ByteRange;
+  linkId: LinkId;
+  expected: JsonValue[];
+  reason?: string;
+  pattern?: string;
+  alternatives?: JsonDocumentIssue[][];
+  accepted?: number;
+}
+export interface JsonValidation {
+  valid: boolean;
+  value: JsonValue | undefined;
+  errors: JsonDocumentIssue[];
+  schemaIssues: JsonSchemaIssue[];
+  network: LinkNetwork;
+}
+export type JsonRecoveryAction = 'closeOpenContainers' | 'dropTrailingCommas' | 'stripCodeFence'
+  | 'extractFirstValue' | 'stripTrailingGarbage' | 'repairEscapes';
+export interface JsonRecoveryEdit {
+  kind: JsonRecoveryAction;
+  span: ByteRange;
+  inserted: string;
+  removed: string;
+  linkId: LinkId;
+}
+export interface JsonRecovery {
+  text: string;
+  value: JsonValue | undefined;
+  edits: JsonRecoveryEdit[];
+  complete: boolean;
+  issues: JsonDocumentIssue[];
+  schemaIssues: JsonSchemaIssue[];
+  network: LinkNetwork;
+  sourceNetwork: LinkNetwork;
+}
+export function validateJson(source: string, schema: JsonSchema): JsonValidation;
+export function recoverJson(source: string, options?: { schema?: JsonSchema; allow?: JsonRecoveryAction[] }): JsonRecovery;
+export function importJsonSchema(schema: JsonSchema): Grammar & { schemaDiagnostics: JsonSchemaIssue[] };
+export function emitJsonSchema(grammar: Grammar): { schema: JsonSchema | null; report: GrammarEmitReport };
 
 export class GrammarImportError extends Error {
   format: string;

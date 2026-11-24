@@ -5,9 +5,14 @@ import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {restorePlatformTestDeadlineHistory} from './support/platform-test-deadline-history.js';
+import {restoreIssue245Source} from '../../experiments/issue-245/source-history.mjs';
 
 const history=readProjectData(new URL('../../parity/naming/platform-test-deadline-source-history.lino',import.meta.url));
-const read=file=>restoreCiRepairSourceHistory(file,readFileSync(new URL('../../'+file,import.meta.url),'utf8'));
+const read=file=>{
+  const source=readFileSync(new URL('../../'+file,import.meta.url),'utf8');
+  const historical=file==='js/tests/issue-195-evidence-resources.test.js'?restoreIssue245Source(file,source):source;
+  return restoreCiRepairSourceHistory(file,historical);
+};
 
 test('actual cold platform deadlines retain every complete test cell and checked compiler argument',()=>{
   for(const row of history.sources){

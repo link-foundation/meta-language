@@ -2,16 +2,20 @@
 // Installs exact npm and crate candidate artifacts into clean consumers on the
 // current platform, parses the shared consumer corpus offline through public
 // entry points only, and writes a platform report. The issue 195 evidence
-// runner turns these reports into package-delivery execution records, and CI
-// runs this script on every supported platform against the same artifacts.
+// runner turns the full reports into package-delivery execution records.
+// CI uses the same artifacts for every enabled platform.
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DOCUMENT_TASK_CASES, DOCUMENT_TASK_EXAMPLE, deliveryAssertions, observedDocumentTask } from './issue-195-delivery.mjs';
+import { verifyEvaluatedCheckout } from './issue-195-merge-enforcement.mjs';
+import { recordIssue195Observations } from '../tests/support/issue-195-observations.js';
 import { readProjectData, readProjectFileBytes, writeProjectData } from './project-data.mjs';
+import { releaseIdentity, verifyInstalledReleaseArtifacts } from './release-publication.mjs';
 import { consumeWorkloadWireData } from './workload-wire-data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -21,6 +25,7 @@ const crate = path.resolve(required('--crate'));
 const workDirectory = path.resolve(required('--work-dir'));
 const output = path.resolve(required('--out'));
 const corpus = readProjectData(corpusPath);
+const translationPaused = process.env.META_LANGUAGE_AUTOMATED_TRANSLATION === 'false';
 const platform = `${process.platform}-${process.arch}`;
 const corpusWirePath = path.join(workDirectory, 'consumer-inputs.wire.json');
 
@@ -35,11 +40,16 @@ const NETWORK_APIS = /\bstd::net\b|\bTcpStream\b|\bTcpListener\b|\bUdpSocket\b|\
 const logs = [];
 
 async function main() {
+  const recordDocumentTasks = translationPaused && process.env.ISSUE_195_OBSERVATION_FILE;
+  if (recordDocumentTasks) verifyEvaluatedCheckout(root, process.env.ISSUE_195_COMMIT);
   await rm(workDirectory, { recursive: true, force: true });
   await mkdir(workDirectory, { recursive: true });
   // The installed probe programs retain their JSON wire contract; their input
   // is a temporary projection of the authenticated linked fixture.
-  await writeFile(corpusWirePath, `${JSON.stringify(corpus)}\n`);
+  const activeCorpus = translationPaused
+    ? { ...corpus, delivery: { ...corpus.delivery, translations: [] } }
+    : corpus;
+  await writeFile(corpusWirePath, `${JSON.stringify(activeCorpus)}\n`);
   const report = {
     schemaVersion: 1,
     platform,
@@ -50,9 +60,53 @@ async function main() {
     logs,
   };
   report.agreement = agreement(report.npm.observations, report.crate.observations);
+  if (translationPaused) report.translationChecks = 'paused';
   await mkdir(path.dirname(output), { recursive: true });
   writeProjectData(output, report);
   console.log(`issue-195 consumer: wrote ${platform} report to ${output}`);
+  if (translationPaused) {
+    const expected = {
+      npm: report.npm.checksum.expectedSha256,
+      crate: report.crate.checksum.expectedSha256,
+    };
+    const context = { corpus: activeCorpus, corpusSha256: report.corpusSha256, version: report.npm.version };
+    const assertions = deliveryAssertions(report, ['npm', 'crate'], expected, context);
+    const exampleSha256 = sha256(await readFile(path.join(root, DOCUMENT_TASK_EXAMPLE)));
+    for (const [, , scenario, assertion] of DOCUMENT_TASK_CASES) {
+      assertions[assertion] = observedDocumentTask(report, expected, context, exampleSha256, scenario);
+    }
+    const failed = Object.entries(assertions).filter(([, passed]) => !passed).map(([name]) => name);
+    if (failed.length > 0) throw new Error(`clean consumer checks failed: ${failed.join(', ')}`);
+    if (recordDocumentTasks) {
+      const published = process.env.GITHUB_EVENT_NAME === 'release';
+      if (published) {
+        const identity = releaseIdentity({
+          packageJson: JSON.parse(await readFile(path.join(root, 'js/package.json'), 'utf8')),
+          packageLock: JSON.parse(await readFile(path.join(root, 'js/package-lock.json'), 'utf8')),
+          cargoManifest: await readFile(path.join(root, 'rust/Cargo.toml'), 'utf8'),
+          env: process.env,
+          commit: process.env.ISSUE_195_COMMIT,
+        });
+        await verifyInstalledReleaseArtifacts(identity, {
+          npmIntegrity: report.npm.checksum.expectedIntegrity,
+          crateChecksum: report.crate.checksum.sha256,
+        });
+      }
+      verifyEvaluatedCheckout(root, process.env.ISSUE_195_COMMIT);
+      const suffix = published ? 'release-delivery' : 'pre-merge';
+      const artifact = published ? 'published' : 'candidate';
+      for (const [id, , scenario, assertion] of DOCUMENT_TASK_CASES) {
+        recordIssue195Observations({
+          requirementId: id,
+          suffix,
+          fixtureId: 'i195-installed-document-tasks',
+          fixtureFile: DOCUMENT_TASK_EXAMPLE,
+          assertions: [assertion],
+          testName: `${artifact} npm document example on ${platform}: ${scenario}`,
+        });
+      }
+    }
+  }
 }
 
 async function npmConsumer() {
@@ -88,12 +142,21 @@ async function npmConsumer() {
     JSON.stringify(Object.keys(lock.packages?.['']?.dependencies ?? {})) === '["meta-language"]';
   checksum.installedIntegrity = installed.integrity ?? null;
   checksum.expectedIntegrity = `sha512-${createHash('sha512').update(bytes).digest('base64')}`;
+  const examplePath = path.join(directory, path.basename(DOCUMENT_TASK_EXAMPLE));
+  await copyFile(path.join(root, DOCUMENT_TASK_EXAMPLE), examplePath);
   await writeFile(path.join(directory, 'deny-network.mjs'), DENY_NETWORK);
   await writeFile(path.join(directory, 'consumer.mjs'), NPM_CONSUMER);
   const observationPath = path.join(directory, 'observations.wire.json');
   await run('npm-consumer', process.execPath, [
     '--import', './deny-network.mjs', 'consumer.mjs', corpusWirePath, observationPath,
-  ], { cwd: directory, env: { ...environment, NODE_OPTIONS: '' } });
+  ], {
+    cwd: directory,
+    env: {
+      ...environment,
+      NODE_OPTIONS: '',
+      META_LANGUAGE_EXTERNAL_GRAMMAR_CACHE: path.join(directory, 'external-grammar-cache'),
+    },
+  });
   const observed = await consumeWorkloadWireData(observationPath, path.join(directory, 'observations.lino'));
   return {
     version: installedPackage.version,
@@ -102,6 +165,7 @@ async function npmConsumer() {
     publicEntryPoints: observed.publicEntryPoints,
     offline: observed.offline,
     observations: observed.observations,
+    documentTasks: { exampleSha256: sha256(await readFile(examplePath)), ...observed.documentTasks },
   };
 }
 
@@ -195,7 +259,7 @@ async function crateConsumer() {
 }
 
 function agreement(left, right) {
-  const sections = ['parses', 'programs', 'translations'];
+  const sections = translationPaused ? ['parses', 'programs'] : ['parses', 'programs', 'translations'];
   const mismatches = sections.filter((section) =>
     canonical(left?.[section]) !== canonical(right?.[section]));
   return { sections, mismatches };
@@ -362,6 +426,7 @@ globalThis.fetch = deny('fetch');
 
 const NPM_CONSUMER = `import { readFileSync, writeFileSync } from 'node:fs';
 import * as api from 'meta-language';
+import { verifyDocumentTasks } from './deterministic-document-tasks.mjs';
 
 const [corpusPath, outputPath] = process.argv.slice(2);
 const corpus = JSON.parse(readFileSync(corpusPath, 'utf8'));
@@ -406,6 +471,7 @@ const translations = corpus.delivery.translations.map(({ source, sourceLanguage,
     provenance: provenance && { ...provenance },
   };
 });
+const documentTasks = verifyDocumentTasks(api, { checkGrammarAssets: true });
 const networkAttempts = [...(globalThis.__issue195NetworkAttempts ?? ['guard missing'])];
 let guardRejectsNetwork = false;
 try {
@@ -420,6 +486,7 @@ writeFileSync(outputPath, JSON.stringify({
   },
   offline: { networkAttempts, guardRejectsNetwork },
   observations: { parses, programs, translations },
+  documentTasks,
 }, null, 2));
 `;
 

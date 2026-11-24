@@ -50,7 +50,18 @@ test('the post-merge report needs an active strict rule and an open pull request
   assert.deepEqual(result.notes, []);
   assert.equal(Object.values(result.checks).every(Boolean), true);
   assert.equal(result.blockedPullRequest, 200);
-  assert.equal(result.delivery.releaseRequirements.length, 4);
+  assert.deepEqual(result.delivery.releaseRequirements, [
+    'I195-DELIVERY-CRATE-PUBLISHED',
+    'I195-DELIVERY-NPM-PUBLISHED',
+    'I195-DELIVERY-RML-PUBLISHED',
+    'I195-DOWNSTREAM-FORMAL-AI-PUBLISHED',
+    'I195-I230-NPM-HTML-TREE',
+    'I195-I244-NPM-FALLBACK-GRAMMAR-ASSETS',
+    'I195-I245-NPM-LANGUAGE-ANALYSIS',
+    'I195-I245-NPM-LOCATED-JSON',
+    'I195-I245-NPM-QUOTE-GROUNDING',
+    'I195-I245-NPM-TEXT-EXTRACTION',
+  ]);
   assert.equal(result.delivery.releaseEvidencePassed, false);
 });
 
@@ -156,6 +167,26 @@ test('release evidence cannot be replaced by pre-merge evidence', () => {
   const result = evaluateMergeEnforcement(snapshot(), { ...options, manifest: weakened });
   assert.equal(result.checks.publishedDeliverySeparatelyVerified, false);
   assert.match(result.errors.join('\n'), /release-delivery/);
+});
+
+test('installed package features require separate candidate and publication checks', () => {
+  for (const requirementId of ['I195-I230-NPM-HTML-TREE', 'I195-I244-NPM-FALLBACK-GRAMMAR-ASSETS']) {
+    const weakened = structuredClone(manifest);
+    const row = weakened.atomicRequirements.find(({ id }) => id === requirementId);
+    const candidate = row.verifications.find(({ checkpoint }) => checkpoint === 'pre-merge');
+    const published = row.verifications.find(({ checkpoint }) => checkpoint === 'release-delivery');
+    for (const verifications of [
+      [candidate],
+      [published],
+      [candidate, { ...published, testId: candidate.testId }],
+      [candidate, { ...published, assertions: [] }],
+    ]) {
+      row.verifications = verifications;
+      const result = evaluateMergeEnforcement(snapshot(), { ...options, manifest: weakened });
+      assert.equal(result.checks.publishedDeliverySeparatelyVerified, false, requirementId);
+      assert.match(result.errors.join('\n'), /release-delivery/);
+    }
+  }
 });
 
 test('a missing live response fails closed', () => {

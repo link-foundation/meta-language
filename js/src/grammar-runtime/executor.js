@@ -26,6 +26,7 @@ import { RULE_MEMO_PAGE_WIDTH, retireCompletedRuleMemoPrefix } from './rule-memo
 import { readRecursiveMemoSeed, rememberRecursiveMemoDependency, acceptRecursiveMemoEntry, reuseRecursiveMemoEntry, advanceRecursiveMemoSeed, finishRecursiveMemoSeed, storeRecursiveMemoEntry } from './recursive-seed-memo.js';
 import { readTriviaPrefixPolicy, acceptTriviaExtraPrefix } from './trivia-prefix-cache.js';
 import { completeRuleContexts } from './precedence-contexts.js';
+import { acceptGrammarSearchEnd } from '../grammar-search-policy.js';
 import { acceptLexicalCacheContext, acceptLexicalCacheReservation, acceptPrecedenceOperandContext, acceptPrecedenceOperandHead, acceptScannerPreemptionBoundary, readLexicalWinnerIndex, readScannerContinuationAction } from '../translation/frontend-rules.js';
 import { lexerObligationsFor } from './lexer-election.js';
 import { acceptGrammarLexerMode, acceptGrammarLexerTrivia, acceptGrammarLexerExpectedToken, readGrammarLexerTriviaIdentity } from '../translation/grammar-lexer-rules.js';
@@ -3810,6 +3811,7 @@ export class Executor {
       step: () => this.step(),
       column: () => columnOf(this.bytes, start, this.begin),
       matched: () => this.text(start, result.end),
+      atStart: () => result.end === 0,
       atEnd: () => result.end === this.end,
       lookahead: () => false,
       requested: null,
@@ -4255,6 +4257,7 @@ export class Executor {
         step: () => this.step(),
         matched: () => this.text(tokenStart, cursor),
         column: () => columnOf(this.bytes, cursor, this.begin),
+        atStart: () => cursor === 0,
         atEnd: () => cursor >= this.end,
         expected: (item) => this.expectations.holds(context, this.program.expectedItems.get(item)),
         lookahead: (expression) => match(expression) >= 0,
@@ -4304,11 +4307,18 @@ export class Executor {
    * reaches farthest, with the rest of the input as an ERROR leaf, or of the
    * cheapest complete result when the round asks for one more repair point.
    */
-  run(startRule) {
+  run(startRule, search) {
     const results = this.reference(startRule, this.begin, INITIAL_STATE, false);
     const complete = [];
     let partial = null;
     for (const result of results) {
+      if (search) {
+        if (acceptGrammarSearchEnd(result.end > this.begin, search.acceptEnd(result.end))) {
+          complete.push({ result, trailing: NO_CHILDREN });
+          if (search.matchPolicy === 'peg-first') break;
+        }
+        continue;
+      }
       const previousFamily = this.lexerFamily;
       this.lexerFamily = result.lexicalFamily ?? previousFamily;
       let trailing;
@@ -4348,7 +4358,8 @@ export class Executor {
     let chosen = complete[0];
     let tied = false;
     for (const candidate of complete.slice(1)) {
-      const order = this.completeOrder(candidate, chosen);
+      const order = (search && candidate.result.end - chosen.result.end)
+        || this.completeOrder(candidate, chosen);
       if (order > 0) {
         chosen = candidate;
         tied = false;
@@ -4359,7 +4370,8 @@ export class Executor {
     if (this.separatorTaken.size > 0) {
       chosen = { ...chosen, result: copyResult(chosen.result, { children: this.widenTokens(chosen.result.children, []) }), trailing: this.widenTokens(chosen.trailing, []) };
     }
-    const root = this.root(startRule, chosen, tied && this.settling.ambiguity && chosen.result.cost === 0);
+    const root = this.root(startRule, chosen, tied && this.settling.ambiguity && chosen.result.cost === 0,
+      search ? chosen.result.end : this.end);
     // When the cheapest complete result takes the rest of the input as ERROR
     // at a repair point, a result that reached past that point without
     // completing costs at least one more repair, at its end. While that could
@@ -4433,15 +4445,15 @@ export class Executor {
     return settledOrder({ ...whole(a), dynamic: a.result.dynamic }, { ...whole(b), dynamic: b.result.dynamic }, this.settling, this.longestTokens);
   }
 
-  root(startRule, { result, trailing }, several) {
+  root(startRule, { result, trailing }, several, end = this.end) {
     const ambiguous = several || result.ambiguous;
     const [only] = result.children;
     if (result.children.length === 1 && only.type === 'node') {
-      return { ...only, end: this.end, children: [...only.children, ...trailing], ambiguous: only.ambiguous || ambiguous };
+      return { ...only, end, children: [...only.children, ...trailing], ambiguous: only.ambiguous || ambiguous };
     }
     const kind = this.program.rules.get(startRule).nodeKind;
     return {
-      type: 'node', kind, rule: kind, start: this.begin, end: this.end,
+      type: 'node', kind, rule: kind, start: this.begin, end,
       children: [...result.children, ...trailing], ambiguous,
     };
   }

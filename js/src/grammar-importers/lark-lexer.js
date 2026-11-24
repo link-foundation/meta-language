@@ -110,7 +110,7 @@ function nextToken(stream) {
   if (character === '"' || character === "'") {
     return { kind: 'string', value: stringLiteral(stream, character) };
   }
-  if (character === '/') return { kind: 'regex', value: regexLiteral(stream) };
+  if (character === '/') return { kind: 'regex', ...regexLiteral(stream) };
   if (Object.hasOwn(PUNCTUATION, character)) {
     stream.advanceChar();
     return { kind: PUNCTUATION[character] };
@@ -156,7 +156,10 @@ function regexLiteral(stream) {
     } else if (character === '\\') {
       escaped = true;
     } else if (character === '/') {
-      return stream.slice(contentStart, stream.cursor - 1);
+      const value = stream.slice(contentStart, stream.cursor - 1);
+      const flagStart = stream.cursor;
+      while (/^[A-Za-z]$/u.test(stream.peekChar())) stream.advanceChar();
+      return { value, flags: stream.slice(flagStart, stream.cursor) };
     } else if (character === '\n' || character === '\r') {
       throw errorAt(start, 'unterminated regex literal');
     }

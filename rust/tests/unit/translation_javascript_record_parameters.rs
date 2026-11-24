@@ -1,5 +1,5 @@
 //! CI-only actual source, generated decision and complete emitted-program parity.
-use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+use super::issue_195_translation_pairs::{TemporaryDirectory, run, sha256};
 use meta_language::translation::{
     check::check_program,
     emit_javascript::emit_javascript,
@@ -17,7 +17,6 @@ use meta_language::{
     encode_link_network_binary, read_structured_data_lino,
 };
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -325,13 +324,14 @@ fn actual_source_policy_captures_and_scalar_loop_exclusion_keep_their_original_o
         .unwrap()
         .iter()
         .chain(policy["originalDeclarations"].as_array().unwrap())
+        .chain(policy["historicalDeclarations"].as_array().unwrap())
     {
-        let source = fs::read(root().join(owner["path"].as_str().unwrap())).unwrap();
-        assert_eq!(source.len() as u64, owner["bytes"].as_u64().unwrap());
-        assert_eq!(
-            format!("{:x}", Sha256::digest(&source)),
-            owner["sourceSha256"].as_str().unwrap()
+        let source = owner.get("revision").map_or_else(
+            || fs::read(root().join(owner["path"].as_str().unwrap())).unwrap(),
+            |_| owner["context"].as_str().unwrap().as_bytes().to_vec(),
         );
+        assert_eq!(source.len() as u64, owner["bytes"].as_u64().unwrap());
+        assert_eq!(sha256(&source), owner["sourceSha256"].as_str().unwrap());
         if let Some(declaration) = owner["declaration"].as_str() {
             assert!(String::from_utf8(source).unwrap().contains(declaration));
             let concrete =

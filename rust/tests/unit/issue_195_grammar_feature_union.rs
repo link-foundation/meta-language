@@ -57,6 +57,261 @@ fn native(listing: &str) -> Grammar {
     parse_native_grammar(listing).expect("the listing parses")
 }
 
+#[test]
+fn grammar_search_reports_original_ranges_captures_and_query_results() {
+    use meta_language::grammar::feature_runtime::{GrammarMatchPolicy, GrammarSearchOptions};
+    use meta_language::{LinkNetwork, LinkQuery, ParseConfiguration, import_ebnf};
+
+    let fixture_file = "parity/fixtures/grammar-search.json";
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/grammar-search.lino"
+    ))
+    .unwrap();
+    let make_parser = |key| {
+        compile_feature_grammar(
+            &import_ebnf(text(&fixture, key)).unwrap(),
+            None,
+            FeatureParseOptions::default(),
+        )
+        .unwrap()
+    };
+    let observe = |requirement_id: &str, assertions: &[&str]| {
+        record(&Observation {
+            requirement_id,
+            suffix: "behavior",
+            fixture_id: &requirement_id.to_ascii_lowercase(),
+            fixture_file,
+            assertions,
+            test_name: "grammar_search_reports_original_ranges_captures_and_query_results",
+        });
+    };
+    let parser = make_parser("grammar");
+    let source = text(&fixture, "source");
+    let expected = fixture["matches"].as_array().unwrap();
+    assert!(
+        !parser
+            .parse_tree(source.as_bytes(), &FeatureParseOptions::default())
+            .unwrap()
+            .ok
+    );
+    assert!(
+        parser
+            .parse_tree(
+                text(&expected[2], "text").as_bytes(),
+                &FeatureParseOptions::default()
+            )
+            .unwrap()
+            .ok
+    );
+    let matches = parser
+        .find_all(
+            source,
+            &GrammarSearchOptions {
+                rule: Some("price".to_owned()),
+                word_boundaries: true,
+                captures: vec!["amount".to_owned(), "currency".to_owned()],
+                ..GrammarSearchOptions::default()
+            },
+        )
+        .unwrap();
+    assert_eq!(matches.len(), expected.len());
+    for (found, expected) in matches.iter().zip(expected) {
+        let spelling = text(expected, "text");
+        let start = source.find(spelling).unwrap();
+        assert_eq!(
+            (found.span.start, found.span.end, found.span.text.as_str()),
+            (start, start + spelling.len(), spelling)
+        );
+        assert_eq!(
+            (found.tree.start(), found.tree.end()),
+            (found.span.start, found.span.end)
+        );
+        for name in ["amount", "currency"] {
+            let captures: Vec<_> = found.captures[name]
+                .iter()
+                .map(|capture| {
+                    assert_eq!(&source[capture.start..capture.end], capture.text);
+                    capture.text.as_str()
+                })
+                .collect();
+            assert_eq!(json!(captures), expected[name]);
+        }
+    }
+    observe(
+        "I195-I235-GRAMMAR-SEARCH-SPANS",
+        &["searchFindsOriginalSpans", "wholeInputParseIsPreserved"],
+    );
+    observe(
+        "I195-I235-GRAMMAR-SEARCH-CAPTURES",
+        &["repeatedNamedCapturesRetainSourceSpans"],
+    );
+
+    let boundary_source = text(&fixture, "boundarySource");
+    let words = make_parser("boundaryGrammar");
+    let starts: Vec<_> = words
+        .find_all(
+            boundary_source,
+            &GrammarSearchOptions {
+                word_boundaries: true,
+                ..GrammarSearchOptions::default()
+            },
+        )
+        .unwrap()
+        .iter()
+        .map(|found| boundary_source[..found.span.start].encode_utf16().count())
+        .collect();
+    assert_eq!(json!(starts), fixture["boundaryStarts"]);
+    assert_eq!(
+        words
+            .find_all(boundary_source, &GrammarSearchOptions::default())
+            .unwrap()
+            .len(),
+        7
+    );
+    let choices = make_parser("selectionGrammar");
+    for (name, match_policy, overlapping) in [
+        ("longest", GrammarMatchPolicy::LeftmostLongest, false),
+        ("first", GrammarMatchPolicy::PegFirst, false),
+        ("overlapping", GrammarMatchPolicy::LeftmostLongest, true),
+    ] {
+        let found: Vec<_> = choices
+            .find_all(
+                text(&fixture, "selectionSource"),
+                &GrammarSearchOptions {
+                    match_policy,
+                    overlapping,
+                    ..GrammarSearchOptions::default()
+                },
+            )
+            .unwrap()
+            .into_iter()
+            .map(|found| found.span.text)
+            .collect();
+        assert_eq!(json!(found), fixture["selection"][name]);
+    }
+    let empty = compile_feature_grammar(
+        &import_ebnf("start = \"\" ;").unwrap(),
+        None,
+        FeatureParseOptions::default(),
+    )
+    .unwrap();
+    assert!(
+        empty
+            .find_all("aaa", &GrammarSearchOptions::default())
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(
+        choices
+            .find_all(
+                "aaa",
+                &GrammarSearchOptions {
+                    rule: Some("missing".to_owned()),
+                    ..GrammarSearchOptions::default()
+                }
+            )
+            .unwrap_err()
+            .reason,
+        "reference"
+    );
+    let limited = compile_feature_grammar(
+        &import_ebnf(text(&fixture, "selectionGrammar")).unwrap(),
+        None,
+        FeatureParseOptions {
+            step_limit: Some(1),
+            ..FeatureParseOptions::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        limited
+            .find_all("aaa", &GrammarSearchOptions::default())
+            .unwrap_err()
+            .reason,
+        "stepLimit"
+    );
+    observe(
+        "I195-I235-GRAMMAR-SEARCH-POLICY",
+        &[
+            "wordBoundariesUseUnicode",
+            "matchPoliciesChooseAtEachStart",
+            "overlapAndEmptyMatchesAreControlled",
+        ],
+    );
+
+    let network = LinkNetwork::parse(
+        text(&fixture, "html"),
+        "HTML",
+        ParseConfiguration::default(),
+    );
+    let query = LinkQuery::from_sexpression(text(&fixture, "query")).unwrap();
+    let matches = network.query_matches_with(
+        &query,
+        &parser.search_predicate(GrammarSearchOptions {
+            word_boundaries: true,
+            ..GrammarSearchOptions::default()
+        }),
+    );
+    assert_eq!(matches.len(), 1);
+    let expected_query =
+        LinkQuery::from_sexpression("(text) @candidate (#eq? @candidate \"от 250 000 ₽\")")
+            .unwrap();
+    assert_eq!(matches, network.find(&expected_query));
+    observe(
+        "I195-I235-GRAMMAR-SEARCH-QUERY",
+        &["sourceTextQueryPredicateComposes"],
+    );
+}
+
+#[test]
+fn grammar_search_uses_pinned_unicode_word_boundaries() {
+    use meta_language::grammar::feature_runtime::GrammarSearchOptions;
+    use meta_language::import_ebnf;
+
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/grammar-search-unicode-boundaries.lino"
+    ))
+    .unwrap();
+    let parser = compile_feature_grammar(
+        &import_ebnf(text(&fixture, "grammar")).unwrap(),
+        None,
+        FeatureParseOptions::default(),
+    )
+    .unwrap();
+    let source = text(&fixture, "source");
+    for (word_boundaries, expected) in [(false, "unrestrictedMatches"), (true, "matches")] {
+        let matches = parser
+            .find_all(
+                source,
+                &GrammarSearchOptions {
+                    word_boundaries,
+                    ..GrammarSearchOptions::default()
+                },
+            )
+            .unwrap();
+        let ranges: Vec<_> = matches
+            .iter()
+            .map(|found| {
+                let (start, end) = (found.span.start, found.span.end);
+                assert_eq!((found.tree.start(), found.tree.end()), (start, end));
+                json!({
+                    "utf16": [source[..start].encode_utf16().count(), source[..end].encode_utf16().count()],
+                    "utf8": [start, end],
+                })
+            })
+            .collect();
+        assert_eq!(json!(ranges), fixture[expected]);
+    }
+    record(&Observation {
+        requirement_id: "I195-I235-UNICODE-SEARCH-BOUNDARIES",
+        suffix: "behavior",
+        fixture_id: "i195-i235-unicode-search-boundaries",
+        fixture_file: "parity/fixtures/grammar-search-unicode-boundaries.lino",
+        assertions: &["pinnedWordBoundariesKeepSourceSpans"],
+        test_name: "grammar_search_uses_pinned_unicode_word_boundaries",
+    });
+}
+
 fn languages(fixture: &Value) -> HashMap<String, Grammar> {
     fixture["languages"]
         .as_object()
@@ -634,176 +889,4 @@ fn every_union_feature_rejects_its_negative_cases() {
     );
 }
 
-#[test]
-fn external_scanners_and_semantic_actions_are_executable_link_definitions() {
-    let fixture = fixture();
-    let suite = Suite::new(&fixture);
-    let by_id = |wanted: &str| {
-        features(&fixture)
-            .iter()
-            .find(|feature| feature["id"] == wanted)
-            .expect("feature")
-    };
-    for id in ["layout", "modes", "predicates", "actions"] {
-        let grammar = native(text(by_id(id), "listing"));
-        let operations: Vec<&FeatureForm> = grammar
-            .declarations()
-            .scanners
-            .iter()
-            .flat_map(|scanner| scanner.operations.iter())
-            .chain(
-                grammar
-                    .rules()
-                    .iter()
-                    .flat_map(|rule| rule.attributes.action.iter().flatten()),
-            )
-            .collect();
-        assert!(
-            !operations.is_empty(),
-            "{id} has scanner or action operations"
-        );
-        for operation in operations {
-            assert!(
-                operation_form(&operation.head).is_some(),
-                "{id}: {}",
-                operation.head
-            );
-        }
-    }
-
-    // The layout scanner and the sum action are links of the links form, and
-    // the grammar read back from those links runs them.
-    let layout = by_id("layout");
-    let layout_links = render_grammar_links(&native(text(layout, "listing")));
-    let scanner_link = Regex::new(
-        r"(?m)^\(scanner layout \(tokens newline indent dedent\) \(operations \(if \(valid newline\)",
-    )
-    .expect("pattern");
-    assert!(scanner_link.is_match(&layout_links), "{layout_links}");
-    let actions = by_id("actions");
-    let action_links = render_grammar_links(&native(text(actions, "listing")));
-    assert!(
-        action_links.contains("(action (setAttribute value (sumOf terms value))"),
-        "{action_links}"
-    );
-    let run_links = |links: &str, feature: &Value, input: &Value| {
-        let grammar = parse_grammar_links(links).expect("the links parse");
-        outcome(&suite.parser(&grammar, feature), &json!({ "input": input }))
-    };
-    let nested = &layout["positive"][0];
-    let summed = &actions["positive"][0];
-    assert_eq!(
-        run_links(&layout_links, layout, &nested["input"]),
-        expected(nested)
-    );
-    assert_eq!(
-        run_links(&action_links, actions, &summed["input"]),
-        expected(summed)
-    );
-
-    // Changing one operation link changes what the parser does: a scanner that
-    // never emits indent cannot open a block, and a lower action limit fails
-    // the sum.
-    assert!(text(nested, "tree").contains("(indent \"\")"));
-    let without_indent = layout_links.replacen(
-        "(push indents (variable pending)) (emit indent)",
-        "(push indents (variable pending)) fail",
-        1,
-    );
-    assert_ne!(without_indent, layout_links);
-    assert_eq!(
-        run_links(&without_indent, layout, &nested["input"])["rejection"]["reason"],
-        "syntax"
-    );
-    assert!(text(summed, "tree").starts_with("(sum {value=6}"));
-    let lower_limit = action_links.replacen("(integer 100)", "(integer 2)", 1);
-    assert_ne!(lower_limit, action_links);
-    assert_eq!(
-        run_links(&lower_limit, actions, &summed["input"])["rejection"]["reason"],
-        "syntax"
-    );
-
-    // An operation outside its context, or one naming a token the scanner does
-    // not declare, is rejected when the grammar loads.
-    let out_of_context = "start s\nrule s = normal literal(\"a\") action(emit(s))\n";
-    assert_eq!(
-        suite.load_failure(out_of_context, &json!({})),
-        json!({ "reason": "operation" })
-    );
-    let undeclared = text(layout, "listing").replacen("emit(dedent)", "emit(outdent)", 1);
-    assert_eq!(
-        suite.load_failure(&undeclared, layout),
-        json!({ "reason": "operation" })
-    );
-
-    // The executor interprets those links; it runs no host code: no process,
-    // no dynamic library and no unsafe code in its sources.
-    let runtime = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/grammar/feature_runtime");
-    let host_code = Regex::new(r"\bunsafe\b|process::Command|libloading|dlopen").expect("pattern");
-    let mut files = 0;
-    // The runtime's submodules sit in directories of their own.
-    let mut directories = vec![runtime];
-    while let Some(directory) = directories.pop() {
-        for entry in std::fs::read_dir(&directory).expect("the runtime directory reads") {
-            let path = entry.expect("entry").path();
-            if path.is_dir() {
-                directories.push(path);
-                continue;
-            }
-            let source = std::fs::read_to_string(
-                super::project_data::resolve_project_data_path(&path)
-                    .expect("one project data storage format"),
-            )
-            .expect("the source reads");
-            assert!(!host_code.is_match(&source), "{}", path.display());
-            files += 1;
-        }
-    }
-    assert!(files > 0);
-    observe(
-        &["scannersAndActionsExecutableAsLinks"],
-        "external_scanners_and_semantic_actions_are_executable_link_definitions",
-    );
-}
-
-#[test]
-fn node_kinds_no_rule_defines_keep_their_source_names_in_the_links_form() {
-    let links = "(grammar (start comment))\n\
-        (kind documentation_comment (source-names (tree-sitter doc_comment)))\n\
-        (rule comment normal (literal %2F%2F))\n";
-    let grammar = parse_grammar_links(links).expect("the kind links parse");
-    let [kind] = grammar.kinds() else {
-        panic!("one kind: {:?}", grammar.kinds());
-    };
-    assert_eq!(kind.name, "documentation_comment");
-    assert_eq!(
-        kind.source_names
-            .iter()
-            .map(|name| (name.source.as_str(), name.name.as_str()))
-            .collect::<Vec<_>>(),
-        [("tree-sitter", "doc_comment")]
-    );
-    assert_eq!(render_grammar_links(&grammar), links);
-    // The kinds come before the rules, once each, with their source names.
-    for (malformed, detail) in [
-        (
-            "(grammar)\n(rule a normal empty)\n(kind b (source-names (t c)))\n",
-            "unexpected link kind",
-        ),
-        (
-            "(grammar)\n(kind b (source-names (t c)))\n(kind b (source-names (t c)))\n(rule a normal empty)\n",
-            "kind b is given twice",
-        ),
-        (
-            "(grammar)\n(kind b (doc x))\n(rule a normal empty)\n",
-            "expected (source-names ...), not doc",
-        ),
-        (
-            "(grammar)\n(kind b (source-names))\n(rule a normal empty)\n",
-            "source-names lists at least one source name",
-        ),
-    ] {
-        let error = parse_grammar_links(malformed).expect_err(malformed);
-        assert!(error.to_string().ends_with(detail), "{error}");
-    }
-}
+include!("issue_195_grammar_feature_union_actions.rs");

@@ -281,7 +281,7 @@ test('GBNF escapes literals and classes and sanitizes names like Rust', () => {
     ['root', E.literal('r')],
   ));
 
-  assert.equal(source, 'root ::= "\\"\\\\\\n\\r\\t\\b\\f\\x01é" [\\x00-\\x9F] [\\[\\]\\-\\^\\\\] ' +
+  assert.equal(source, 'root ::= "\\"\\\\\\n\\r\\t\\b\\f\\x01é" [\\x00-\\x9F] [\\[\\]\\-\\x5E\\\\] ' +
     '[Aa]"-"[Bb]" ""1" ("m" | "n") ml-9lives root-1\nroot-1 ::= "r"\n');
   assert.deepEqual(report.lossy, [
     'GBNF renamed rule "root" to "root-1"',
@@ -289,6 +289,18 @@ test('GBNF escapes literals and classes and sanitizes names like Rust', () => {
     'GBNF expands case-insensitive terminal "a-B 1" to character classes',
     'GBNF dropped anonymous capture',
   ]);
+});
+
+test('GBNF delimits byte escapes before adjacent hexadecimal digits', () => {
+  const specification = grammar(null, ['entry', seq(
+    E.literal('\u0001A\\x1F'),
+    cls(true, range('\u0000', '\u001f'), ch('a'), ch('b')),
+    cls(false, ch('^'), range('A', 'F'), ch('0')),
+    cls(false, ch('\u007f'), ch('g')),
+  )]);
+  const { source } = emitGbnf(specification);
+  assert.equal(source, 'root ::= "\\u0001A\\\\x1F" [^\\x00-\\u001Fab] [\\u005EA-F0] [\\x7Fg]\n');
+  assert.deepEqual(importGbnf(source).undefinedNonterminals(), []);
 });
 
 test('GBNF emission reports unsupported constructs', () => {

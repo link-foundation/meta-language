@@ -34,6 +34,7 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 const FIXTURE = 'parity/fixtures/grammar-merge.json';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const fixture = readProjectData(path.join(root, FIXTURE));
+const pestExpectations = readProjectData(path.join(root, 'parity/fixtures/pest-grammar-merge-expectations.lino'));
 
 function observe(requirementId, assertions, testName) {
   recordIssue195Observations({
@@ -55,13 +56,22 @@ const changedSources = () => sources(fixture.sources.map((source) =>
 const merge = (list = sources(), options = {}) => mergeGrammars(list, { samples: fixture.samples, ...options });
 const group = (result, key) => result.groups.find((entry) => entry.key === key);
 const decisions = (entry, kind) => entry.decisions.filter((decision) => decision.kind === kind);
+const isPestBuiltIn = name => /^ASCII_(?:ALPHA|DIGIT|ALPHANUMERIC)$/u.test(name);
+const originalIdentities = identities => Object.fromEntries(
+  Object.entries(identities).filter(([, name]) => !isPestBuiltIn(name)));
 
 test('the merge decides every fixture group exactly as recorded', () => {
   const result = merge();
   assert.equal(result.status, 'complete');
   assert.deepEqual(result.alternatives, fixture.expected.alternatives);
   assert.deepEqual(result.groups.map(({ key }) => key), fixture.expected.groups.map(({ key }) => key));
-  for (const expected of fixture.expected.groups) {
+  assert.deepEqual(pestExpectations.groups.map(entry => ({
+    ...entry,
+    rules: entry.rules.filter(name => !isPestBuiltIn(name)),
+    identities: originalIdentities(entry.identities),
+    decisions: entry.decisions.filter(decision => !isPestBuiltIn(decision.name)),
+  })), fixture.expected.groups);
+  for (const expected of pestExpectations.groups) {
     const actual = group(result, expected.key);
     assert.deepEqual(actual.sources, expected.sources, expected.key);
     assert.equal(actual.grammar.start, expected.start, expected.key);
@@ -111,7 +121,10 @@ test('merging is reproducible, idempotent and independent of the source order', 
 test('an upstream change re-merges only its group and keeps established canonical identities', () => {
   const previous = merge();
   const remerged = merge(changedSources(), { previous });
-  const expected = fixture.expected.remerge;
+  const expected = { ...fixture.expected.remerge, ...pestExpectations.remerge };
+  assert.deepEqual(expected.rules.filter(name => !isPestBuiltIn(name)), fixture.expected.remerge.rules);
+  assert.deepEqual(originalIdentities(expected.identities), fixture.expected.remerge.identities);
+  assert.deepEqual(originalIdentities(expected.identitiesWithoutPrevious), fixture.expected.remerge.identitiesWithoutPrevious);
   assert.deepEqual(remerged.reused, expected.reused);
   assert.deepEqual(remerged.recomputed, expected.recomputed);
   for (const key of expected.reused) assert.equal(group(remerged, key), group(previous, key));
@@ -150,7 +163,7 @@ test('language editions are merged separately and listed as explicit alternative
   const older = group(result, 'arithmetic@2024');
   const newer = group(result, 'arithmetic@2025');
   assert.ok(Object.keys(older.identities).every((alias) => !alias.startsWith('upstream-c:')));
-  assert.deepEqual(Object.keys(newer.identities), ['upstream-c:expression', 'upstream-c:term', 'upstream-c:number']);
+  assert.deepEqual(Object.keys(newer.identities), ['upstream-c:expression', 'upstream-c:term', 'upstream-c:number', 'upstream-c:ASCII_DIGIT']);
   assert.notDeepEqual(newer.grammar.rule('number').expression, older.grammar.rule('number').expression);
   assert.deepEqual(result.alternatives, [{ reason: 'edition', name: 'arithmetic', options: ['2024', '2025'] }]);
   observe('I195-MERGE-DETERMINISM', ['editionBoundariesPreserved'], 'language editions are merged separately');
@@ -164,6 +177,8 @@ test('differently named equivalent rules are merged, recursively and after norma
       ['expression', ['upstream-a:expression', 'upstream-b:sum']],
       ['term', ['upstream-a:term', 'upstream-b:operand']],
       ['number', ['upstream-a:number', 'upstream-b:integer']],
+      ['ASCII_ALPHA', ['upstream-a:ASCII_ALPHA', 'upstream-b:ASCII_ALPHA']],
+      ['ASCII_DIGIT', ['upstream-a:ASCII_DIGIT', 'upstream-b:ASCII_DIGIT']],
     ],
   );
   // `ASCII_DIGIT ~ ASCII_DIGIT*` and `ASCII_DIGIT+` mean the same, and the
@@ -178,7 +193,8 @@ test('differently named equivalent rules are merged, recursively and after norma
 
   for (const decision of decisions(older, 'merged')) {
     assert.equal(decision.basis, GRAMMAR_MERGE_METHOD);
-    assert.match(decision.definition, /^(normal|atomic):/u);
+    if (['ASCII_ALPHA', 'ASCII_DIGIT'].includes(decision.name)) assert.match(decision.definition, /^silent:/u);
+    else assert.match(decision.definition, /^(normal|atomic):/u);
     assert.equal(decision.definition, normalizedRuleDefinition(older.grammar.rule(decision.name)));
   }
   observe('I195-MERGE-MEANING-AWARE-DEDUPLICATION', ['equivalenceJustified'], 'every merge records its proof method and definition');

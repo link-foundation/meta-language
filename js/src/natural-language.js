@@ -8,6 +8,8 @@ import {
 } from './primitives.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
 import { LANGUAGE_IDENTIFIER_TERM, identifyLanguage } from './language-identification.js';
+import { analyzeMorphology } from './morphology.js';
+import { naturalLanguageValues } from './natural-language-values.js';
 import { BIDI_RANGES } from './unicode-bidi-classes.js';
 
 const encoder = new TextEncoder();
@@ -183,22 +185,33 @@ export function annotateNaturalLanguage(network, document, text, language) {
 
   // Segments belong to the declared region; the identifier's verdict lives on
   // the Language link and its annotation.
-  const segments = wordSegments(text, declaredLanguage).map(({ segment, start, end }) =>
-    network.insertLink(
+  const segments = wordSegments(text, declaredLanguage).map(({ segment, start, end }) => {
+    const span = lines.span(start, end);
+    const token = network.insertLink(
       [],
       LinkMetadata.new()
         .withLinkType(LinkType.SourceToken)
         .withNamed(true)
         .withTerm(segment)
         .withLanguage(declaredLanguage)
-        .withSpan(lines.span(start, end)),
-    ));
+        .withSpan(span),
+    );
+    for (const { lemma, upos, features, score, source } of analyzeMorphology(segment, declaredLanguage)) {
+      const properties = [`lemma:${lemma}`, `upos:${upos}`, ...(features.length ? features : ['_']).map(feature => `ufeat:${feature}`)];
+      const children = properties.map(term => insertSyntax(network, term, [], declaredLanguage, span));
+      annotations.push(insertSyntax(network, `morphology:${source}:${score.toFixed(6)}`, [token, ...children], declaredLanguage, span));
+    }
+    return token;
+  });
 
   const sentence = annotateMorphosyntax(network, text, lines, declaredLanguage, documentSpan);
   annotations.push(
     ...unicodeAnnotations(text).map((term) =>
       insertSemanticAnnotation(network, languageLink, term, detectedLanguage, documentSpan)),
   );
+  for (const { start, end, term } of naturalLanguageValues(text, declaredLanguage)) {
+    annotations.push(insertSemanticAnnotation(network, languageLink, term, declaredLanguage, lines.span(start, end)));
+  }
   const workedExample = insertWorkedExampleAnnotation(network, text, declaredLanguage, documentSpan);
   if (workedExample) annotations.push(workedExample);
 

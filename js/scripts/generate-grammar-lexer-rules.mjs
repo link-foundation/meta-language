@@ -8,7 +8,8 @@ import { isDeepStrictEqual } from 'node:util';
 import { DecoratorSet } from '../src/decorators.js';
 import { GRAMMAR_LEXER_FORMS } from '../src/grammar-lexer-forms.js';
 import { readProjectData, writeProjectData } from './project-data.mjs';
-import { readPortableSourceParameterStyles, readPortableSourceLintStyles, partitionPortableRustLibrary } from './portable-source-library-style.mjs';
+import { readPortableSourceParameterStyles, readPortableSourceLintStyles } from './portable-source-library-style.mjs';
+import { partitionReviewedRustLibrary } from './reviewed-rust-source-styles.mjs';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
 
 const sourceFile = new URL('../src/translation/grammar-lexer-rules.js', import.meta.url);
@@ -122,7 +123,7 @@ export async function generateGrammarLexerRules({ check = false, native = false 
     if (/\bcrate::/u.test(decorated)) throw new Error('the native lexical library has an unresolved crate-root reference');
     const notice = '// Generated from the complete shared grammar-lexer-rules.js and recorded source closure.\n// Do not edit by hand.\n';
     const rustSource = formatProductRuleSource(decorated);
-    const nativeFiles = partitionPortableRustLibrary(rustSource, { notice, directory: 'grammar_lexer_rules' });
+    const nativeFiles = partitionReviewedRustLibrary(rustSource, { notice, directory: 'grammar_lexer_rules' });
     const artifact = { schemaVersion: 1, model: policy.model, sourceSha256: policy.sourceSha256, closedSourceSha256: policy.closedSourceSha256,
       sourceClosure: policy.sourceClosure, formSourceSha256: policy.formSourceSha256, styleSha256: hash(readFileSync(nativeStyles)),
       definitions: emitted.definitions, assumptions: emitted.assumptions, encodings: emitted.encodings, rustSource, rustSha256: hash(rustSource),

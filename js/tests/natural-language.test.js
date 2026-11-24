@@ -4,7 +4,9 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { LinkMetadata, LinkNetwork, LinkType } from '../src/index.js';
+import { readProjectData } from '../scripts/project-data.mjs';
+import { LinkMetadata, LinkNetwork, LinkType, identifyLanguage as rankLanguage } from '../src/index.js';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
 import {
   LANGUAGE_IDENTIFIER_TERM,
   identifyLanguage,
@@ -16,6 +18,38 @@ import {
 } from '../src/natural-language.js';
 
 const jsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const rankedFixture = 'parity/fixtures/ranked-language-identification.lino';
+
+test('the public identifier ranks Cyrillic languages and retains mixed-script UTF-8 spans', (context) => {
+  const fixture = readProjectData(new URL(`../../${rankedFixture}`, import.meta.url));
+  for (const { text, language, firstCandidate } of fixture.inputs) {
+    const result = rankLanguage(text);
+    assert.equal(result.language, language, text);
+    assert.equal(result.candidates[0]?.language ?? null, firstCandidate, text);
+    assert.ok(result.candidates.every(({ confidence }, index, values) => confidence > 0
+      && confidence <= 1 && (index === 0 || confidence <= values[index - 1].confidence)), text);
+    const strict = rankLanguage(text, { minimumConfidence: 1 });
+    assert.equal(strict.language, null, text);
+    assert.deepEqual(strict.candidates, result.candidates, text);
+  }
+  for (const { text, spans } of fixture.mixed) {
+    const bytes = Buffer.from(text);
+    assert.deepEqual(rankLanguage(text).spans.map(({ script, start, end, language }) => ({
+      script, start, end, language, text: bytes.subarray(start, end).toString(),
+    })), spans);
+  }
+  for (const minimumConfidence of [-1, 1.1, NaN]) {
+    assert.throws(() => rankLanguage('text', { minimumConfidence }), RangeError);
+  }
+  recordIssue195Observations({
+    requirementId: 'I195-NATURAL-LANGUAGE-IDENTIFICATION-RANKING',
+    suffix: 'behavior',
+    fixtureId: 'i195-natural-language-identification-ranking',
+    fixtureFile: rankedFixture,
+    assertions: ['rankedCyrillicModels', 'explicitUnknownThreshold', 'shortTextEvidence', 'utf8ScriptSpans'],
+    testName: context.name,
+  });
+});
 
 function semanticTerms(network) {
   return network.links()

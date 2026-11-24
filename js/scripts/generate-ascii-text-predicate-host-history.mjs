@@ -5,9 +5,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { captureGitArtifactCertificate } from './capture-git-artifact-certificate.mjs';
 import { checkProjectData, writeProjectData, readProjectData } from './project-data.mjs';
+import { asciiPredicateAssertionSource, readIssue245SourcePair } from '../../experiments/issue-245/source-history.mjs';
 import { ASCII_HOST_REVISION, ASCII_HOST_ADDITIONS, ASCII_HOST_REGISTRATIONS,
   ASCII_HOST_EDITS, ASCII_ASSERTION_EDITS, asciiHostPin, replayAsciiHostEdits, verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
-import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
+import { restoreAsciiNativeArtifact, restoreAsciiNativeHostSource } from './ascii-native-source-succession.mjs';
 
 const root = new URL('../../', import.meta.url);
 
@@ -17,8 +18,10 @@ export function generateAsciiTextPredicateHostHistory({ check = false, assertion
     ? (assert.ok(existsSync(output), 'first capture requires the retained exact unexecuted draft via --assertion-draft'),
       readProjectData(output).assertionCorrection.draft.source)
     : readFileSync(assertionDraft, 'utf8');
-  const assertionPath = 'js/tests/translation-ascii-text-predicates.test.js';
-  const currentAssertionSource = readFileSync(new URL(assertionPath, root), 'utf8');
+  const assertionPath = asciiPredicateAssertionSource;
+  const assertion = readIssue245SourcePair(assertionPath);
+  assert.equal(readFileSync(new URL(assertionPath, root), 'utf8'), assertion.current);
+  const currentAssertionSource = assertion.predecessor;
   const assertionReplay = replayAsciiHostEdits(draftSource, ASCII_ASSERTION_EDITS);
   assert.equal(currentAssertionSource, assertionReplay.source, 'only the finite documented incomplete-source correction and added String spread control');
   const assertionCorrection = { path: assertionPath,
@@ -32,7 +35,7 @@ export function generateAsciiTextPredicateHostHistory({ check = false, assertion
     const source = blob.toString('utf8');
     assert.deepEqual(Buffer.from(source), blob);
     const replay = replayAsciiHostEdits(source, specification.changes);
-    assert.equal(restoreRequiredFieldNativeHostSource(readFileSync(new URL(specification.path, root), 'utf8'), specification.path, 'ASCII character host'), replay.source,
+    assert.equal(restoreAsciiNativeHostSource(readFileSync(new URL(specification.path, root), 'utf8'), specification.path), replay.source,
       'capture the exact finite reviewed successor, without unrelated source drift');
     return { path: specification.path, source, certificate, current: asciiHostPin(replay.source), edits: replay.edits };
   });
@@ -41,7 +44,7 @@ export function generateAsciiTextPredicateHostHistory({ check = false, assertion
     return { path, source, pin: asciiHostPin(source) };
   });
   const artifactPath = 'parity/self-translation/ascii-text-predicate-rules-native.lino';
-  const artifactBytes = readFileSync(new URL(artifactPath, root));
+  const artifactBytes = restoreAsciiNativeArtifact(readFileSync(new URL(artifactPath, root), 'utf8'), artifactPath);
   const artifact = readProjectData(new URL(artifactPath, root));
   const archive = { schemaVersion: 1, model: 'Rust ASCII character query host replay 1',
     revision: ASCII_HOST_REVISION, coordinateUnit: 'UTF-16 code units', hosts, additions,

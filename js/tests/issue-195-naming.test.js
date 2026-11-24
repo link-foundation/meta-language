@@ -12,12 +12,13 @@ import { test } from 'node:test';
 import { areSynonyms, loadWordNet, partsOfSpeech } from '../scripts/english-vocabulary.mjs';
 import {
   checkConceptRecords,
+  checkInventoryCoverage,
   checkNamingFixtures,
   checkRepositoryNames,
+  checkSourceDescriptions,
   extractNameInventory,
   extractSourceDescriptions,
   FORMER_NAME_TABLES,
-  loadNamingRegisters,
   NAME_INVENTORIES,
   NAMING_FIXTURES,
   nameProblems,
@@ -28,13 +29,12 @@ import { readProjectData } from '../scripts/project-data.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const wordnet = loadWordNet();
-const registers = loadNamingRegisters(root);
-const context = { wordnet, vocabulary: registers.vocabulary };
 const { fixtures } = readProjectData(new URL(`../../${NAMING_FIXTURES}`, import.meta.url));
 // Use the same complete current plus certified historical source inventory as the normal naming driver.
 const currentNames = extractNameInventory(root);
 const historicalNames = extractOwnCodebaseHistoricalNames(root, NAME_INVENTORIES);
 const repository = checkRepositoryNames(root, wordnet, { names: [...currentNames, ...historicalNames] });
+const context = { wordnet, vocabulary: repository.vocabulary };
 
 function observe(assertions, testName) {
   recordIssue195Observations({
@@ -50,8 +50,14 @@ function observe(assertions, testName) {
 
 const record = (id) => structuredClone(repository.records.find((candidate) => candidate.id === id));
 const kindsOf = (problems) => [...new Set(problems.map((problem) => problem.kind))].sort();
-// The problems of the repository with records or source names mutated in memory.
-const mutated = (override) => checkRepositoryNames(root, wordnet, { names: repository.names, ...override }).problems;
+// Evaluate each in-memory mutation against the same full set of source inputs.
+function mutated({ records = repository.records, names = repository.names } = {}) {
+  return [
+    ...checkConceptRecords(records, context),
+    ...checkSourceDescriptions(records, repository.descriptions),
+    ...checkInventoryCoverage(records, repository.exemptions, names, context, repository.formers),
+  ];
+}
 
 test('the vocabulary is WordNet 3.1 plus registered technical terms, not a letter pattern', () => {
   assert.equal(wordnet.source, 'WordNet 3.1 (wordnet-db)');
@@ -62,7 +68,7 @@ test('the vocabulary is WordNet 3.1 plus registered technical terms, not a lette
   assert.equal(areSynonyms(wordnet, 'loop', 'branch', 'noun'), false);
   // Every technical term is outside WordNet in the part of speech it registers
   // and cites the reference that defines it.
-  for (const [word, term] of registers.vocabulary.technicalTerms) {
+  for (const [word, term] of repository.vocabulary.technicalTerms) {
     assert.ok(term.partsOfSpeech.some((part) => !partsOfSpeech(wordnet, word).includes(part)), word);
     assert.match(term.source, /\S/u, word);
     assert.match(term.definition, /^\p{Lu}.*\.$/u, word);
@@ -100,7 +106,7 @@ test('concepts must be noun phrases and operations verb phrases', () => {
 test('an abbreviation fails the gate, including one WordNet lists with another meaning', () => {
   for (const abbreviation of ['char', 'ref', 'id', 'min', 'max']) {
     assert.ok(partsOfSpeech(wordnet, abbreviation).length > 0, `${abbreviation} is a WordNet lemma`);
-    assert.ok(registers.vocabulary.abbreviations.has(abbreviation), abbreviation);
+    assert.ok(repository.vocabulary.abbreviations.has(abbreviation), abbreviation);
   }
   const renamed = repository.records.map((candidate) =>
     candidate.id === 'grammar.character-class' ? { ...candidate, id: 'grammar.char-class', phrase: 'char class' } : candidate);
@@ -144,6 +150,7 @@ test('a repeated identity, definition, synonym or representation name fails the 
 
 test('every name the sources define has a concept record and every record is used', () => {
   assert.deepEqual(repository.problems, []);
+  assert.deepEqual(mutated(), repository.problems);
   const inventories = new Set(repository.names.map(({ inventory }) => inventory));
   assert.deepEqual([...inventories].sort(), [...new Set(NAME_INVENTORIES.map(({ inventory }) => inventory))].sort());
   assert.equal(new Set(repository.formers.map(({ table }) => table)).size, FORMER_NAME_TABLES.length);

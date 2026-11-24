@@ -17,6 +17,8 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::configuration::{LanguageIdentificationDetector, ParseConfiguration};
 use crate::language_identification::{self, LANGUAGE_IDENTIFIER_TERM};
 use crate::line_index::LineIndex;
+use crate::link_network::morphology::analyze_morphology;
+use crate::link_network::natural_language_values::natural_language_values;
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::natural_language_grammar::annotate_morphosyntax;
 use crate::source::{ByteRange, SourceSpan};
@@ -94,19 +96,59 @@ pub fn annotate_natural_language(
     // Segments belong to the declared region; the identifier's verdict lives
     // on the Language link and its annotations.
     for segment in segments {
-        network.insert_link(
+        let span = span_for_range(&lines, segment.range.start(), segment.range.end());
+        let morphology = analyze_morphology(&segment.text, declared_language);
+        let token = network.insert_link(
             [region],
             LinkMetadata::new()
                 .with_link_type(LinkType::Token)
                 .with_named(true)
                 .with_term(segment.text)
                 .with_language(declared_language)
-                .with_span(span_for_range(
-                    &lines,
-                    segment.range.start(),
-                    segment.range.end(),
-                )),
+                .with_span(span),
         );
+        for reading in morphology {
+            let mut children = vec![token];
+            let mut properties = vec![
+                format!("lemma:{}", reading.lemma),
+                format!("upos:{}", reading.upos),
+            ];
+            if reading.features.is_empty() {
+                properties.push("ufeat:_".to_owned());
+            } else {
+                properties.extend(
+                    reading
+                        .features
+                        .into_iter()
+                        .map(|feature| format!("ufeat:{feature}")),
+                );
+            }
+            for term in properties {
+                children.push(
+                    network.insert_link(
+                        [],
+                        LinkMetadata::new()
+                            .with_link_type(LinkType::Syntax)
+                            .with_named(true)
+                            .with_term(term)
+                            .with_language(declared_language)
+                            .with_span(span),
+                    ),
+                );
+            }
+            network.insert_link(
+                children,
+                LinkMetadata::new()
+                    .with_link_type(LinkType::Syntax)
+                    .with_named(true)
+                    .with_term(format!(
+                        "morphology:{}:{:.6}",
+                        reading.source, reading.score
+                    ))
+                    .with_language(declared_language)
+                    .with_span(span),
+            );
+        }
     }
 
     annotate_morphosyntax(
@@ -125,6 +167,16 @@ pub fn annotate_natural_language(
         detected_language,
         document_span,
     );
+    for value in natural_language_values(text, declared_language) {
+        insert_semantic_annotation(
+            network,
+            region,
+            language_link,
+            value.term,
+            declared_language,
+            span_for_range(&lines, value.start, value.end),
+        );
+    }
     insert_worked_example_annotations(network, region, text, declared_language, document_span);
 }
 

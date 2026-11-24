@@ -1,0 +1,991 @@
+use std::borrow::Cow;
+use std::collections::{HashMap, HashSet};
+use std::rc::Rc;
+
+mod filters;
+
+use super::document_container::{
+    BinaryStringCoordinates, binary_string, byte_source_span, insert_derived_document,
+};
+use super::document_container_policy::{
+    compose_pdf_matrices, pdf_drawing_operator, pdf_marked_content_operator,
+    pdf_stream_filter_kind, pdf_text_operator_kind, translate_pdf_matrix,
+};
+use super::pdf_text_fonts::{
+    PdfFont, decode_font_text, glyph_name, predefined_encoding, read_unicode_map, string_bytes,
+};
+use crate::builtin_grammar::GrammarNode;
+use crate::pdf_grammar::{parse_binary_pdf_cst, parse_pdf_content_cst};
+use crate::structured_text_parser::pdf_content_network;
+use crate::{
+    LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, SourceSpan,
+};
+
+const MAXIMUM_STREAM_BYTES: usize = 16 * 1024 * 1024;
+const MAXIMUM_DECODED_BYTES: usize = 32 * 1024 * 1024;
+const MAXIMUM_CMAP_BYTES: usize = 2 * 1024 * 1024;
+const MAXIMUM_CMAP_DEPTH: usize = 5;
+type PdfTransformationMatrix = (f64, f64, f64, f64, f64, f64);
+const PAGE_ROTATIONS: [PdfTransformationMatrix; 4] = [
+    (1.0, 0.0, 0.0, 1.0, 0.0, 0.0),
+    (0.0, -1.0, 1.0, 0.0, 0.0, 0.0),
+    (-1.0, 0.0, 0.0, -1.0, 0.0, 0.0),
+    (0.0, 1.0, -1.0, 0.0, 0.0, 0.0),
+];
+const IDENTITY_MATRIX: PdfTransformationMatrix = PAGE_ROTATIONS[0];
+
+pub(crate) fn attach_binary_pdf(
+    network: &mut LinkNetwork,
+    parent: LinkId,
+    bytes: &[u8],
+    language: &str,
+    configuration: ParseConfiguration,
+) {
+    let text = binary_string(bytes);
+    let coordinates = BinaryStringCoordinates::new(bytes);
+    let span =
+        |start, end| byte_source_span(coordinates.byte_offset(start), coordinates.byte_offset(end));
+    let tree = parse_binary_pdf_cst(&text);
+    let root = network.insert_link(
+        [parent],
+        LinkMetadata::new()
+            .with_link_type(LinkType::Syntax)
+            .with_term("pdf_file")
+            .with_language(language)
+            .with_named(true)
+            .with_span(span(0, text.len()))
+            .with_flags(if tree.has_error {
+                LinkFlags::containing_error()
+            } else {
+                LinkFlags::clean()
+            }),
+    );
+    let mut pending = vec![&tree];
+    while let Some(node) = pending.pop() {
+        if node.is_error || node.is_missing {
+            let flags = if node.is_missing {
+                LinkFlags::missing()
+            } else {
+                LinkFlags::error()
+            };
+            network.insert_link(
+                [root],
+                LinkMetadata::new()
+                    .with_link_type(LinkType::Syntax)
+                    .with_term(node.term)
+                    .with_language(language)
+                    .with_named(node.named)
+                    .with_span(span(node.start, node.end))
+                    .with_flags(flags),
+            );
+        }
+        if node.has_error {
+            pending.extend(&node.children);
+        }
+    }
+    attach_pdf_content(network, root, &text, &tree, span, configuration, "bytes");
+}
+
+pub(crate) fn attach_pdf_content(
+    network: &mut LinkNetwork,
+    parent: LinkId,
+    text: &str,
+    tree: &GrammarNode,
+    span: impl Fn(usize, usize) -> SourceSpan,
+    configuration: ParseConfiguration,
+    encoding: &str,
+) {
+    let document = PdfReader::new(text, tree, configuration.decode_document_streams()).read();
+    for (stream, tree) in document.streams {
+        let content = pdf_content_network(&stream.source, &tree, configuration);
+        let metadata = LinkMetadata::new()
+            .with_term("content_stream")
+            .with_language("PDF")
+            .with_span(span(stream.data.start, stream.data.end));
+        insert_derived_document(
+            network,
+            parent,
+            metadata,
+            encoding,
+            &stream.filter,
+            &content,
+        );
+    }
+    for run in document.text_runs {
+        network.insert_link(
+            [parent],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Semantic)
+                .with_term(if run.separated {
+                    "PDF text line"
+                } else {
+                    "PDF text run"
+                })
+                .with_language("PDF")
+                .with_span(span(run.start, run.end))
+                .with_definition(run.text),
+        );
+    }
+    for (data, error) in document.errors {
+        network.insert_link(
+            [parent],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Object)
+                .with_term("ERROR")
+                .with_language("PDF")
+                .with_span(span(data.start, data.end))
+                .with_named(true)
+                .with_definition(error)
+                .with_flags(LinkFlags::error()),
+        );
+    }
+}
+
+fn field<'tree>(node: Option<&'tree GrammarNode>, name: &str) -> Option<&'tree GrammarNode> {
+    node?
+        .children
+        .iter()
+        .find(|child| child.field == Some(name))
+}
+
+fn array_elements(node: Option<&GrammarNode>) -> impl DoubleEndedIterator<Item = &GrammarNode> {
+    node.into_iter()
+        .flat_map(|node| &node.children)
+        .filter(|child| child.named && !child.extra)
+}
+
+fn text_of<'source>(source: &'source str, node: Option<&GrammarNode>) -> &'source str {
+    node.map_or("", |node| &source[node.start..node.end])
+}
+
+fn name_of<'source>(source: &'source str, node: Option<&GrammarNode>) -> Cow<'source, str> {
+    let Some(node) = node.filter(|node| node.term == "name") else {
+        return Cow::Borrowed("");
+    };
+    let name = &source[node.start + 1..node.end];
+    if !name.contains('#') {
+        return Cow::Borrowed(name);
+    }
+    let mut decoded = String::new();
+    let mut remaining = name;
+    while let Some(position) = remaining.find('#') {
+        decoded.push_str(&remaining[..position]);
+        remaining = &remaining[position + 1..];
+        if let Some(byte) = remaining
+            .get(..2)
+            .and_then(|hex| u8::from_str_radix(hex, 16).ok())
+        {
+            decoded.push(char::from(byte));
+            remaining = &remaining[2..];
+        } else {
+            decoded.push('#');
+        }
+    }
+    decoded.push_str(remaining);
+    Cow::Owned(decoded)
+}
+
+type ObjectReference = (u64, u64);
+type MarkedContentOrder = HashMap<i32, usize>;
+type PageStructureOrder = HashMap<usize, MarkedContentOrder>;
+type PdfStructureOrder = HashMap<usize, PageStructureOrder>;
+
+fn object_reference(text: &str, node: &GrammarNode) -> Option<ObjectReference> {
+    Some((
+        text_of(text, field(Some(node), "object_number"))
+            .parse()
+            .ok()?,
+        text_of(text, field(Some(node), "generation"))
+            .parse()
+            .ok()?,
+    ))
+}
+
+struct PdfStream<'source> {
+    source: Cow<'source, str>,
+    data: &'source GrammarNode,
+    filter: String,
+}
+
+#[derive(Default)]
+struct TextRun {
+    text: String,
+    separated: bool,
+    start: usize,
+    end: usize,
+    position: Option<TextPosition>,
+    rank: Option<usize>,
+    paint_order: usize,
+}
+
+#[derive(Clone, Copy)]
+struct TextPosition {
+    x: f64,
+    y: f64,
+}
+
+#[derive(Clone)]
+struct GraphicsState {
+    transform: PdfTransformationMatrix,
+    font: Option<Rc<PdfFont>>,
+    leading: f64,
+}
+
+fn numeric_operand(source: &str, operand: &GrammarNode) -> Option<f64> {
+    if !matches!(operand.term, "integer" | "real") {
+        return None;
+    }
+    text_of(source, Some(operand))
+        .parse::<f64>()
+        .ok()
+        .filter(|value| value.is_finite())
+}
+
+fn dictionary_value<'node>(
+    source: &str,
+    node: Option<&'node GrammarNode>,
+    key: &str,
+) -> Option<&'node GrammarNode> {
+    let entry = node?.children.iter().find(|entry| {
+        entry.term == "dictionary_entry" && name_of(source, field(Some(entry), "key")) == key
+    })?;
+    field(Some(entry), "value")
+}
+
+fn marked_content_id(source: &str, node: Option<&GrammarNode>) -> Option<i32> {
+    let node = node.filter(|node| node.term == "integer")?;
+    text_of(source, Some(node))
+        .parse::<i32>()
+        .ok()
+        .filter(|id| *id >= 0)
+}
+
+fn transformation_matrix(
+    values: impl Iterator<Item = Option<f64>>,
+) -> Option<PdfTransformationMatrix> {
+    let values = values.collect::<Option<Vec<_>>>()?;
+    let &[a, b, c, d, e, f] = values.as_slice() else {
+        return None;
+    };
+    Some((a, b, c, d, e, f))
+}
+
+#[derive(Default)]
+struct PdfDocument<'source> {
+    streams: Vec<(Rc<PdfStream<'source>>, Rc<GrammarNode>)>,
+    text_runs: Vec<TextRun>,
+    errors: Vec<(&'source GrammarNode, &'static str)>,
+}
+
+struct TextState<'structure> {
+    active: HashSet<usize>,
+    separated: bool,
+    ordinate: Option<f64>,
+    position: Option<PdfTransformationMatrix>,
+    graphics: GraphicsState,
+    saved_graphics: Vec<GraphicsState>,
+    orderable: bool,
+    page: Option<usize>,
+    structure: Option<&'structure PageStructureOrder>,
+    rank: Option<usize>,
+}
+
+impl TextState<'_> {
+    fn new(transform: PdfTransformationMatrix) -> Self {
+        Self {
+            active: HashSet::new(),
+            separated: true,
+            ordinate: None,
+            position: None,
+            graphics: GraphicsState {
+                transform,
+                font: None,
+                leading: 0.0,
+            },
+            saved_graphics: Vec::new(),
+            orderable: true,
+            page: None,
+            structure: None,
+            rank: None,
+        }
+    }
+
+    fn advance_line(&mut self) {
+        self.position = self
+            .position
+            .filter(|_| self.graphics.leading.is_finite())
+            .map(|position| translate_pdf_matrix(position, 0.0, -self.graphics.leading));
+    }
+
+    fn transform(&mut self, matrix: Option<PdfTransformationMatrix>) {
+        if let Some(matrix) = matrix {
+            self.graphics.transform = compose_pdf_matrices(self.graphics.transform, matrix);
+        } else {
+            self.orderable = false;
+        }
+    }
+
+    fn position_on_page(&mut self) -> Option<TextPosition> {
+        let (a, b, c, d, x, y) = compose_pdf_matrices(self.graphics.transform, self.position?);
+        if a > 0.0 && b == 0.0 && c == 0.0 && d > 0.0 && x.is_finite() && y.is_finite() {
+            Some(TextPosition { x, y })
+        } else {
+            self.orderable = false;
+            None
+        }
+    }
+}
+
+fn order_positioned_page_text(runs: &mut Vec<TextRun>, start: usize) {
+    let mut positions = Vec::new();
+    for run in runs[start..].iter().filter(|run| run.separated) {
+        let Some(position) = run
+            .position
+            .filter(|position| position.x.is_finite() && position.y.is_finite())
+        else {
+            return;
+        };
+        positions.push(position);
+    }
+    let mut lines = Vec::<(TextPosition, Vec<TextRun>)>::new();
+    let mut positions = positions.into_iter();
+    for run in runs.drain(start..) {
+        if run.separated {
+            lines.push((positions.next().expect("validated text line"), Vec::new()));
+        }
+        lines
+            .last_mut()
+            .expect("each page starts with a text line")
+            .1
+            .push(run);
+    }
+    lines.sort_by(|(left, _), (right, _)| {
+        right
+            .y
+            .partial_cmp(&left.y)
+            .expect("finite vertical positions")
+            .then_with(|| {
+                left.x
+                    .partial_cmp(&right.x)
+                    .expect("finite horizontal positions")
+            })
+    });
+    runs.extend(lines.into_iter().flat_map(|(_, runs)| runs));
+}
+
+fn order_page_text(runs: &mut Vec<TextRun>, start: usize, orderable: bool, has_structure: bool) {
+    if orderable {
+        order_positioned_page_text(runs, start);
+    }
+    if !has_structure {
+        return;
+    }
+    let mut positions = Vec::new();
+    let mut tagged = Vec::new();
+    for (offset, run) in runs[start..].iter_mut().enumerate() {
+        if let Some(rank) = run.rank {
+            positions.push(start + offset);
+            tagged.push((rank, run.paint_order, std::mem::take(run)));
+        }
+    }
+    if tagged.is_empty() {
+        return;
+    }
+    // Keep stream order within each marked sequence and preserve untagged slots.
+    tagged.sort_unstable_by_key(|(rank, paint_order, _)| (*rank, *paint_order));
+    for (position, (_, _, run)) in positions.into_iter().zip(tagged) {
+        runs[position] = run;
+    }
+    runs[start].separated = true;
+}
+
+struct PdfReader<'source> {
+    text: &'source str,
+    decode_streams: bool,
+    objects: HashMap<ObjectReference, &'source GrammarNode>,
+    order: Vec<ObjectReference>,
+    attached: HashSet<usize>,
+    stream_cache: HashMap<usize, Option<Rc<PdfStream<'source>>>>,
+    font_cache: HashMap<usize, Rc<PdfFont>>,
+    decoded_bytes: usize,
+    output: PdfDocument<'source>,
+}
+
+impl<'source> PdfReader<'source> {
+    fn new(text: &'source str, tree: &'source GrammarNode, decode_streams: bool) -> Self {
+        let mut order = Vec::new();
+        let mut objects = HashMap::new();
+        for object in tree
+            .children
+            .iter()
+            .filter(|object| object.term == "indirect_object")
+        {
+            if let (Some(key), Some(value)) =
+                (object_reference(text, object), field(Some(object), "value"))
+                && objects.insert(key, value).is_none()
+            {
+                order.push(key);
+            }
+        }
+        Self {
+            text,
+            decode_streams,
+            objects,
+            order,
+            attached: HashSet::new(),
+            stream_cache: HashMap::new(),
+            font_cache: HashMap::new(),
+            decoded_bytes: 0,
+            output: PdfDocument::default(),
+        }
+    }
+
+    fn resolve(&self, node: &'source GrammarNode) -> Option<&'source GrammarNode> {
+        if node.term == "indirect_reference" {
+            self.objects
+                .get(&object_reference(self.text, node)?)
+                .copied()
+        } else {
+            Some(node)
+        }
+    }
+
+    fn get(&self, node: Option<&'source GrammarNode>, key: &str) -> Option<&'source GrammarNode> {
+        self.resolve(dictionary_value(self.text, self.resolve(node?), key)?)
+    }
+
+    fn kind(&self, node: Option<&'source GrammarNode>, key: &str) -> Cow<'source, str> {
+        name_of(self.text, self.get(node, key))
+    }
+
+    fn read_structure_order(&self, catalog: Option<&'source GrammarNode>) -> PdfStructureOrder {
+        let mut pages = PdfStructureOrder::new();
+        let Some(first) = self.get(self.get(catalog, "StructTreeRoot"), "K") else {
+            return pages;
+        };
+        let mut visited = HashSet::new();
+        let mut pending = vec![(first, None)];
+        let mut next = 0;
+        while let Some((node, inherited)) = pending.pop() {
+            match node.term {
+                "array" if visited.insert(node.start) => {
+                    pending.extend(
+                        array_elements(Some(node))
+                            .rev()
+                            .filter_map(|child| self.resolve(child).map(|item| (item, inherited))),
+                    );
+                }
+                "dictionary" if self.kind(Some(node), "Type") != "MCR" => {
+                    if visited.insert(node.start)
+                        && let Some(children) = self.get(Some(node), "K")
+                    {
+                        pending.push((children, self.get(Some(node), "Pg").or(inherited)));
+                    }
+                }
+                "integer" | "dictionary" => {
+                    let Some(page) = self.get(Some(node), "Pg").or(inherited) else {
+                        continue;
+                    };
+                    let stream = self.get(Some(node), "Stm").unwrap_or(page);
+                    let identifier = if node.term == "integer" {
+                        Some(node)
+                    } else {
+                        self.get(Some(node), "MCID")
+                    };
+                    let Some(id) = marked_content_id(self.text, identifier) else {
+                        continue;
+                    };
+                    pages
+                        .entry(page.start)
+                        .or_default()
+                        .entry(stream.start)
+                        .or_default()
+                        .entry(id)
+                        .or_insert_with(|| {
+                            let rank = next;
+                            next += 1;
+                            rank
+                        });
+                }
+                _ => {}
+            }
+        }
+        pages
+    }
+
+    fn stream(&mut self, node: Option<&'source GrammarNode>) -> Option<Rc<PdfStream<'source>>> {
+        let node = node.filter(|node| node.term == "stream")?;
+        let data = field(Some(node), "data")?;
+        let dictionary = field(Some(node), "dictionary");
+        let filter = self.get(dictionary, "Filter");
+        let source = text_of(self.text, Some(data));
+        let Some(filter) = filter else {
+            return Some(Rc::new(PdfStream {
+                source: Cow::Borrowed(source),
+                data,
+                filter: String::new(),
+            }));
+        };
+        if !self.decode_streams {
+            return None;
+        }
+        if let Some(cached) = self.stream_cache.get(&node.start) {
+            return cached.clone();
+        }
+        let names = if filter.term == "array" {
+            array_elements(Some(filter))
+                .map(|item| name_of(self.text, self.resolve(item)))
+                .collect::<Vec<_>>()
+        } else {
+            vec![name_of(self.text, Some(filter))]
+        };
+        let kinds = names
+            .iter()
+            .map(|name| pdf_stream_filter_kind(name))
+            .collect::<Vec<_>>();
+        if kinds.is_empty() || kinds.contains(&0) {
+            return None;
+        }
+        let parameters = self.get(dictionary, "DecodeParms");
+        let options = if parameters.is_some_and(|node| node.term == "array") {
+            array_elements(parameters)
+                .map(|parameter| self.resolve(parameter))
+                .collect::<Vec<_>>()
+        } else {
+            vec![parameters]
+        };
+        if options.iter().any(|&option| {
+            text_of(self.text, self.get(option, "Predictor"))
+                .parse::<f64>()
+                .is_ok_and(|value| value > 1.0)
+        }) {
+            return None;
+        }
+        let stream = match self.decode(source, &kinds, &options) {
+            Ok(source) => Some(Rc::new(PdfStream {
+                source: Cow::Owned(source),
+                data,
+                filter: names.join(","),
+            })),
+            Err(error) => {
+                self.output.errors.push((data, error));
+                None
+            }
+        };
+        self.stream_cache.insert(node.start, stream.clone());
+        stream
+    }
+
+    fn font(&mut self, node: Option<&'source GrammarNode>) -> Option<Rc<PdfFont>> {
+        let node = node?;
+        if let Some(cached) = self.font_cache.get(&node.start) {
+            return Some(Rc::clone(cached));
+        }
+        let encoding_node = self.get(Some(node), "Encoding");
+        let mut encoding_name = name_of(self.text, encoding_node);
+        if encoding_name.is_empty() {
+            encoding_name = self.kind(encoding_node, "BaseEncoding");
+        }
+        let fallback = match self.kind(Some(node), "BaseFont").as_ref() {
+            "Symbol" => "SymbolSetEncoding",
+            "ZapfDingbats" => "ZapfDingbatsEncoding",
+            _ => "StandardEncoding",
+        };
+        let encoding = predefined_encoding(if encoding_name.is_empty() {
+            fallback
+        } else {
+            &encoding_name
+        });
+        let composite =
+            self.kind(Some(node), "Subtype") == "Type0" || encoding_name.starts_with("Identity-");
+        let mut differences = HashMap::new();
+        let mut code = None;
+        for member in array_elements(self.get(encoding_node, "Differences")) {
+            if member.term == "integer" {
+                code = text_of(self.text, Some(member)).parse::<u32>().ok();
+            } else if member.term == "name"
+                && let Some(value) = code.filter(|value| *value <= 255)
+            {
+                differences.insert(value, glyph_name(&name_of(self.text, Some(member))));
+                code = Some(value + 1);
+            }
+        }
+        let mut streams = Vec::new();
+        let mut visited = HashSet::new();
+        let mut remaining_bytes = MAXIMUM_CMAP_BYTES;
+        let mut to_unicode = self.get(Some(node), "ToUnicode");
+        while let Some(map) = to_unicode {
+            if visited.len() > MAXIMUM_CMAP_DEPTH || !visited.insert(map.start) {
+                break;
+            }
+            let Some(stream) = self.stream(Some(map)) else {
+                break;
+            };
+            let bytes = stream.source.chars().take(remaining_bytes + 1).count();
+            if bytes > remaining_bytes {
+                break;
+            }
+            remaining_bytes -= bytes;
+            streams.push(stream);
+            to_unicode = self.get(field(Some(map), "dictionary"), "UseCMap");
+        }
+        let cmap = (!streams.is_empty())
+            .then(|| read_unicode_map(streams.iter().map(|stream| stream.source.as_ref())));
+        let font = Rc::new(PdfFont {
+            encoding,
+            differences,
+            composite,
+            cmap,
+        });
+        self.font_cache.insert(node.start, Rc::clone(&font));
+        Some(font)
+    }
+
+    fn visit_content(
+        &mut self,
+        node: Option<&'source GrammarNode>,
+        resources: Option<&'source GrammarNode>,
+        state: &mut TextState<'_>,
+        depth: usize,
+    ) {
+        let Some(node) = node.filter(|node| depth <= 16 && !state.active.contains(&node.start))
+        else {
+            return;
+        };
+        let Some(stream) = self.stream(Some(node)) else {
+            return;
+        };
+        let Some(tree) = parse_pdf_content_cst(&stream.source) else {
+            return;
+        };
+        // A page or form declares content even when the decoded stream has no text operators.
+        let declared = state.page.is_some()
+            || depth > 0
+            || name_of(
+                self.text,
+                self.get(field(Some(node), "dictionary"), "Subtype"),
+            ) == "Form";
+        if !declared
+            && !tree.children.iter().any(|operation| {
+                let operator = text_of(&stream.source, field(Some(operation), "operator"));
+                operation.term == "operation"
+                    && (pdf_text_operator_kind(operator) != 0
+                        || pdf_drawing_operator(operator)
+                        || operator == "TL")
+            })
+        {
+            return;
+        }
+        let tree = Rc::new(tree);
+        if !stream.filter.is_empty() && self.attached.insert(node.start) {
+            self.output
+                .streams
+                .push((Rc::clone(&stream), Rc::clone(&tree)));
+        }
+        state.active.insert(node.start);
+        let ranks = state.structure.and_then(|structure| {
+            let scope = if depth == 0 { state.page? } else { node.start };
+            structure.get(&scope)
+        });
+        let inherited_rank = state.rank;
+        let mut marks = Vec::new();
+        for operation in tree
+            .children
+            .iter()
+            .filter(|operation| operation.term == "operation")
+        {
+            let operator = text_of(&stream.source, field(Some(operation), "operator"));
+            match (pdf_marked_content_operator(operator), ranks) {
+                (kind @ (1 | 2), Some(ranks)) => {
+                    marks.push(state.rank);
+                    if kind == 2 {
+                        let properties = operation
+                            .children
+                            .iter()
+                            .filter(|child| child.field == Some("operand"))
+                            .nth(1);
+                        let id = if properties.is_some_and(|node| node.term == "dictionary") {
+                            marked_content_id(
+                                &stream.source,
+                                dictionary_value(&stream.source, properties, "MCID"),
+                            )
+                        } else {
+                            let name = name_of(&stream.source, properties);
+                            let properties = self.get(self.get(resources, "Properties"), &name);
+                            marked_content_id(self.text, self.get(properties, "MCID"))
+                        };
+                        state.rank = id.and_then(|id| ranks.get(&id).copied()).or(state.rank);
+                    }
+                }
+                (3, Some(_)) => {
+                    if let Some(previous) = marks.pop() {
+                        state.rank = previous;
+                    }
+                }
+                _ => self.operation(&stream, operation, resources, state, depth),
+            }
+        }
+        state.active.remove(&node.start);
+        state.rank = inherited_rank;
+    }
+
+    fn operation(
+        &mut self,
+        stream: &PdfStream<'_>,
+        operation: &GrammarNode,
+        resources: Option<&'source GrammarNode>,
+        state: &mut TextState<'_>,
+        depth: usize,
+    ) {
+        let source = &stream.source;
+        let operator = text_of(source, field(Some(operation), "operator"));
+        let operands = operation
+            .children
+            .iter()
+            .filter(|child| child.field == Some("operand"));
+        let first = operands.clone().next();
+        let last = operands.clone().next_back();
+        let number = |operand| numeric_operand(source, operand);
+        match pdf_text_operator_kind(operator) {
+            1 => {
+                state.graphics.font =
+                    self.font(self.get(self.get(resources, "Font"), &name_of(source, first)))
+            }
+            2 => {
+                let form = self.get(self.get(resources, "XObject"), &name_of(source, first));
+                let dictionary = field(form, "dictionary");
+                if self.kind(dictionary, "Subtype") == "Form" {
+                    let ordinate = state.ordinate;
+                    let position = state.position;
+                    let graphics = state.graphics.clone();
+                    let saved_graphics = std::mem::take(&mut state.saved_graphics);
+                    if let Some(matrix) = self.get(dictionary, "Matrix") {
+                        state.transform(transformation_matrix(array_elements(Some(matrix)).map(
+                            |value| {
+                                self.resolve(value)
+                                    .and_then(|value| numeric_operand(self.text, value))
+                            },
+                        )));
+                    }
+                    self.visit_content(
+                        form,
+                        self.get(dictionary, "Resources").or(resources),
+                        state,
+                        depth + 1,
+                    );
+                    state.ordinate = ordinate;
+                    state.position = position;
+                    state.graphics = graphics;
+                    state.saved_graphics = saved_graphics;
+                }
+            }
+            3 => self.show_text(stream, last, state),
+            4 => {
+                for item in array_elements(last) {
+                    if matches!(item.term, "integer" | "real") {
+                        let space = text_of(source, Some(item))
+                            .parse::<f64>()
+                            .is_ok_and(|value| value <= -250.0);
+                        if space
+                            && !state.separated
+                            && self
+                                .output
+                                .text_runs
+                                .last()
+                                .is_some_and(|run| !run.text.ends_with(' '))
+                        {
+                            self.show_run(stream, item, state, " ".into());
+                        }
+                    } else {
+                        self.show_text(stream, Some(item), state);
+                    }
+                }
+            }
+            5 => {
+                state.separated = true;
+                state.advance_line();
+                self.show_text(stream, last, state);
+            }
+            6 => {
+                state.separated = true;
+                if operator == "BT" {
+                    state.ordinate = None;
+                    state.position = None;
+                }
+                if operator == "T*" {
+                    state.advance_line();
+                }
+            }
+            7 => {
+                let ordinate = text_of(source, last).parse::<f64>().unwrap_or(0.0);
+                if (operator == "Tm" && Some(ordinate) != state.ordinate)
+                    || (operator != "Tm" && ordinate != 0.0)
+                {
+                    state.separated = true;
+                }
+                state.ordinate = Some(if operator == "Tm" {
+                    ordinate
+                } else {
+                    state.ordinate.unwrap_or_default() + ordinate
+                });
+                if operator == "Tm" {
+                    state.position = transformation_matrix(operands.map(number));
+                    state.orderable &= state.position.is_some();
+                } else if let Some(&[x, y]) =
+                    operands.map(number).collect::<Option<Vec<_>>>().as_deref()
+                {
+                    state.position = Some(translate_pdf_matrix(
+                        state.position.unwrap_or(IDENTITY_MATRIX),
+                        x,
+                        y,
+                    ));
+                    if operator == "TD" {
+                        state.graphics.leading = -y;
+                    }
+                } else {
+                    state.orderable = false;
+                }
+            }
+            _ if operator == "TL" => {
+                state.graphics.leading = first
+                    .filter(|_| operands.count() == 1)
+                    .and_then(number)
+                    .unwrap_or(f64::NAN);
+            }
+            _ if operator == "cm" => state.transform(transformation_matrix(operands.map(number))),
+            _ if operator == "q" => state.saved_graphics.push(state.graphics.clone()),
+            _ if operator == "Q" => {
+                if let Some(graphics) = state.saved_graphics.pop() {
+                    state.graphics = graphics;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn show_text(
+        &mut self,
+        stream: &PdfStream<'_>,
+        node: Option<&GrammarNode>,
+        state: &mut TextState<'_>,
+    ) {
+        let Some(node) = node.filter(|node| matches!(node.term, "literal_string" | "hex_string"))
+        else {
+            return;
+        };
+        let text = decode_font_text(
+            &string_bytes(text_of(&stream.source, Some(node))),
+            state.graphics.font.as_deref(),
+        );
+        if !text.is_empty() {
+            self.show_run(stream, node, state, text);
+        }
+    }
+
+    fn show_run(
+        &mut self,
+        stream: &PdfStream<'_>,
+        node: &GrammarNode,
+        state: &mut TextState<'_>,
+        text: String,
+    ) {
+        let (start, end) = if stream.filter.is_empty() {
+            (stream.data.start + node.start, stream.data.start + node.end)
+        } else {
+            (stream.data.start, stream.data.end)
+        };
+        let paint_order = self.output.text_runs.len();
+        self.output.text_runs.push(TextRun {
+            text,
+            separated: state.separated,
+            start,
+            end,
+            position: state.position_on_page(),
+            rank: state.rank,
+            paint_order,
+        });
+        state.separated = false;
+    }
+
+    fn read(mut self) -> PdfDocument<'source> {
+        let objects = self
+            .order
+            .iter()
+            .filter_map(|reference| self.objects.get(reference).copied())
+            .collect::<Vec<_>>();
+        let catalog = objects
+            .iter()
+            .copied()
+            .find(|node| self.kind(Some(node), "Type") == "Catalog");
+        let structure = self.read_structure_order(catalog);
+        if let Some(root) = self.get(catalog, "Pages") {
+            let mut frames = vec![(root, None, IDENTITY_MATRIX)];
+            let mut visited = HashSet::new();
+            while let Some((node, inherited, inherited_rotation)) = frames.pop() {
+                if !visited.insert(node.start) {
+                    continue;
+                }
+                let resources = self.get(Some(node), "Resources").or(inherited);
+                let turns = self
+                    .get(Some(node), "Rotate")
+                    .filter(|value| value.term == "integer")
+                    .and_then(|value| numeric_operand(self.text, value))
+                    .map(|degrees| (degrees / 90.0).rem_euclid(4.0));
+                let rotation = match turns {
+                    Some(0.0) => PAGE_ROTATIONS[0],
+                    Some(1.0) => PAGE_ROTATIONS[1],
+                    Some(2.0) => PAGE_ROTATIONS[2],
+                    Some(3.0) => PAGE_ROTATIONS[3],
+                    _ => inherited_rotation,
+                };
+                match self.kind(Some(node), "Type").as_ref() {
+                    "Pages" => {
+                        for kid in array_elements(self.get(Some(node), "Kids"))
+                            .rev()
+                            .filter_map(|kid| self.resolve(kid))
+                        {
+                            frames.push((kid, resources, rotation));
+                        }
+                    }
+                    "Page" => {
+                        let contents = self.get(Some(node), "Contents");
+                        let mut state = TextState::new(rotation);
+                        state.page = Some(node.start);
+                        state.structure = structure.get(&node.start);
+                        let page_start = self.output.text_runs.len();
+                        if contents.is_some_and(|node| node.term == "array") {
+                            for item in array_elements(contents) {
+                                self.visit_content(self.resolve(item), resources, &mut state, 0);
+                            }
+                        } else {
+                            self.visit_content(contents, resources, &mut state, 0);
+                        }
+                        order_page_text(
+                            &mut self.output.text_runs,
+                            page_start,
+                            state.orderable,
+                            state.structure.is_some(),
+                        );
+                    }
+                    _ => {}
+                }
+            }
+        } else {
+            for node in objects {
+                let dictionary = field(Some(node), "dictionary");
+                if node.term == "stream"
+                    && matches!(self.kind(dictionary, "Type").as_ref(), "" | "XObject")
+                    && matches!(self.kind(dictionary, "Subtype").as_ref(), "" | "Form")
+                {
+                    self.visit_content(
+                        Some(node),
+                        self.get(dictionary, "Resources"),
+                        &mut TextState::new(IDENTITY_MATRIX),
+                        0,
+                    );
+                }
+            }
+        }
+        self.output
+    }
+}

@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
+import {javascriptWorkflowSource,readIssue245SourcePair,restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 import {partitionTests,partitionGroupFiles,testFiles} from '../scripts/test-groups.mjs';
 import {generateTranslationWorkflowHistory} from '../scripts/generate-translation-workflow-history.mjs';
 import {restoreTranslationWorkflowHistory} from './support/translation-workflow-history.js';
@@ -23,7 +24,7 @@ test('six bounded translation partitions retain every previous file once and pre
     assert.equal(restoreTranslationWorkflowHistory(current),row.sourceText);
     assert.equal(restoreTranslationWorkflowHistory(current+'\n# changed\n'),current+'\n# changed\n');
   }
-  const workflow=read('.github/workflows/js.yml');
+  const workflow=restoreIssue245SourceSuccessor(javascriptWorkflowSource,read(javascriptWorkflowSource));
   const tests=parseWorkflow(workflow).find(job=>job.id==='tests');
   assert.match(tests.header,/timeout-minutes: 15/u);assert.match(tests.header,/fail-fast: false/u);
   const entries=[...tests.header.matchAll(/\{group: translation, partition: ([0-9]+), shards: ([0-9]+)\}/gu)]
@@ -41,24 +42,47 @@ test('six bounded translation partitions retain every previous file once and pre
   for(const file of partitionTests(originalFiles).groups.translation)assert.ok(files.includes(file),file);
 });
 
-test('six feedback partitions merge exact scope and bytes while missing foreign and tampered cohorts refuse',(t)=>{
-  const root=realpathSync(mkdtempSync(join(tmpdir(),'meta-language-six-feedback-')));
+test('nine translation jobs retain complete historical cohorts and merge their exact artifact set',()=>{
+  const workflow=read(javascriptWorkflowSource);
+  const versions=readIssue245SourcePair(javascriptWorkflowSource).versions;
+  const [previous,scheduled]=versions;
+  const current=versions.at(-1);
+  assert.equal(workflow,current);
+  const [six,nine]=[6,9].map(count=>Array.from({length:count},(_,index)=>
+    '          - {group: translation, partition: '+(index+1)+', shards: '+count+'}\n').join(''));
+  assert.equal(previous.split(six).length,2);
+  assert.equal(scheduled,previous.replace(six,nine)
+    .replace('*-of-6\n','*-of-9\n').replace('--partitions 6 ','--partitions 9 '));
+  const tests=parseWorkflow(workflow).find(job=>job.id==='tests');
+  assert.match(tests.header,/timeout-minutes: 15/u);
+  assert.match(tests.header,/fail-fast: false/u);
+  const files=partitionTests(testFiles()).groups.translation;
+  const assigned=Array.from({length:9},(_,index)=>partitionGroupFiles(files,(index+1)+'/9'));
+  assert.ok(assigned.every(shard=>shard.length>0));
+  for(let cohort=0;cohort<3;cohort++){
+    const original=partitionGroupFiles(files,(cohort+1)+'/3');
+    assert.deepEqual([assigned[cohort],assigned[cohort+3],assigned[cohort+6]].flat().sort(),original.sort());
+  }
+});
+
+for (const partitions of [6,9]) test(partitions+' feedback partitions merge exact scope and reject missing, foreign and tampered inputs',(t)=>{
+  const root=realpathSync(mkdtempSync(join(tmpdir(),'meta-language-translation-feedback-')));
   t.after(()=>rmSync(root,{recursive:true}));
   mkdirSync(join(root,'js/tests'),{recursive:true});
-  for(let index=0;index<6;index++)writeFileSync(join(root,'js/tests/translation-'+index+'.test.js'),'');
+  for(let index=0;index<partitions;index++)writeFileSync(join(root,'js/tests/translation-'+index+'.test.js'),'');
   const payload='issue-195-artifacts/compiler-feedback/source.lino';
   mkdirSync(join(root,'issue-195-artifacts/compiler-feedback'),{recursive:true});
   writeFileSync(join(root,payload),'(retained compiler bytes)\n');
   const commit='a'.repeat(40),inputDirectory=join(root,'parts'),directories=[];
-  const capture=index=>captureTranslationTestFeedbackPartition({root,commit,partitions:6,
-    shard:(index+1)+'/6',outputDirectory:join(inputDirectory,'translation-test-feedback-'+commit+'-'+(index+1)+'-of-6')});
-  for(let index=0;index<6;index++){
+  const capture=index=>captureTranslationTestFeedbackPartition({root,commit,partitions,
+    shard:(index+1)+'/'+partitions,outputDirectory:join(inputDirectory,'translation-test-feedback-'+commit+'-'+(index+1)+'-of-'+partitions)});
+  for(let index=0;index<partitions;index++){
     const receipt=capture(index);assert.equal(receipt.files.length,1);
-    directories.push(join(inputDirectory,'translation-test-feedback-'+commit+'-'+(index+1)+'-of-6'));
+    directories.push(join(inputDirectory,'translation-test-feedback-'+commit+'-'+(index+1)+'-of-'+partitions));
   }
-  const arguments_={root,commit,inputDirectory,partitions:6,outputDirectory:join(root,'merged')};
+  const arguments_={root,commit,inputDirectory,partitions,outputDirectory:join(root,'merged')};
   const merged=mergeTranslationTestFeedbackPartitions(arguments_);
-  assert.equal(merged.partitions,6);assert.deepEqual(merged.files,[payload]);
+  assert.equal(merged.partitions,partitions);assert.deepEqual(merged.files,[payload]);
   assert.equal(readFileSync(join(root,'merged',payload),'utf8'),'(retained compiler bytes)\n');
   const rejected={...arguments_,outputDirectory:join(root,'rejected')};
   assert.throws(()=>mergeTranslationTestFeedbackPartitions({...rejected,partitions:3}),/exactly once/u);

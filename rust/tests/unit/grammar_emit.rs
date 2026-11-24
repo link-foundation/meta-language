@@ -309,6 +309,46 @@ fn emits_gbnf_golden_with_root_mapping_native_operators_and_lossy_report() {
 }
 
 #[test]
+fn gbnf_delimits_byte_escapes_before_adjacent_hexadecimal_digits() {
+    let expr = Grammar::expr();
+    let grammar = Grammar::builder()
+        .rule(
+            "entry",
+            expr.seq([
+                expr.term("\u{0001}A\\x1F"),
+                expr.char_class(
+                    true,
+                    [
+                        CharClassItem::range('\u{0000}', '\u{001f}'),
+                        CharClassItem::char('a'),
+                        CharClassItem::char('b'),
+                    ],
+                ),
+                expr.char_class(
+                    false,
+                    [
+                        CharClassItem::char('^'),
+                        CharClassItem::range('A', 'F'),
+                        CharClassItem::char('0'),
+                    ],
+                ),
+                expr.char_class(
+                    false,
+                    [CharClassItem::char('\u{007f}'), CharClassItem::char('g')],
+                ),
+            ]),
+        )
+        .build();
+    let (text, _) = emit_gbnf(&grammar).expect("GBNF emits");
+    assert_eq!(
+        text,
+        "root ::= \"\\u0001A\\\\x1F\" [^\\x00-\\u001Fab] [\\u005EA-F0] [\\x7Fg]\n"
+    );
+    let reparsed = import_gbnf(&text).expect("emitted GBNF imports");
+    assert!(reparsed.undefined_nonterminals().is_empty());
+}
+
+#[test]
 fn emits_gbnf_json_object_fixture_for_llm_constraints() {
     let expr = Grammar::expr();
     let comma_member = expr.seq([expr.term(","), expr.nt("ws"), expr.nt("member")]);

@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readCollectionSizeProjectionSchemaPacket,deriveCollectionSizeProjectionValidationSource} from './collection-size-projection-schema.mjs';
 import {restoreRawConsumingSnapshotSource} from './raw-consuming-snapshot-source-profile.mjs';
 import {truthyProjectionHostPins,restoreTruthyProjectionHistoricalSource} from './truthy-projection-schema.mjs';
+import {restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 const validator='js/src/typed-program-links-validation.js',checker='js/src/translation/check.js';
 const changes=[
   {
@@ -46,6 +47,7 @@ export function restoreReferenceIdentityHistoricalSource(source,file,scope){
     assert.equal(pin(source).sha256,"f87fa8dcb3362165869d8f4678fd014f13c057eee92243d1489297613c66972d");
   }
  if(file===validator&&['collection size projection','program string registration'].includes(scope)){
+  source=restoreIssue245SourceSuccessor(file,source);
   const owner=originalOwner(file),previous=deriveCollectionSizeProjectionValidationSource(owner.source);
   assert.deepEqual(pin(previous),owner.current);
   return source===deriveWithOwner(owner,previous)?previous:source;

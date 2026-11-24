@@ -1,0 +1,8 @@
+(htmlBlock address article aside blockquote caption dd details dialog div dl dt fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 header hgroup hr li main menu nav ol p pre section summary table tbody tfoot thead tr ul)
+(hiddenHtml head script style template)
+(htmlTag start_tag self_closing_tag end_tag erroneous_end_tag)
+(hiddenHtmlSyntax script_element style_element comment doctype document_type_declaration)
+(markdownTextContainer inline pipe_table_cell code_fence_content indented_code_block html_block)
+(markdownLink inline_link full_reference_link collapsed_reference_link shortcut_link image)
+(markdownHiddenSyntax emphasis_delimiter strikethrough_delimiter block_continuation html_tag)
+(numericReferenceReplacement 8364 129 8218 402 8222 8230 8224 8225 710 8240 352 8249 338 141 381 143 144 8216 8217 8220 8221 8226 8211 8212 732 8482 353 8250 339 157 382 376)

@@ -5,11 +5,12 @@ import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {replayRequiredFieldNativeHostIntervals} from './required-field-native-host-succession.mjs';
+import {restoreIssue245SourceSuccessor,typedProgramCheckerSource} from '../../experiments/issue-245/source-history.mjs';
 const root=new URL('../../',import.meta.url);
 export const CURRENT_NATIVE_HOST_REVISION='8d77e476d097448eb381ebe03e2aa173402bc03d';
 export const CURRENT_NATIVE_HOST_OUTPUT='parity/self-translation/ci-39539903548-native-host-source-history.lino';
 export const CURRENT_NATIVE_HOST_FILES=Object.freeze(['rust/src/self_translation.rs','rust/src/translation/mod.rs','rust/tests/unit/mod.rs','rust/src/translation/javascript/expressions/values.rs']);
-const packetSha256='c6b6f5db65721cdef6138af14c66a7895bc99fe3165f6248fd3047e7134d8a06';
+const packetSha256='f1641bc71cefc46856827b2721401cee55388416c66548b13ded565b0b47f118';
 let cached;
 export const pinCurrentNativeHostSource=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const exactKeys=(value,keys)=>{assert.ok(value&&typeof value==='object'&&!Array.isArray(value));assert.deepEqual(Object.keys(value).sort(),[...keys].sort());};
@@ -57,6 +58,7 @@ export function readCurrentNativeHostSourceHistory(){
  * No unknown source is assigned a historical identity; runtime files stay current. */
 export function restoreCurrentNativeHostSource(source,file){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');
+  if(file===typedProgramCheckerSource)return restoreIssue245SourceSuccessor(file,source);
   if(!CURRENT_NATIVE_HOST_FILES.includes(file))return source;
   const row=readCurrentNativeHostSourceHistory().sources.find(row=>row.file===file);
   return source===row.current.source?row.previous.source:source;

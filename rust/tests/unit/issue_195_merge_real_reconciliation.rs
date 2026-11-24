@@ -271,8 +271,8 @@ fn the_name_tier_compares_rule_names_without_a_leading_name_of_their_language() 
     )
     .expect("the native grammar imports");
     // grammars-v4's HTML grammar names its rules `htmlDocument`, `htmlElement`
-    // and `htmlAttribute`; they decompose the constructs differently, so only
-    // their names correspond.
+    // and `htmlAttribute`; these constructs match by name. The shared Pest
+    // character-class production has a separate structural proof.
     let prefixed = |prefix: &str| {
         import_pest(&format!(
             "{prefix}Document = {{ {prefix}Element+ ~ EOI }}\n\
@@ -291,17 +291,26 @@ fn the_name_tier_compares_rule_names_without_a_leading_name_of_their_language() 
             true,
         )
     };
-    let html = merged("html");
-    let shared: Vec<(String, Vec<String>, String)> = shared_rule_decisions(&html.groups[0])
-        .into_iter()
-        .map(|decision| {
-            (
-                decision.name.clone(),
-                decision.members.clone(),
-                decision.basis.clone(),
-            )
-        })
-        .collect();
+    let shared = |prefix| {
+        shared_rule_decisions(&merged(prefix).groups[0])
+            .into_iter()
+            .map(|decision| {
+                (
+                    decision.name.clone(),
+                    decision.members.clone(),
+                    decision.basis.clone(),
+                )
+            })
+            .collect::<Vec<_>>()
+    };
+    let ascii = (
+        "ASCII_ALPHA".to_owned(),
+        vec![
+            "native:ASCII_ALPHA".to_owned(),
+            "grammars-v4:ASCII_ALPHA".to_owned(),
+        ],
+        "recursive-structural-bisimulation".to_owned(),
+    );
     let expected: Vec<(String, Vec<String>, String)> = ["document", "element", "attribute"]
         .into_iter()
         .map(|name| {
@@ -315,13 +324,11 @@ fn the_name_tier_compares_rule_names_without_a_leading_name_of_their_language() 
                 "name-correspondence".to_owned(),
             )
         })
+        .chain([ascii.clone()])
         .collect();
-    assert_eq!(shared, expected);
-    // Another prefix is part of the name, so nothing corresponds.
-    assert_eq!(
-        shared_rule_decisions(&merged("xml").groups[0]),
-        [] as [&meta_language::GrammarMergeDecision; 0]
-    );
+    assert_eq!(shared("html"), expected);
+    // A different prefix leaves just the shared character-class production.
+    assert_eq!(shared("xml"), [ascii]);
     observe(
         &["sharedRulesNonZero"],
         "the name tier strips a leading language name",

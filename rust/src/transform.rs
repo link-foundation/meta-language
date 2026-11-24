@@ -597,7 +597,7 @@ fn capture_literal_arguments(predicate: &QueryPredicate) -> Option<(&str, &str)>
     ))
 }
 
-fn captured_text(network: &LinkNetwork, link_id: Option<LinkId>) -> Option<String> {
+pub(crate) fn captured_text(network: &LinkNetwork, link_id: Option<LinkId>) -> Option<String> {
     let link_id = link_id?;
     let token_ids = source_token_ids(network, link_id);
     if token_ids.is_empty() {

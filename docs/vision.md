@@ -82,6 +82,18 @@ Both runtime packages, the Rust crate `meta-language` and the npm package
 this, and the runtime-parity rows of the ledger check it again on shared
 fixtures.
 
+The default natural-language grammar produces sentence links whose UTF-8 spans
+cover the original text, including sentence-final spacing. Its shared Links
+rules keep periods inside decimal numbers, initials and context-dependent
+abbreviations. For example, lowercase continuation can keep `руб.` within a
+Russian sentence, while `т. д.` can end a sentence before an uppercase start.
+Both runtimes execute the same generated rules and retain all source tokens.
+
+Language identification reads shared Links data for scripts, alphabets and
+trigram models. The public ranked result carries a document-level estimate and
+separate script spans in UTF-8 bytes. A low score or a close match leaves the
+language unknown, with any candidates still available to callers.
+
 ### Global concept space
 
 All grammars of all languages inhabit **one global concept space**. It includes
@@ -1559,7 +1571,79 @@ the same global space as programming languages, and reuse requires the same
 checked meaning correspondence. Tests distinguish native representation and
 source preservation from any richer linguistic capability they verify.
 
+Each segmented word has a set of scored morphology readings with the source
+token, lemma, Universal Dependencies part of speech, and feature assignments.
+The readings retain the token's original UTF-8 span. An empty feature bundle
+uses the CoNLL-U `_` marker. Shared Links data records the language-specific
+tag mapping, lexical forms, suffix predictions, and agreement exceptions.
+Inflection selects an attested form that satisfies the requested features.
+Cardinal agreement applies the language's number and case rules before
+inflection. The Russian profile loads a compact OpenCorpora selection on first
+use. A caller can explicitly install the complete pinned OpenCorpora snapshot
+with `npm run morphology:provision -- DIRECTORY` from `js/` and set
+`META_LANGUAGE_MORPHOLOGY_DATA=DIRECTORY` in either runtime. That snapshot adds
+the complete dictionary, corpus-derived ambiguity scores, and suffix
+prediction. The English profile looks up attested forms and lemmas in a
+bundled Links dictionary derived from AGID 2016.01.19 and the WordNet 3.1
+adjective and adverb indexes. Both runtimes expand it on first dictionary
+lookup and use the same ordered indexes for readings and inverse inflection.
+The dictionary retains competing readings from the source and leaves uncertain
+source entries to the shared lexical and suffix rules. [AGID format and license](https://wordlist.aspell.net/agid-readme/) · [WordNet 3.1](https://wordnet.princeton.edu/)
+Profiles for the remaining catalog languages apply their shared
+lexical and suffix data and return an unspecified part of speech when the
+available evidence cannot identify one.
+
+Value annotations use grammar search over the source and keep each successful
+interpretation as a semantic link at its original UTF-8 extent. The shared
+Links grammars recognize the shape of numeric expressions, currencies,
+durations and dates. Locale vocabularies provide number words, units and month
+names. A value action reads the captured fields, normalizes exact decimals and
+ISO 4217 codes, and validates calendar dates. Both runtimes derive numeric and
+calendar fields from one pinned Unicode 17.0 decimal digit table. The shared
+grammar recognizes Arabic decimal and grouping separators, and value actions
+normalize digit spellings after search preserves their original source spans.
+One comma or period between a nonzero one- to three-digit group and exactly
+three following digits allows both a grouping and a decimal reading. The locale's
+preferred reading stays first. Additional grouping, an Arabic decimal separator,
+or two different marks can determine a single reading. Amounts, ranges and
+durations preserve distinct readings from the captured numbers.
+Shared Links data records CLDR 49 root currency spellings with a Unicode
+17.0 currency symbol and their active ISO 4217 codes. The rules also keep
+established sign aliases. A money match emits one link per compatible code,
+including the full spelling of a qualified sign. When the input has several
+currency markers, the value action keeps the codes supported by every marker.
+The established code for a sign remains first when several interpretations
+are possible. [Pinned CLDR currency data](https://github.com/unicode-org/cldr/blob/96e54b273d2da4ec6fbad350ba19ff23fa24a588/common/main/root.xml)
+
+A named month can occur after the day in English and Russian or before the day
+in English. These full dates use the same calendar validation as digit-only
+dates and can be endpoints of bounded or open date ranges.
+A spelling such as `5-7` can carry both a numeric range and a date. An
+unqualified scale word implies one unit of that scale. An explicit count in
+digits or words multiplies the scale, including zero. A scale after the last
+digit amount in a range also applies to the first digit amount when that amount
+has no scale of its own.
+
 ## Grammar feature union
+
+A compiled grammar can scan a text with a selected rule. Grammar search
+keeps the original text and tree coordinates, captures each occurrence of a named
+concrete rule, and selects either the longest admitted result or the first
+admitted result at each start. Callers can allow overlapping matches and require
+Unicode word boundaries. Both runtimes use the same Unicode 17.0 general
+categories for letters, marks, numbers and connector punctuation to identify
+the inside of a word. Search positions use UTF-16 code units in JavaScript
+and UTF-8 bytes in Rust. Concrete tree coordinates use UTF-8 bytes in both
+runtimes. The `#grammar-match?` predicate composes with source text predicates
+over a captured link. Whole-input parsing continues to use the full source range.
+
+Pest imports resolve built-in character rules from shared Links data generated
+from the pinned Pest Unicode tables. Input-boundary rules evaluate at the
+absolute source positions, including during a grammar search. When Pest source
+defines `WHITESPACE` or `COMMENT`, the importer lowers the applicable sequence
+and repetition boundaries to explicit trivia matches. Atomic calls select rule
+variants that suppress implicit trivia, and non-atomic rules restore it.
+Unsupported Pest stack operations report their construct at import time.
 
 Grammar attributes preserve ordinary JavaScript own-key order: canonical
 array-index names come first numerically, other names retain insertion order,
@@ -1741,6 +1825,46 @@ region. Abstract syntax is an explicitly selected projection or mode with
 provenance to the complete concrete tree; omitting that selection always keeps
 the full concrete representation.
 
+Visible text is a separate projection of document syntax. HTML, Markdown and
+WordprocessingML use shared projection rules for hidden syntax, block breaks,
+list markers and character references. PDF uses show-text operators and font
+maps in page-tree order. A ToUnicode map can inherit glyph mappings and code
+spaces from embedded `UseCMap` streams, with nearer mappings taking precedence.
+The chain uses a shared size and mapping budget and stops at a repeated or
+unreadable stream. Each code-space range compares corresponding bytes and
+the smallest matching width determines glyph boundaries. See
+[PDF 2.0 §9.10.3 and its errata](https://pdf-issues.pdfa.org/32000-2-2020/clause09.html#9103-tounicode-cmaps)
+and [Adobe CMap and CIDFont Files Specification §5.2](https://adobe-type-tools.github.io/font-tech-notes/pdfs/5014.CIDFont_Spec.pdf).
+Fully positioned horizontal lines on a page are ordered by descending baseline
+and then ascending horizontal position after
+applying page rotation, graphics transformations, and nested form matrices.
+Graphics state carries across page content streams and is scoped to each form.
+Lines without a common page coordinate system keep their content order. Within
+each page, tagged text follows the structure tree. Marked-content identifiers
+are scoped to the page content or the referenced form stream. Untagged text
+keeps its position among the geometrically ordered runs. Projected
+coordinates use the runtime's string indices (JavaScript UTF-16 and Rust
+UTF-8). Source ranges index the original bytes of byte input or the UTF-8
+encoding of string input. Each projected
+interval maps to the bytes that produced it, including character references,
+collapsed whitespace and inserted separators. A selection can resolve to a
+covering range even when page or part order differs from physical byte order.
+
+Decoded PDF page content and WordprocessingML package parts are independent
+lossless networks stored on derived document links. Each link records its
+original byte range, container input encoding and compression. Decoded
+coordinates belong to the child network. Uncompressed selections can resolve
+to individual physical spans. Compressed selections resolve to the covering
+encoded stream or ZIP entry. Optional PDF decoding applies bounded Flate,
+ASCIIHex, ASCII85 and LZW filters in the declared order and keeps the original
+content bytes. Declared page and form streams keep decoded trees even when
+empty or containing only comments or inline images. LZW respects each filter's
+code-width setting. Invalid streams and package entries carry diagnostics with
+a physical source span.
+WordprocessingML package relationships
+select the main part and its internal headers, footers, and notes. A package
+without relationship metadata can use conventional part names.
+
 An inspectable linked `any-grammar` or `all-grammar` selection rule invokes
 supported grammar definitions recursively through the same algorithms and
 global concept space. Embedding is defined by grammar data and explicit
@@ -1841,6 +1965,14 @@ sources with pinned revisions, licenses, provenance and independent test corpora
 Every catalog language parses by default, through its alias and extension
 dispatch and its embedded-language paths. Merely listing a language, keeping its
 text or requiring caller registration is not default support.
+
+The standalone parser availability query reports every canonical catalog name
+in order, with missing grammar asset paths for its default parser. JavaScript
+checks the installed files and authenticated download cache locations without
+loading a grammar. It checks both Markdown components. The parser verifies
+asset digests on load. Rust compiles its default parsers into the runtime and
+has no missing asset paths. A host document may separately need parsers for
+languages in its actual embedded regions.
 
 Complete JavaScript, Markdown, Rust and TypeScript grammars are the initial
 delivery priority, followed by the other languages used by these projects.
@@ -2216,6 +2348,56 @@ catalog starts with:
 - lexer specifications.
 
 This list is a minimum and is reconciled with the other widely used formats.
+
+Lark regex terminals lower to native expressions for literals, scalar classes,
+Unicode digit, word and whitespace shorthands, and greedy repetition. The
+runtime treats a regular-expression terminal as one lexical match even when
+the imported expression has multiple atoms. The portable subset supports
+ASCII case-insensitive patterns with Python's additional Unicode equivalents,
+and dot-all matching. Patterns outside the subset report the UTF-8 byte
+position of the unsupported syntax during import.
+
+The strict JSON document grammar retains the full source as Links, including
+trivia and syntax recovery. JSON Schema validation refers to those links
+through their JSON Pointers, byte spans and expected values. The grammar
+importer lowers schema constraints to the shared grammar expressions.
+Constraints that require separate validation have their own schema pointers
+and diagnostics. Reverse emission can recover the source schema of an
+unchanged import or infer constants from finite JSON productions.
+
+JSON recovery applies caller-enabled edits anchored to recovery links.
+Every edit retains the original span, old spelling and replacement. The
+original and edited documents have separate networks. Closing input at its
+end preserves the truncated state, and schema validation reports required
+fields still missing after recovery.
+
+Quote location builds a Unicode projection of the source and fragment and
+retains original offsets across character expansion, whitespace collapse and
+soft-hyphen removal. An exact occurrence reports the transformations it used.
+The `case` transformation uses the Unicode 17.0 default full case folding
+table. Folded characters retain their original spans, and exact matches span
+whole expansions. Both packages carry the same generated case folding table
+and include the Unicode data license under `src/data/natural-language-values/`.
+Both runtimes use Unicode 17.0 default extended grapheme cluster boundaries
+for compatibility normalization and grapheme edit units. The JavaScript
+property tables and the shared boundary fixtures are generated from the pinned
+Unicode data by `js/scripts/build-text-location-graphemes.mjs`. The `nfkc`
+transformation uses Unicode 17.0 compatibility decomposition, canonical
+ordering and composition across the full input. When composition or reordering
+crosses grapheme boundaries, the affected projection retains a single ordered
+original range. JavaScript generates its normalization tables and the shared
+conformance cases through `js/scripts/build-text-location-normalization.mjs`.
+[Unicode text segmentation](https://www.unicode.org/reports/tr29/tr29-47.html#Grapheme_Cluster_Boundaries) · [Unicode normalization](https://www.unicode.org/reports/tr15/tr15-57.html)
+
+A positive edit budget compares graphemes or word segments and returns the
+lowest-distance nonempty match at each start, preferring the shorter match on
+ties. Word n-gram overlap returns every pair of source ranges for each shared
+projected word sequence. The word and dash classifications use the same
+generated Unicode 17.0 character category ranges in both runtimes. A word is
+a consecutive sequence of letters, marks, numbers or underscores. Dash
+normalization maps dash punctuation and the minus sign to the ASCII hyphen.
+JavaScript exposes UTF-16 offsets and Rust exposes UTF-8 offsets for these
+operations. [Unicode 17.0 character data](https://www.unicode.org/Public/17.0.0/ucd/UnicodeData.txt)
 
 The JavaScript Yacc/Lex draft lowers declared token rules, left and right
 precedence, `%prec`, lexical modes, trivia and supported arithmetic or textual
@@ -2884,6 +3066,33 @@ architecture.
 
 ## JavaScript first and self-translation
 
+[Issue #248](https://github.com/link-foundation/meta-language/issues/248) pauses
+required automated translation until the maintainer resumes it. During the
+pause, contributors may hand-port JavaScript-first batches between the supported
+languages. A manual port follows the same observable behavior contract and uses
+shared fixtures, native tests and the language feature inventory. Keep the
+automated translator, its checks, and its complete acceptance scope available.
+Skipped execution produces no translation evidence. Normal CI continues scoped
+JavaScript and Rust checks, grammar generation, candidate packaging and
+downstream validation. The complete acceptance path remains available on opt-in.
+
+[The CI scope decision in PR #246](https://github.com/link-foundation/meta-language/pull/246#issuecomment-7127833773)
+also pauses Windows and macOS execution. Ordinary CI schedules Linux native
+tests and clean package consumers. The native matrix reads the same Links shard
+policy for each platform. Keep platform-specific test commands, setup, fixtures
+and required evidence available.
+
+Use the CI dispatch inputs `automated_translation` and
+`cross_platform_checks`, or set the repository variables
+`META_LANGUAGE_AUTOMATED_TRANSLATION` and
+`META_LANGUAGE_CROSS_PLATFORM_CHECKS` to `true`. Enable both for the
+complete acceptance workflow and every supported consumer platform. Linux
+tests and installed package consumers can still establish their individual
+assertions when the switches are off. Published document consumer observations
+require both installed artifacts to match the registry bytes for the tagged
+source. The aggregate reports active job failures. A paused workflow supplies
+evidence only for the checks it executes.
+
 The review of [Router PR #761](https://github.com/link-assistant/router/pull/761)
 at revision `e2ceac6071d90514fb1a37b3fe5964433d61c402` records its source
 hashes and applicability decisions in
@@ -3020,11 +3229,12 @@ predecessor sources and independent body and source inverses accompany the
 correspondence. This changes the internal library ABI, keeps the checked source
 algorithm intact and disables no lint. Native validation remains CI work.
 
-The port is done by meta-language itself. A self-translation tool, a library
+The long-term porting workflow uses meta-language itself. A self-translation tool, a library
 API and a CLI command in both packages, reads JavaScript or TypeScript into
 meta-language links and writes Rust, and reads Rust and writes JavaScript or
-TypeScript. Code it cannot translate yet is a gap in the translator, not
-something to write by hand. Meta-language's own source is its main acceptance
+TypeScript. Code it cannot translate yet remains a gap in the translator,
+including when a manual port implements equivalent behavior during the pause.
+Meta-language's own source is its main acceptance
 corpus:
 
 - JavaScript → links → JavaScript and Rust → links → Rust are byte-identical;
@@ -3498,7 +3708,11 @@ and receipt with those inputs. Compile-time references keep the copied fields
 and operations checked without relaxing native lints or exposing private
 production interfaces. This source extraction preserves the original algorithm
 and assertions; it does not establish semantic self-translation or native test
-execution before CI runs.
+execution before CI runs. A mutation test that needs the actual private
+production values may be declared in the owning module with `#[cfg(test)]`
+and a relative `#[path]` to its file under `rust/tests/`. The source check
+requires the resolved file to live under `rust/tests/` and rejects test bodies
+under `rust/src/`.
 
 Expression-dispatch frame extraction records byte-exact original match arms
 and parent reconstruction in
@@ -3648,12 +3862,31 @@ remain authenticated against their certified predecessor. Unknown profiles,
 missing or duplicate registrations and native admission in a JavaScript-only
 profile refuse. This follows CI 39489000471, which completed all three source
 archives and constructed its observation plan before the unchanged deadline.
+CI 45104457483 spent nearly two minutes fetching and checking out the whole
+repository before the raw plan job. The first repair used a blobless checkout
+with full commit history and materialized the entire current tree.
+CI 45296878458 spent two minutes and nine seconds in
+checkout before the complete plan reached the ten-minute limit. The raw plan
+checkout materializes the current inputs with sparse checkout. It omits
+historical development logs and the canonical naming authoring registry checked
+by the tooling job. Its dependency and provenance archives remain present.
+Full commit and tree history, the fresh merge check, exact source checks, all
+seven plan contracts and the ten-minute deadline still apply.
+Each raw execution boundary rereads both emission archives, the raw source and
+all producer inputs. An execution can reuse a successful emission profile proof
+only when every input buffer exactly matches the verified bytes. The transport,
+process, observation and profile-specific checks still run on every execution.
 Successful timing and full native execution still require corrected-commit CI.
 The complete tooling test group likewise has four required physical cells after
-its measured fifteen-minute cancellation. The existing modulo file partitioner
-assigns every current test file exactly once; all commands, assertions, flags,
-deadlines and aggregate prerequisites remain intact. Historical workflow checks
-recover their exact original inputs through a separate checked matrix inverse.
+its measured fifteen-minute cancellation. The schedule assigns every current
+test file exactly once and preserves commands, assertions, flags, deadlines and
+aggregate prerequisites. Historical workflow checks recover their exact
+original inputs through a separate checked matrix inverse.
+Tooling assignments use measured durations for identical source bytes. When a
+previously measured tooling file changes, its size estimate uses the larger of
+its previous milliseconds per byte and the catalog-wide median rate. This
+keeps expensive files represented after small source edits. Newly added files
+use the catalog-wide rate. Estimates only choose owners.
 An exact native checked-program mismatch keeps its original rejection and adds
 a bounded first differing field path. Declaration-list archive failures retain
 their actual original input in the failure message. Neither diagnostic accepts,
@@ -3801,8 +4034,27 @@ authenticated for historical controls, and independent controls inspect the
 actual current six-way matrix, feedback cohort and native artifact uploads.
 
 A separate JavaScript test group checks these published reports after all
-report shards finish. It uses the producers' exact checkout and source hashes,
-reuses their measurements, and must pass before Rust or delivery stages start.
+sixteen report shards finish. The producer assigns each complete module to one
+shard by measured workload. The [CI workload sample](../parity/fixtures/ci-45104457483-report-workload-costs.lino)
+binds recorded module durations to their source bytes. It divides time shared by
+import resolution and measurement equally between the two concurrent modules.
+The [subsequent CI workload sample](../parity/fixtures/ci-45215384144-report-workload-costs.lino)
+records 381 completed modules and one unfinished module. Replaying its completed
+durations with the updated schedule assigns the two longest modules from the
+timed-out shard to different shards.
+An unfinished module uses the preceding sample for matching source bytes or a
+size estimate. The sixteen shards retain their thirty-minute job deadlines.
+The [complete CI workload sample](../parity/fixtures/ci-45296878458-report-workload-costs.lino)
+covers all 382 modules from the exact merge checkout. Replaying those durations
+reduces the longest estimated shard from 27.36 minutes to 18.33 minutes while
+keeping every module in one shard.
+The pull-request report producers check out the exact merge commit with all
+JavaScript and Rust sources, report tools, grammars, decorators and workload
+samples. Sparse checkout omits development logs and historical archives from
+these producers. Run 45336634236 spent 84 seconds fetching a full checkout
+before shard 16 reached its deadline during the final three modules.
+The verifier uses the producers' exact checkout and source hashes, reuses their
+measurements, and must pass before Rust or delivery stages start.
 Standalone JavaScript workflow runs produce and check their own report shards.
 
 Real target-tool interchange reports identify the emitted target format, its
@@ -4284,10 +4536,13 @@ capabilities.
 
 Release publication verifies the release tag, checked-out commit, package
 versions and lockfiles before either registry write. A registry preflight fails
-closed when existing publication state cannot be established. The release then
-checks that npm and crates.io expose the same intended version and verifies its
-self-translation API through installed consumers. Trusted-publisher settings
-and the release-tag workflow are documented alongside the publishing machinery.
+closed when existing publication state cannot be established. Before npm
+publication, it verifies the published crate against the crates.io checksum
+and checks that the Cargo provenance identifies the clean tagged commit.
+The npm version metadata identifies the same commit after publication or
+when the version already exists. The release verifies the self-translation
+API through installed consumers. Trusted-publisher settings and the
+release-tag workflow are documented alongside the publishing machinery.
 
 ## Documentation consistency
 
@@ -4487,3 +4742,255 @@ assertion remain intact; snapshots are not shared across unrelated builds.
 Provenance-only refresh updates selected native provider digests while refusing
 changed source identities, provider versions or independent oracle receipts.
 It retains all expected trees; CI still recomputes the complete fixture checks.
+
+### JSON Schema and document recovery
+
+The JSON document grammar preserves tokens, trivia, and recovery links in
+original UTF-8 coordinates. Validation resolves local draft 2020-12 schemas
+against the same concrete syntax, including intact members of incomplete
+documents. Instance errors carry a JSON Pointer, source span, expected values
+or tokens, and a link that can be inspected in the returned network.
+Numeric validation reads the original number tokens. It compares normalized
+decimal positions and significant digits for integer types and numeric bounds,
+and uses the same comparison for numeric members of constants and enumerations.
+This preserves assertions near rounding and underflow boundaries even when the
+returned host value uses a floating-point number.
+The decoder uses that normalization for numeric constants and enumerations,
+including numeric members of collections. A zero constant accepts every
+valid all-zero mantissa with either sign and any valid exponent. Each nonzero
+constant supports its unscaled decimal form and forms with a decimal point
+inside the significant digits or up to one extra zero on either side.
+Each form fixes the compensating exponent, with optional leading zeros and
+either case of the exponent marker. The importer reports the remaining
+spellings for validation based on the original tokens.
+
+The schema importer builds the shared grammar representation for existing
+emitters. It defines a `start` production for Lark consumers, and retains only
+the productions reachable from that entry point. GBNF emitters map it to
+`root` and qualify identifiers reserved by XGrammar. GBNF uses a fixed-width
+Unicode escape before adjacent hexadecimal digits so readers with variable-width
+byte escapes preserve the same characters. Lark emits supplementary
+Unicode scalars directly. Calendar productions use matching scalar boundaries
+across overlapping alternatives so a contextual decoder can follow either
+path. Date, date-time, UUID and email productions share the same decoder
+grammar asset across runtimes and accept both direct and escaped spellings
+of their permitted characters. A bounded automaton intersection combines these
+format productions with supported regular patterns over JSON source characters.
+The resulting productions enforce both constraints across raw and escaped
+spellings. An empty intersection has no generatable string. The importer retains
+a pattern diagnostic if a conjunction exceeds the construction bound.
+Object rules can interleave declared fields
+and additional fields.
+The additional-field rule excludes every decoded spelling of each declared
+key. Bounded numeric rules generate signed integer or decimal spellings and
+apply inclusive and exclusive limits. The grammar represents exclusive
+alternatives as a choice when each pair has disjoint JSON instance types or
+shares a required property whose allowed string values are disjoint. Each
+pair of object alternatives can use a different property to distinguish its
+members. For alternatives made of bounded or unbounded integer intervals, the
+decoder generates each integer spelling covered by exactly one interval. Pattern rules
+compile character classes, alternation, top-level anchors, and bounded or
+unbounded repetitions from the catalog regex syntax tree. They match decoded
+Unicode scalars and admit their raw and escaped JSON spellings, including
+surrogate pairs. The importer can collect finite candidates through local
+references and nested alternatives. It validates each candidate against the
+whole schema, including sibling assertions and exclusive branch counts,
+before emitting its production. The search has a work and depth bound and
+uses the regular importer path for a recursive or unbounded domain. A sibling
+type assertion filters the possible types of a referenced schema or alternative
+at the current position, including the integer subset of numbers. References
+can share productions with the same type restriction. Member and item schemas
+determine the types of their own values. Grammar
+diagnostics identify assertions that require validation, including exponent
+spellings, other overlapping alternatives, unsupported patterns, and objects
+that exceed the decoder's field-order or key-spelling bounds. Decoder and
+validation rules share the JSON grammar and
+keyword policy. The reverse API preserves an imported schema and can infer
+constants from bounded finite JSON productions.
+
+A bounded automaton product handles overlapping `oneOf` branches over strings.
+It counts branches whose supported patterns, formats and finite value assertions
+all match the JSON spelling. A sibling string assertion restricts every branch.
+The decoder accepts exactly one matching branch and omits a production when
+the product has no accepting path.
+For the string type of a local reference, the importer intersects supported
+sibling patterns and formats along the local reference chain. Referenced alternatives
+participate in string branch selection and can supply a required string tag
+from their terminal object schema. The chain analysis stops at a repeated
+reference or the schema inspection depth limit. For string
+`anyOf`, it intersects each branch with the common assertions and emits their
+union. Each intersection has the shared automaton work and state limits. If a
+branch exceeds those limits, a diagnostic identifies the validation assertion.
+
+Numeric local references combine inclusive and exclusive limits across the
+reference chain. For numeric `anyOf` branches, the decoder intersects the
+common limits with each branch before forming their union. For `oneOf`
+branches over integers or over numbers, the decoder intersects each branch
+with the common limits and generates spellings covered by exactly one
+interval. For decimal ranges it counts branch membership at each endpoint
+and on both sides, so open boundaries and isolated accepted values retain
+their exact semantics. In mixed integer and number alternatives, integral
+values count both kinds of branch and may have a zero-only fractional suffix.
+Non-integral values count the number branches. A number-only range covering
+every number retains exponent spellings. Bounded and mixed ranges use decimal
+spelling and report the equivalent exponent spellings checked by document
+validation.
+
+A finite numeric branch contributes one closed point for each distinct value
+that satisfies the branch and the common numeric bounds. The points take part
+in the same interval count so a value shared with another branch is excluded.
+Equivalent decimal spellings have the same membership. The finite candidate
+inspection uses the existing construction budget and can follow local references.
+
+When overlapping exclusive alternatives span several JSON instance types,
+the decoder checks each type separately. The numeric production keeps integer
+and non-integral values together so both numeric branch counts are available.
+String and numeric intersections can therefore enforce exclusivity alongside
+other disjoint alternatives. For Boolean and null alternatives, the decoder
+validates each value in that finite type domain against the complete schema.
+The same check applies to local references with sibling assertions when their
+allowed type domain is Boolean, null, or both. Any unresolved overlap still
+carries a validation diagnostic for that type.
+
+An object local reference chain takes the union of the required names and
+the declared property names. For each name, the decoder uses each layer's
+explicit property schema or that layer's additional-property policy when it
+leaves the name undeclared. An unrestricted policy contributes no constraint.
+A prohibition in any layer or disjoint declared types exclude the property.
+Identical constraints across layers share a production. The same rules apply
+to names absent from all declarations and to object branches combined with
+assertions from the parent schema.
+An array chain uses the strongest minimum and maximum lengths. A layer with
+`items: false` bounds the length by that layer's own prefix length. At each
+reachable position, the layer contributes its prefix schema when it declares
+one and its tail schema otherwise. Identical constraints across layers share
+a production, and unrestricted layers contribute no constraint. A forbidden
+position or disjoint set of declared types ends the array before that position.
+Supported string patterns, formats, and numeric bounds also intersect within
+an item or property, including additional properties and local references to
+their scalar schemas. The importer uses the existing reference inspection and
+grammar construction bounds. Assertions still apply only to their own instance
+types. When any layer enumerates a finite set of property or item values,
+including through local references and alternatives, the decoder validates
+each candidate against every contributing schema within the inspection bound.
+An empty set forbids that property or item. A nested property or item collection
+combines compatible layouts by the same rules. The shared policy allows up to
+32 nested layout intersections along a path and 4096 during one import.
+Recursive or wider intersections that exceed the bound report a diagnostic for
+document validation. Incompatible lengths or required names forbidden by the
+property layout leave no generatable collection. Other unsupported intersections
+also carry a diagnostic for document validation.
+The shared keyword policy scopes collection, string, and numeric assertions
+to their respective instance types. Local reference chains build a production
+for each applicable type, including chains without a declared type. Inclusive
+alternatives apply sibling constraints to each branch. Exclusive alternatives
+use this construction when disjoint types, required object tags, or array
+layouts distinguish every pair. For array-only branches, the proof includes
+the bounds and closed prefixes along each local reference chain. When branches
+share an item layout, the decoder clips each length interval to common sibling
+bounds and generates only lengths covered by exactly one branch. A layer with
+a closed tail contributes its own prefix length as an upper bound. The same
+layout constrains items in the remaining lengths, including an unbounded tail.
+When the first position in each layout has a disjoint instance type, the
+decoder counts positive lengths separately for each shared layout. That
+position uses the first prefix schema when present and the recurring item
+schema otherwise. The decoder emits the empty array when exactly one branch
+admits zero items. A common item rule supplies
+the layout for unrestricted branches. If no layout admits a length covered by
+one branch, there is no generatable array. Two branches with different item
+layouts can also be distinguished by disjoint finite string sets at a
+common required prefix position. Optional positions and overlapping string sets
+cannot establish that proof. The decoder can also enforce exclusivity when
+each distinct item schema has a finite candidate domain or a common sibling
+schema supplies that domain. It groups item values by the branches accepting
+them and carries only those branches to the next array position. A shared item
+schema can constrain all surviving branches without enumerating its values.
+For item and property schemas that constrain only instance types, the decoder
+groups each base JSON production by the branches that accept its type. It
+intersects declarations across reference layers and with sibling constraints.
+The unrestricted number production applies when integral and fractional numbers
+have the same membership. Each exclusive group for one differing property
+contributes to that property's generated language.
+When item or property schemas constrain strings with regular patterns, formats,
+or constants, the decoder constructs one product of the supported string
+grammars. It groups reachable accepting states by the branches that match and
+emits a production for each distinct branch set. Reference siblings and the
+parent member schema contribute constraints to the same product. Other
+unrestricted instance types contribute their type memberships. When every
+active string branch has a regular constraint, the product uses decoded Unicode
+scalars. The decoder then expands each transition into its JSON spellings and
+reuses the same production for repeated character sets. A branch with an
+unrestricted string uses the existing JSON string grammar. The shared string
+product work limit applies across these member products during one import, and
+the collection budget also counts the resulting productions.
+Numeric item and property schemas partition their supported bounds into
+open intervals and individual endpoints. Sibling and reference constraints
+restrict each branch before that partition. When an integral value and a
+non-integral value have different membership, the decoder retains separate
+productions for their branch sets. Decimal spellings with a zero-only
+fraction count as integral. The collection work bound covers membership
+checks and construction. A located diagnostic records the additional exponent
+spellings supported by validation.
+When alternatives constrain both numbers and strings at the same item or
+property, the decoder combines both partitions by matching branch set.
+Unrestricted instance types retain their own memberships. Consecutive array
+items can narrow the same branch set across different types. Both partitions
+apply member constraints from reference layers and the parent collection.
+Closing the array requires exactly one surviving branch that accepts its length.
+Beyond the final prefix and length boundaries, the current item schema and
+the effect of length stay the same. The decoder can represent the remaining
+tail with recursive productions. The shared policy bounds the work used to
+inspect members and construct branch states. An unresolved overlap retains a
+diagnostic for validation. For object alternatives with a common
+additional-property rule, the decoder compares effective property schemas
+across the union of declared names. The default applies to names a branch
+leaves undeclared. The decoder can factor finite property domains, including
+typed defaults, and group values by the branches that accept them. When all
+branches that allow a property share
+its schema, that schema constrains its presence. In closed layouts this lets
+the decoder distinguish optional properties that other branches prohibit.
+Absence contributes only the branches in which the property is optional.
+The decoder intersects branch sets across these properties and emits the object
+when exactly one branch remains. The common layout constrains the other
+properties. When branches differ only in the value of one optional property,
+the generated object requires that property because omitting it would give all
+branches the same result. The existing finite inspection budget charges each
+combination of multiple value differences or required-name differences and the
+estimated cost of emitting each resulting object layout.
+Local references can supply the common layout or the finite property schemas.
+Parent object assertions intersect with the common layout. For each differing
+property, the decoder applies the parent's explicit property schema or its
+additional-property policy and enforces any required presence. If this excludes
+every combination with exclusive branch membership, there is no generatable object.
+Identical object alternatives with no other branch have no generatable document.
+For finite collection branches,
+the importer forms candidate values from the allowed members of a closed
+object or bounded array. The validator checks every candidate against the full
+schema, including common sibling restrictions and the exclusive branch count.
+The shared policy allows six declared object fields, 32 array items and 128
+values per collection. The existing finite inspection budget also accounts for
+the sizes of copied members. The importer reports a validation diagnostic when
+its other analyses cannot resolve an overlap within these limits.
+The type analysis intersects declared types along each local reference chain.
+The decoder removes branches with impossible bounds or required names and
+reports a residual when branch exclusivity or a layout intersection needs
+document validation.
+
+An unrestricted integer decoder over all JSON spellings exceeds the portable
+context-free grammar model. Restrict number spellings to `1.0*1e10*`, with
+`n` zeroes between the two `1` digits in the significand and `k` zeroes in
+the exponent.
+The represented value is integral precisely when `n + 1 <= 10^k`. A
+finite-state transduction turns the two zero runs into counts of distinct
+symbols. In a semilinear representation, every period that increases `n`
+must increase `k`, since each fixed `k` bounds `n`. Finitely many such periods
+would bound the growth of `n` linearly in `k`, but the actual bound grows
+exponentially. The decoder therefore emits
+the supported spelling family and reports the residual assertion for exact
+source-based validation. [Parikh's theorem](https://doi.org/10.1145/321356.321364)
+
+JSON recovery starts from the unmodified syntax and applies explicitly
+selected actions. Edits identify the original recovery link, byte range,
+removed text, and replacement. Closing a truncated document preserves its
+incomplete status. Schema validation reports missing fields, and repetition is
+reported over the original text.

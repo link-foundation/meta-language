@@ -4,8 +4,10 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {generateRawOracleContractPartitions} from '../scripts/generate-raw-oracle-contract-partitions.mjs';
-import {restoreRawOracleContractPartitionHistory} from '../scripts/raw-oracle-contract-partition-history.mjs';
+import {restoreRawOracleContractPartitionHistory,restoreReportScheduleHistory} from '../scripts/raw-oracle-contract-partition-history.mjs';
+import {restoreVerificationPauseSource} from '../../experiments/issue-245/verification-pause-history.mjs';
 import {createOriginalLinkRawContractPartition} from '../../experiments/original-link-complete-table-projection/raw-contract-partitions.mjs';
+import {javascriptWorkflowSource,readIssue245SourcePair} from '../../experiments/issue-245/source-history.mjs';
 import {parseNative} from '../src/native-grammar-parser.js';
 import {tokenize} from '../src/translation/lexer.js';
 
@@ -70,16 +72,47 @@ test('the entire current test source retains every original call body hash and a
 
 test('two required raw contract cells preserve complete commands limits and the preceding whole workflow',()=>{
   const {history}=generateRawOracleContractPartitions({check:true}),path='.github/workflows/js.yml';
-  const currentSource=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  const liveSource=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  const currentSource=restoreVerificationPauseSource(path,liveSource);
   const previousSource=history.sources.find(row=>row.path===path).source;
   assert.equal(restoreRawOracleContractPartitionHistory(currentSource,path),previousSource);
-  const previous=parseWorkflow(previousSource),current=parseWorkflow(currentSource);
+  const previous=parseWorkflow(previousSource),current=parseWorkflow(restoreReportScheduleHistory(currentSource));
   assert.equal(current.length,previous.length);
   const before=previous.find(row=>row.id==='package-checks'),after=current.find(row=>row.id==='package-checks');
   assert.equal(after.steps.length,before.steps.length+1);
   const old=before.steps.find(row=>row.name==='Run complete original link raw native oracle contracts');
   const plan=after.steps.find(row=>row.name===old.name);
   const schema=after.steps.find(row=>row.name==='Run complete original link raw schema and consumer contracts');
+  const live=parseWorkflow(currentSource).find(row=>row.id==='package-checks');
+  const active=parseWorkflow(liveSource).find(row=>row.id==='package-checks');
+  for(const name of ['Check out raw plan inputs', 'Run complete original link raw schema and consumer contracts']){
+    assert.equal(active.steps.find(row=>row.name===name)?.text,live.steps.find(row=>row.name===name)?.text,name);
+  }
+  const activePlan=active.steps.find(row=>row.name===plan.name);
+  const historicalPlan=live.steps.find(row=>row.name===plan.name);
+  const planCondition="matrix.group == 'source-model-raw'";
+  assert.ok(historicalPlan.text.includes(`${planCondition} }}`));
+  assert.equal(activePlan.text,historicalPlan.text.replace(
+    `${planCondition} }}`,`${planCondition} && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}`));
+  const checkoutFilter="          filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}\n";
+  const [,scheduled,blobless,currentWorkflow]=readIssue245SourcePair(javascriptWorkflowSource).versions;
+  assert.equal(currentSource,currentWorkflow);
+  assert.equal(blobless.split(checkoutFilter).length,2);
+  assert.equal(blobless.replace(checkoutFilter,''),scheduled);
+  assert.match(live.steps[0].text,/fetch-depth: 0/u);
+  assert.deepEqual(parseWorkflow(scheduled).find(row=>row.id==='package-checks'),after);
+  const fullCheckout = "        if: ${{ matrix.group != 'source-model-raw' }}\n";
+  assert.equal(live.steps[0].text.replace(fullCheckout,''),after.steps[0].text);
+  const sparseCheckout = live.steps[1];
+  assert.equal(sparseCheckout.name,'Check out raw plan inputs');
+  assert.ok(sparseCheckout.text.includes("        if: ${{ matrix.group == 'source-model-raw' }}\n"));
+  assert.match(sparseCheckout.text,/uses: actions\/checkout@v7\n        with:\n          fetch-depth: 0\n/u);
+  assert.ok(sparseCheckout.text.includes('          sparse-checkout-cone-mode: false\n'));
+  assert.ok(sparseCheckout.text.trimEnd().endsWith('          sparse-checkout: |\n            /*\n            !/dev/log/\n            !/parity/naming/canonical-concepts.lino'));
+  assert.deepEqual(live.header,after.header);
+  assert.deepEqual(live.steps.slice(2),after.steps.slice(1));
+  assert.deepEqual(parseWorkflow(currentSource).filter(job=>job.id!=='package-checks'),
+    parseWorkflow(scheduled).filter(job=>job.id!=='package-checks'));
   assert.equal(plan.text.replace("\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'plan'",''),old.text);
   assert.equal(schema.text.replace("\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'schema'",'')
     .replace('Run complete original link raw schema and consumer contracts',old.name)

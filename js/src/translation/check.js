@@ -805,7 +805,9 @@ class Checker {
       case 'if': {
         const cond = this.booleanValue(this.expr(node.cond, env, path, undefined), node.span);
         let then = this.expr(node.then, env, path, expected, allowLiteral);
-        let otherwise = this.expr(node.else, env, path, expected ?? (then.type.kind === 'literal' ? undefined : then.type), allowLiteral);
+        // Keep the declared optional element and all permitted absence tags in both branches.
+        const elseExpected = expected?.kind === 'option' || then.type.kind === 'literal' ? expected : then.type;
+        let otherwise = this.expr(node.else, env, path, elseExpected, allowLiteral);
         if (then.type.kind === 'literal' && otherwise.type.kind !== 'literal') then = this.expr(node.then, env, path, otherwise.type);
         if (then.type.kind === 'literal') {
           then = this.expr(node.then, env, path, this.defaultNumber());

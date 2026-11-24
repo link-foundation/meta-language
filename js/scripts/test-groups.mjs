@@ -24,7 +24,7 @@ const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 
 /** Largest observed workload first; source changes use a byte-size estimate.
  * Timing samples only choose owners. They never establish test completion. */
-export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
+export function partitionMeasuredWorkloads(files,count,{readSource,costs,usePreviousFileRates=false}={}){
  assert.ok(Number.isSafeInteger(count)&&count>0&&count<=files.length);
  assert.equal(new Set(files).size,files.length,'workload source identities are unique');
  const measured=costs??readProjectData(schedulingFile);
@@ -43,7 +43,8 @@ export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
  const read=readSource??(file=>readFileSync(path.join(packageRoot,'..',file)));
  const workloads=files.map(file=>{const bytes=Buffer.from(read(file)),row=known.get(file);
   const exact=row&&row.bytes===bytes.length&&row.sha256===schedulingDigest(bytes);
-  return {file,milliseconds:exact?row.milliseconds:Math.max(1,Math.ceil(bytes.length*rate))};});
+  const estimatedRate=usePreviousFileRates&&row?Math.max(rate,row.milliseconds/row.bytes):rate;
+  return {file,milliseconds:exact?row.milliseconds:Math.max(1,Math.ceil(bytes.length*estimatedRate))};});
  workloads.sort((a,b)=>b.milliseconds-a.milliseconds||a.file.localeCompare(b.file));
  const loads=Array(count).fill(0),shards=Array.from({length:count},()=>[]);
  for(const row of workloads){const owner=loads.indexOf(Math.min(...loads));loads[owner]+=row.milliseconds;shards[owner].push(row.file);}
@@ -96,7 +97,7 @@ export function captureMeasuredWorkloadCosts(directory){
 /** Test groups, each a pattern over the test file name without `.test.js`. */
 export const TEST_GROUPS = Object.freeze({
   grammar:
-    /^(?!issue-195-grammar-(?:profile-|native-|declared-settling$))(?!error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|lino-grammar-scaling$|unicode-input-)(?:grammar-|native-tree-projection-memory$|native-concept-reuse-normalization$|lino-|links-notation$|pdf-grammar$|default-cst-|tree-sitter-node-kind$|issue-195-merge-real-reconciliation$|language-|natural-language$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
+    /^(?!issue-195-grammar-(?:profile-|native-|declared-settling$))(?!error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|lino-grammar-scaling$|unicode-input-)(?:grammar-|native-tree-projection-memory$|native-concept-reuse-normalization$|lino-|links-notation$|pdf-(?:grammar|document)$|visible-document-text$|wordprocessing-package$|default-cst-|tree-sitter-node-kind$|issue-195-merge-real-reconciliation$|language-|natural-language(?:-(?:morphology|values))?$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
   'grammar-native':
     /^(?:issue-195-grammar-native-(?!recovery$)|issue-195-grammar-declared-settling$|native-development-oracles$|native-text-grammars$)/u,
   'grammar-recovery': /^(?:error-recovery-|issue-195-grammar-native-recovery$)/u,
@@ -151,9 +152,59 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
-  // Only the measured general-grammar cohort changes owners. Native and
-  // historical modulo cohorts retain their independent exact partition rules.
-  if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
+  if (count === 4 && files.includes('issue-195-evidence-tooling-partitions.test.js')) {
+    const baseline = readProjectData(schedulingFile);
+    const measured = readProjectData(new URL('../../parity/fixtures/ci-45296878458-tooling-test-wall-costs.lino', import.meta.url));
+    assert.equal(measured.schemaVersion, 1);
+    assert.equal(measured.run, 45296878458);
+    assert.equal(measured.revision, 'c96947107d97819e90af6406279a8f76212f3bc8');
+    const costs = { ...baseline, entries: measured.entries };
+    return partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), count, { costs, usePreviousFileRates: true })[index - 1]
+      .map(file => file.slice('js/tests/'.length));
+  }
+  if (count === 6 && files.includes('issue-195-interchange-api-cli.test.js')) {
+    const baseline = readProjectData(schedulingFile);
+    const measured = readProjectData(new URL('../../parity/fixtures/ci-45250356617-grammar-test-wall-costs.lino', import.meta.url));
+    assert.equal(measured.schemaVersion, 1);
+    assert.equal(measured.run, 45250356617);
+    assert.equal(measured.revision, '3224c9a1d9e26d7eebe31e7cbfd563555bd69b9b');
+    assert.equal(new Set(measured.entries.map(row => row.file)).size, measured.entries.length);
+    const entries = new Map(baseline.entries.map(row => [row.file, row]));
+    for (const row of measured.entries) entries.set(row.file, row);
+    const costs = { ...baseline, entries: [...entries.values()] };
+    return partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), count, { costs })[index - 1]
+      .map(file => file.slice('js/tests/'.length));
+  }
+  if ((count === 6 || count === 9) && files.includes('translation-ascii-text-predicates.test.js')
+    && files.includes('translation-raw-data-freeze.test.js')) {
+    const originalPartition = (index - 1) % 3;
+    const cohort = files.filter((_, offset) => offset % 3 === originalPartition);
+    const baseline = readProjectData(schedulingFile);
+    const measured = readProjectData(new URL('../../parity/fixtures/ci-45076523061-translation-test-workload-costs.lino', import.meta.url));
+    assert.equal(measured.schemaVersion, 1);
+    assert.equal(measured.run, 45076523061);
+    assert.equal(new Set(measured.entries.map(row => row.file)).size, measured.entries.length);
+    let entries = [...baseline.entries, ...measured.entries];
+    if (count === 9) {
+      const recent = new Map(entries.map(row => [row.file, row]));
+      for (const [run, revision] of [
+        [45089575521, '0deae514483822ffd2a42a4fa0f4c88744d0745d'],
+        [45118414652, 'a0853ceb85613f91513e82ccd5ebc62215528a5a'],
+      ]) {
+        const wall = readProjectData(new URL(`../../parity/fixtures/ci-${run}-translation-test-wall-costs.lino`, import.meta.url));
+        assert.equal(wall.schemaVersion, 1);
+        assert.equal(wall.run, run);
+        assert.equal(wall.revision, revision);
+        assert.equal(new Set(wall.entries.map(row => row.file)).size, wall.entries.length);
+        for (const row of wall.entries) recent.set(row.file, row);
+      }
+      entries = [...recent.values()];
+    }
+    // Balance whole files within their original three-way cohort.
+    const costs = { ...baseline, entries };
+    const assignments = partitionMeasuredWorkloads(cohort.map(file => 'js/tests/' + file), count / 3, { costs });
+    return assignments[Math.floor((index - 1) / 3)].map(file => file.slice('js/tests/'.length));
+  }
   return files.filter((_, offset) => offset % count === index - 1);
 }
 
