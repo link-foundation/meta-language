@@ -10,6 +10,7 @@ import {readStringOrderRefusal} from './string-order-rules.js';
 
 import { typeError, unsupported } from './diagnostics.js';
 import { readCollectionConstructionBinding, renderCollectionConstruction, renderCollectionConstructionType } from './collection-construction-rules.js';
+import { renderCollectionSize } from './collection-size-rules.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
@@ -759,7 +760,7 @@ class RocqEmitter {
       }
       case 'collectionSize':
         this.floats();
-        return `(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length ${this.expr(e.object)}))))`;
+        return renderCollectionSize('Rocq', this.expr(e.object));
       case 'collectionRead': {
         const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
         const key = e.object.type.kind === 'map' ? '(fst ml_value)' : 'ml_value';

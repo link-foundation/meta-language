@@ -328,6 +328,9 @@ plans append to the existing schema without changing its model, prior plans or
 historical source receipts. Complete JavaScript source and text and binary
 program replays drive automatic native generation; native behavior remains a CI
 verification obligation.
+Map and Set size reads keep their receiver and Number result in source-free
+programs. Both runtimes reconstruct the same checked collection operation and
+emit it through the shared target rules after a Links reload.
 Owned occurrence paths likewise compare the numeric value of an actual Number
 position, checking the actual array bounds through the shared tuple-index rule.
 Equivalent integral spellings retain their stored scalar, including negative

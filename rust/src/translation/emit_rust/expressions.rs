@@ -34,6 +34,7 @@ impl RustEmitter<'_> {
             Node::RecordField { object, .. }
             | Node::TupleIndex { object, .. }
             | Node::Method { object, .. }
+            | Node::CollectionSize { object }
             | Node::CollectionItems { object, .. } => object.ty.is_reference(),
             _ => false,
         };
@@ -387,7 +388,8 @@ impl RustEmitter<'_> {
             | Node::Length { .. }
             | Node::OptionalIndex { .. }
             | Node::StringPoints { .. }
-            | Node::CollectionItems { .. } => self.array_expr(expr),
+            | Node::CollectionItems { .. }
+            | Node::CollectionSize { .. } => self.array_expr(expr),
             Node::Math { .. } => self.math(expr),
         }
     }

@@ -29,6 +29,7 @@ import { readOwnedArrayFinalUses } from './owned-array-moves.js';
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import { typeError, unsupported } from './diagnostics.js';
 import { renderCollectionConstruction } from './collection-construction-rules.js';
+import { renderCollectionSize } from './collection-size-rules.js';
 import { sameType, typeKey } from './types.js';
 import {acceptReferenceIdentityComparison, readReferenceIdentityComparisonError, renderReferenceIdentityComparison} from './reference-identity-rules.js';
 import { Scope, renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
@@ -1309,7 +1310,7 @@ class RustEmitter {
         return renderCollectionConstruction('Rust', e.k, key.kind, values, '', '', '');
       }
       case 'collectionSize':
-        return `(${this.receiver(e.object)}.len() as f64)`;
+        return renderCollectionSize('Rust', this.receiver(e.object));
       case 'collectionRead': {
         const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
         const equal = keyType.kind === 'float' ? '(ml_key == &ml_search || (ml_key.is_nan() && ml_search.is_nan()))' : 'ml_key == &ml_search';

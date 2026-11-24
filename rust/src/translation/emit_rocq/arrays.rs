@@ -118,6 +118,15 @@ impl RocqEmitter<'_> {
                     self.inhabitant(&e.ty)?
                 ))
             }
+            Node::CollectionSize { object } => {
+                self.floats();
+                let value = self.expr(object)?;
+                Ok(
+                    crate::translation::collection_size_rules::render_collection_size(
+                        "Rocq", &value,
+                    ),
+                )
+            }
             Node::Length { array } => {
                 if array.ty == super::Type::String {
                     self.floats();

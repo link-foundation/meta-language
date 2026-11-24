@@ -1,6 +1,7 @@
 //! Typed construction driven by the shared record entry and field plans.
 
-use super::{Checker, Env, Expr, Node, Result, SExpr, Span, Type, type_error, unsupported};
+use super::{Checker, Env, Expr, FLOAT, Node, Result, SExpr, Span, Type, type_error, unsupported};
+use crate::translation::collection_size_rules::select_collection_size_field;
 use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::ir::RecordEntry;
 use crate::translation::record_value_rules as rules;
@@ -221,6 +222,14 @@ impl Checker {
         let value = Self::reference_value(value);
         if let Some(record) = Self::record_field(value.clone(), field, span)? {
             return Ok(record);
+        }
+        if select_collection_size_field(field, value.ty.kind()) {
+            return Ok(Expr::new(
+                Node::CollectionSize {
+                    object: Box::new(value),
+                },
+                FLOAT,
+            ));
         }
         if field == "length"
             && let Some(length) = Self::length_field(value)

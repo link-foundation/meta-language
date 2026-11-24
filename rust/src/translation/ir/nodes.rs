@@ -247,6 +247,10 @@ pub enum Node {
         object: Box<Expr>,
         op: String,
     },
+    /// The number of entries in a Map or values in a Set, as a Number.
+    CollectionSize {
+        object: Box<Expr>,
+    },
     /// The number of elements of `array`, as a Number or an integer.
     Length {
         array: Box<Expr>,
@@ -327,6 +331,7 @@ impl Node {
             Self::OptionalIndexNumber { .. } => "optionalIndexNumber",
             Self::StringPoints { .. } => "stringPoints",
             Self::CollectionItems { .. } => "collectionItems",
+            Self::CollectionSize { .. } => "collectionSize",
             Self::Length { .. } => "length",
             Self::ReferenceAllocate { .. } => "referenceAllocate",
             Self::ReferenceRead { .. } => "referenceRead",

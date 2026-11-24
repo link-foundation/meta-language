@@ -62,6 +62,15 @@ impl JavaScriptEmitter<'_> {
                     ),
                 )
             }
+            Node::CollectionSize { object } => {
+                let value = self.expr(object)?;
+                Ok(
+                    crate::translation::collection_size_rules::render_collection_size(
+                        "JavaScript",
+                        &value,
+                    ),
+                )
+            }
             Node::Index {
                 array,
                 index,

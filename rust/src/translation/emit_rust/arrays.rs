@@ -127,6 +127,14 @@ impl RustEmitter<'_> {
                     self.borrow(array)?
                 ))
             }
+            Node::CollectionSize { object } => {
+                let value = self.receiver(object)?;
+                Ok(
+                    crate::translation::collection_size_rules::render_collection_size(
+                        "Rust", &value,
+                    ),
+                )
+            }
             Node::Length { array } => {
                 if array.ty == super::Type::String {
                     if self.utf16_strings {
