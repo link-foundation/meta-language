@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -46,6 +47,7 @@ test('report checkout preserves the complete workload and removes unrelated arch
       'parity/fixtures/ci-45076523061-report-workload-costs.lino',
       'parity/fixtures/ci-45104457483-report-workload-costs.lino',
       'parity/fixtures/ci-45215384144-report-workload-costs.lino',
+      'parity/fixtures/ci-45296878458-report-workload-costs.lino',
     ]) assert.ok(selected.has(file), file);
     for (const file of selected) {
       assert.doesNotMatch(file, /^(?:dev\/log|experiments|parity\/naming)\//u);
@@ -115,11 +117,45 @@ test('recent report timings balance all complete module workloads across the sam
   assert.deepEqual(preceding.flat().sort(), sampledSources);
   assert.ok(longest(preceding) <= 20 * 60 * 1000, 'overlap-adjusted samples leave headroom within the deadline');
 
-  for (const row of latest.entries) elapsed.set(row.file, row.milliseconds);
-  const current = partitionSelfTranslationReportModules(sampledSources, 16, sampledInput);
-  assert.deepEqual(current.flat().sort(), sampledSources);
+  for (const row of latest.entries) {
+    elapsed.set(row.file, row.milliseconds);
+    priorEntries.set(row.file, row);
+  }
+  const updated = partitionMeasuredWorkloads(sampledSources, 16, {
+    ...sampledInput, costs: { ...baseline, entries: [...priorEntries.values()] },
+  });
+  assert.deepEqual(updated.flat().sort(), sampledSources);
   assert.ok(longest(preceding) >= 28 * 60 * 1000, 'the cancelled shard accumulated nearly the full deadline before its final module');
-  assert.ok(longest(current) <= 17 * 60 * 1000, 'updated costs distribute the expensive modules across the sixteen owners');
+  assert.ok(longest(updated) <= 17 * 60 * 1000, 'updated costs distribute the expensive modules across the sixteen owners');
+
+  const complete = readProjectData(new URL('../../parity/fixtures/ci-45296878458-report-workload-costs.lino', import.meta.url));
+  assert.equal(git('rev-parse', `${complete.revision}^2`).toString().trim(), complete.head);
+  assert.deepEqual(complete.logs.map(row => row.number), record.logs.map(row => row.number));
+  for (const row of complete.logs) {
+    assert.equal(row.conclusion, 'success');
+    assert.deepEqual(row.unfinished, []);
+  }
+  const completeSources = git('ls-tree', '-r', '--name-only', complete.revision, 'js/src')
+    .toString().trimEnd().split('\n').filter(file => file.endsWith('.js')).sort();
+  assert.equal(completeSources.length, 382);
+  assert.deepEqual(complete.entries.map(row => row.file).sort(), completeSources);
+  const completeBytes = new Map();
+  for (const row of complete.entries) {
+    const bytes = git('show', `${complete.revision}:${row.file}`);
+    assert.equal(bytes.length, row.bytes, row.file);
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), row.sha256, row.file);
+    completeBytes.set(row.file, bytes);
+    elapsed.set(row.file, row.milliseconds);
+  }
+  const completeInput = { readSource: file => completeBytes.get(file) };
+  const beforeComplete = partitionMeasuredWorkloads(completeSources, 16, {
+    ...completeInput, costs: { ...baseline, entries: [...priorEntries.values()] },
+  });
+  const current = partitionSelfTranslationReportModules(completeSources, 16, completeInput);
+  assert.deepEqual(beforeComplete.flat().sort(), completeSources);
+  assert.deepEqual(current.flat().sort(), completeSources);
+  assert.ok(longest(beforeComplete) >= 27 * 60 * 1000, 'complete timings expose the overloaded prior shard');
+  assert.ok(longest(current) <= 19 * 60 * 1000, 'complete timings balance all sixteen shards within the available time');
 });
 
 test('recent translation test timings balance both jobs in each original three-way partition', () => {

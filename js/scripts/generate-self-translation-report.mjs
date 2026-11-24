@@ -92,7 +92,7 @@ function listSourceModules() {
 export function partitionSelfTranslationReportModules(files, count, { readSource } = {}) {
   const baseline = readProjectData(join(root, 'parity/fixtures/ci-39615628279-workload-costs.lino'));
   const entries = new Map(baseline.entries.map(row => [row.file, row]));
-  for (const [run, moduleCount] of [[45076523061, 364], [45104457483, 376], [45215384144, 381]]) {
+  for (const [run, moduleCount] of [[45076523061, 364], [45104457483, 376], [45215384144, 381], [45296878458, 382]]) {
     const measured = readProjectData(join(root, `parity/fixtures/ci-${run}-report-workload-costs.lino`));
     assert.equal(measured.run, run);
     assert.equal(measured.attempt, 2);

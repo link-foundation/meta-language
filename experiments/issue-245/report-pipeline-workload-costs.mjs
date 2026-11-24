@@ -23,6 +23,12 @@ const runs = {
     cancelledShard: 5,
     expectedUnfinished: ['js/src/typed-program-expression-projection.js'],
   },
+  45296878458: {
+    revision: 'c96947107d97819e90af6406279a8f76212f3bc8',
+    head: '8561a770850ea0b9cfa218c23ccc6958dae2a16a',
+    cancelledShard: null,
+    expectedUnfinished: [],
+  },
 };
 const run = Number(runOption);
 assert.ok(Object.hasOwn(runs, run), 'run ID requires a reviewed merge checkout and report outcome');

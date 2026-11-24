@@ -4016,6 +4016,10 @@ durations with the updated schedule assigns the two longest modules from the
 timed-out shard to different shards.
 An unfinished module uses the preceding sample for matching source bytes or a
 size estimate. The sixteen shards retain their thirty-minute job deadlines.
+The [complete CI workload sample](../parity/fixtures/ci-45296878458-report-workload-costs.lino)
+covers all 382 modules from the exact merge checkout. Replaying those durations
+reduces the longest estimated shard from 27.36 minutes to 18.33 minutes while
+keeping every module in one shard.
 The pull-request report producers check out the exact merge commit with all
 JavaScript and Rust sources, report tools, grammars, decorators and workload
 samples. Sparse checkout omits development logs and historical archives from
