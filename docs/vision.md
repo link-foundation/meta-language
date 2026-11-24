@@ -3906,17 +3906,17 @@ source hashes for 93 of 94 files, and the scheduler estimates any changed or
 unmeasured file by size. The complete four-partition test union and
 fifteen-minute deadline remain in effect.
 
-In [run 45276612669](https://github.com/link-foundation/meta-language/actions/runs/45276612669/job/138049949159),
-the seventh translation job spent 218 seconds in setup and reached its
-fifteen-minute deadline after 236 passing assertions. The preceding job with
-the same file assignment passed all 260 assertions. Ten required translation
-jobs now share the complete file set using the recorded costs. The feedback
-merge requires all ten exact-commit partitions. The timing experiment checks
-a 500-second advisory test budget. The workflow regression verifies the
-complete file union and the original deadline. The former eight-partition
-workflow remains an authenticated input.
-The six acceptance evidence partitions and eight conformance jobs retain their
-existing schedules.
+The seventh translation job in run 45276612669 spent 218 seconds in setup and
+reached its fifteen-minute deadline after 236 passing assertions. The preceding
+job with the same file assignment passed all 260 assertions.
+[Timed-out job](https://github.com/link-foundation/meta-language/actions/runs/45276612669/job/138049949159)
+
+Ten required translation jobs share the complete file set using the recorded
+costs. The feedback merge requires all ten exact-commit partitions. The timing
+experiment checks a 500-second advisory test budget. The workflow regression
+verifies the complete file union and the fifteen-minute deadline and uses the
+authenticated eight-partition predecessor. Translation evidence uses six
+partitions. Conformance uses eight jobs.
 
 A separate JavaScript test group checks these published reports after all
 report shards finish. It uses the producers' exact checkout and source hashes,
