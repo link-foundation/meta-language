@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {readProjectData} from '../../js/scripts/project-data.mjs';
 import {readSourceTextRustBlock} from '../../js/scripts/source-text-byte-library-style.mjs';
+import {readOriginalBinaryRuleProducer} from '../../js/scripts/reviewed-rust-source-styles.mjs';
 import {LinkNetwork,encodeLinkNetworkBinary,decodeLinkNetworkBinary,readStructuredDataLino} from '../../js/src/index.js';
 import {LinkMetadata} from '../../js/src/primitives.js';
 import {parseJavaScript} from '../../js/src/translation/javascript.js';
@@ -42,6 +43,10 @@ export function verifyBinaryMetadataBufferNativeModel(read=readFileSync){
  return Object.entries(digests).map(([file,expected])=>{
   const refusal='the frozen binary candidate model changed: '+file;
   const physicalBytes=read(new URL(file,root));let actualBytes=physicalBytes,sourceSuccession;
+  if(file==='js/scripts/generate-link-network-binary-rules.mjs'){
+   try{actualBytes=Buffer.from(readOriginalBinaryRuleProducer(physicalBytes.toString('utf8')));}
+   catch(cause){throw new Error(refusal,{cause});}
+  }
   if(file==='rust/src/translation/frontend_rules.rs'&&sha256(physicalBytes)==='3c9be49f013c6ed1d3e8f2c5a9235236160f6eed4cc3e60b27b415ef5d7d55e7'){
    assert.equal(physicalBytes.length,43982,refusal);
    const physical=physicalBytes.toString('utf8'),current=readSourceTextRustBlock(physical,'fn','accept_java_script_optional_tuple_context');

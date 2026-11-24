@@ -104,13 +104,12 @@ pub(super) fn accept_owned_publication(
 pub(super) fn read_deferred_binding(
     terms: &[&str],
     fields: &[&str],
-    parents: &[f64],
-    starts: &[f64],
-    ends: &[f64],
+    locations: (&[f64], &[f64], &[f64]),
     texts: &[&str],
     errors: &[f64],
     source_bytes: f64,
 ) -> Vec<f64> {
+    let (parents, starts, ends) = locations;
     let terms = terms
         .iter()
         .map(|value| (*value).to_owned())

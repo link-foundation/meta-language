@@ -105,7 +105,8 @@ test('both mutable-array source hosts keep the actual required-field transport a
     const historical=restoreScopedIterationNativeHostSource(actual,row.file,'required field native host');
     assert.equal(historical,row.current.source);
     if(row.file===SCOPED_ITERATION_NATIVE_SOURCE.file){
-      assert.deepEqual(pinRequiredFieldNativeHostSource(actual),SCOPED_ITERATION_NATIVE_SOURCE.current);
+      const scoped=restoreIssue245SourceSuccessor(row.file,actual);
+      assert.deepEqual(pinRequiredFieldNativeHostSource(scoped),SCOPED_ITERATION_NATIVE_SOURCE.current);
       assert.ok(actual.includes('&self.owned_array_iteration_sources,'));
       assert.notEqual(actual,historical);
     }else assert.equal(actual,historical);

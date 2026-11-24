@@ -486,12 +486,16 @@ impl RustEmitter<'_> {
                 op.name(),
                 left.ty.kind(),
                 right.ty.kind(),
-                left.ty.is_reference(),
-                right.ty.is_reference(),
-                left.ty == right.ty,
-                domain.is_some(),
-                domain.as_ref().is_some_and(Type::is_reference),
-                domain.as_ref() == Some(&left.ty),
+                (
+                    left.ty.is_reference(),
+                    right.ty.is_reference(),
+                    left.ty == right.ty,
+                ),
+                (
+                    domain.is_some(),
+                    domain.as_ref().is_some_and(Type::is_reference),
+                    domain.as_ref() == Some(&left.ty),
+                ),
             );
         if !reference_error.is_empty() {
             return Err(unsupported(

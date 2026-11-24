@@ -101,6 +101,15 @@ const profiles = [
   ['js/scripts/dependency-inventory-append-history.mjs', { revision: '18590bea3b3595c008da0ce9f0afa85104bbe205',
     predecessor: 'b64e713da2f954c37f70e84435408544d9cdedb2cbaf0939634a33298cf27dfa',
     current: '00cfc27b598cdc9870c48d249ade9c0dfba931fa59ddccc247f51da35a944ef7' }],
+  ['rust/src/formal_concept_definition.rs', { revision: mainRevision,
+    predecessor: '9850a48ca996e62e76e1f976894fbe0107a8badb7031c03b10511c44d9fed5e6',
+    current: '72c1c67513615647e952411c928f3ccf93c891fbf4b5b569343d639fc724139d' }],
+  ['rust/src/shared_numeric_function_model.rs', { revision: mainRevision,
+    predecessor: '4d7edc5f126877eaa272edabe6c2bd10dc38771bb4cb18c244434fdf98ee93ea',
+    current: '08a5038124815a7c747a317ae26fee80fc4802709d172c598ce3a0a893cb8c03' }],
+  ['rust/src/translation/javascript/declarations.rs', { revision: mainRevision,
+    predecessor: 'dfc79a3cb7003704e29948116ff4b27f05675f8da30aba23fe7692a46ab61267',
+    current: 'c05b669c3c8ffa857fc3f8f3b8ccfd7674679fb7ee06b5ca891194c417e2a8af' }],
 ];
 const reviewedFiles = new Set(profiles.map(([file]) => file));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');

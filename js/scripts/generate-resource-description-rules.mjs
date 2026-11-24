@@ -9,6 +9,7 @@ import { DecoratorSet } from '../src/decorators.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { readProjectFileBytes } from './project-data.mjs';
 import { reviewResourceDescriptionStyles, reuseResourceArrayPrelude } from './resource-description-reviewed-styles.mjs';
+import { applyReviewedRustSourceStyles } from './reviewed-rust-source-styles.mjs';
 
 const sourceFile = new URL('../src/resource-description-rules.js', import.meta.url);
 const stylesFile = new URL('../../parity/self-translation/resource-description-rules-decorators.lino', import.meta.url);
@@ -129,8 +130,9 @@ for (const [index, group] of groups.entries()) {
   const imports = names.filter(name => !own.has(name) && new RegExp('(?<!::)\\b' + name + '\\b').test(content));
   const generatedHeader = header.replace(')]', ', clippy::float_cmp, clippy::cast_precision_loss, clippy::cast_possible_truncation, clippy::cast_sign_loss)]');
   const file = 'part_' + index + '.rs';
-  const text = '// Generated from resource-description-rules.js by the checked translator.\n// Do not edit by hand.\n'
+  const source = '// Generated from resource-description-rules.js by the checked translator.\n// Do not edit by hand.\n'
     + format(generatedHeader + '\n' + (imports.length ? 'use super::{' + imports.join(', ') + '};\n' : '') + content);
+  const text = applyReviewedRustSourceStyles(`rust/src/resource_description_rules/${file}`, source, format);
   if (text.split('\n').length > 900) throw new Error('a generated module exceeds the bounded source-file target');
   outputs.push([file, text]);
 }

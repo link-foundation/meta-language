@@ -53,6 +53,7 @@ export function writeRecordRuleLibrary(emitted, name, { check = false, sourceSty
   const files = partitionPortableRustLibrary(formatted, {
     notice: '// Generated from the complete checked JavaScript source and recorded dependencies.\n// Do not edit by hand.\n',
     directory: name,
+    reviewedStyles: true,
   });
   for (const file of files) {
     const output = new URL('../../rust/src/translation/' + (file.path ?? name + '.rs'), import.meta.url);

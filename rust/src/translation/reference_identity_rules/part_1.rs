@@ -19,22 +19,15 @@ pub fn accept_reference_identity_comparison(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
 pub fn read_reference_identity_comparison_error(
     operation: &str,
     left_kind: &str,
     right_kind: &str,
-    left_reference: bool,
-    right_reference: bool,
-    same_domain: bool,
-    domain_present: bool,
-    domain_reference: bool,
-    same_operation_domain: bool,
+    operands: (bool, bool, bool),
+    domain: (bool, bool, bool),
 ) -> String {
+    let (left_reference, right_reference, same_domain) = operands;
+    let (domain_present, domain_reference, same_operation_domain) = domain;
     if ((!left_reference && !right_reference) && !domain_reference)
         || (((self::accept_reference_identity_comparison(
             operation,

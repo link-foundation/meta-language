@@ -55,11 +55,9 @@ impl Checker {
                     let mut inner = path.to_vec();
                     inner.push(name.clone());
                     if !self.scope_mut(path).modules.contains_key(&name) {
-                        self.scope_mut(path)
-                            .modules
-                            .insert(name.clone(), full_name.clone());
+                        self.scope_mut(path).modules.insert(name, full_name.clone());
                         self.modules.insert(
-                            full_name.clone(),
+                            full_name,
                             Scope {
                                 path: inner.clone(),
                                 ..Scope::default()

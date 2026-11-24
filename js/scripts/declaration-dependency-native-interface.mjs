@@ -86,6 +86,11 @@ export function deriveDeclarationDependencyNativeInterface(files,libraryInterfac
         const primitive=kind==='number'?'f64':'bool';assert.equal(type,primitive,'unknown primitive ABI refuses');declarations.push(parameter+': '+primitive);arguments_.push(parameter);
       }
     });
+    if(name==='read_deferred_binding'){
+      assert.deepEqual(declarations.slice(2,5),['parents: &[f64]','starts: &[f64]','ends: &[f64]']);
+      declarations.splice(2,3,'locations: (&[f64], &[f64], &[f64])');
+      conversion='    let (parents, starts, ends) = locations;\n'+conversion;
+    }
     definitions.push('pub(super) fn '+name+'('+declarations.join(', ')+') -> '+result+' {\n'+conversion+'    rules::'+row.target+'('+arguments_.join(', ')+')\n}');
   }
   return'// Generated actual-ABI transport only; shared JS decisions own every dependency/admission result.\nuse crate::translation::declaration_dependency_rules as rules;\n\n'+definitions.join('\n\n')+'\n';

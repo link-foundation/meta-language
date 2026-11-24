@@ -122,7 +122,7 @@ export async function generateGrammarLexerRules({ check = false, native = false 
     if (/\bcrate::/u.test(decorated)) throw new Error('the native lexical library has an unresolved crate-root reference');
     const notice = '// Generated from the complete shared grammar-lexer-rules.js and recorded source closure.\n// Do not edit by hand.\n';
     const rustSource = formatProductRuleSource(decorated);
-    const nativeFiles = partitionPortableRustLibrary(rustSource, { notice, directory: 'grammar_lexer_rules' });
+    const nativeFiles = partitionPortableRustLibrary(rustSource, { notice, directory: 'grammar_lexer_rules', reviewedStyles: true });
     const artifact = { schemaVersion: 1, model: policy.model, sourceSha256: policy.sourceSha256, closedSourceSha256: policy.closedSourceSha256,
       sourceClosure: policy.sourceClosure, formSourceSha256: policy.formSourceSha256, styleSha256: hash(readFileSync(nativeStyles)),
       definitions: emitted.definitions, assumptions: emitted.assumptions, encodings: emitted.encodings, rustSource, rustSha256: hash(rustSource),

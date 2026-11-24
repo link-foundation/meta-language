@@ -9,6 +9,7 @@ import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { DecoratorSet } from '../src/decorators.js';
 import { readProjectData, writeProjectData } from './project-data.mjs';
+import { applyReviewedRustSourceStyles, readOriginalBinaryRuleProducer } from './reviewed-rust-source-styles.mjs';
 
 const candidateMode = process.argv.includes('--metadata-buffer-candidate');
 const originalStyles = new URL('../../parity/self-translation/link-network-binary-rules-decorators.lino', import.meta.url);
@@ -410,7 +411,7 @@ if (candidateMode) {
   candidateReceipt = {...result.receipt, baselineSourceSha256: digest(previousSource), baselineStylesSha256: digest(readFileSync(originalStyles)),
     candidateSourceSha256: digest(readFileSync(source)), checkedDeclarations: emitted.definitions.length,
     generationPolicy: candidatePolicy, generationPolicySha256: digest(readFileSync(candidatePolicyFile)), stringPreludeSha256: digest(stringPrelude),
-    generatorSha256: digest(readFileSync(new URL(import.meta.url))),
+    generatorSha256: digest(readOriginalBinaryRuleProducer(readFileSync(new URL(import.meta.url), 'utf8'))),
     candidateStyleBuilderSha256: digest(readFileSync(new URL('./binary-metadata-candidate-styles.mjs', import.meta.url))),
     candidateStylesSha256: digest(expected),
     historicalReplacementContexts: historical.decorators.filter(row => row.when.some(([field, value]) => field === 'scope' && value === 'formatted-item'))
@@ -446,6 +447,12 @@ if (candidateMode) {
   if (process.argv.includes('--check')) {
     if (JSON.stringify(readProjectData(receiptFile)) !== JSON.stringify(candidateReceipt)) throw new Error('candidate binary generation receipt is stale');
   } else writeProjectData(receiptFile, candidateReceipt);
+}
+if (!candidateMode) {
+  const target = destination.pathname.split('/').at(-2);
+  for (const output of outputs) {
+    output[1] = applyReviewedRustSourceStyles(`rust/src/${target}/${output[0]}`, output[1], format);
+  }
 }
 mkdirSync(destination, { recursive: true });
 for (const [name, expected] of outputs) {

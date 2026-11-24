@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {tokenize} from '../src/translation/lexer.js';
 import {readSourceTextRustBlock} from './source-text-byte-library-style.mjs';
+import {applyReviewedRustSourceStyles} from './reviewed-rust-source-styles.mjs';
+import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
 
 export {readPortableSourceLintStyles} from './portable-source-lint-style.mjs';
 
@@ -202,7 +204,7 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
 }
 
 /** Place complete top-level items in bounded child modules with the same API. */
-export function partitionPortableRustLibrary(source, {notice = '', directory, maximumLines = 900} = {}) {
+export function partitionPortableRustLibrary(source, {notice = '', directory, maximumLines = 900, reviewedStyles = false} = {}) {
   assert.match(directory, /^[a-z][a-z_0-9]*$/u, 'a portable library has one explicit child-module directory');
   assert.ok(Number.isSafeInteger(maximumLines) && maximumLines > 0 && maximumLines < 990);
   const lines = source.trimEnd().split('\n');
@@ -273,8 +275,12 @@ export function partitionPortableRustLibrary(source, {notice = '', directory, ma
       input: names.map(name => `use super::${name};\n`).join(''), encoding: 'utf8',
     }) : {status: 0, stdout: ''};
     assert.equal(imports.status, 0, imports.stderr ?? imports.error?.message);
-    const text = notice + imports.stdout + (imports.stdout ? '\n' : '') + part + '\n';
+    const path = `${directory}/part_${index + 1}.rs`;
+    const partSource = notice + imports.stdout + (imports.stdout ? '\n' : '') + part + '\n';
+    const text = reviewedStyles
+      ? applyReviewedRustSourceStyles(`rust/src/translation/${path}`, partSource, formatProductRuleSource)
+      : partSource;
     assert.ok(text.split('\n').length < 1000, 'explicit sibling imports retain a bounded child module');
-    return {path: `${directory}/part_${index + 1}.rs`, source: text};
+    return {path, source: text};
   })];
 }
