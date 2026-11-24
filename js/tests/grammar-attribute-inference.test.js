@@ -3,7 +3,7 @@ import test from 'node:test';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { compileGrammar, createDynamicMetaLanguage, DynamicMetaLanguage, inferGrammarAttributeAction,
   metaLanguageArchiveToBinary, readMetaLanguageArchiveBinary, runDynamicLanguageCommand } from '../src/index.js';
-import { parseGrammarLinks, renderGrammarLinks } from '../src/grammar-links.js';
+import { parseGrammarLinks, percentEncodeLinksText, renderGrammarLinks } from '../src/grammar-links.js';
 import { readStructuredDataLino, structuredDataToLino } from '../src/structured-data-links.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 import { encodeFormalConceptDefinition, proveFormalConceptEquivalence,
@@ -13,6 +13,17 @@ import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const fixtureFile = 'parity/fixtures/grammar-attribute-inference.lino';
 const fixture = readProjectData(new URL('../../' + fixtureFile, import.meta.url));
+
+function replaceInferredAction(links, request, unique) {
+  const canonicalAction = value => {
+    const grammar = parseGrammarLinks('(grammar (start action))\n(rule action normal empty (action (setAttribute '
+      + percentEncodeLinksText(request.attribute) + ' ' + value + ')))\n');
+    return renderGrammarLinks(grammar).split(' (action ')[1].slice(0, -2);
+  };
+  const edited = links.replace(canonicalAction(unique.candidate), canonicalAction(unique.mutation));
+  assert.notEqual(edited, links);
+  return edited;
+}
 
 test('concrete attribute observations constrain executable native actions', context => {
   const [major, minor] = process.versions.node.split('.').map(Number);
@@ -25,7 +36,7 @@ test('concrete attribute observations constrain executable native actions', cont
   const links = renderGrammarLinks(result.grammar);
   assert.ok(links.includes(unique.doc));
   assert.equal(original.rule(request.rule).action, undefined);
-  for (const [listing, value] of [[links, unique.value], [links.replace(unique.candidate, unique.mutation), unique.mutatedValue]]) {
+  for (const [listing, value] of [[links, unique.value], [replaceInferredAction(links, request, unique), unique.mutatedValue]]) {
     const parser = compileGrammar(parseGrammarLinks(listing));
     const outcome = parser.parseTree(unique.holdout);
     assert.equal(outcome.ok, true);
@@ -92,10 +103,11 @@ test('installed inferred actions translate after archive reload and invalidate o
   const translated = (language, input, expected) => {
     const parsed = language.parse(source.id, input);
     assert.ok(parsed.ok);
-    assert.equal(parsed.tree.attributes[request.attribute], expected);
+    assert.equal(parsed.tree.selection.mode, 'grammar-root');
+    assert.equal(parsed.tree.root.attributes[request.attribute], expected);
     const javascript = language.translateAttributes(source.id, input, 'JavaScript', [selection, selection]);
     const rust = language.translateAttributes(source.id, input, 'Rust', [selection, selection]);
-    assert.equal(javascript.parsed.tree.attributes[request.attribute], expected);
+    assert.deepEqual(javascript.parsed.tree, parsed.tree);
     assert.equal(javascript.output.language, 'JavaScript');
     assert.equal(rust.output.language, 'Rust');
     const lines = String(expected) + '\n' + String(expected) + '\n';
@@ -123,8 +135,7 @@ test('installed inferred actions translate after archive reload and invalidate o
   assert.equal(verifyFormalConceptEquivalence(first, first, certificate), true);
 
   const listing = renderGrammarLinks(installed.sources[0].grammar);
-  const changedListing = listing.replace(unique.candidate, unique.mutation);
-  assert.notEqual(changedListing, listing);
+  const changedListing = replaceInferredAction(listing, request, unique);
   const changed = restored(installed.extend([{ ...source, grammar: parseGrammarLinks(changedListing) }], { replace: true }));
   const second = translated(changed, unique.holdout, unique.mutatedValue);
   assert.equal(verifyFormalConceptEquivalence(first, second, certificate), false);

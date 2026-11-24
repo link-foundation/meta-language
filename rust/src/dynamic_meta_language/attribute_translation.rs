@@ -19,7 +19,7 @@ use crate::typed_program_links::{
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DynamicAttributeSelection {
-    /// Child indices in the concrete tree, including trivia.
+    /// Child indices from the invoked production, including trivia.
     pub path: Vec<usize>,
     /// Required concrete node or token kind.
     pub kind: String,
@@ -139,6 +139,14 @@ impl DynamicMetaLanguage {
             .ok_or_else(|| {
                 fail("attribute translation needs an accepted unambiguous concrete tree")
             })?;
+        let tree = match tree {
+            SyntaxTree::Embed {
+                root,
+                selection: Some(selection),
+                ..
+            } if selection.mode == "grammar-root" => root.as_ref(),
+            tree => tree,
+        };
         let effects = selections.iter().map(|selection| {
             let value = select_attribute(tree, selection).ok_or_else(|| {
                 fail("attribute translation selection does not identify a concrete attributed occurrence")

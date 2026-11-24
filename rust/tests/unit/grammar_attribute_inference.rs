@@ -20,6 +20,30 @@ fn text(value: &Value) -> &str {
     value.as_str().unwrap()
 }
 
+fn replace_inferred_action(listing: &str, attribute: &str, unique: &Value) -> String {
+    let canonical_action = |value: &Value| {
+        let attribute = meta_language::percent_encode_links_text(attribute);
+        let input = format!(
+            "(grammar (start action))\n(rule action normal empty (action (setAttribute {attribute} {})))\n",
+            text(value),
+        );
+        let serialized = render_grammar_links(&parse_grammar_links(&input).unwrap());
+        serialized
+            .split_once(" (action ")
+            .unwrap()
+            .1
+            .strip_suffix(")\n")
+            .unwrap()
+            .to_owned()
+    };
+    let changed = listing.replace(
+        &canonical_action(&unique["candidate"]),
+        &canonical_action(&unique["mutation"]),
+    );
+    assert_ne!(changed, listing);
+    changed
+}
+
 fn observed_value(value: &Value) -> OperationValue {
     match value {
         Value::String(text) => OperationValue::Text(text.clone()),
@@ -158,10 +182,19 @@ fn installed_inferred_actions_translate_after_reload_and_invalidate_old_semantic
             .parse(source_id, input.as_bytes(), &DynamicParseOptions::default())
             .unwrap();
         assert!(parsed.outcome.ok);
-        let Some(SyntaxTree::Node {
+        let Some(SyntaxTree::Embed {
+            root,
+            selection: Some(selection),
+            ..
+        }) = parsed.outcome.tree.as_ref()
+        else {
+            panic!("expected the installed grammar's invocation boundary");
+        };
+        assert_eq!(selection.mode, "grammar-root");
+        let SyntaxTree::Node {
             attributes: Some(attributes),
             ..
-        }) = parsed.outcome.tree
+        } = root.as_ref()
         else {
             panic!("expected attributes on the installed language's concrete tree");
         };
@@ -256,8 +289,7 @@ fn installed_inferred_actions_translate_after_reload_and_invalidate_old_semantic
     ));
 
     let listing = render_grammar_links(&installed.sources()[0].grammar);
-    let changed_listing = listing.replace(text(&unique["candidate"]), text(&unique["mutation"]));
-    assert_ne!(changed_listing, listing);
+    let changed_listing = replace_inferred_action(&listing, request.attribute, unique);
     let replace = DynamicMetaLanguageOptions {
         replace: true,
         ..DynamicMetaLanguageOptions::default()
@@ -346,7 +378,7 @@ fn concrete_attribute_observations_constrain_executable_native_actions() {
             .is_none()
     );
     let options = FeatureParseOptions::default();
-    let mutated = listing.replace(candidate, text(&unique["mutation"]));
+    let mutated = replace_inferred_action(&listing, request.attribute, unique);
     for (listing, expected) in [
         (&listing, &unique["value"]),
         (&mutated, &unique["mutatedValue"]),

@@ -384,8 +384,12 @@ export class DynamicMetaLanguage {
     }
     const parsed = this.parse(sourceIdentifier, input, { ...options, ambiguity: 'reject', recovery: 'reject' });
     if (!parsed.ok || !parsed.tree) fail('attribute translation needs an accepted unambiguous concrete tree');
+    // The qualification wrapper is retained in the CST. Selection paths start
+    // at the invoked production and cannot cross into another embedded grammar.
+    const root = parsed.tree.type === 'embed' && parsed.tree.selection?.mode === 'grammar-root'
+      ? parsed.tree.root : parsed.tree;
     const effects = selections.map(({ path, kind, attribute }) => {
-      let node = parsed.tree;
+      let node = root;
       for (const index of path) node = node?.children?.[index];
       if (!node || node.kind !== kind || node.trivia || !node.attributes || !Object.hasOwn(node.attributes, attribute)) {
         fail('attribute translation selection does not identify a concrete attributed occurrence');
