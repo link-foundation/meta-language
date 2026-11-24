@@ -13,6 +13,18 @@ const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').up
 let history;
 let integrationSources;
 
+/** Preserve the exact workflow before selecting the supported observation toolchain. */
+export function restoreRustObservationToolchain(source, path) {
+  if (path !== '.github/workflows/rust.yml' ||
+      pin(source).sha256 !== 'f75fb07e2cb4da8896bb6152649499f124c8352905d42de700c1fa5f43335df6') return source;
+  const selected = '      # The native assertions cover Rust >=1.90.0 <1.100.0.\n      - name: Setup Rust\n        uses: dtolnay/rust-toolchain@1.99.0';
+  const previous = '      - name: Setup Rust\n        uses: dtolnay/rust-toolchain@stable';
+  assert.equal(source.split(selected).length, 5);
+  const restored = source.replaceAll(selected, previous);
+  assert.equal(pin(restored).sha256, 'e006605c0c28530a461717e64cf031f42087b9199a8604231bb035a8dce58eba');
+  return restored;
+}
+
 /** Select certified predecessors for exact integrated source files. */
 export function restoreIntegrationSource(source, path) {
   if (path !== 'rust/Cargo.toml' && path !== 'js/src/translation/types.js') return source;
@@ -35,6 +47,7 @@ export function restoreIntegrationSource(source, path) {
  * complete independently pinned current source gets an original source view. */
 export function restoreCurrentCiRepairSource(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
+  source=restoreRustObservationToolchain(source,path);
   source=restoreIntegrationSource(source,path);
   source=restoreCurrentNativeHostSource(source,path);
   source=restoreBooleanValueGuardHistory(source,path);
