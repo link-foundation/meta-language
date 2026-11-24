@@ -5,6 +5,7 @@ import {readCollectionConstructionField as field,readCollectionConstructionEleme
 import {readJavaScriptClosedClassObservationOperationOperands} from './javascript-class-observation-rules.js';
 import {readRecordFieldWriteName} from './record-write-rules.js';
 import {containsJavaScriptClosedClassBrand} from './javascript-class-observation-rules.js';
+import {acceptLinkedJavaScriptSourceException} from './source-exception-rules.js';
 /** @returns {string} */
 export function readJavaScriptClassOwnerModel(){return 'closed JavaScript class data owners 1';}
 /** @param {string} left @param {string} right @param {boolean} leftOpen @param {boolean} rightOpen @returns {string} */
@@ -29,14 +30,18 @@ function payload(forms,texts,starts,counts,labels,targets,node,owner,depth){if(n
  * cannot certify the constructor's returned instance.
  * @param {string[]} forms @param {string[]} texts @param {number[]} starts @param {number[]} counts @param {string[]} labels @param {number[]} targets @param {number} node @param {string} owner @param {string[]} bindings @param {number[]} values @param {number} depth @returns {number} */
 function fresh(forms,texts,starts,counts,labels,targets,node,owner,bindings,values,depth){
- if(node<0||depth>256)return -1;const type=field(starts,counts,labels,targets,node,'type');if(!carries(forms,texts,starts,counts,labels,targets,type,owner,0))return -2;
+ if(node<0||depth>256)return -1;
  const kind=word(forms,texts,starts,counts,labels,targets,node,'k');
+ // Abrupt paths produce no instance. An abrupt operand in a let remains
+ // distinct from an ordinary value that simply has an unrelated type.
+ if(kind==='abort'||acceptLinkedJavaScriptSourceException(kind,word(forms,texts,starts,counts,labels,targets,node,'op')))return -3;
+ const type=field(starts,counts,labels,targets,node,'type');if(!carries(forms,texts,starts,counts,labels,targets,type,owner,0))return -2;
  if(kind==='referenceAllocate'){const reference=field(starts,counts,labels,targets,type,'reference');return reference>=0&&text(forms,reference)==='boolean'&&text(texts,reference)==='true'&&payload(forms,texts,starts,counts,labels,targets,field(starts,counts,labels,targets,node,'value'),owner,0)?node:-1;}
  if(kind==='var'){const name=word(forms,texts,starts,counts,labels,targets,node,'name');for(let at=bindings.length-1;at>=0;at-=1)if(text(bindings,at)===name)return number(values,at);return -1;}
- if(kind==='let'){const value=field(starts,counts,labels,targets,node,'value'),origin=fresh(forms,texts,starts,counts,labels,targets,value,owner,bindings,values,depth+1);return fresh(forms,texts,starts,counts,labels,targets,field(starts,counts,labels,targets,node,'body'),owner,bindings.concat([word(forms,texts,starts,counts,labels,targets,node,'name')]),values.concat([origin]),depth+1);}
+ if(kind==='let'){const value=field(starts,counts,labels,targets,node,'value'),origin=fresh(forms,texts,starts,counts,labels,targets,value,owner,bindings,values,depth+1);if(origin===-3)return -3;return fresh(forms,texts,starts,counts,labels,targets,field(starts,counts,labels,targets,node,'body'),owner,bindings.concat([word(forms,texts,starts,counts,labels,targets,node,'name')]),values.concat([origin]),depth+1);}
  if(kind==='print'||kind==='cellWrite')return fresh(forms,texts,starts,counts,labels,targets,field(starts,counts,labels,targets,node,'body'),owner,bindings,values,depth+1);
- if(kind==='if'){const left=fresh(forms,texts,starts,counts,labels,targets,field(starts,counts,labels,targets,node,'then'),owner,bindings,values,depth+1),right=fresh(forms,texts,starts,counts,labels,targets,field(starts,counts,labels,targets,node,'else'),owner,bindings,values,depth+1);return left>=0&&left===right?left:-1;}
- if(kind==='tuple'){let origin=-2;const items=field(starts,counts,labels,targets,node,'items');if(items<0)return -1;for(let at=0;at<number(counts,items);at+=1){const value=fresh(forms,texts,starts,counts,labels,targets,element(starts,counts,targets,items,at),owner,bindings,values,depth+1);if(value===-1||value>=0&&origin>=0&&value!==origin)return -1;if(value>=0)origin=value;}return origin;}
+ if(kind==='if'){const left=fresh(forms,texts,starts,counts,labels,targets,field(starts,counts,labels,targets,node,'then'),owner,bindings,values,depth+1),right=fresh(forms,texts,starts,counts,labels,targets,field(starts,counts,labels,targets,node,'else'),owner,bindings,values,depth+1);if(left===-3)return right;if(right===-3)return left;return left>=0&&left===right?left:-1;}
+ if(kind==='tuple'){let origin=-2;const items=field(starts,counts,labels,targets,node,'items');if(items<0)return -1;for(let at=0;at<number(counts,items);at+=1){const value=fresh(forms,texts,starts,counts,labels,targets,element(starts,counts,targets,items,at),owner,bindings,values,depth+1);if(value===-3)return -3;if(value===-1||value>=0&&origin>=0&&value!==origin)return -1;if(value>=0)origin=value;}return origin;}
  if(kind==='tupleIndex')return fresh(forms,texts,starts,counts,labels,targets,field(starts,counts,labels,targets,node,'object'),owner,bindings,values,depth+1);
  return -1;
 }
