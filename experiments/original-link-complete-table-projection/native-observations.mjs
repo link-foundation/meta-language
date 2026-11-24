@@ -8,7 +8,6 @@ import {LinkNetwork,encodeLinkNetworkBinary,decodeLinkNetworkBinary,readStructur
 import {TYPED_PROGRAM_LINKS_SCHEMA as schema} from '../../js/src/typed-program-links.js';
 import {parseJavaScript} from '../../js/src/translation/javascript.js';
 import {checkProgram} from '../../js/src/translation/check.js';
-import {emitRust} from '../../js/src/translation/emit-rust.js';
 import {emitJavaScript} from '../../js/src/translation/emit-javascript.js';
 import {tokenize} from '../../js/src/translation/lexer.js';
 import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
@@ -19,8 +18,9 @@ import {projectOriginalLinkCompleteCertificateTables} from './rules.mjs';
 import {projectOriginalLinkCompleteTables,ORIGINAL_LINK_COMPLETE_TABLE_POLICY as policy} from './transport.mjs';
 import {originalLinkCompleteTablePolicy} from './policy.mjs';
 import {createCompleteRustSourceArchives,replayCompleteRustSourceArchives,readCanonicalArchiveTransportSource,requireSuccessfulSourceArchive} from './archive-transport.mjs';
+import {ORIGINAL_LINK_COMPLETE_TABLE_MODEL_COMMIT,regenerateHistoricalOriginalLinkCompleteTable} from './historical-table-generation.mjs';
 
-export const ORIGINAL_LINK_COMPLETE_TABLE_MODEL_COMMIT='9a835e469572341e6a8e5c6e9fe6f40b8655dfbe';
+export {ORIGINAL_LINK_COMPLETE_TABLE_MODEL_COMMIT};
 const digests={
  'policy.mjs':'e869b0164d92e28c4e34277ec0ac9a24e0476ee5e104042748f2f35a3e959970',
  'rules.mjs':'da3815634f0ec09afdefd432c817e0368c73749fd6ca88fbc86db82f8beb5952',
@@ -175,7 +175,8 @@ function prepareOriginalLinkCompleteTableSources(){
  const transportSources=[readCanonicalArchiveTransportSource()];
  const modelSources=verifyOriginalLinkCompleteTableNativeModel(),source=readFileSync(new URL('./rules.mjs',import.meta.url),'utf8'),artifact=readProjectData(new URL('./data/native-definitions.lino',import.meta.url));assert.deepEqual(readProjectData(new URL('./data/policy.lino',import.meta.url)),originalLinkCompleteTablePolicy);assert.equal(originalLinkCompleteTablePolicy.translation.referenceSemantics,false);
  const saved=LinkNetwork.fromLino(readFileSync(new URL('./data/native-definitions.lino',import.meta.url),'utf8'));assert.deepEqual(readStructuredDataLino(saved.toLino()),artifact);assert.deepEqual(readStructuredDataLino(decodeLinkNetworkBinary(encodeLinkNetworkBinary(saved)).toLino()),artifact);
- const program=checkProgram(parseJavaScript(source,originalLinkCompleteTablePolicy.translation)),rust=emitRust(program),javascript=emitJavaScript(program);assert.equal(sha256(source),artifact.sourceSha256);assert.deepEqual(rust.definitions,artifact.declarations);assert.equal(rust.text,artifact.completeRust);assert.equal(program.items.length,66);assert.equal(rust.definitions.length,66);assert.deepEqual(program.items.map(row=>row.fullName),artifact.declarationNames);
+ const regenerated=regenerateHistoricalOriginalLinkCompleteTable();assert.deepEqual(regenerated,artifact);assert.equal(regenerated.declarations.length,66);
+ const program=checkProgram(parseJavaScript(source,originalLinkCompleteTablePolicy.translation)),javascript=emitJavaScript(program);assert.equal(sha256(source),artifact.sourceSha256);assert.equal(program.items.length,66);assert.deepEqual(program.items.map(row=>row.fullName),artifact.declarationNames);
  const callee=program.declarations.get('projectOriginalLinkCompleteCertificateTables'),vector={kind:'array',element:{kind:'float'}};assert.deepEqual(callee.params.map(row=>row.name),parameterOrder);for(const[index,row]of callee.params.entries()){assert.deepEqual(row.type,index<2?{kind:'float'}:vector);assert.equal(row.guard,null);assert.equal(row.default,null);}assert.deepEqual(callee.ret,{kind:'array',element:vector});const target=javascript.mappings.find(row=>row.kind==='function'&&row.source===callee.fullName)?.target;
  const native=artifact.completeRust;assert.equal(textBytes(native).length,nativeReceipt.sourceBytes);assert.equal(sha256(native),nativeReceipt.sourceSha256);for(const definition of artifact.declarations)assert.ok(native.includes(definition));
  return freeze({model:artifact.model,modelSources,transportSources,native,header:nativeInterface(native),target,javaScriptText:javascript.text,javaScriptSha256:sha256(javascript.text),

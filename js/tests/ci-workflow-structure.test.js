@@ -1338,10 +1338,33 @@ const RAW_EMISSION_FRESHNESS_REVISION = Object.freeze({
   current: RAW_SOURCE_PACKAGE_STEPS[0][1].replace('generate-raw.mjs', 'generate-raw-current-emission.mjs'),
 });
 
-function readRawEmissionFreshnessPredecessor(step) {
-  const revision = RAW_EMISSION_FRESHNESS_REVISION;
+const packageFreshnessRevisions = new Map([
+  RAW_EMISSION_FRESHNESS_REVISION,
+  {
+    name: COMPLETE_TABLE_PACKAGE_STEPS[0][0],
+    previous: COMPLETE_TABLE_PACKAGE_STEPS[0][1],
+    current: COMPLETE_TABLE_PACKAGE_STEPS[0][1].replace('generate.mjs', 'historical-table-generation.mjs'),
+  },
+  {
+    name: 'Check generated binary link network rules',
+    previous: 'node js/scripts/generate-link-network-binary-rules.mjs --check',
+    current: 'node experiments/binary-metadata-buffer/historical-translation.mjs legacy',
+  },
+  {
+    name: BINARY_METADATA_PACKAGE_STEPS[1][0],
+    previous: BINARY_METADATA_PACKAGE_STEPS[1][1],
+    current: 'node ../experiments/binary-metadata-buffer/historical-translation.mjs candidate',
+  },
+  {
+    name: BINARY_RECORD_PACKAGE_STEPS[0][0],
+    previous: BINARY_RECORD_PACKAGE_STEPS[0][1],
+    current: 'node ../experiments/binary-metadata-buffer/historical-translation.mjs record',
+  },
+].map(revision => [revision.name, revision]));
+
+function readPackageFreshnessPredecessor(step, revision) {
   assert.equal(step.name, revision.name);
-  assert.equal(step.run.trim(), revision.current, 'the exact current raw freshness driver is required');
+  assert.equal(step.run.trim(), revision.current, 'the exact package freshness driver is required');
   assert.equal(step.text.split(revision.current).length, 2, 'only one complete command may be revised');
   assert.equal(step.text.split(revision.previous).length, 1, 'the obsolete generator cannot remain as an extra command');
   const previous = {...step, run: step.run.replace(revision.current, revision.previous),
@@ -1350,16 +1373,18 @@ function readRawEmissionFreshnessPredecessor(step) {
   return previous;
 }
 
-test('raw emission freshness retains the exact historical gate around one authenticated current provider', () => {
-  const step = jobs('js.yml').get('package-checks').steps.find(row => row.name === RAW_EMISSION_FRESHNESS_REVISION.name);
-  const previous = readRawEmissionFreshnessPredecessor(step);
-  assert.equal(previous.run.trim(), RAW_SOURCE_PACKAGE_STEPS[0][1]);
-  assert.equal(packageStepSignature(previous, true), RAW_SOURCE_PACKAGE_STEPS[0][2]);
-  for (const replacement of [RAW_EMISSION_FRESHNESS_REVISION.previous,
-    RAW_EMISSION_FRESHNESS_REVISION.current.replace('--check', '--record-attempt'),
-    RAW_EMISSION_FRESHNESS_REVISION.current + '\nnode bypass.mjs']) {
-    assert.throws(() => readRawEmissionFreshnessPredecessor({...step, run: replacement,
-      text: step.text.replace(RAW_EMISSION_FRESHNESS_REVISION.current, replacement)}), assert.AssertionError);
+test('package artifact checks retain their exact workflow gates and can access pinned compiler history', () => {
+  const sources = jobs('js.yml').get('package-checks').steps;
+  assert.match(sources.find(row => row.text.includes('actions/checkout@')).text, /fetch-depth: 0/u);
+  const native = jobs('rust.yml').get('test').steps;
+  assert.match(native.find(row => row.text.includes('actions/checkout@')).text, /fetch-depth: 0/u);
+  for (const revision of packageFreshnessRevisions.values()) {
+    const step = sources.find(row => row.name === revision.name);
+    assert.equal(readPackageFreshnessPredecessor(step, revision).run.trim(), revision.previous);
+    for (const replacement of [revision.previous, revision.current + '\nnode bypass.mjs']) {
+      assert.throws(() => readPackageFreshnessPredecessor({...step, run: replacement,
+        text: step.text.replace(revision.current, replacement)}, revision), assert.AssertionError);
+    }
   }
 });
 
@@ -2528,7 +2553,8 @@ function checkPackageStepConservation(parsed) {
       const owner = id === 'test' ? 'package' : group ?? 'all';
       assert.equal(owner, baseline.owner === 'all' ? (id === 'test' ? 'package' : 'all') : baseline.owner,
         `package step owner changed: ${step.name}`);
-      const preservedStep = step.name === RAW_EMISSION_FRESHNESS_REVISION.name ? readRawEmissionFreshnessPredecessor(step) : step;
+      const revision = packageFreshnessRevisions.get(step.name);
+      const preservedStep = revision ? readPackageFreshnessPredecessor(step, revision) : step;
       if (baseline.addition) assert.equal(preservedStep.run.trim(), baseline.command, `additive gate command changed: ${step.name}`);
       assert.equal(packageStepSignature(preservedStep, baseline.addition), baseline.hash, `package step semantics changed: ${step.name}`);
       if (id === 'package-checks') {

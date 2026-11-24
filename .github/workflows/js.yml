@@ -1146,7 +1146,7 @@ jobs:
       - name: Check complete original link table projection kernel
         if: ${{ !cancelled() && matrix.group == 'source-model-tables' }}
         working-directory: js
-        run: node ../experiments/original-link-complete-table-projection/generate.mjs --check
+        run: node ../experiments/original-link-complete-table-projection/historical-table-generation.mjs --check
 
       - name: Run complete original link table projection checks
         if: ${{ !cancelled() && matrix.group == 'source-model-tables' }}
@@ -1174,11 +1174,13 @@ jobs:
 
       - name: Check generated binary metadata buffer candidate
         if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
-        run: node experiments/binary-metadata-buffer/historical-translation.mjs candidate
+        working-directory: js
+        run: node ../experiments/binary-metadata-buffer/historical-translation.mjs candidate
 
       - name: Check generated record-local binary link network rules
         if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
-        run: node experiments/binary-metadata-buffer/historical-translation.mjs record
+        working-directory: js
+        run: node ../experiments/binary-metadata-buffer/historical-translation.mjs record
 
       - name: Check generated buffered binary link network rules
         if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
