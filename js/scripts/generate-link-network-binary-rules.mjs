@@ -9,6 +9,7 @@ import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { DecoratorSet } from '../src/decorators.js';
 import { readProjectData, writeProjectData } from './project-data.mjs';
+import { applyReviewedBinaryFramingStyles, restoreBinaryNetworkFramingGeneratorSource } from './binary-network-compiler-clone-styles.mjs';
 
 const candidateMode = process.argv.includes('--metadata-buffer-candidate');
 const originalStyles = new URL('../../parity/self-translation/link-network-binary-rules-decorators.lino', import.meta.url);
@@ -410,14 +411,15 @@ if (candidateMode) {
   candidateReceipt = {...result.receipt, baselineSourceSha256: digest(previousSource), baselineStylesSha256: digest(readFileSync(originalStyles)),
     candidateSourceSha256: digest(readFileSync(source)), checkedDeclarations: emitted.definitions.length,
     generationPolicy: candidatePolicy, generationPolicySha256: digest(readFileSync(candidatePolicyFile)), stringPreludeSha256: digest(stringPrelude),
-    generatorSha256: digest(readFileSync(new URL(import.meta.url))),
+    generatorSha256: digest(restoreBinaryNetworkFramingGeneratorSource(readFileSync(new URL(import.meta.url), 'utf8'))),
     candidateStyleBuilderSha256: digest(readFileSync(new URL('./binary-metadata-candidate-styles.mjs', import.meta.url))),
     candidateStylesSha256: digest(expected),
     historicalReplacementContexts: historical.decorators.filter(row => row.when.some(([field, value]) => field === 'scope' && value === 'formatted-item'))
       .reduce((count, row) => count + row.actions.filter(action => action.op === 'replace').length, 0)};
 }
 const decorators = DecoratorSet.fromLino(readFileSync(styles, 'utf8'));
-const styled = styleBinaryItems(items, decorators);
+const initialStyles = styleBinaryItems(items, decorators);
+const styled = candidateMode ? initialStyles : applyReviewedBinaryFramingStyles(initialStyles, format);
 const groups = [];
 let current = [], lines = 0;
 for (const item of styled) {

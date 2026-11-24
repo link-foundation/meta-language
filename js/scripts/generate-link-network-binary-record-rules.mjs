@@ -5,11 +5,12 @@ import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {DecoratorSet} from '../src/decorators.js';
 import {readProjectData,writeProjectData} from './project-data.mjs';
+import {restoreBinaryNetworkFramingGeneratorSource} from './binary-network-compiler-clone-styles.mjs';
 
 assert.ok(process.argv.slice(2).every(argument=>argument==='--check'),
   'record generation accepts only --check and cannot rewrite historical compiler receipts');
 const producerFile=new URL('./generate-link-network-binary-rules.mjs',import.meta.url);
-const producer=readFileSync(producerFile,'utf8');
+const producer=restoreBinaryNetworkFramingGeneratorSource(readFileSync(producerFile,'utf8'));
 const digest=value=>createHash('sha256').update(value).digest('hex');
 assert.equal(digest(producer),'b69fe844f08f933f7cca47b3fc34139e606b7bd72cefb3fd3c6380d4301745c8');
 const primitiveFile=new URL('../src/link-network-binary-rules.js',import.meta.url);
@@ -46,6 +47,9 @@ const blockReturnReviewFile = new URL('../../parity/self-translation/binary-reco
 const blockReturnReview = readProjectData(blockReturnReviewFile);
 const {readBinaryRecordBlockReturnStyles} = await import('./binary-record-block-return-styles.mjs');
 derived.decorators.push(readBinaryRecordBlockReturnStyles(styleBinaryItems(items, new DecoratorSet(derived.decorators)), blockReturnReview));
+const cloneReviewFile = new URL('../../parity/self-translation/binary-network-ci-clone-review-138183525811.lino', import.meta.url);
+const {readBinaryNetworkCompilerCloneStyles} = await import('./binary-network-compiler-clone-styles.mjs');
+derived.decorators.push(readBinaryNetworkCompilerCloneStyles(styleBinaryItems(items, new DecoratorSet(derived.decorators)), 'link_network_binary_record_rules'));
 const expectedStyles = new DecoratorSet(derived.decorators).toLino();
 if (process.argv.includes('--check')) assert.equal(readFileSync(styles, 'utf8'), expectedStyles, 'record-local binary styles are fresh');
 else writeFileSync(styles, expectedStyles);
@@ -63,6 +67,8 @@ globalThis[Symbol.for('meta-language binary record generation')] = {
   blockReturnReview: {sourceSha256:createHash('sha256').update(readFileSync(blockReturnReviewFile)).digest('hex'),
     styleBuilderSha256:createHash('sha256').update(readFileSync(new URL('./binary-record-block-return-styles.mjs', import.meta.url))).digest('hex'),
     logSha256:blockReturnReview.capture.logSha256, reviewedBindingReturns:3},
+  cloneReview: {sourceSha256:createHash('sha256').update(readFileSync(cloneReviewFile)).digest('hex'),
+    reviewedCloneCorrections:60},
 };`;
 
 const replacements=[

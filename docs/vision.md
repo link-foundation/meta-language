@@ -4278,6 +4278,11 @@ scheduling change.
   renames through generation decorators, preserving the frozen producer and
   all checked declarations. The replay rejects stale or ambiguous contexts,
   overlapping edits, missing diagnostic corrections and identifier capture.
+  The Rust 1.100.0 review of binary framing and record rules binds each
+  redundant clone to its compiler location, complete function and module in the
+  hosted run. Each generation path applies its own reviewed replacements to
+  those formatted functions. The frozen metadata buffer candidate continues to
+  verify its complete recorded producer and original output.
   Rendered review never acquires invented machine applicability or substitutes
   for native compilation and execution in CI.
 - Full acceptance and native evidence stages execute in CI. Local validation

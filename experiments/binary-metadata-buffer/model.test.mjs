@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {restoreBinaryNetworkFramingGeneratorSource} from '../../js/scripts/binary-network-compiler-clone-styles.mjs';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
@@ -39,7 +40,12 @@ test('the candidate generation receipt binds the explicit native model, source, 
   assert.equal(receipt.candidateSourceSha256,gap.candidate.sha256);
   assert.equal(receipt.baselineSourceSha256,gap.baseline.sha256);
   assert.equal(receipt.baselineStylesSha256,gap.nativeGeneration.originalStylesSha256);
-  assert.equal(receipt.generatorSha256,digest('js/scripts/generate-link-network-binary-rules.mjs'));
+  const actualProducer=readFileSync(new URL('js/scripts/generate-link-network-binary-rules.mjs',root),'utf8');
+  const predecessor=restoreBinaryNetworkFramingGeneratorSource(actualProducer);
+  assert.equal(receipt.generatorSha256,createHash('sha256').update(predecessor).digest('hex'));
+  assert.notEqual(predecessor,actualProducer);
+  assert.equal(restoreBinaryNetworkFramingGeneratorSource(predecessor),predecessor);
+  assert.equal(restoreBinaryNetworkFramingGeneratorSource(actualProducer+'\n'),actualProducer+'\n');
   assert.equal(receipt.candidateStyleBuilderSha256,digest('js/scripts/binary-metadata-candidate-styles.mjs'));
   assert.equal(receipt.candidateStylesSha256,digest('experiments/binary-metadata-buffer/native-styles.lino'));
   assert.equal(receipt.generationPolicySha256,digest('experiments/binary-metadata-buffer/native-policy.lino'));
