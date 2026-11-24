@@ -193,9 +193,12 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
     }
   }
   if (!signaturesOnly && from === 'JavaScript' && to === 'Rust' && set.size === 0
-    && !items.some(item => isMarker(item) || ['ERROR', 'import_statement', 'export_statement'].includes(item.term))
-    && usesRelativeElementCall(parsed.tree, bytes)) {
-    const complete = emitCompleteRelativeElementProgram(text, { utf16Strings: representation, referenceSemantics: references || undefined });
+    && !items.some(item => isMarker(item) || ['ERROR', 'import_statement', 'export_statement'].includes(item.term))) {
+    const spans = new Set();
+    collectRelativeElementCallSpans(parsed.tree, bytes, spans);
+    const complete = spans.size === 0 ? null : emitCompleteRelativeElementProgram(text, spans, {
+      utf16Strings: representation, referenceSemantics: references || undefined,
+    });
     if (complete !== null) {
       const tail = `\n\n${RUST_ALLOW}\n\n${complete}`;
       const standaloneHeader = `${HEADER}source=${from} target=${to} sha256=${sha256(text)} bytes=${bytes.length} mode=standalone`;
@@ -281,19 +284,34 @@ function restoreSourceEnvelope(header, bytes, target) {
   return null;
 }
 
-function usesRelativeElementCall(node, bytes) {
+function collectRelativeElementCallSpans(node, bytes, spans) {
   if (node.term === 'call_expression') {
     const member = node.children.find(child => child.field === 'function' && child.term === 'member_expression');
     const name = member?.children.find(child => child.field === 'property');
-    if (name && readPrimitiveMethodLoweringForm('array', bytes.subarray(name.span.byteRange.start, name.span.byteRange.end).toString('utf8')) === 'relative-element-template') return true;
+    if (name && readPrimitiveMethodLoweringForm('array', bytes.subarray(name.span.byteRange.start, name.span.byteRange.end).toString('utf8')) === 'relative-element-template') {
+      const { start, end } = node.span.byteRange;
+      const prefixLength = bytes.subarray(0, start).toString('utf8').length;
+      const callLength = bytes.subarray(start, end).toString('utf8').length;
+      spans.add(`${prefixLength}:${prefixLength + callLength}`);
+    }
   }
-  return node.children.some(child => usesRelativeElementCall(child, bytes));
+  for (const child of node.children) collectRelativeElementCallSpans(child, bytes, spans);
 }
 
-function emitCompleteRelativeElementProgram(source, { utf16Strings, referenceSemantics }) {
+function containsCheckedArrayRelativeElement(value, spans) {
+  if (!value || typeof value !== 'object') return false;
+  if (value.k === 'apply' && value.fn?.k === 'lambda' && value.args?.[0]?.type?.kind === 'array' && value.fn.span) {
+    const { start, end } = value.fn.span;
+    if (spans.has(`${start}:${end}`)) return true;
+  }
+  return Object.values(value).some(child => containsCheckedArrayRelativeElement(child, spans));
+}
+
+function emitCompleteRelativeElementProgram(source, spans, { utf16Strings, referenceSemantics }) {
   try {
     const program = checkProgram(parseJavaScript(source, { referenceSemantics }));
     if (!program.main?.effects.length || program.imports?.length || program.externals?.length) return null;
+    if (!containsCheckedArrayRelativeElement(program, spans)) return null;
     if (utf16Strings) program.utf16Strings = true;
     return emitRust(program, { arrayConsumption: true }).text;
   } catch (error) {

@@ -1,5 +1,5 @@
 //! Existing item emission with an internal representation context.
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::binding::declared_signatures;
 use super::representation::Context;
@@ -9,6 +9,7 @@ use super::{
 };
 use crate::LinkNetwork;
 use crate::query::QueryIndex;
+use crate::translation::Span;
 use crate::translation::check::check_program;
 use crate::translation::diagnostics::TranslationError;
 use crate::translation::emit_common::Emitted;
@@ -25,30 +26,73 @@ use crate::translation::surface::{External, SExpr};
 use regex::Regex;
 use std::sync::LazyLock;
 
-pub(super) fn uses_relative_element_call(network: &LinkNetwork, source: &str) -> bool {
+pub(super) fn relative_element_call_spans(network: &LinkNetwork, source: &str) -> HashSet<Span> {
     let index = QueryIndex::new(network);
     network
         .links()
         .filter(|link| link.metadata().term() == Some("call_expression"))
-        .flat_map(|call| index.field_targets(call.id(), "function"))
-        .filter(|member| {
-            index.link(*member).and_then(|link| link.metadata().term()) == Some("member_expression")
+        .filter(|call| {
+            index
+                .field_targets(call.id(), "function")
+                .into_iter()
+                .filter(|member| {
+                    index.link(*member).and_then(|link| link.metadata().term())
+                        == Some("member_expression")
+                })
+                .flat_map(|member| index.field_targets(member, "property"))
+                .filter_map(|name| index.link(name).and_then(|link| link.metadata().span()))
+                .filter_map(|span| {
+                    let range = span.byte_range();
+                    source.get(range.start()..range.end())
+                })
+                .any(|name| {
+                    read_primitive_method_lowering_form("array", name)
+                        == "relative-element-template"
+                })
         })
-        .flat_map(|member| index.field_targets(member, "property"))
-        .filter_map(|name| index.link(name).and_then(|link| link.metadata().span()))
-        .filter_map(|span| {
-            let range = span.byte_range();
-            source.get(range.start()..range.end())
+        .filter_map(|call| {
+            let range = call.metadata().span()?.byte_range();
+            let prefix_length = source.get(..range.start())?.encode_utf16().count();
+            let call_length = source
+                .get(range.start()..range.end())?
+                .encode_utf16()
+                .count();
+            Some(Span::new(prefix_length, prefix_length + call_length))
         })
-        .any(|name| {
-            read_primitive_method_lowering_form("array", name) == "relative-element-template"
-        })
+        .collect()
+}
+
+fn contains_checked_array_relative_element(
+    value: &serde_json::Value,
+    spans: &HashSet<Span>,
+) -> bool {
+    if value["k"] == "apply"
+        && value["fn"]["k"] == "lambda"
+        && value["args"][0]["type"]["kind"] == "array"
+        && serde_json::from_value::<Span>(value["fn"]["span"].clone())
+            .is_ok_and(|span| spans.contains(&span))
+    {
+        return true;
+    }
+    match value {
+        serde_json::Value::Array(values) => values
+            .iter()
+            .any(|child| contains_checked_array_relative_element(child, spans)),
+        serde_json::Value::Object(fields) => fields
+            .values()
+            .any(|child| contains_checked_array_relative_element(child, spans)),
+        _ => false,
+    }
 }
 
 pub(super) fn emit_complete_relative_element_program(
     source: &str,
+    spans: &HashSet<Span>,
     utf16_strings: bool,
 ) -> Option<String> {
+    if spans.is_empty() {
+        return None;
+    }
     let program = check_program(&parse_javascript(source).ok()?).ok()?;
     if program
         .main
@@ -56,6 +100,7 @@ pub(super) fn emit_complete_relative_element_program(
         .is_none_or(|main| main.effects.is_empty())
         || !program.imports.is_empty()
         || !program.externals.is_empty()
+        || !contains_checked_array_relative_element(&serde_json::to_value(&program).ok()?, spans)
     {
         return None;
     }

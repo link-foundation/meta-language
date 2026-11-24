@@ -32,8 +32,8 @@ mod emission;
 pub mod representation;
 mod representation_rules;
 use emission::{
-    emit_complete_relative_element_program, emit_item, restore_source_envelope, source_envelope,
-    standalone_translation, uses_relative_element_call,
+    emit_complete_relative_element_program, emit_item, relative_element_call_spans,
+    restore_source_envelope, source_envelope, standalone_translation,
 };
 use representation::Context;
 mod scope;
@@ -341,8 +341,11 @@ fn translate_module(
                     "ERROR" | "import_statement" | "export_statement"
                 )
         })
-        && uses_relative_element_call(&network, source)
-        && let Some(complete) = emit_complete_relative_element_program(source, utf16_strings)
+        && let Some(complete) = emit_complete_relative_element_program(
+            source,
+            &relative_element_call_spans(&network, source),
+            utf16_strings,
+        )
     {
         let tail = format!("\n\n{RUST_ALLOW}\n\n{complete}");
         let envelope = source_envelope(source, &tail);
