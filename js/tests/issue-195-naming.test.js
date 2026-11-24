@@ -218,6 +218,13 @@ test('the normal naming source profile retains every actual current name and bot
     assert.equal(entry.recordOf(row.name), row.record);
     assert.equal(restoreDependencyWorkflowSource(current + '\n# unknown edit', row.file), current + '\n# unknown edit');
   }
+  const rawProfileSource = 'experiments/original-link-complete-table-projection/raw-native-observations.mjs';
+  const rawProfileRecord = 'repository.read-selected-raw-emission-profile';
+  const rawProfileName = 'read selected raw emission profile';
+  assert.ok(dependencyNames.some(row => row.file === rawProfileSource && row.record === rawProfileRecord &&
+    row.name === rawProfileName && row.inventory === `B64 authenticated raw emission source names for ${rawProfileSource}`));
+  assert.ok(currentNames.some(row => row.file === rawProfileSource && row.record === rawProfileRecord &&
+    row.name === rawProfileName && row.inventory === `B70 physical field source view names for ${rawProfileSource}`));
   const changed = structuredClone(historicalNames); changed[0].sourceView.path = 'unregistered/source.rs';
   assert.notDeepEqual(changed, historicalNames);
   assert.deepEqual(extractOwnCodebaseHistoricalNames(root, NAME_INVENTORIES), historicalNames,

@@ -472,9 +472,24 @@ function prepareOriginalLinkRawSource(prepared, {emitJavaScript, tokenize}, prof
     declarationNames: emissionProfile.declarationNames, definitionCount: rust.definitions.length, preludeCount: rust.preludes.length});
 }
 
+/** Reuse the decoded artifact only when a fresh complete read matches its bytes. */
+export function createOriginalLinkRawEmissionArtifactReader(path) {
+  let previous;
+  return () => {
+    const bytes = readFileSync(path);
+    if (previous?.bytes.equals(bytes)) return previous.artifact;
+    const artifact = freezeOriginalLinkRawData(readStructuredDataLino(bytes.toString('utf8')));
+    previous = { bytes, artifact };
+    return artifact;
+  };
+}
+
+const readHistoricalEmissionArtifact = createOriginalLinkRawEmissionArtifactReader(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT);
+const readCurrentEmissionArtifact = createOriginalLinkRawEmissionArtifactReader(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT);
+
 function readOriginalLinkRawSelectedEmissionProfile(profile) {
-  const historicalArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, 'utf8'));
-  const currentArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, 'utf8'));
+  const historicalArtifact = readHistoricalEmissionArtifact();
+  const currentArtifact = readCurrentEmissionArtifact();
   const source = readFileSync(new URL('./raw-rules.mjs', import.meta.url), 'utf8');
   const selected = readOriginalLinkRawEmissionProfile(['consuming','borrowed consuming'].includes(profile) ? 'current' : profile, {historicalArtifact, currentArtifact, source,
     producerSources: readOriginalLinkRawEmissionProducerSources()});

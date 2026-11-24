@@ -3723,6 +3723,13 @@ and tree history with Git's `blob:none` filter. Checkout loads every current
 file and Git fetches historical blobs on demand during fresh merge checks or
 source authentication. The complete planner, cleanup and ten-minute deadline
 still apply.
+The subsequent [blobless run](https://github.com/link-foundation/meta-language/actions/runs/45303012723/job/138190375005)
+also passed all seven contracts and reached the job deadline. The checkout
+took 117 seconds. Each profile check now rereads both complete Lino artifacts
+and reuses their immutable decoded data only when the current bytes match.
+Changed bytes are decoded again. The complete profile verifier, producer
+source reads, and pre- and post-execution comparisons still run at their
+original boundaries.
 
 The generated-slice guard reverses these exact checkout lines before checking
 the original package schedule digest. The separate raw-planning guard checks

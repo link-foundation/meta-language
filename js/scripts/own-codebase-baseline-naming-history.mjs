@@ -191,7 +191,8 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
     }
   }
   for(const entry of inventories.filter(inventory=>inventory.inventory.startsWith('B70 physical field source view names for ')
-    ||inventory.inventory==='B61 actual lexical binding source names for js/tests/translation-frontend-rule-styles.test.js')){
+    ||inventory.inventory==='B61 actual lexical binding source names for js/tests/translation-frontend-rule-styles.test.js'
+    ||inventory.inventory==='B64 authenticated raw emission source names for experiments/original-link-complete-table-projection/raw-native-observations.mjs')){
     for(const file of entry.files.filter(file=>Object.hasOwn(dependencyWorkflowPredecessors,file))){
       const current=readFileSync(resolve(root,file),'utf8');
       const predecessor=restoreDependencyWorkflowSource(current,file);

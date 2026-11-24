@@ -1,12 +1,44 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {EventEmitter} from 'node:events';
-import {readFileSync} from 'node:fs';
+import {mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {Worker} from 'node:worker_threads';
 import test from 'node:test';
 import {runOriginalLinkRawArchiveJobs,runOriginalLinkRawArchiveWorker,replayOriginalLinkRawSourceArchives,
   readOriginalLinkRawArchiveWorkerSources,prepareOriginalLinkRawArchiveBatch,canOverlapOriginalLinkRawSourcePreparation} from '../../experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs';
-import {readOriginalLinkRawArchiveSources} from '../../experiments/original-link-complete-table-projection/raw-native-observations.mjs';
+import {createOriginalLinkRawEmissionArtifactReader, readOriginalLinkRawArchiveSources} from '../../experiments/original-link-complete-table-projection/raw-native-observations.mjs';
+import {structuredDataToLino} from '../src/structured-data-links.js';
+
+test('raw emission artifact reuse depends on every current file byte', t => {
+  const directory = mkdtempSync(join(tmpdir(), 'original-raw-emission-'));
+  t.after(() => rmSync(directory, {recursive: true, force: true}));
+  const path = join(directory, 'artifact.lino');
+  const read = createOriginalLinkRawEmissionArtifactReader(path);
+  const firstBytes = structuredDataToLino({definitions: ['one']});
+  const secondBytes = structuredDataToLino({definitions: ['two']});
+  assert.equal(Buffer.byteLength(firstBytes), Buffer.byteLength(secondBytes));
+
+  writeFileSync(path, firstBytes);
+  const first = read();
+  assert.deepEqual(first, {definitions: ['one']});
+  assert.ok(Object.isFrozen(first));
+  assert.ok(Object.isFrozen(first.definitions));
+  assert.strictEqual(read(), first);
+
+  writeFileSync(path, secondBytes);
+  const second = read();
+  assert.deepEqual(second, {definitions: ['two']});
+  assert.strictEqual(read(), second);
+  writeFileSync(path, 'invalid artifact');
+  assert.throws(read, TypeError);
+  rmSync(path);
+  assert.throws(read, {code: 'ENOENT'});
+
+  writeFileSync(path, firstBytes);
+  assert.deepEqual(read(), first);
+});
 
 test('bounded source archive jobs retain every complete input and deterministic result order',async()=>{
   const sources=['first complete source','second complete source','third complete source'],original=[...sources];
