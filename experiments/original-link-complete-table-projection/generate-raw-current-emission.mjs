@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {readProjectData,writeProjectData,checkProjectData} from '../../js/scripts/project-data.mjs';
-import {generateOriginalLinkRawJavaScript} from './generate-raw.mjs';
+import {regenerateHistoricalRawInstructions} from './historical-raw-generation.mjs';
 import {
   ORIGINAL_LINK_RAW_CURRENT_ARTIFACT,ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT,
   createOriginalLinkRawCurrentArtifact,readOriginalLinkRawEmissionProducerSources,
@@ -11,7 +11,7 @@ import {
 
 /** Check the actual complete current compiler result, not a patched old output. */
 export function prepareCurrentOriginalLinkRawEmission({readProjectData,parseJavaScript,checkProgram,emitRust},{check=true}={}) {
-  const source=generateOriginalLinkRawJavaScript(true);
+  const source=regenerateHistoricalRawInstructions();
   const historicalArtifact=readProjectData(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT);
   const producerSources=readOriginalLinkRawEmissionProducerSources();
   const program=checkProgram(parseJavaScript(source,{referenceSemantics:false}));

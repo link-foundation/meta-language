@@ -11,7 +11,8 @@ import {decodeRustTextCertificateFacet} from '../rust-text-certificate-adapter/r
 import {createRawTextCertificateFixture,originalLinkRawAdversarialFixtures} from './raw-fixtures.mjs';
 import {readOriginalLinkRawTransport,checkOriginalLinkRawSelectedGraph} from './raw-transport.mjs';
 import {checkOriginalLinkRawShape,hasOriginalRawMember,readOriginalRawMemberPosition} from './raw-rules.mjs';
-import {generateOriginalLinkRawJavaScript,generateOriginalLinkRawNative} from './generate-raw.mjs';
+import {generateOriginalLinkRawNative} from './generate-raw.mjs';
+import {regenerateHistoricalRawInstructions} from './historical-raw-generation.mjs';
 import {emitRustTextValueProjection} from '../rust-text-value-projection/model.mjs';
 import {originalLinkRawCertificateCorpus,originalLinkRawNumericMetadataCorpus,createOriginalLinkRawEditedFixture,createOriginalLinkRawOwnerForgery} from './raw-corpus.mjs';
 const archive=(packet,format)=>format==='direct'?packet:({...packet,network:format==='text'?LinkNetwork.fromLino(packet.network.toLino()):decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))});
@@ -33,7 +34,9 @@ for(const fixture of originalLinkRawAdversarialFixtures())test('original raw gra
   if(expected.oldDecoder==='accepted')assert.equal(decodeRustTextCertificateFacet(packet.network,packet.root).decision[0],1);else if(expected.oldDecoder==='refused')assert.throws(()=>decodeRustTextCertificateFacet(packet.network,packet.root));else if(expected.oldDecoder==='unselected')assert.equal(decodeRustTextCertificateFacet(packet.network,packet.root),null);
  }
 });
-test('separate raw instructions regenerate without touching any old kernel or generating native output',()=>{assert.ok(generateOriginalLinkRawJavaScript(true).includes('export function checkOriginalLinkRawShape'));});
+test('separate raw instructions regenerate from the original ordered schema without writing any output',()=>{
+ assert.equal(regenerateHistoricalRawInstructions(),readFileSync(new URL('./raw-rules.mjs',import.meta.url),'utf8'));
+});
 test('portable dense Number membership preserves SameValueZero independently of strict positions',()=>{
  for(const values of[[],[NaN],[-0],[0],[NaN,-0,0,Infinity,-Infinity,7]])for(const query of[NaN,-0,0,Infinity,-Infinity,7,8]){
   const before=[...values];assert.equal(hasOriginalRawMember(values,query),values.includes(query));assert.equal(readOriginalRawMemberPosition(values,query),values.indexOf(query));assert.deepEqual(values,before);

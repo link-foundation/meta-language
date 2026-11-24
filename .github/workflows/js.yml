@@ -607,7 +607,7 @@ jobs:
 
       - name: Check generated binary link network rules
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
-        run: node js/scripts/generate-link-network-binary-rules.mjs --check
+        run: node experiments/binary-metadata-buffer/historical-translation.mjs legacy
 
       - name: Check shared binary link network fixtures
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
@@ -1174,13 +1174,11 @@ jobs:
 
       - name: Check generated binary metadata buffer candidate
         if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
-        working-directory: js
-        run: node scripts/generate-link-network-binary-rules.mjs --metadata-buffer-candidate --check
+        run: node experiments/binary-metadata-buffer/historical-translation.mjs candidate
 
       - name: Check generated record-local binary link network rules
         if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
-        working-directory: js
-        run: node scripts/generate-link-network-binary-record-rules.mjs --check
+        run: node experiments/binary-metadata-buffer/historical-translation.mjs record
 
       - name: Check generated buffered binary link network rules
         if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}

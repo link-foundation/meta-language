@@ -15,8 +15,9 @@ import {tokenize} from '../../js/src/translation/lexer.js';
 import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
 import {transcodeLinkNetworkBinary as previous} from './prior-rules.mjs';
 import {transcodeLinkNetworkBinary as candidate} from './candidate.mjs';
+import {binaryMetadataGenerationRevision,readHistoricalBinaryRustEmission} from './historical-translation.mjs';
 
-export const BINARY_METADATA_BUFFER_MODEL_COMMIT='1bb41fae1cbe4c88592e3241d01563346c97fac0';
+export const BINARY_METADATA_BUFFER_MODEL_COMMIT=binaryMetadataGenerationRevision;
 const root=new URL('../../',import.meta.url),sha256=value=>createHash('sha256').update(value).digest('hex'),checkedPlans=new WeakSet();
 const digests={
  'experiments/binary-metadata-buffer/candidate.mjs':'d96f973eb3026166b16f74ce8884e4a3b39d65e6bfaf3469cd24e5aa3ddf82cb',
@@ -197,7 +198,9 @@ export function planBinaryMetadataBufferNative(){
  const modelSources=verifyBinaryMetadataBufferNativeModel(),receipt=readProjectData(new URL('./native-generation.lino',import.meta.url)),policy=readProjectData(new URL('./native-policy.lino',import.meta.url)),gap=readProjectData(new URL('./generation-gap.lino',import.meta.url));
  assert.deepEqual(policy,{schemaVersion:1,model:'binary metadata buffer native generation 1',scope:'native generation input only',parser:{referenceSemantics:false},checkedProgram:{utf16Strings:true}});assert.deepEqual(receipt.generationPolicy,policy);
  const hash=path=>digests[path];assert.equal(receipt.candidateSourceSha256,gap.candidate.sha256);assert.equal(receipt.baselineSourceSha256,gap.baseline.sha256);assert.equal(receipt.generatorSha256,hash('js/scripts/generate-link-network-binary-rules.mjs'));assert.equal(receipt.candidateStyleBuilderSha256,hash('js/scripts/binary-metadata-candidate-styles.mjs'));assert.equal(receipt.candidateStylesSha256,hash('experiments/binary-metadata-buffer/native-styles.lino'));assert.equal(receipt.generationPolicySha256,hash('experiments/binary-metadata-buffer/native-policy.lino'));assert.equal(receipt.baselineStylesSha256,hash('parity/self-translation/link-network-binary-rules-decorators.lino'));
- const old=emittedJavaScript(readFileSync(new URL('./prior-rules.mjs',import.meta.url),'utf8'),policy),next=emittedJavaScript(readFileSync(new URL('./candidate.mjs',import.meta.url),'utf8'),policy),raw=emitRust({...next.program,...policy.checkedProgram}),oldRaw=emitRust(old.program);
+ const old=emittedJavaScript(readFileSync(new URL('./prior-rules.mjs',import.meta.url),'utf8'),policy),next=emittedJavaScript(readFileSync(new URL('./candidate.mjs',import.meta.url),'utf8'),policy),currentRaw=emitRust({...next.program,...policy.checkedProgram}),currentOldRaw=emitRust(old.program);
+ assert.equal(currentRaw.definitions.length,53);assert.equal(currentRaw.preludes.length,4);assert.equal(currentOldRaw.definitions.length,54);assert.equal(currentOldRaw.preludes.length,4);
+ const {candidate:raw,baseline:oldRaw}=readHistoricalBinaryRustEmission();
  assert.equal(next.program.items.length,53);assert.equal(old.program.items.length,54);assert.equal(raw.definitions.length,53);assert.equal(raw.preludes.length,4);assert.equal(oldRaw.definitions.length,54);assert.equal(oldRaw.preludes.length,4);
  const rawSource=[...raw.preludes,...raw.definitions].join('\n\n'),oldRawSource=[...oldRaw.preludes,...oldRaw.definitions].join('\n\n');assert.equal(sha256(rawSource),'0e4c7c907ac0789d898ca9080bff2e27c80d08802c29ef7016743d9b0ae56ce6');assert.equal(sha256(oldRawSource),'c09bb04cd012bac8347176de503814978dd4fda1a11db647b754bd12a90bc88f');
  const stringPrelude=raw.preludes.find(source=>source.includes('pub mod ml_string {'));assert.equal(sha256(stringPrelude),receipt.stringPreludeSha256);assert.ok(oldRaw.preludes.includes(stringPrelude),'the entire original UTF16 String prelude remains unchanged');
