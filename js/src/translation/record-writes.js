@@ -2,6 +2,7 @@
 import { coerce, bindLocal } from './check.js';
 import { unsupported, typeError } from './diagnostics.js';
 import { UNIT } from './types.js';
+import { readReferenceMutationDiagnostic } from './array-value-rules.js';
 import {javaScriptConstructorFieldValueType, readJavaScriptOwnedRecordField} from './javascript-constructor-presence.js';
 import { readRecordFieldWriteOperator, readRecordFieldWriteName, readRecordFieldSourceWriteRefusal, readRecordCompoundBinaryOperation,
   readOptionalRecordCompoundBinaryOperation, readRecordFieldWriteArgumentCount, readRecordFieldWriteIdentity } from './record-write-rules.js';
@@ -61,11 +62,12 @@ export function checkRecordFieldWrite(checker, node, object, env, path) {
 
 export function checkSourceRecordFieldWrite(checker, node, env, path) {
   const literalKey = checker.language === 'JavaScript' && node.index?.k === 'str';
-  if (node.index ? !literalKey : typeof node.field !== 'string') throw unsupported('shared indexed assignment',
-    'indexed assignment needs live slots, holes, length and property-key semantics', node.span);
+  const indexedRefusal = () => checker.language === 'JavaScript'
+    ? unsupported(readReferenceMutationDiagnostic('feature'), readReferenceMutationDiagnostic('reason'), node.span)
+    : unsupported('shared indexed assignment', 'indexed assignment needs live slots, holes, length and property-key semantics', node.span);
+  if (node.index ? !literalKey : typeof node.field !== 'string') throw indexedRefusal();
   const object = checker.expr(node.object, env, path, undefined);
-  if (literalKey && object.type.kind !== 'record') throw unsupported('shared indexed assignment',
-    'indexed assignment needs live slots, holes, length and property-key semantics', node.span);
+  if (literalKey && object.type.kind !== 'record') throw indexedRefusal();
   const operation = readRecordFieldWriteIdentity(node.op, literalKey ? node.index.value : node.field);
   if (!operation) throw unsupported('shared record field assignment', 'this operator needs its complete state operation', node.span);
   return checkRecordFieldWrite(checker, { ...node, op: operation, args: node.value ? [node.value] : [] }, object, env, path);

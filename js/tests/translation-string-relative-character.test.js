@@ -112,8 +112,11 @@ test('the independent relative character table executes every original input and
   }
   const packet=createTypedProgramLinks(fixture.source,'JavaScript');
   const forged=decodeTypedProgramLinks(LinkNetwork.fromLino(packet.network.toLino()),packet.root);
-  assert.equal(forged.items[0].body.k,'apply');assert.equal(forged.items[0].body.fn.k,'lambda');
-  forged.items[0].body.fn.type.ret={kind:'string'};
+  let call=forged.items[0].body;
+  while(call.k==='let')call=call.body;
+  assert.equal(call.k,'apply');assert.equal(call.fn.k,'lambda');
+  assert.deepEqual(call.fn.type.ret,{kind:'option',element:{kind:'string'},absence:'undefined'});
+  call.fn.type.ret={kind:'string'};
   assert.throws(()=>recheckLinkedTypedProgram(forged,{wholeProgram:true}));
 });
 

@@ -3,6 +3,7 @@ use super::{
     Checker, Env, Expr, Node, Result, SArrayItem, SExpr, SNode, Span, Type, UNIT, type_error,
     unsupported,
 };
+use crate::translation::array_value_rules::read_reference_mutation_diagnostic;
 use crate::translation::record_write_source_interfaces as rules;
 
 impl Checker {
@@ -250,24 +251,32 @@ impl Checker {
         path: &[String],
         span: Option<Span>,
     ) -> Result<Expr> {
+        let java_script = self.language.as_str() == "JavaScript";
         let literal_key = index.and_then(|index| match &index.node {
-            SNode::Str { value } if self.language.as_str() == "JavaScript" => Some(value.as_str()),
+            SNode::Str { value } if java_script => Some(value.as_str()),
             _ => None,
         });
+        let indexed_refusal = || {
+            if java_script {
+                unsupported(
+                    &read_reference_mutation_diagnostic("feature"),
+                    &read_reference_mutation_diagnostic("reason"),
+                    span,
+                )
+            } else {
+                unsupported(
+                    "shared indexed assignment",
+                    "indexed assignment needs live slots, holes, length and property-key semantics",
+                    span,
+                )
+            }
+        };
         let Some(field) = literal_key.or_else(|| field.filter(|_| index.is_none())) else {
-            return Err(unsupported(
-                "shared indexed assignment",
-                "indexed assignment needs live slots, holes, length and property-key semantics",
-                span,
-            ));
+            return Err(indexed_refusal());
         };
         let object = self.expr(object, env, path, None, false)?;
         if literal_key.is_some() && !matches!(object.ty, Type::Record { .. }) {
-            return Err(unsupported(
-                "shared indexed assignment",
-                "indexed assignment needs live slots, holes, length and property-key semantics",
-                span,
-            ));
+            return Err(indexed_refusal());
         }
         let operation = rules::read_record_field_write_identity(operator, field);
         if operation.is_empty() {
