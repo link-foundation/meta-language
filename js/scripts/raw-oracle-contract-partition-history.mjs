@@ -22,14 +22,22 @@ const reportScheduleHistory = new Map([
 /** Admit only the complete reviewed report matrix change for historical tests. */
 export function restoreReportScheduleHistory(source) {
   source = restoreIssue245SourceSuccessor(javascriptWorkflowSource,source);
-  const previous = reportScheduleHistory.get(createHash('sha256').update(source).digest('hex'));
+  const digest = value => createHash('sha256').update(value).digest('hex');
+  if (digest(source) === '1a84ae044fd6bf946376a6b2b9507a97d1c3eb9a53cb898b171a925f34985123') {
+    const checkout = /^ {10}sparse-checkout-cone-mode: false\n {10}sparse-checkout: \|\n(?: {12}\S[^\n]*\n)+/gmu;
+    assert.equal([...source.matchAll(checkout)].length, 1);
+    source = source.replace(checkout, '');
+    assert.equal(Buffer.byteLength(source), 92275);
+    assert.equal(digest(source), '3fa0faf82dc34b1b0fff35c671570f0dc21dd7b124bc1d51d72dde5af695f39b');
+  }
+  const previous = reportScheduleHistory.get(digest(source));
   if (!previous) return source;
   const original = source
     .replaceAll('${{ matrix.shard }}/16', '${{ matrix.shard }}/8')
     .replace('shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]',
       'shard: [1, 2, 3, 4, 5, 6, 7, 8]');
   assert.equal(Buffer.byteLength(original), previous.bytes, previous.file);
-  assert.equal(createHash('sha256').update(original).digest('hex'), previous.sha256, previous.file);
+  assert.equal(digest(original), previous.sha256, previous.file);
   return original;
 }
 

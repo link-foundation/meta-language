@@ -1,14 +1,66 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { compareRustDefinitions, createModuleContext, measureSelfTranslationModule, partitionSelfTranslationReportModules, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { partitionGroupFiles, partitionMeasuredWorkloads, partitionTests, testFiles } from '../scripts/test-groups.mjs';
 import { createReportMeasurementWorker } from '../scripts/self-translation-report-worker-host.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 import { selfTranslate } from '../src/self-translation.js';
+
+test('report checkout preserves the complete workload and removes unrelated archives', () => {
+  const repository = fileURLToPath(new URL('../../', import.meta.url));
+  const workflow = '.github/workflows/ci.yml';
+  const git = (...args) => execFileSync('git', args, { cwd: repository, encoding: 'utf8' });
+  const reportJob = source => parseWorkflow(source).find(job => job.id === 'self-translation-report');
+  const current = reportJob(readFileSync(join(repository, workflow), 'utf8'));
+  const previous = reportJob(git('show', `1e0cecca0cb83797c8b3263e5576705db95cb492:${workflow}`));
+  const checkout = current.steps[0].text;
+  const sparse = /^ {10}sparse-checkout-cone-mode: false\n {10}sparse-checkout: \|\n((?: {12}\S[^\n]*\n)+)/mu.exec(checkout);
+  assert.ok(sparse, 'the exact report checkout uses non-cone sparse rules');
+  assert.equal(checkout.replace(sparse[0], ''), previous.steps[0].text);
+  assert.equal(current.header, previous.header);
+  assert.deepEqual(current.steps.slice(1), previous.steps.slice(1));
+  const scratch = mkdtempSync(join(tmpdir(), 'meta-language-report-checkout-'));
+  try {
+    const rules = join(scratch, 'patterns');
+    writeFileSync(rules, sparse[1].replace(/^ {12}/gmu, ''));
+    const tracked = git('ls-files', '-z');
+    const files = tracked.split('\0').filter(Boolean);
+    const selected = new Set(execFileSync('git', [
+      'sparse-checkout', 'check-rules', '-z', '--no-cone', '--rules-file', rules,
+    ], { cwd: repository, encoding: 'utf8', input: tracked }).split('\0').filter(Boolean));
+    for (const prefix of ['js/src/', 'js/scripts/', 'rust/src/', 'scripts/', 'parity/grammars/']) {
+      const required = files.filter(file => file.startsWith(prefix));
+      assert.ok(required.length > 0, prefix);
+      for (const file of required) assert.ok(selected.has(file), file);
+    }
+    for (const file of [
+      'js/package.json', 'js/package-lock.json', 'parity/self-translation/decorators.lino',
+      'parity/fixtures/ci-39615628279-workload-costs.lino',
+      'parity/fixtures/ci-45076523061-report-workload-costs.lino',
+      'parity/fixtures/ci-45104457483-report-workload-costs.lino',
+      'parity/fixtures/ci-45215384144-report-workload-costs.lino',
+    ]) assert.ok(selected.has(file), file);
+    for (const file of selected) {
+      assert.doesNotMatch(file, /^(?:dev\/log|experiments|parity\/naming)\//u);
+      if (file.startsWith('parity/fixtures/')) {
+        assert.match(file, /^parity\/fixtures\/ci-[^/]+workload-costs\.lino$/u);
+      }
+      if (file.startsWith('parity/self-translation/')) {
+        assert.equal(file, 'parity/self-translation/decorators.lino');
+      }
+    }
+    assert.ok(selected.size < files.length);
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
+});
 
 test('recent report timings balance all complete module workloads across the same sixteen shards', () => {
   const repository = fileURLToPath(new URL('../../', import.meta.url));

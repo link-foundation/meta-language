@@ -4016,6 +4016,11 @@ durations with the updated schedule assigns the two longest modules from the
 timed-out shard to different shards.
 An unfinished module uses the preceding sample for matching source bytes or a
 size estimate. The sixteen shards retain their thirty-minute job deadlines.
+The pull-request report producers check out the exact merge commit with all
+JavaScript and Rust sources, report tools, grammars, decorators and workload
+samples. Sparse checkout omits development logs and historical archives from
+these producers. Run 45336634236 spent 84 seconds fetching a full checkout
+before shard 16 reached its deadline during the final three modules.
 The verifier uses the producers' exact checkout and source hashes, reuses their
 measurements, and must pass before Rust or delivery stages start.
 Standalone JavaScript workflow runs produce and check their own report shards.
