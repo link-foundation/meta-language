@@ -1,7 +1,6 @@
 // Explicit experimental validation owns this provenance; public APIs keep their defaults.
 import { isDeepStrictEqual } from 'node:util';
 import { readRuntimeProjectData } from '../../js/src/project-data-loader.js';
-import { tokenize } from '../../js/src/translation/lexer.js';
 import { parseRustTokenStream } from '../../js/src/translation/rust.js';
 import { checkProgram } from '../../js/src/translation/check.js';
 import { emitJavaScript } from '../../js/src/translation/emit-javascript.js';
@@ -14,7 +13,7 @@ import {
 } from '../generated-owned-rust/model.mjs';
 import { encodeGeneratedOwnedRust as encode, decodeGeneratedOwnedRust as decode } from '../generated-owned-rust/codec.mjs';
 import { acceptRustRawBindingIdentifierModel, acceptRustRawBindingIdentifierType, acceptRustRawBindingIdentifierClosure, acceptRustRawBindingIdentifierInvocationModel, acceptRustRawBindingIdentifierInput } from './rules.mjs';
-import { fail, validName, readRawBindingIdentifierSyntax, renameRawBindingIdentifierSurface } from './syntax.mjs';
+import { fail, validName, readRawBindingIdentifierSyntax, renameRawBindingIdentifierSurface, tokenizeRawBindingIdentifierProof } from './syntax.mjs';
 
 export const RUST_RAW_BINDING_IDENTIFIER_POLICY = readRuntimeProjectData(new URL('./data/policy.lino', import.meta.url));
 const policy = RUST_RAW_BINDING_IDENTIFIER_POLICY;
@@ -51,7 +50,7 @@ function check(program, proof) {
   data(program, proof); fields(proof, policy.fields.proof); interval(proof.span, true);
   if (!acceptRustRawBindingIdentifierModel(proof.model) || proof.language !== policy.language || proof.worker !== program.main) fail('the model or actual empty worker owner differs');
   if (!Array.isArray(proof.aliases) || !Array.isArray(proof.occurrences)) fail('the actual alias and occurrence inventories must be ordered arrays');
-  checkProgramDeclarationOwners(program); cst(proof, {});
+  checkProgramDeclarationOwners(program); cst(proof, {}, tokenizeRawBindingIdentifierProof);
   const { plan, surface, expected } = parse(proof, program);
   if (!isDeepStrictEqual(program, expected) || !isDeepStrictEqual([...program.declarations.keys()], [...expected.declarations.keys()])) fail('the actual core differs from its entire alias-resolved source');
   const actual = occurrences(surface, program, plan);
@@ -73,7 +72,7 @@ export function createRustRawBindingIdentifiers(source, { model = policy.model }
   if (typeof source !== 'string' || !acceptRustRawBindingIdentifierModel(model)) fail('select the explicit experimental model and primitive source string');
   const tokens = [], gaps = [];
   let end = 0;
-  for (const token of tokenize(source, 'Rust').tokens) {
+  for (const token of tokenizeRawBindingIdentifierProof(source)) {
     const text = source.slice(end, token.start);
     gaps.push({ span: { start: end, end: token.start }, units: Array.from({ length: text.length }, (_, index) => text.charCodeAt(index)) });
     tokens.push({ kind: token.kind, value: token.value, raw: token.raw, span: { start: token.start, end: token.end },
