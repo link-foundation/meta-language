@@ -45,6 +45,22 @@ export function restoreRustJobAdmissionSource(source) {
 /** Return the certified predecessor only for a complete integration successor. */
 export function restoreIntegrationSource(source,path) {
   if (path === '.github/workflows/ci.yml') source = restoreRustJobAdmissionSource(source);
+  if (path === '.github/workflows/rust.yml'
+    && pin(source).sha256 === '9ea1cf322e18b37306b02d3f5d6752a7de26fccbd3e591fbc76f7b1ee9b9296f') {
+    source = source.replace(
+      '        # The experiment\'s receipt accepts Cargo and rustc >=1.90.0 <1.100.0.\n        uses: dtolnay/rust-toolchain@1.99.0\n',
+      '        uses: dtolnay/rust-toolchain@stable\n',
+    );
+    assert.equal(pin(source).sha256, 'e006605c0c28530a461717e64cf031f42087b9199a8604231bb035a8dce58eba');
+  }
+  if (path === 'experiments/grammar-outcome-network/native-transport/runner/compiler-profile.test.mjs'
+    && pin(source).sha256 === '5d1e10f93075a0a69c8aadeef7b8ded0d5f32040cba9cea0464e28540c44b33c') {
+    const appendedTest = "\ntest('the native outcome workflow selects one explicit toolchain";
+    const start = source.indexOf(appendedTest);
+    assert.ok(start > 0);
+    source = source.slice(0, start);
+    assert.equal(pin(source).sha256, 'dbb8772b661085514493fd4dd22cbbbd6da13eaf47a52f46dacbb49bfa4b56a2');
+  }
   if(!integrationSources){
     const bytes=readFileSync(new URL('parity/self-translation/integration-source-history.lino',root));
     assert.equal(pin(bytes).sha256,'a67a0934fcce2f2c6be67284f45370b83a56899198dd01092d5ec336e203d1d9');

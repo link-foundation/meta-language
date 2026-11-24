@@ -88,3 +88,21 @@ test('the native width observation has the complete actual source owner and exac
   assert.notEqual(deriveOutcomeTargetProbe(original).receipt.original.sha256,altered.receipt.original.sha256);
   assert.throws(()=>deriveOutcomeTargetProbe(Buffer.concat([original,Buffer.from('\n')])));
 });
+
+test('the native outcome workflow selects one explicit toolchain covered by the compiler profile', async () => {
+  const {parseWorkflow} = await import('../../../../scripts/check-cache-policy.mjs');
+  const workflow = readFileSync(new URL('../../../../.github/workflows/rust.yml', import.meta.url), 'utf8');
+  const experiment = parseWorkflow(workflow).find(job => job.id === 'native-grammar-outcome-experiment');
+  const setup = experiment.steps.filter(step => step.name === 'Setup Rust');
+  assert.equal(setup.length, 1);
+  const pin = /^ {8}uses: dtolnay\/rust-toolchain@(\d+\.\d+\.\d+)$/mu.exec(setup[0].text);
+  assert.ok(pin, 'the native outcome experiment requires an exact Rust toolchain version');
+  const version = pin[1];
+  const profile = readOutcomeCompilerProfile({
+    ...options(),
+    cargoVersion: `cargo ${version} (workflow contract)\n`,
+    rustcVersion: `rustc ${version} (workflow contract)\n`,
+  });
+  assert.equal(profile.cargoVersion, version);
+  assert.equal(profile.rustcVersion, version);
+});
