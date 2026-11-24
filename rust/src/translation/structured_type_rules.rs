@@ -19,9 +19,9 @@ pub fn join_type_names(children: &[String], separator: &str) -> String {
         {
             let at = 0f64;
             {
-                crate::translation::structured_type_rules::ml_join_type_names_loop1(
-                    children, separator, text, at,
-                )
+                let text_2 =
+                    crate::source_ml_temporary_join_type_names_loop1(children, separator, text, at);
+                text_2
             }
         }
     }
@@ -311,9 +311,7 @@ pub fn render_rust_reference_type(type_: &str, reference: bool) -> String {
     }
 }
 
-/// Execute the checked shared structural type decision.
-#[must_use]
-pub fn ml_join_type_names_loop1(
+pub fn source_ml_temporary_join_type_names_loop1(
     children: &[String],
     separator: &str,
     mut text: String,
