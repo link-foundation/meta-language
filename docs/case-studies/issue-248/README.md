@@ -325,6 +325,13 @@ partition artifacts retain the installed-package observations for aggregation.
 [corpus partition artifact](https://github.com/link-foundation/meta-language/actions/runs/45307026026/artifacts/14901217236),
 [remaining partition artifact](https://github.com/link-foundation/meta-language/actions/runs/45307026026/artifacts/14898758155)
 
+The aggregate validated both partitions against the same package artifacts
+at log lines 341–346 and published the combined report at line 369. The report
+records 147 JavaScript passes, the one paused JavaScript translation test,
+134 Rust passes, and no failures.
+[Formal AI aggregate](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138305065744),
+[combined report](https://github.com/link-foundation/meta-language/actions/runs/45307026026/artifacts/14903546654)
+
 Fresh Merge Simulation (6) reported a failed check at log line 2195. Its
 native test step had already passed 55 unit and six integration tests. Clippy
 1.99 had reported 53 diagnostics at lines 1226–1866. Fifty-one also appeared
