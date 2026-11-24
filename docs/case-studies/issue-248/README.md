@@ -359,9 +359,10 @@ indexed it again. The default index now initializes once per process. Rust
 releases the decoded register after indexing, and caller-supplied records
 still receive a fresh index on each call. A bounded JavaScript regression
 observed two index builds before the change and one afterward, with the same
-default results and updated results after a caller record mutation. The
-macOS deadline and all grammar tests remain in force. The next native run
-will measure the effect on the cancelled shard.
+default results and updated results after a caller record mutation.
+The original deadline and all grammar tests remain defined. The Linux grammar
+shards can measure the effect during the platform pause. Timing on the cancelled
+macOS shard requires a run after macOS scheduling resumes.
 [macOS grammar shard 5](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138282887277) ·
 [Linux fresh merge](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138282883844) ·
 [Index regression](../../../js/tests/global-concept-space.test.js)
@@ -374,6 +375,7 @@ will measure the effect on the cancelled shard.
 | Keep the code, checks, tests and strict results | Remove commands, move the whole translator to a different workflow, or retain the existing commands and artifact graph with opt-in conditions. | Retain the checked commands and strict evidence evaluator in place. Compare commands with their certified predecessors and verify that paused jobs cannot seal or supply complete translation evidence. |
 | Disable failing automated translation checks | Match failures by name, split shared jobs by role, or ignore entire shared jobs. | Gate translation execution and select native libtest exclusions. Keep parser, manifest, naming, packaging and downstream checks active. Clean consumers check installation, public entry points, and offline parse and program behavior. Run the actual gate script with fault inputs and inspect the latest PR checks for regressions. |
 | Permit manual translation between supported languages | Permit independent implementations without common tests, or keep the JavaScript-first batch and shared behavior contract. | Allow manual ports in the vision and contributor instructions. Use shared fixtures and independent native tests for affected runtimes. Maintain `parity/language-features.lino` when public behavior changes. |
+| Pause Windows and macOS CI execution and retain their definitions | Skip steps after occupying a runner, exclude only the base matrix rows, or select the active platform before expanding the job matrix. GitHub processes additional include rows after exclusions. | Use the same Linux scheduling selection for native tests and clean consumers. Regenerate the original native matrix from the existing platform and shard policy in the conservation test. Keep the full platform admission and consumer report validators. Verify the actual scheduled jobs on the updated PR. [PR feedback](https://github.com/link-foundation/meta-language/pull/250#issuecomment-7127536709) · [GitHub matrix syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstrategymatrixexclude) |
 | Apply the pause to all open pull requests | Change repository branch rules, push each branch, or land one common base change and update each branch. | [PR #250](https://github.com/link-foundation/meta-language/pull/250) is the rollout source. After that commit enters the base, use each pull request's branch-update path and verify a fresh eligible run at its new head or test merge commit. Other refs remain outside this PR's push scope. |
 | Capture data in the requested folder and research each possible solution | Record only links, keep full CI logs in Git, or capture exact issue data and referenced excerpts. | Keep the source body, digests, branch inventory and selected log lines in [evidence.lino](evidence.lino). Retain full logs outside regenerable scratch. Review workflow condition semantics, same-revision reuse, dispatch and validation tooling. |
 | Deliver all changes in one pull request | Split the policy, CI and record changes across PRs, or review a single coordinated change. | Keep the implementation and case study in PR #250. Review the change against the default branch and verify the active checks at the exact PR revision. Record rollout only from observed runs on each PR. |
@@ -410,7 +412,11 @@ ordinary CI. Strict acceptance requires the original full workload.
 
 The Rust coverage floor of 84.30% is calibrated for the full suite, including
 its translation shard. The opt-in still runs that entire coverage gate and the
-complete release-delivery translation checks. After the workflow is available on
+complete release-delivery translation checks. Both modes schedule native and
+consumer jobs on Linux during the platform pause. The strict platform admission
+and delivery validators still require Windows and macOS observations. Restoring
+the full platform schedule in `js/scripts/rust-test-shards.mjs` requires a
+maintainer decision before a strict run can meet those assertions. After the workflow is available on
 the default branch, a maintainer can run a diagnostic on a selected ref with this
 command.
 
@@ -440,9 +446,10 @@ ordinary and strict runs when recording findings.
 A rerun at an older commit uses the older workflow. Once the policy reaches
 the default branch, enumerate the open PRs again, update their branches through
 GitHub where necessary, and record the new head and eligible run for each PR.
-Confirm the translation stages are skipped and the applicable independent
-checks ran. A conflicting branch requires its own conflict resolution before
-it can be verified. The captured branch inventory is a rollout input.
+Confirm the translation stages are skipped, the applicable independent checks
+ran, and each run's platform audit reports only Linux scheduling. A conflicting
+branch requires its own conflict resolution before it can be verified. The
+captured branch inventory is a rollout input.
 
 The 2026-11-24 09:08 UTC audit found seven other open PRs targeting
 `main` at `ec9f4efb0e9ef936114e09823981352f6db13700`. Each exact head's
@@ -461,8 +468,9 @@ that audit. [Default branch commit](https://github.com/link-foundation/meta-lang
 
 The post-merge report records the newest eligible workflow run and its latest
 attempt for each current pull request head and base pair. It requires a
-successful pause step and aggregate. It checks the workflow's pull request
-number and verified head and base parents even when GitHub omits the association
+successful pause step, Linux scheduling audit, aggregate and exact checkout
+step. It checks the workflow's pull request number and verified head and base
+parents even when GitHub omits the association
 for a fork. It reads the current base branch ref directly because an unmergeable
 pull request can report an older base commit. Run the same observation from a
 clean checkout with GitHub CLI access.

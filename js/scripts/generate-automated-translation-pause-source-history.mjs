@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 
-import { nativeLintCaptureSources, nativeRepairNamingSources } from './automated-translation-pause-source-history.mjs';
+import { nativeLintCaptureSources, nativePlatformPausePredecessor, nativeRepairNamingSources } from './automated-translation-pause-source-history.mjs';
 import { captureGitArtifactCertificate } from './capture-git-artifact-certificate.mjs';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
 
@@ -50,6 +50,10 @@ files.push({ file: 'js/tests/test-groups.test.js', revision: '231c6610fc93225fcc
 files.push({ file: 'js/scripts/scheduling-source-history.mjs', revision: '15745ffcd322c48bdd537ccb48a5f7c9deb96917' });
 files.push({ file: 'js/scripts/tooling-frozen-source-history.mjs', revision: '269c48e497280025271ade3765f808b2f372d1b6' });
 files.push({ file: 'parity/fixtures/grammar-selection-diagnostic-order.lino', revision });
+for (const file of ['.github/workflows/ci.yml', '.github/workflows/rust.yml',
+  'js/scripts/rust-test-shards.mjs', 'rust/tests/unit/ci-cd/workflow_release.rs']) {
+  files.push({ file, revision: nativePlatformPausePredecessor });
+}
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const trees = {};
 const commits = {};

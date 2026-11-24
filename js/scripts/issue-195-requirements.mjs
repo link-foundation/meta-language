@@ -14,6 +14,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
   automatedTranslationPause: 'https://github.com/link-foundation/meta-language/issues/248',
+  nativePlatformPause: 'https://github.com/link-foundation/meta-language/pull/250#issuecomment-7127536709',
   clarification:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
   acceptanceGate:

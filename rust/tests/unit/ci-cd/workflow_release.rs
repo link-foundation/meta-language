@@ -173,10 +173,9 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         // Cold platform test builds retain all original logical suites and tests
         // with the same bounded thirty-minute deadline for every physical cell.
         let expected = if job_name == "test" {
-            assert!(job.contains("        os: [ubuntu-latest, macos-latest, windows-latest]\n"));
-            assert!(job.contains(
-                "        suite: [grammar, inference, generative, translation, remaining]\n"
-            ));
+            assert!(
+                job.contains("      matrix: ${{ fromJSON(needs.check.outputs.test-matrix) }}\n")
+            );
             "    timeout-minutes: 30\n".to_owned()
         } else {
             format!("    timeout-minutes: {timeout_minutes}\n")
@@ -895,21 +894,51 @@ fn cargo_check_gates_every_compiling_job() {
 fn rust_test_suites_partition_the_tests_by_name() {
     let workflow = release_workflow();
     let test = job_block(&workflow, "test");
-    assert!(test.contains("suite: [grammar, inference, generative, translation, remaining]"));
-    assert!(test.contains("os: [ubuntu-latest, macos-latest, windows-latest]"));
-    let filters = |suite: &str| {
-        let marker = format!("          - suite: {suite}\n            filters: ");
-        let start = test
-            .find(&marker)
-            .unwrap_or_else(|| panic!("the {suite} suite declares its filters"))
-            + marker.len();
-        test[start..].lines().next().unwrap().to_string()
+    assert!(test.contains("      matrix: ${{ fromJSON(needs.check.outputs.test-matrix) }}\n"));
+    let check = job_block(&workflow, "check");
+    assert!(check.contains("      test-matrix: ${{ steps.test-matrix.outputs.matrix }}\n"));
+    assert!(check.contains("run: node js/scripts/rust-test-shards.mjs --workflow-matrix test"));
+    let policy = meta_language::read_structured_data_lino(include_str!(
+        "../../../../parity/rust-test-physical-shards.lino"
+    ))
+    .unwrap();
+    let platforms = policy["platforms"].as_array().unwrap();
+    assert_eq!(
+        platforms
+            .iter()
+            .map(|platform| platform.as_str().unwrap())
+            .collect::<Vec<_>>(),
+        ["ubuntu-latest", "macos-latest", "windows-latest"]
+    );
+    let suites = policy["suites"].as_array().unwrap();
+    let suite_names = [
+        "grammar",
+        "inference",
+        "generative",
+        "translation",
+        "remaining",
+    ];
+    assert_eq!(
+        suites
+            .iter()
+            .map(|suite| suite["name"].as_str().unwrap())
+            .collect::<Vec<_>>(),
+        suite_names
+    );
+    let filters = |index: usize| {
+        suites[index]["filters"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|filter| filter.as_str().unwrap())
+            .collect::<Vec<_>>()
+            .join(" ")
     };
     // Each suite skips the filters of the suites before it, and `remaining`
     // skips every filter, so each test runs in exactly one suite.
     let mut earlier: Vec<String> = Vec::new();
-    for suite in ["grammar", "inference", "generative", "translation"] {
-        let line = filters(suite);
+    for (index, suite) in suite_names[..4].iter().enumerate() {
+        let line = filters(index);
         let (own, skipped) = line
             .split_once("--skip")
             .map_or((line.as_str(), ""), |(own, rest)| (own, rest));
@@ -925,7 +954,7 @@ fn rust_test_suites_partition_the_tests_by_name() {
         );
         earlier.extend(own.split_whitespace().map(str::to_string));
     }
-    let remaining = filters("remaining");
+    let remaining = filters(4);
     let skipped: Vec<&str> = remaining
         .split("--skip")
         .map(str::trim)

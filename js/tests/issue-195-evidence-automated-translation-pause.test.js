@@ -1,16 +1,19 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 
 import { captureDiagnosticDependencyProfile, diagnosticFixturePath } from '../../experiments/grammar-outcome-network/native-transport/diagnostic-order/generate.mjs';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
-import { nativeLintCaptureSources, restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
+import { nativeLintCaptureSources, nativePlatformPausePredecessor, restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
+import { supportedPlatformCoverage } from '../scripts/issue-195-delivery.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
-import { executePhysicalHarness, matchesLogicalFilters, nativeTestArguments, verifyHarnessExecution } from '../scripts/rust-test-shards.mjs';
+import { executePhysicalHarness, matchesLogicalFilters, nativeTestArguments, nativeTestMatrix, readPhysicalShardPolicy, readShardAdmission, verifyHarnessExecution, verifyWorkflowPlatforms } from '../scripts/rust-test-shards.mjs';
 import { partitionGroupFiles, partitionTests, testFiles } from '../scripts/test-groups.mjs';
 import { recordIssue195DirectiveObservation } from './support/issue-195-observations.js';
 
@@ -77,6 +80,90 @@ test('the two new tooling tests preserve all established shard assignments', () 
 });
 const observe = (scope, assertions, name) =>
   recordIssue195DirectiveObservation(`I195-AUTOMATED-TRANSLATION-PAUSE-${scope}`, assertions, name);
+
+test('Linux scheduling preserves every native platform definition and all strict evidence requirements', (context) => {
+  const previousJobs = name => {
+    const file = `.github/workflows/${name}.yml`;
+    const previous = restoreAutomatedTranslationPauseSource(workflow(name), file, nativePlatformPausePredecessor);
+    assert.notEqual(previous, workflow(name));
+    return Object.fromEntries(parseWorkflow(previous).map(job => [job.id, job]));
+  };
+  const savedRust = previousJobs('rust').test;
+  const savedConsumer = previousJobs('ci').consumers;
+  const platforms = /^ {8}os: \[([^\]]+)\]$/mu;
+  const originalPlatforms = platforms.exec(savedRust.header)[1].split(', ');
+  assert.deepEqual(originalPlatforms, platforms.exec(savedConsumer.header)[1].split(', '));
+  const suites = [...savedRust.header.matchAll(/^ {10}- suite: ((?!physical$)[\w-]+)\n {12}filters: (.+)$/gmu)];
+  const baseCells = originalPlatforms.flatMap(os => suites.map(([, suite, filters]) => ({ os, suite, filters })));
+  const extraCells = [...savedRust.header.matchAll(/^ {10}- suite: physical\n {12}os: (.+)\n {12}logical_suite: (.+)\n {12}physical_shard: (\d+)\n {12}filters: (.+)$/gmu)]
+    .map(([, os, logical_suite, shard, filters]) => ({ os, suite: 'physical', logical_suite, physical_shard: Number(shard), filters }));
+  assert.equal(baseCells.length, 15);
+  assert.equal(extraCells.length, 67);
+  const policy = readPhysicalShardPolicy();
+  const retained = nativeTestMatrix(policy).include;
+  const sorted = cells => cells.map(cell => JSON.stringify(cell)).sort();
+  assert.deepEqual(sorted(retained), sorted([...baseCells, ...extraCells]));
+  assert.deepEqual(rust.test.steps, savedRust.steps);
+  assert.deepEqual(ci.consumers.steps, savedConsumer.steps);
+
+  const selector = 'node js/scripts/rust-test-shards.mjs --workflow-matrix ';
+  assert.equal(step(rust.check, 'Select active native test platforms').run.trim(), selector + 'test');
+  assert.equal(step(ci.candidates, 'Select active clean consumer platforms').run.trim(), selector + 'consumer');
+  assert.match(rust.check.header, /test-matrix: \$\{\{ steps\.test-matrix\.outputs\.matrix \}\}/u);
+  assert.match(ci.candidates.header, /consumer-matrix: \$\{\{ steps\.consumer-matrix\.outputs\.matrix \}\}/u);
+  assert.match(rust.test.header, /matrix: \$\{\{ fromJSON\(needs\.check\.outputs\.test-matrix\) \}\}/u);
+  assert.match(ci.consumers.header, /matrix: \$\{\{ fromJSON\(needs\.candidates\.outputs\.consumer-matrix\) \}\}/u);
+  const workflowFiles = readdirSync(new URL('.github/workflows/', root)).filter(file => /\.ya?ml$/u.test(file));
+  const dynamicRunners = workflowFiles.flatMap(file => parseWorkflow(read(`.github/workflows/${file}`)).flatMap(job => {
+    const runner = /^ {4}runs-on: (.+)$/mu.exec(job.header)?.[1];
+    return runner && runner !== 'ubuntu-latest' ? [[file, job.id, runner]] : [];
+  }));
+  assert.deepEqual(dynamicRunners, [['ci.yml', 'consumers', '${{ matrix.os }}'], ['rust.yml', 'test', '${{ matrix.os }}']]);
+  const linuxCells = retained.filter(cell => cell.os === 'ubuntu-latest');
+  assert.equal(linuxCells.length, 30);
+  const directory = mkdtempSync(path.join(tmpdir(), 'meta-language-ci-platforms-'));
+  try {
+    for (const translationMode of ['false', 'true']) {
+      for (const [job, matrix] of [['test', { include: linuxCells }], ['consumer', { os: ['ubuntu-latest'] }]]) {
+        const output = path.join(directory, `${job}-${translationMode}`);
+        const run = spawnSync(process.execPath, ['js/scripts/rust-test-shards.mjs', '--workflow-matrix', job], {
+          cwd: fileURLToPath(root), encoding: 'utf8',
+          env: { ...process.env, GITHUB_OUTPUT: output, META_LANGUAGE_AUTOMATED_TRANSLATION: translationMode },
+        });
+        assert.equal(run.status, 0, run.stderr);
+        assert.equal(readFileSync(output, 'utf8'), `matrix=${JSON.stringify(matrix)}\n`);
+      }
+    }
+  } finally {
+    rmSync(directory, { recursive: true });
+  }
+
+  const linuxJobs = linuxCells.map(({ os, suite, logical_suite }) => ({
+    name: `Rust / Test (${os}, ${logical_suite ?? suite})`, status: 'completed', conclusion: 'success',
+  }));
+  const settled = (name, conclusion = 'success', labels = ['ubuntu-latest']) => ({ name, status: 'completed', conclusion, labels });
+  const consumer = settled('Clean Consumer (ubuntu-latest)');
+  const selectedJobs = [consumer, settled('Rust / Cargo Check'), ...linuxJobs];
+  assert.deepEqual(verifyWorkflowPlatforms(selectedJobs, policy), { nativeTests: 30, cleanConsumers: 1 });
+  assert.deepEqual(verifyWorkflowPlatforms([consumer, settled('Rust / Cargo Check', 'skipped')], policy), { nativeTests: 0, cleanConsumers: 1 });
+  assert.throws(() => verifyWorkflowPlatforms(selectedJobs.slice(1), policy), /missing or extra Clean Consumer/u);
+  assert.throws(() => verifyWorkflowPlatforms(selectedJobs.slice(0, -1), policy), /missing or extra.*Test/u);
+  assert.throws(() => verifyWorkflowPlatforms([...selectedJobs, selectedJobs.at(-1)], policy), /missing or extra.*Test/u);
+  assert.throws(() => verifyWorkflowPlatforms([settled(consumer.name, 'failure'), ...selectedJobs.slice(1)], policy), /unsuccessful.*Consumer/u);
+  assert.throws(() => verifyWorkflowPlatforms([...selectedJobs, settled('Clean Consumer (macos-latest)')], policy), /runner work was admitted/u);
+  assert.throws(() => verifyWorkflowPlatforms([...selectedJobs, settled('Opaque job label', 'success', ['windows-2025'])], policy), /runner work was admitted/u);
+  assert.match(step(ci.acceptance, 'Verify Linux-only workflow scheduling').run, /attempts\/\$GITHUB_RUN_ATTEMPT\/jobs\?per_page=100.*\n.*--verify-workflow-platforms/u);
+  assert.throws(() => readShardAdmission(linuxJobs, policy), /missing or duplicate scheduled physical jobs/u);
+  const corpus = readProjectData(new URL('parity/fixtures/issue-195-evidence.json', root));
+  const linuxReport = { platform: 'linux-x64', corpusSha256: 'fixture', agreement: { mismatches: [] } };
+  const coverage = supportedPlatformCoverage([linuxReport], [], {}, { corpus, corpusSha256: 'fixture' });
+  assert.deepEqual(coverage, { observed: false, failures: [
+    { platform: 'darwin-arm64', reason: 'no consumer report' }, { platform: 'win32-x64', reason: 'no consumer report' },
+  ] });
+  recordIssue195DirectiveObservation('I195-CI-NATIVE-PLATFORM-PAUSE', [
+    'workflowsScheduleOnlyLinuxRunners', 'originalPlatformMatrixAndCommandsRetained', 'strictPlatformEvidenceStillRequired',
+  ], context.name);
+});
 
 function when(text, overrides = {}) {
   const inline = /^\s*if: \$\{\{ (.*) \}\}$/mu.exec(text)?.[1];
@@ -325,12 +412,17 @@ test('the case study captures exact issue input, baseline, alternatives and roll
   assert.equal(issue.url, source.url);
   assert.equal(createHash('sha256').update(issue.body).digest('hex'), source.sha256);
   assert.equal(Buffer.byteLength(issue.body), source.bytes);
+  const platformInstruction = evidence.platformInstruction;
+  const platformSource = register.requirementSources.find(({ id }) => id === platformInstruction.id);
+  assert.equal(platformInstruction.url, platformSource.url);
+  assert.equal(createHash('sha256').update(platformInstruction.body).digest('hex'), platformSource.sha256);
+  assert.equal(Buffer.byteLength(platformInstruction.body), platformSource.bytes);
   assert.ok(evidence.baseline.observations.every(({ job, url, excerpts }) =>
     url.endsWith('/job/' + job) && excerpts.every(({ line, text }) => line > 0 && text.length > 0)));
   const study = read(folder + 'README.md');
   for (const requirement of ['Pause required automated translation', 'Keep the code, checks, tests',
     'Disable failing automated translation', 'Permit manual translation', 'Apply the pause to all open pull requests',
-    'Capture data in the requested folder', 'Deliver all changes in one pull request']) {
+    'Pause Windows and macOS CI execution', 'Capture data in the requested folder', 'Deliver all changes in one pull request']) {
     assert.ok(study.includes('| ' + requirement), requirement);
   }
   for (const { number, url, headRefName } of evidence.openPullRequests) {

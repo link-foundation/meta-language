@@ -2037,6 +2037,16 @@ export const VISION_REQUIREMENTS = Object.freeze([
     specification: 'javascript-first-and-self-translation',
     ...row,
   })),
+  {
+    id: 'I195-CI-NATIVE-PLATFORM-PAUSE',
+    sourceKey: 'nativePlatformPause',
+    area: 'automated-translation-pause',
+    specification: 'javascript-first-and-self-translation',
+    construct: 'scheduling the retained native platform checks',
+    expectedBehavior: 'Schedule Linux native tests and clean consumers while retaining all Windows and macOS definitions, commands and strict evidence requirements.',
+    assertions: ['workflowsScheduleOnlyLinuxRunners', 'originalPlatformMatrixAndCommandsRetained', 'strictPlatformEvidenceStillRequired'],
+    tooling: ['.github/workflows/ci.yml', '.github/workflows/rust.yml', 'parity/rust-test-physical-shards.lino', 'js/scripts/rust-test-shards.mjs'],
+  },
 ]);
 
 const RUNTIMES = ['javascript', 'rust', 'tooling'];

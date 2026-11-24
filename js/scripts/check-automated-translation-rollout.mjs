@@ -8,6 +8,7 @@ import { FULL_REQUIREMENTS_CHECK, githubQuery, verifyEvaluatedCheckout } from '.
 import { writeProjectData } from './project-data.mjs';
 
 const pauseStep = 'Require the active checks while automated translation is paused';
+const platformStep = 'Verify Linux-only workflow scheduling';
 
 export async function inspectAutomatedTranslationRollout(repository, query = githubQuery) {
   const api = `repos/${repository}`;
@@ -54,11 +55,13 @@ export async function inspectAutomatedTranslationRollout(repository, query = git
       .flatMap(page => page.jobs);
     const aggregate = jobs.find(job => job.name === FULL_REQUIREMENTS_CHECK);
     const pause = aggregate?.steps?.find(step => step.name === pauseStep);
+    const platforms = aggregate?.steps?.find(step => step.name === platformStep);
     const checkout = aggregate?.steps?.find(step => step.name === `Verify paused checkout for PR ${pull.number} at ${head} against ${base}`);
     observations.push({
       ...observation,
       aggregate: aggregate?.conclusion ?? null,
       pauseStep: pause?.conclusion ?? null,
+      platformStep: platforms?.conclusion ?? null,
       checkoutStep: checkout?.conclusion ?? null,
     });
   }
@@ -81,12 +84,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     error = cause.message;
   }
   const everyOpenPullRequestRunsPausedWorkflow = error === undefined && observations.every(row =>
-    row.aggregate === 'success' && row.pauseStep === 'success' && row.checkoutStep === 'success');
+    row.aggregate === 'success' && row.pauseStep === 'success' && row.platformStep === 'success' && row.checkoutStep === 'success');
   mkdirSync(path.dirname(output), { recursive: true });
   writeProjectData(output, { commit, observations, everyOpenPullRequestRunsPausedWorkflow, ...(error && { error }) }, { format: 'lino' });
   if (error) console.error(error);
   for (const row of observations) {
-    console.log(`#${row.pull} ${row.head} ${row.run ?? row.url} ${row.problem ?? `aggregate ${row.aggregate}, pause step ${row.pauseStep}, checkout step ${row.checkoutStep}`}`);
+    console.log(`#${row.pull} ${row.head} ${row.run ?? row.url} ${row.problem ?? `aggregate ${row.aggregate}, pause step ${row.pauseStep}, platform step ${row.platformStep}, checkout step ${row.checkoutStep}`}`);
   }
   if (!everyOpenPullRequestRunsPausedWorkflow) process.exitCode = 1;
 }

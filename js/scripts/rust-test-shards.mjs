@@ -12,6 +12,7 @@ import {readNativeNumberControlPublication} from '../../experiments/grammar-outc
 const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const script = fileURLToPath(import.meta.url);
 const policyPath = path.join(repository, 'parity/rust-test-physical-shards.lino');
+const workflowPlatforms = ['ubuntu-latest'];
 const digest = value => createHash('sha256').update(value).digest('hex');
 const requireValue = (condition, message) => {if (!condition) throw new Error(`Rust physical shards: ${message}`);};
 const encoded = value => structuredDataToLino(value);
@@ -43,6 +44,35 @@ export function physicalShardCount(policy, profile, suite, platform = null) {
   const matches=overrides.filter(entry => entry.platform === platform && (entry.profile === undefined || entry.profile === profile));
   requireValue(matches.length <= 1,'overlapping platform shard expansions');
   return matches[0]?.shards ?? row.shards;
+}
+
+export function nativeTestMatrix(policy, platforms = policy.platforms) {
+  return {include: platforms.flatMap(os => policy.suites.flatMap(suite => {
+    const count = physicalShardCount(policy, 'test', suite.name, os);
+    const filters = suite.filters.join(' ');
+    return Array.from({length: count}, (_, index) => index === 0
+      ? {os, suite: suite.name, filters}
+      : {os, suite: 'physical', logical_suite: suite.name, physical_shard: index + 1, filters});
+  }))};
+}
+
+export function verifyWorkflowPlatforms(jobs, policy) {
+  const active = jobs.filter(job => job.conclusion !== 'skipped');
+  const inactivePlatform = /\b(?:macos|windows)(?:-|\b)/iu;
+  requireValue(!active.some(job => inactivePlatform.test(job.name) || job.labels?.some(label => inactivePlatform.test(label))),
+    'Windows or macOS runner work was admitted');
+  const compareJobs = (name, expected) => {
+    const actual = active.filter(job => job.name.startsWith(`${name} (`));
+    requireValue(JSON.stringify(actual.map(job => job.name).sort()) === JSON.stringify(expected.sort()),
+      `missing or extra ${name} jobs (expected ${expected.length}, found ${actual.length})`);
+    requireValue(actual.every(job => job.status === 'completed' && job.conclusion === 'success'),
+      `unsuccessful ${name} jobs`);
+  };
+  compareJobs('Clean Consumer', workflowPlatforms.map(os => `Clean Consumer (${os})`));
+  const validCheck = active.some(job => job.name === 'Rust / Cargo Check' && job.conclusion === 'success');
+  const tests = validCheck ? nativeTestMatrix(policy, workflowPlatforms).include : [];
+  compareJobs('Rust / Test', tests.map(row => `Rust / Test (${row.os}, ${row.logical_suite ?? row.suite})`));
+  return {nativeTests: tests.length, cleanConsumers: workflowPlatforms.length};
 }
 
 export function readHarnessInventory(output) {
@@ -522,6 +552,24 @@ if (process.argv[1] && path.resolve(process.argv[1]) === script) {
     const [mode, ...arguments_] = process.argv.slice(2);
     if (mode === '--configure') configure(arguments_[0] === '--shell');
     else if (mode === '--finish') finish();
+    else if (mode === '--workflow-matrix') {
+      const [job] = arguments_;
+      requireValue(arguments_.length === 1 && ['test', 'consumer'].includes(job), 'expected a test or consumer workflow matrix');
+      const policy = readPhysicalShardPolicy();
+      // The archived platform definitions remain in policy.platforms. This
+      // scheduling control applies even when automated translation is enabled.
+      requireValue(workflowPlatforms.every(platform => policy.platforms.includes(platform)), 'unknown active platform');
+      const matrix = job === 'test' ? nativeTestMatrix(policy, workflowPlatforms) : {os: workflowPlatforms};
+      appendFileSync(process.env.GITHUB_OUTPUT, `matrix=${JSON.stringify(matrix)}\n`);
+      console.log(`Scheduled ${job} runners on ${workflowPlatforms.join(', ')}.`);
+    }
+    else if (mode === '--verify-workflow-platforms') {
+      const [file] = arguments_;
+      requireValue(arguments_.length === 1, 'expected workflow job metadata');
+      const pages = JSON.parse(readFileSync(file, 'utf8'));
+      const verified = verifyWorkflowPlatforms(pages.flatMap(page => page.jobs), readPhysicalShardPolicy());
+      console.log(`Verified ${verified.nativeTests} Linux native test jobs and ${verified.cleanConsumers} Linux clean consumer jobs.`);
+    }
     else if (mode === '--runner') process.exitCode = await runHarness(arguments_[0], arguments_.slice(1));
     else if (mode === '--admission') {
       const pages = JSON.parse(readFileSync(arguments_[0], 'utf8'));
@@ -530,6 +578,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === script) {
     }
     else if (mode === '--verify') console.log(verifyPhysicalShardDirectory(arguments_[0], {commit: process.env.GITHUB_SHA, run: process.env.GITHUB_RUN_ID,
       attempt: process.env.GITHUB_RUN_ATTEMPT, profiles: (process.env.META_LANGUAGE_SHARD_EXPECTED_PROFILES ?? '').split(',').filter(Boolean)}));
-    else throw new Error('expected --configure, --runner, --finish or --verify');
+    else throw new Error('expected --configure, --runner, --finish, --workflow-matrix, --verify-workflow-platforms, --admission or --verify');
   } catch (error) {console.error(error.stack);process.exitCode = 1;}
 }

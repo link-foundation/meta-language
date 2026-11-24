@@ -2892,7 +2892,17 @@ shared fixtures, native tests and the language feature inventory. Keep the
 automated translator, its checks, and its complete acceptance scope available.
 Skipped execution produces no translation evidence. Normal CI continues scoped
 JavaScript and Rust checks, grammar generation, candidate packaging and
-downstream validation. The complete acceptance path remains available on opt-in.
+downstream validation. Opt-in enables the complete translation commands and
+their evidence evaluators.
+
+The [PR #250 platform instruction](https://github.com/link-foundation/meta-language/pull/250#issuecomment-7127536709)
+pauses all Windows and macOS CI execution. Native test and clean consumer jobs
+select Linux before allocating runners on pull requests, pushes, releases and
+manual runs. The shared platform and shard definitions, commands, fixtures and
+validators remain available. Full coverage and translation commands still run
+on translation opt-in. The strict platform evidence gates continue to require
+actual reports for all three platforms, so that opt-in alone cannot satisfy
+them during the platform pause.
 
 The review of [Router PR #761](https://github.com/link-assistant/router/pull/761)
 at revision `e2ceac6071d90514fb1a37b3fe5964433d61c402` records its source

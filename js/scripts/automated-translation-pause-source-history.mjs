@@ -68,8 +68,10 @@ export const nativeLintCaptureSources = Object.freeze([
   'rust/tests/unit/translation_javascript_array_bindings.rs',
 ]);
 
+export const nativePlatformPausePredecessor = '7853a7351adf37d1ccc8f73479abf3d1960623bc';
+
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = '22e5224c02862fae02cbaf04e284ae721648976b4dc0c9ae09cdb40f16656378';
+const archiveDigest = '26510e4d735765d4dd6e8ae4aca90ced9fe00fb6d9786edeeade1022ed4d61aa';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
