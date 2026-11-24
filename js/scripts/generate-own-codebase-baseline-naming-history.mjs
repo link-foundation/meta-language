@@ -83,6 +83,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     'rust/tests/unit/self_translation_recursive_declaration_groups.rs',
     'rust/tests/unit/translation_arrays.rs',
     'rust/tests/unit/translation_javascript_record_parameters.rs',
+    'rust/tests/unit/translation_reference_identity.rs',
     'rust/tests/unit/translation_rust_literal_matches.rs',
     'rust/tests/unit/translation_surface_reference_analysis.rs',
   ];

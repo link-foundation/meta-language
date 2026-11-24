@@ -138,8 +138,48 @@ fn reference_identity_keeps_every_explicit_surface_refusal() {
     let policy = policy();
     for row in policy["refusals"].as_array().unwrap() {
         let script = r"
+import assert from 'node:assert/strict';
 import {parseJavaScript} from './js/src/translation/javascript.js';
-console.log(JSON.stringify(parseJavaScript(process.argv[1],JSON.parse(process.argv[2]))));
+import {checkProgram} from './js/src/translation/check.js';
+const [source, optionsText, name] = process.argv.slice(1);
+const options = JSON.parse(optionsText);
+const frontendRefusals = new Map([
+  ['different structural reference domains are not coerced', ['an array and as record', 61, 73]],
+  ['different element domains are not coerced', ['a number and as a string', 24, 35]],
+]);
+const frontendRefusal = frontendRefusals.get(name);
+if (!frontendRefusal) {
+  console.log(JSON.stringify(parseJavaScript(source, options)));
+} else {
+  const [major, minor] = process.versions.node.split('.').map(Number);
+  assert.ok(major === 22 && minor >= 15 || major === 24, 'uncovered Node ' + process.versions.node);
+  const [domains, start, end] = frontendRefusal;
+  const span = {start, end};
+  assert.throws(() => parseJavaScript(source, options), {
+    kind: 'type',
+    reason: 'one value is used as ' + domains + '; declare the types of the function with JSDoc',
+    span,
+  });
+
+  // A record types the same operands independently. Reuse those operands to
+  // exercise the checker even when inference refuses the original equality.
+  const operands = source.slice(start, end).split('===');
+  assert.equal(operands.length, 2);
+  const [left, right] = operands;
+  const control = source.slice(0, start) + '{left:' + left + ',right:' + right + '}' + source.slice(end);
+  const surface = parseJavaScript(control, options);
+  checkProgram(surface);
+  const declaration = surface.items[0];
+  let owner = declaration;
+  while (owner.body.k === 'let') owner = owner.body;
+  assert.equal(owner.body.k, 'record');
+  assert.deepEqual(owner.body.entries.map(entry => entry.name), ['left', 'right']);
+  const [leftEntry, rightEntry] = owner.body.entries;
+  declaration.ret = {kind: 'bool'};
+  owner.body = {k: 'binary', op: 'eq', left: leftEntry.value, right: rightEntry.value, span};
+  assert.throws(() => checkProgram(surface), {kind: 'type'});
+  console.log(JSON.stringify(surface));
+}
 ";
         let source = row["source"].as_str().unwrap();
         let output = run(Command::new("node").current_dir(root).args([
@@ -148,6 +188,7 @@ console.log(JSON.stringify(parseJavaScript(process.argv[1],JSON.parse(process.ar
             script,
             source,
             &row["options"].to_string(),
+            row["name"].as_str().unwrap(),
         ]));
         assert!(output.ok, "{}", output.stderr);
         let surface = serde_json::from_str(&output.stdout).unwrap();
