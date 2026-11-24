@@ -315,6 +315,24 @@ selected independent tests while automated translation was paused.
 [native grammar artifact](https://github.com/link-foundation/meta-language/actions/runs/45307026026/artifacts/14900795234),
 [Windows partition](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138282886688)
 
+The Windows grammar shard passed 155 unit tests at log line 1933, and both
+Formal AI workload partitions passed. The corpus partition completed the native
+grammar projection ratchet at line 634 and recorded 147 of 148 JavaScript
+workload tests at line 644, with the translation workload paused. The two
+partition artifacts retain the installed-package observations for aggregation.
+[Windows grammar](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138282886914),
+[Formal AI corpus](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138253433300),
+[corpus partition artifact](https://github.com/link-foundation/meta-language/actions/runs/45307026026/artifacts/14901217236),
+[remaining partition artifact](https://github.com/link-foundation/meta-language/actions/runs/45307026026/artifacts/14898758155)
+
+Fresh Merge Simulation (6) reported a failed check at log line 2195. Its
+native test step had already passed 55 unit and six integration tests. Clippy
+1.99 had reported 53 diagnostics at lines 1226–1866. Fifty-one also appeared
+in stable Clippy. The two additional diagnostics both point to the grouped
+ASCII test import after a statement, which the test corrections move above
+the first assertion. Both compiler versions still run the existing lint gate.
+[Fresh Merge Simulation (6)](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138282883746)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |
