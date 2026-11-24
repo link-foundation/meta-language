@@ -361,3 +361,31 @@ test('standalone JavaScript runs produce and validate the same report shards', a
 
 import {restoreRawContractPartitionHistory} from './support/raw-contract-partition-history.js';
 import {restoreTranslationWorkflowHistory} from './support/translation-workflow-history.js';
+
+test('eight-shard scheduling reuses wrapper timing only for the recorded imported test source', async () => {
+  const fixture = new URL('../../parity/fixtures/ci-45251703034-translation-workload-costs.lino', import.meta.url);
+  const measured = readProjectData(fixture);
+  const wrapper = 'js/tests/translation-typed-program-schema-neutral-defaults.test.js';
+  const dependency = measured.dependencies.find(row => row.file === wrapper);
+  const imported = await readFile(new URL('../../' + dependency.path, import.meta.url));
+  assert.equal(imported.length, dependency.bytes);
+  assert.equal(createHash('sha256').update(imported).digest('hex'), dependency.sha256);
+  assert.ok(measured.entries.find(row => row.file === wrapper).milliseconds >= 78_983);
+
+  const sources = new Map([['a-slow.js', 'a'], ['middle.js', 'b'], ['fast.js', 'c'], [wrapper, 'd']]);
+  const files = [...sources.keys()];
+  const entries = [300, 200, 100, 400].map((milliseconds, index) => {
+    const [file, source] = [...sources][index];
+    return { file, bytes: 1, sha256: createHash('sha256').update(source).digest('hex'), milliseconds };
+  });
+  const costs = { ...measured, entries, dependencies: [dependency] };
+  const schedule = readSource => partitionMeasuredWorkloads(files, 2, { group: 'translation-eight', costs, readSource });
+  const current = schedule(file => file === dependency.path ? imported : sources.get(file));
+  assert.deepEqual(current, [['fast.js', wrapper], ['a-slow.js', 'middle.js']]);
+  const changed = schedule(file => file === dependency.path ? Buffer.from('edited test') : sources.get(file));
+  assert.deepEqual(changed, [['a-slow.js', 'middle.js'], ['fast.js', wrapper]]);
+  assert.deepEqual(schedule(file => {
+    if (file === dependency.path) throw Object.assign(new Error('missing test source'), { code: 'ENOENT' });
+    return sources.get(file);
+  }), changed);
+});

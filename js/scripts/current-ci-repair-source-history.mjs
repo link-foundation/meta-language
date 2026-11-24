@@ -47,6 +47,22 @@ export function restoreIntegrationSource(source,path) {
   if (path === '.github/workflows/ci.yml') source = restoreRustJobAdmissionSource(source);
   source = restoreDiagnosticOrderFixture(source, path);
   source = restoreCargoTestHarnessRecognition(source, path);
+  if (path === 'js/scripts/test-groups.mjs'
+    && pin(source).sha256 === 'cad042bb4afb315a3ed4102eb4ef3cfd2a9f55f710da83d32e6852e2e3a41a6a') {
+    source = source.replace(/  'translation-eight': \{\n(?:[^\n]*\n){2}  \},\n/u, '')
+      .replace(/ const dependencies = new Map\(\);\n[\s\S]*?(?= const workloads=files\.map)/u, '')
+      .replace('&&matchesDependency(file)', '')
+      .replace("translation ? (count === 8 ? 'translation-eight' : 'translation')", "translation ? 'translation'");
+    assert.equal(pin(source).sha256, 'b435c356312edb7019afa05f6b5951c8a051ee70b6db45386cae3912a6fad9dd');
+  }
+  if (path === 'js/tests/test-groups.test.js'
+    && pin(source).sha256 === '507c2c07a9eff3eeaed4bf4d8d3970b1eac15fcfb0b5cc0a708c26793c7484ed') {
+    const appendedTest = "\ntest('eight-shard scheduling reuses wrapper timing";
+    const start = source.indexOf(appendedTest);
+    assert.ok(start > 0);
+    source = source.slice(0, start);
+    assert.equal(pin(source).sha256, '111daac3a4462bc8efd527d86b05cfd6c4fa137d2f02bceea2b7b9d2084ba077');
+  }
   if (path === 'js/scripts/dependency-inventory-append-history.mjs'
     && pin(source).sha256 === '80e4ed4842f8b5bf3a212e3bcda0ba656694320ef3c510aa374cec9c31a25c4c') {
     source = source.replace("import {isDeepStrictEqual} from 'node:util';\n", '')

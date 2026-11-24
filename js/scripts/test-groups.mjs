@@ -29,6 +29,10 @@ const schedulingProfiles = {
       [45049378352, 'f39cd80cf682b33d18a8f35a7a5af6ae39e69f98'],
     ]),
   },
+  'translation-eight': {
+    file: new URL('../../parity/fixtures/ci-45251703034-translation-workload-costs.lino', import.meta.url),
+    revisions: new Map([[45251703034, 'd1a0528619f9eaa960dd43c7576aaf22a127e5cd']]),
+  },
   'self-translation-report': {
     file: new URL('../../parity/fixtures/ci-45055131879-self-translation-workload-costs.lino', import.meta.url),
     revisions: new Map([
@@ -77,8 +81,27 @@ export function partitionMeasuredWorkloads(files,count,{readSource,costs,group}=
  const rates=measured.entries.map(row=>row.milliseconds/row.bytes).sort((a,b)=>a-b);
  assert.ok(rates.length>0);const rate=rates[Math.floor(rates.length/2)];
  const read=readSource??(file=>readFileSync(path.join(packageRoot,'..',file)));
+ const dependencies = new Map();
+ for (const { file, path: dependency, bytes, sha256 } of measured.dependencies ?? []) {
+  assert.ok(known.has(file) && !dependencies.has(file));
+  assert.match(dependency, /^experiments\/[a-z0-9-]+\/[a-z0-9-]+\.test\.mjs$/u);
+  assert.ok(Number.isSafeInteger(bytes) && bytes > 0);
+  assert.match(sha256, /^[a-f0-9]{64}$/u);
+  dependencies.set(file, { path: dependency, bytes, sha256 });
+ }
+ function matchesDependency(file) {
+  const dependency = dependencies.get(file);
+  if (!dependency) return true;
+  try {
+   const source = read(dependency.path);
+   return source != null && Buffer.byteLength(source) === dependency.bytes && schedulingDigest(source) === dependency.sha256;
+  } catch (error) {
+   if (error.code !== 'ENOENT') throw error;
+   return false;
+  }
+ }
  const workloads=files.map(file=>{const bytes=Buffer.from(read(file)),row=known.get(file);
-  const exact=row&&row.bytes===bytes.length&&row.sha256===schedulingDigest(bytes);
+  const exact=row&&row.bytes===bytes.length&&row.sha256===schedulingDigest(bytes)&&matchesDependency(file);
   return {file,milliseconds:exact?row.milliseconds:Math.max(1,Math.ceil(bytes.length*rate))};});
  workloads.sort((a,b)=>b.milliseconds-a.milliseconds||a.file.localeCompare(b.file));
  const loads=Array(count).fill(0),shards=Array.from({length:count},()=>[]);
@@ -190,7 +213,7 @@ export function partitionGroupFiles(files, shard = '1/1') {
   const translation = (count === 6 || count === 8) && files.includes('translation-scheduling-source-history.test.js');
   const grammar = count === 6 && files.includes('issue-195-interchange-api-cli.test.js');
   if (translation || grammar) {
-    const group = translation ? 'translation' : 'grammar';
+    const group = translation ? (count === 8 ? 'translation-eight' : 'translation') : 'grammar';
     return partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), count, { group })[index - 1].map(file => file.slice(9));
   }
   return files.filter((_, offset) => offset % count === index - 1);

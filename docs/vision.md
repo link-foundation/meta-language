@@ -4247,6 +4247,13 @@ composes before earlier historical scheduling views, preserving every older
 partition and source assertion. No new deadline success is inferred from the
 scheduling change.
 
+The eight translation test shards use advisory measurements from the eight
+completed jobs for the same pull request merge commit. The profile binds a
+side-effect import wrapper to both its own source and the complete imported
+test file. Changed or missing dependency bytes use the same size estimate as a
+changed test file. Each shard keeps the original deadline and reports every
+assigned whole test file.
+
 - CI runs a fast `cargo check` of all targets and features first; the jobs that
   compile and test need it, so a compile error fails once.
 - CI splits the Rust tests by test target and filter, and the JavaScript tests
