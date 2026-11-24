@@ -3490,7 +3490,13 @@ count once in the original full report. Missing, duplicate, foreign, tampered or
 failed parts provide no complete evidence. The canonical job, report, artifact
 and downstream barriers retain their identities, with full diagnostics retained.
 
-Native tests belong under `rust/tests/`. Private output-comparison tests use an
+Native tests belong under `rust/tests/`. A source file may declare a private
+test-only module for assertions that need access to private production values.
+The source placement check requires an explicit relative module path to an
+existing Rust file under `rust/tests/`. It rejects inline test bodies, public
+test modules, and targets outside that directory.
+
+Private output-comparison tests use an
 isolated fixture extracted automatically from the actual owned Rust concrete
 syntax declarations. Its source receipt binds every selected declaration and
 the complete original test bytes; freshness checks compare the generated model

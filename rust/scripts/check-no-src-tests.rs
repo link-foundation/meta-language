@@ -164,7 +164,7 @@ fn print_findings(findings: &[SrcTestFinding]) {
     for finding in findings {
         println!("  {}:{} {}", finding.file, finding.line, finding.marker);
     }
-    println!("\nMove these tests to tests/ and keep src/ free of test modules.\n");
+    println!("\nMove these test bodies to tests/. Private module declarations must point there.\n");
 }
 
 #[cfg(not(test))]
