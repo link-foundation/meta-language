@@ -146,6 +146,9 @@ impl LeanEmitter<'_> {
                         ),
                     );
                 }
+                if e.ty == Type::Nat {
+                    return Ok(format!("({}.size)", self.expr(array, depth)?));
+                }
                 let of = if e.ty.is_float() {
                     "Float.ofNat"
                 } else {

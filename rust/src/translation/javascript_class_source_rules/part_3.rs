@@ -9,6 +9,7 @@ use super::MlTemporaryRenderJavaScriptClosedClassLoop45Result;
 use super::MlTemporaryRenderJavaScriptClosedClassLoop46Result;
 use super::MlTemporaryRenderJavaScriptClosedClassRangeLoop21Result;
 use super::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result;
+use super::find_java_script_closed_class_field_end;
 use super::ml;
 use super::ml_array;
 use super::ml_math;
@@ -550,35 +551,62 @@ pub fn render_java_script_closed_class(
                                                                                                                     self::render_java_script_closed_class_range(source, values, starts, ends, (constructor_body + 1f64), initialization, &(self::ml_string::Text::from_units(vec![])), class_names, static_calls)
                                                                                                                 };
                                                                                                                 {
-                                                                                                                    let remainder = if constructor_body < 0f64 {
-                                                                                                                        self::ml_string::Text::from_units(vec![])
-                                                                                                                    } else {
-                                                                                                                        self::render_java_script_closed_class_range(source, values, starts, ends, self::read_java_script_closed_class_prefix_end(row), constructor_end, &(receiver), class_names, static_calls)
-                                                                                                                    };
+                                                                                                                    let first_statement = constructor_body + 1f64;
                                                                                                                     {
-                                                                                                                        let constructor_name = (self::ml_array::optional_at(row, self::ml_array::number_index(2f64))).unwrap_or_else(|| -1f64);
-                                                                                                                        {
-                                                                                                                            let documentation = if constructor_name < 0f64 {
-                                                                                                                                self::ml_string::Text::from_units(vec![])
-                                                                                                                            } else {
+                                                                                                                        let prologue_3 = if ((((constructor_body >= 0f64) && (initialization == constructor_end)) && (((self::ml_array::optional_at(values, self::ml_array::number_index(first_statement))).unwrap_or_else(|| self::ml_string::Text::from_units(vec![]))) == (self::ml_string::Text::from_units(vec![116, 104, 114, 111, 119])))) && (({
+                                                                                                                            let source_ml_source1_string_range_operand41 = source.clone();
+                                                                                                                            {
+                                                                                                                                let source_ml_source1_string_range_operand42 = (self::ml_array::optional_at(starts, self::ml_array::number_index(first_statement))).unwrap_or_else(|| 0f64);
                                                                                                                                 {
-                                                                                                                                    let source_ml_source1_string_range_operand36 = source.clone();
+                                                                                                                                    let source_ml_source1_string_range_operand43 = (self::ml_array::optional_at(ends, self::ml_array::number_index(first_statement))).unwrap_or_else(|| 0f64);
                                                                                                                                     {
-                                                                                                                                        let source_ml_source1_string_range_operand37 = (self::ml_array::optional_at(ends, self::ml_array::number_index(constructor_name - 1f64))).unwrap_or_else(|| 0f64);
+                                                                                                                                        let source_ml_source1_string_range_position44 = source_ml_source1_string_range_operand42;
                                                                                                                                         {
-                                                                                                                                            let source_ml_source1_string_range_operand38 = (self::ml_array::optional_at(starts, self::ml_array::number_index(constructor_name))).unwrap_or_else(|| 0f64);
-                                                                                                                                            {
-                                                                                                                                                let source_ml_source1_string_range_position39 = source_ml_source1_string_range_operand37;
-                                                                                                                                                {
-                                                                                                                                                    let source_ml_source1_string_range_position40 = source_ml_source1_string_range_operand38;
-                                                                                                                                                    source_ml_source1_string_range_operand36.slice(source_ml_source1_string_range_position39, source_ml_source1_string_range_position40)
-                                                                                                                                                }
-                                                                                                                                            }
+                                                                                                                                            let source_ml_source1_string_range_position45 = source_ml_source1_string_range_operand43;
+                                                                                                                                            source_ml_source1_string_range_operand41.slice(source_ml_source1_string_range_position44, source_ml_source1_string_range_position45)
                                                                                                                                         }
                                                                                                                                     }
                                                                                                                                 }
+                                                                                                                            }
+                                                                                                                        }) == (self::ml_string::Text::from_units(vec![116, 104, 114, 111, 119])))) && ((self::find_java_script_closed_class_field_end(values, (first_statement + 1f64), constructor_end)) == (constructor_end - 1f64)) {
+                                                                                                                            {
+                                                                                                                                ((self::ml_string::Text::from_units(vec![105, 102, 32, 40, 116, 114, 117, 101, 41, 32, 123, 32])).concat(&prologue)).concat(&self::ml_string::Text::from_units(vec![32, 125]))
+                                                                                                                            }
+                                                                                                                        } else {
+                                                                                                                            prologue.clone()
+                                                                                                                        };
+                                                                                                                        {
+                                                                                                                            let remainder = if constructor_body < 0f64 {
+                                                                                                                                self::ml_string::Text::from_units(vec![])
+                                                                                                                            } else {
+                                                                                                                                self::render_java_script_closed_class_range(source, values, starts, ends, self::read_java_script_closed_class_prefix_end(row), constructor_end, &(receiver), class_names, static_calls)
                                                                                                                             };
-                                                                                                                            ((((((((((((((((((((stubs_3.concat(&self::ml_string::Text::from_units(vec![10]))).concat(&documentation)).concat(&self::ml_string::Text::from_units(vec![10, 102, 117, 110, 99, 116, 105, 111, 110, 32]))).concat(&name)).concat(&self::ml_string::Text::from_units(vec![40]))).concat(&parameters)).concat(&self::ml_string::Text::from_units(vec![41, 32, 123, 10]))).concat(&initializations_2)).concat(&prologue)).concat(&self::ml_string::Text::from_units(vec![10]))).concat(&constructor_fields_2)).concat(&self::ml_string::Text::from_units(vec![99, 111, 110, 115, 116, 32]))).concat(&receiver)).concat(&self::ml_string::Text::from_units(vec![32, 61, 32, 123, 32]))).concat(&fields_3)).concat(&self::ml_string::Text::from_units(vec![32, 125, 59, 10]))).concat(&assignments_2)).concat(&remainder)).concat(&self::ml_string::Text::from_units(vec![10, 114, 101, 116, 117, 114, 110, 32]))).concat(&receiver)).concat(&self::ml_string::Text::from_units(vec![59, 10, 125, 10]))
+                                                                                                                            {
+                                                                                                                                let constructor_name = (self::ml_array::optional_at(row, self::ml_array::number_index(2f64))).unwrap_or_else(|| -1f64);
+                                                                                                                                {
+                                                                                                                                    let documentation = if constructor_name < 0f64 {
+                                                                                                                                        self::ml_string::Text::from_units(vec![])
+                                                                                                                                    } else {
+                                                                                                                                        {
+                                                                                                                                            let source_ml_source1_string_range_operand46 = source.clone();
+                                                                                                                                            {
+                                                                                                                                                let source_ml_source1_string_range_operand47 = (self::ml_array::optional_at(ends, self::ml_array::number_index(constructor_name - 1f64))).unwrap_or_else(|| 0f64);
+                                                                                                                                                {
+                                                                                                                                                    let source_ml_source1_string_range_operand48 = (self::ml_array::optional_at(starts, self::ml_array::number_index(constructor_name))).unwrap_or_else(|| 0f64);
+                                                                                                                                                    {
+                                                                                                                                                        let source_ml_source1_string_range_position49 = source_ml_source1_string_range_operand47;
+                                                                                                                                                        {
+                                                                                                                                                            let source_ml_source1_string_range_position50 = source_ml_source1_string_range_operand48;
+                                                                                                                                                            source_ml_source1_string_range_operand46.slice(source_ml_source1_string_range_position49, source_ml_source1_string_range_position50)
+                                                                                                                                                        }
+                                                                                                                                                    }
+                                                                                                                                                }
+                                                                                                                                            }
+                                                                                                                                        }
+                                                                                                                                    };
+                                                                                                                                    ((((((((((((((((((((stubs_3.concat(&self::ml_string::Text::from_units(vec![10]))).concat(&documentation)).concat(&self::ml_string::Text::from_units(vec![10, 102, 117, 110, 99, 116, 105, 111, 110, 32]))).concat(&name)).concat(&self::ml_string::Text::from_units(vec![40]))).concat(&parameters)).concat(&self::ml_string::Text::from_units(vec![41, 32, 123, 10]))).concat(&initializations_2)).concat(&prologue_3)).concat(&self::ml_string::Text::from_units(vec![10]))).concat(&constructor_fields_2)).concat(&self::ml_string::Text::from_units(vec![99, 111, 110, 115, 116, 32]))).concat(&receiver)).concat(&self::ml_string::Text::from_units(vec![32, 61, 32, 123, 32]))).concat(&fields_3)).concat(&self::ml_string::Text::from_units(vec![32, 125, 59, 10]))).concat(&assignments_2)).concat(&remainder)).concat(&self::ml_string::Text::from_units(vec![10, 114, 101, 116, 117, 114, 110, 32]))).concat(&receiver)).concat(&self::ml_string::Text::from_units(vec![59, 10, 125, 10]))
+                                                                                                                                }
+                                                                                                                            }
                                                                                                                         }
                                                                                                                     }
                                                                                                                 }
@@ -630,8 +658,8 @@ pub fn require_java_script_closed_class_prototype_methods(
                         {
                             let source_ml_temporary_index50 = self::ml::Big::from_i128(0);
                             {
-                                let source_ml_source1_s41 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop52(values, &(names_2), &(source_ml_temporary_values50), source_ml_temporary_index50);
-                                match source_ml_source1_s41 {
+                                let source_ml_source1_s51 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop52(values, &(names_2), &(source_ml_temporary_values50), source_ml_temporary_index50);
+                                match source_ml_source1_s51 {
                                     self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Done => {
                                         false
                                     }
@@ -665,8 +693,8 @@ pub fn read_java_script_closed_class_method_target(
                 {
                     let at = 0f64;
                     {
-                        let source_ml_source1_s42 = self::source_ml_temporary_read_java_script_closed_class_method_target_loop56(methods, receiver_fields, method, target, at);
-                        match source_ml_source1_s42 {
+                        let source_ml_source1_s52 = self::source_ml_temporary_read_java_script_closed_class_method_target_loop56(methods, receiver_fields, method, target, at);
+                        match source_ml_source1_s52 {
                         self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Result::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Done(target_2) => {
                             target_2
                         }
@@ -693,20 +721,20 @@ pub fn accept_java_script_closed_class_method_definition(
 ) -> bool {
     {
         let marker = {
-            let source_ml_source1_string_search_operand43 = brand.clone();
+            let source_ml_source1_string_search_operand53 = brand.clone();
             {
-                let source_ml_source1_string_search_operand44 =
+                let source_ml_source1_string_search_operand54 =
                     self::ml_string::Text::from_units(vec![
                         99, 108, 97, 115, 115, 95, 105, 100, 101, 110, 116, 105, 116, 121, 95,
                     ]);
                 {
-                    let source_ml_source1_string_search_text45 =
-                        source_ml_source1_string_search_operand44;
+                    let source_ml_source1_string_search_text55 =
+                        source_ml_source1_string_search_operand54;
                     {
-                        let source_ml_source1_string_search_position46 = f64::NAN;
-                        source_ml_source1_string_search_operand43.last_index_of(
-                            &source_ml_source1_string_search_text45,
-                            source_ml_source1_string_search_position46,
+                        let source_ml_source1_string_search_position56 = f64::NAN;
+                        source_ml_source1_string_search_operand53.last_index_of(
+                            &source_ml_source1_string_search_text55,
+                            source_ml_source1_string_search_position56,
                         )
                     }
                 }
@@ -717,20 +745,20 @@ pub fn accept_java_script_closed_class_method_definition(
         } else {
             {
                 let prefix = {
-                    let source_ml_source1_string_range_operand47 = brand.clone();
+                    let source_ml_source1_string_range_operand57 = brand.clone();
                     {
-                        let source_ml_source1_string_range_operand48 = 0f64;
+                        let source_ml_source1_string_range_operand58 = 0f64;
                         {
-                            let source_ml_source1_string_range_operand49 = marker;
+                            let source_ml_source1_string_range_operand59 = marker;
                             {
-                                let source_ml_source1_string_range_position50 =
-                                    source_ml_source1_string_range_operand48;
+                                let source_ml_source1_string_range_position60 =
+                                    source_ml_source1_string_range_operand58;
                                 {
-                                    let source_ml_source1_string_range_position51 =
-                                        source_ml_source1_string_range_operand49;
-                                    source_ml_source1_string_range_operand47.slice(
-                                        source_ml_source1_string_range_position50,
-                                        source_ml_source1_string_range_position51,
+                                    let source_ml_source1_string_range_position61 =
+                                        source_ml_source1_string_range_operand59;
+                                    source_ml_source1_string_range_operand57.slice(
+                                        source_ml_source1_string_range_position60,
+                                        source_ml_source1_string_range_position61,
                                     )
                                 }
                             }
@@ -739,17 +767,17 @@ pub fn accept_java_script_closed_class_method_definition(
                 };
                 {
                     let ordinal = {
-                        let source_ml_source1_string_range_operand52 = brand.clone();
+                        let source_ml_source1_string_range_operand62 = brand.clone();
                         {
-                            let source_ml_source1_string_range_operand53 = marker + 15f64;
+                            let source_ml_source1_string_range_operand63 = marker + 15f64;
                             {
-                                let source_ml_source1_string_range_position54 =
-                                    source_ml_source1_string_range_operand53;
+                                let source_ml_source1_string_range_position64 =
+                                    source_ml_source1_string_range_operand63;
                                 {
-                                    let source_ml_source1_string_range_position55 = f64::INFINITY;
-                                    source_ml_source1_string_range_operand52.slice(
-                                        source_ml_source1_string_range_position54,
-                                        source_ml_source1_string_range_position55,
+                                    let source_ml_source1_string_range_position65 = f64::INFINITY;
+                                    source_ml_source1_string_range_operand62.slice(
+                                        source_ml_source1_string_range_position64,
+                                        source_ml_source1_string_range_position65,
                                     )
                                 }
                             }
@@ -813,9 +841,9 @@ pub fn read_java_script_closed_class_owner_row(row: &[self::ml_string::Text]) ->
                 if (((((((!(self::ml_math::is_safe_integer(fields)) || (fields < 0f64))
                     || (fields > 8192f64))
                     || (({
-                        let source_ml_source1_string_argument57 = fields;
+                        let source_ml_source1_string_argument67 = fields;
                         self::ml_string::Text::from_text(&self::ml_number::js_number(
-                            source_ml_source1_string_argument57,
+                            source_ml_source1_string_argument67,
                         ))
                     }) != ((self::ml_array::optional_at(
                         row,
@@ -826,9 +854,9 @@ pub fn read_java_script_closed_class_owner_row(row: &[self::ml_string::Text]) ->
                     || (methods < 0f64))
                     || (methods > 8192f64))
                     || (({
-                        let source_ml_source1_string_argument59 = methods;
+                        let source_ml_source1_string_argument69 = methods;
                         self::ml_string::Text::from_text(&self::ml_number::js_number(
-                            source_ml_source1_string_argument59,
+                            source_ml_source1_string_argument69,
                         ))
                     }) != ((self::ml_array::optional_at(
                         row,

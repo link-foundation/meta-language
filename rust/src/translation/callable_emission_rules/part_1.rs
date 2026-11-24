@@ -1,14 +1,11 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::MlCallableEmissionFieldLoop1Result;
-use super::MlCallableEmissionHasNameLoop6Result;
-use super::MlReadCallableEagerEffectsJoin7;
-use super::MlReadCallableEagerEffectsLoop8Result;
-use super::ml_callable_emission_field_loop1;
-use super::ml_callable_emission_has_name_loop6;
-use super::ml_plan_callable_capture_bindings_loop3;
-use super::ml_read_callable_eager_effects_loop8;
-use super::ml_read_callable_effectful_declarations_loop9;
+use super::MlTemporaryCallableEmissionFieldLoop1Result;
+use super::MlTemporaryCallableEmissionHasNameLoop9Result;
+use super::source_ml_temporary_callable_emission_field_loop1;
+use super::source_ml_temporary_callable_emission_has_name_loop9;
+use super::source_ml_temporary_plan_callable_capture_bindings_loop3;
+use super::source_ml_temporary_plan_formal_reference_store_functions_loop5;
 
 /// Unbounded integers for the portable core's naturals and integers.
 pub mod ml {
@@ -464,34 +461,87 @@ pub mod ml_array {
     }
 }
 
+pub mod ml_source_exception {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct SourceException {
+        pub class_name: String,
+        pub message_units: Vec<u16>,
+        pub message_present: bool,
+    }
+    impl SourceException {
+        #[must_use]
+        pub fn raise(self) -> ! {
+            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
+        }
+        #[must_use]
+        pub fn from_text(class_name: &str, message: &str) -> Self {
+            Self {
+                class_name: class_name.to_owned(),
+                message_units: message.encode_utf16().collect(),
+                message_present: true,
+            }
+        }
+    }
+    impl std::fmt::Display for SourceException {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.message_units))
+        }
+    }
+    impl std::error::Error for SourceException {}
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_number_fact() -> f64 {
-    panic!("{}", "missing required Number fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Number fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_text_fact() -> String {
-    panic!("{}", "missing required text fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required text fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_boolean_fact() -> bool {
-    panic!("{}", "missing required Boolean fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Boolean fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Number fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required Number fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_number_fact)
     }
@@ -500,13 +550,16 @@ pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required text fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required text fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_text_fact)
     }
@@ -515,13 +568,16 @@ pub fn read_required_text_fact(values: &[String], index: f64) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Boolean fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required Boolean fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_boolean_fact)
     }
@@ -545,14 +601,16 @@ pub fn callable_emission_field(
             {
                 let end = at + self::read_required_number_fact(counts, node);
                 {
-                    let ml_s1 =
-                        self::ml_callable_emission_field_loop1(labels, targets, field, at, end);
-                    match ml_s1 {
-                        self::MlCallableEmissionFieldLoop1Result::MlCallableEmissionFieldLoop1Done => {
+                    let source_ml_source1_s1 =
+                        self::source_ml_temporary_callable_emission_field_loop1(
+                            labels, targets, field, at, end,
+                        );
+                    match source_ml_source1_s1 {
+                        self::MlTemporaryCallableEmissionFieldLoop1Result::MlTemporaryCallableEmissionFieldLoop1Done => {
                             -1f64
                         }
-                        self::MlCallableEmissionFieldLoop1Result::MlCallableEmissionFieldLoop1Return(ml_result1) => {
-                            ml_result1
+                        self::MlTemporaryCallableEmissionFieldLoop1Result::MlTemporaryCallableEmissionFieldLoop1Return(source_ml_temporary_result1) => {
+                            source_ml_temporary_result1
                         }
                     }
                 }
@@ -595,19 +653,19 @@ pub fn plan_callable_capture_bindings(
     {
         let selected = Vec::<f64>::new();
         {
-            let ml_values2 = references.to_vec();
+            let source_ml_temporary_values2 = references.to_vec();
             {
-                let ml_index2 = self::ml::Big::from_i128(0);
+                let source_ml_temporary_index2 = self::ml::Big::from_i128(0);
                 {
-                    self::ml_plan_callable_capture_bindings_loop3(
+                    self::source_ml_temporary_plan_callable_capture_bindings_loop3(
                         texts,
                         starts,
                         counts,
                         labels,
                         targets,
                         selected,
-                        &(ml_values2),
-                        ml_index2,
+                        &(source_ml_temporary_values2),
+                        source_ml_temporary_index2,
                     )
                 }
             }
@@ -619,6 +677,135 @@ pub fn plan_callable_capture_bindings(
 #[must_use]
 pub fn accept_callable_creation_effect_traversal(kind: &str) -> bool {
     kind != "lambda"
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_formal_local_cell_element(kind: &str) -> bool {
+    (((((kind == "bool") || (kind == "float")) || (kind == "fixed")) || (kind == "int"))
+        || (kind == "nat"))
+        || (kind == "string")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn require_formal_reference_store(kind: &str, reference_receiver: bool) -> bool {
+    ((self::observe_formal_structural_state(kind, reference_receiver) || (kind == "cellAllocate"))
+        || (kind == "cellRead"))
+        || (kind == "cellWrite")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub const fn accept_formal_reference_type(callable_class_slot: bool) -> bool {
+    !callable_class_slot
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn observe_formal_structural_state(kind: &str, reference_receiver: bool) -> bool {
+    ((((kind == "referenceAllocate") || (kind == "referenceRead")) || (kind == "referenceWrite"))
+        || (kind == "referenceIdentity"))
+        || (((kind == "method") || (kind == "binary")) && reference_receiver)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub const fn accept_formal_reference_store_lowering(
+    observed_collection: bool,
+    observed_cell: bool,
+    structural_state: bool,
+    standalone: bool,
+) -> bool {
+    (observed_collection || (observed_cell && !structural_state))
+        || (standalone && structural_state)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_formal_reference_store_functions(
+    roots: &[String],
+    callers: &[String],
+    callees: &[String],
+) -> Vec<String> {
+    {
+        let selected = roots.to_vec();
+        {
+            let changed = true;
+            {
+                self::source_ml_temporary_plan_formal_reference_store_functions_loop5(
+                    callers, callees, selected, changed,
+                )
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_formal_reference_store_operation(
+    kind: &str,
+    operation: &str,
+    identity: &str,
+    arguments_count: f64,
+    ordered_record: bool,
+    record_operator: &str,
+) -> String {
+    if (((kind == "record") && (record_operator == "=")) && !ordered_record)
+        && (arguments_count == 1f64)
+    {
+        String::from("write field")
+    } else if (identity == "fill-array-elements") && (arguments_count == 1f64) {
+        String::from("fill")
+    } else if ((identity).is_empty()) || ((kind != "map") && (kind != "set")) {
+        String::new()
+    } else if (operation == "clear")
+        || (((operation == "set") && (kind == "map")) && (arguments_count >= 2f64))
+    {
+        operation.to_owned()
+    } else if arguments_count < 1f64 {
+        String::new()
+    } else if (((operation == "has") || (operation == "delete"))
+        || ((operation == "get") && (kind == "map")))
+        || ((operation == "add") && (kind == "set"))
+    {
+        operation.to_owned()
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_formal_class_method_factory(body_kind: &str, parameters: f64, guarded: bool) -> bool {
+    ((body_kind == "lambda") && (parameters == 1f64)) && !guarded
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_formal_class_method_placeholder(
+    body_kind: &str,
+    parameters: f64,
+    self_call: bool,
+    operands: f64,
+) -> bool {
+    ((body_kind == "call") && self_call)
+        && ((operands).partial_cmp(&(parameters)) == Some(std::cmp::Ordering::Equal))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_formal_class_method_installation(
+    operator: &str,
+    actual_receiver: bool,
+    operands: f64,
+    actual_factory: bool,
+    factory_receiver: bool,
+    factory_operands: f64,
+) -> bool {
+    (((((operator == "=") && actual_receiver) && (operands == 1f64)) && actual_factory)
+        && factory_receiver)
+        && (factory_operands == 1f64)
 }
 
 /// Execute the checked shared source algorithm.
@@ -645,189 +832,23 @@ pub fn accept_callable_effect_field(field: &str) -> bool {
 #[must_use]
 pub fn callable_emission_has_name(names: &[String], name: &str) -> bool {
     {
-        let ml_values5 = names.to_vec();
+        let source_ml_temporary_values8 = names.to_vec();
         {
-            let ml_index5 = self::ml::Big::from_i128(0);
+            let source_ml_temporary_index8 = self::ml::Big::from_i128(0);
             {
-                let ml_s2 =
-                    self::ml_callable_emission_has_name_loop6(name, &(ml_values5), ml_index5);
-                match ml_s2 {
-                    self::MlCallableEmissionHasNameLoop6Result::MlCallableEmissionHasNameLoop6Done => {
-                        false
-                    }
-                    self::MlCallableEmissionHasNameLoop6Result::MlCallableEmissionHasNameLoop6Return(ml_result6) => {
-                        ml_result6
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn read_callable_eager_effects(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    node: f64,
-    names: &[String],
-) -> bool {
-    if node < 0f64 {
-        false
-    } else {
-        {
-            let form = self::read_required_text_fact(forms, node);
-            if (form != "object") && (form != "array") {
-                false
-            } else {
-                {
-                    let kind = self::callable_emission_text(
-                        texts, starts, counts, labels, targets, node, "k",
+                let source_ml_source1_s2 =
+                    self::source_ml_temporary_callable_emission_has_name_loop9(
+                        name,
+                        &(source_ml_temporary_values8),
+                        source_ml_temporary_index8,
                     );
-                    if (self::accept_callable_creation_effect_traversal(&(kind))) {
-                        if (self::require_callable_output_effect(
-                            &(kind),
-                            &(self::callable_emission_text(
-                                texts,
-                                starts,
-                                counts,
-                                labels,
-                                targets,
-                                node,
-                                "semantics",
-                            )),
-                            &(self::callable_emission_text(
-                                texts, starts, counts, labels, targets, node, "flavor",
-                            )),
-                            &(self::callable_emission_text(
-                                texts, starts, counts, labels, targets, node, "byZero",
-                            )),
-                        )) || ((kind == "call")
-                            && self::callable_emission_has_name(
-                                names,
-                                &(self::callable_emission_text(
-                                    texts, starts, counts, labels, targets, node, "fn",
-                                )),
-                            ))
-                        {
-                            true
-                        } else {
-                            {
-                                let ml_s3 = if kind == "apply" {
-                                    {
-                                        let fn_ = self::callable_emission_field(
-                                            starts, counts, labels, targets, node, "fn",
-                                        );
-                                        {
-                                            let target = self::callable_emission_text(
-                                                texts, starts, counts, labels, targets, fn_, "k",
-                                            );
-                                            if ((target == "functionRef")
-                                                && self::callable_emission_has_name(
-                                                    names,
-                                                    &(self::callable_emission_text(
-                                                        texts, starts, counts, labels, targets,
-                                                        fn_, "fn",
-                                                    )),
-                                                ))
-                                                || ((target == "lambda")
-                                                    && self::read_callable_eager_effects(
-                                                        forms,
-                                                        texts,
-                                                        starts,
-                                                        counts,
-                                                        labels,
-                                                        targets,
-                                                        self::callable_emission_field(
-                                                            starts, counts, labels, targets, fn_,
-                                                            "body",
-                                                        ),
-                                                        names,
-                                                    ))
-                                            {
-                                                self::MlReadCallableEagerEffectsJoin7::MlReadCallableEagerEffectsJoin7Return(true)
-                                            } else {
-                                                self::MlReadCallableEagerEffectsJoin7::MlReadCallableEagerEffectsJoin7Next
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    self::MlReadCallableEagerEffectsJoin7::MlReadCallableEagerEffectsJoin7Next
-                                };
-                                match ml_s3 {
-                                        self::MlReadCallableEagerEffectsJoin7::MlReadCallableEagerEffectsJoin7Next => {
-                                            {
-                                                let at = self::read_required_number_fact(starts, node);
-                                                {
-                                                    let end = at + self::read_required_number_fact(counts, node);
-                                                    {
-                                                        let ml_s4 = self::ml_read_callable_eager_effects_loop8(forms, texts, starts, counts, labels, targets, names, at, end);
-                                                        match ml_s4 {
-                                                            self::MlReadCallableEagerEffectsLoop8Result::MlReadCallableEagerEffectsLoop8Done => {
-                                                                false
-                                                            }
-                                                            self::MlReadCallableEagerEffectsLoop8Result::MlReadCallableEagerEffectsLoop8Return(ml_result8) => {
-                                                                ml_result8
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        self::MlReadCallableEagerEffectsJoin7::MlReadCallableEagerEffectsJoin7Return(ml_result8_2) => {
-                                            ml_result8_2
-                                        }
-                                    }
-                            }
-                        }
-                    } else {
+                match source_ml_source1_s2 {
+                    self::MlTemporaryCallableEmissionHasNameLoop9Result::MlTemporaryCallableEmissionHasNameLoop9Done => {
                         false
                     }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_callable_effectful_declarations(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    declarations: f64,
-) -> Vec<f64> {
-    {
-        let selected = Vec::<f64>::new();
-        {
-            let names = Vec::<String>::new();
-            {
-                let grew = true;
-                {
-                    self::ml_read_callable_effectful_declarations_loop9(
-                        forms,
-                        texts,
-                        starts,
-                        counts,
-                        labels,
-                        targets,
-                        declarations,
-                        selected,
-                        names,
-                        grew,
-                    )
+                    self::MlTemporaryCallableEmissionHasNameLoop9Result::MlTemporaryCallableEmissionHasNameLoop9Return(source_ml_temporary_result9) => {
+                        source_ml_temporary_result9
+                    }
                 }
             }
         }

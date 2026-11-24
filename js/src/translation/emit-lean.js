@@ -5,6 +5,8 @@ import {RECORD_PROPERTY_ORDER_LEAN_PRELUDE} from './record-property-order-formal
 import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
 import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
 import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
+import { prepareFormalLocalCells } from './formal-local-cells.js';
+import { prepareFormalReferenceCollections } from './formal-reference-collections.js';
 import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
 import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
 import {UNICODE_CASE_LEAN_PRELUDE} from './unicode-case-formal-runtime.js';
@@ -39,7 +41,7 @@ import { typeError, unsupported } from './diagnostics.js';
 import { renderCollectionConstruction, renderCollectionConstructionType } from './collection-construction-rules.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
-import { renderArrayFromMapping } from './array-from-rules.js';
+import { acceptFormalArrayCallbackOperation, renderArrayFromMapping, renderFormalArrayCallbackOperation } from './array-from-rules.js';
 import { readPrimitiveMethodRenderingRefusal } from './primitive-method-rules.js';
 import { renderRecordProductField, renderRecordType, renderRecordValue } from './record-emission-rules.js';
 import { readUnionTargetRefusal } from './type-syntax-rules.js';
@@ -212,7 +214,7 @@ function ident(name) {
 
 export function emitLean(source) {
   checkJavaScriptClassOwners(source);
-  const program = threadOutput(prepareOrderedRecordValues(source), 'Lean');
+  const program = threadOutput(prepareFormalReferenceCollections(prepareFormalLocalCells(prepareOrderedRecordValues(source))), 'Lean');
   const state = new EmitState(program, 'Lean', ident, KEYWORDS, {
     ctorStyle: 'data',
     generated: (name) => [`${name}.eq_1`],
@@ -646,6 +648,7 @@ class LeanEmitter {
       case 'length':
         if(acceptRustExactArrayLengthResult(e.k,e.type.kind,e.type.bits??0,e.type.signed===true,e.array.type.kind))return renderRustExactArrayLength('Lean',this.expr(e.array,depth));
         if (e.array.type.kind === 'string') return renderStringLengthExpression('Lean', this.expr(e.array, depth));
+        if (e.type.kind === 'nat') return `(${this.expr(e.array, depth)}.size)`;
         return `(${e.type.kind === 'float' ? 'Float.ofNat' : 'Int.ofNat'} ${this.expr(e.array, depth)}.size)`;
       case 'math':
         if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('Lean',e,argument=>this.expr(argument,depth));
@@ -671,20 +674,13 @@ class LeanEmitter {
       return `(String.intercalate ${this.expr(e.args[0], depth)} (${object}.toList.map (fun ml_value => ${text('ml_value', e.object.type.element)})))`;
     }
     if (e.op === 'reduce' && e.args.length === 1) throw unsupported('array reduce without an initial value', 'the empty-array TypeError needs an operational abort encoding in Lean', e.span);
-    if (!['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'reduce'].includes(e.op)) throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Lean', 'array', e.op) || 'this array operation needs an operational encoding in Lean', e.span);
+    if (e.op !== 'map' && !acceptFormalArrayCallbackOperation(e.op)) throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Lean', 'array', e.op) || 'this array operation needs an operational encoding in Lean', e.span);
     const callback = e.args[0];
-    if (e.op === 'map') return renderArrayFromMapping('Lean', object, this.expr(callback, depth), callback.type.params.length, '');
-    const args = e.op === 'reduce' ? ['ml_accumulator', 'ml_pair.1', '(Float.ofNat ml_pair.2)', 'ml_values'] : ['ml_pair.1', '(Float.ofNat ml_pair.2)', 'ml_values'];
-    const call = callback.type.params.length ? `(ml_callback ${args.slice(0, callback.type.params.length).join(' ')})` : 'ml_callback';
-    const head = `(let ml_values := ${object}; let ml_callback := ${this.expr(callback, depth)}; `;
-    const pairs = 'ml_values.toList.zipIdx';
-    const lambda = `(fun ml_pair => ${call})`;
-    if (e.op === 'flatMap') return `${head} (${pairs}.flatMap (fun ml_pair => ${call}.toList)).toArray)`;
-    if (e.op === 'some' || e.op === 'every') return `${head} ${pairs}.${e.op === 'some' ? 'any' : 'all'} ${lambda})`;
-    if (e.op === 'filter') return `${head} ((${pairs}.filter ${lambda}).map (fun ml_pair => ml_pair.1)).toArray)`;
-    if (e.op === 'find') return `${head} (${pairs}.find? ${lambda}).map (fun ml_pair => ml_pair.1))`;
-    if (e.op === 'findIndex') return `${head} ((${pairs}.find? ${lambda}).map (fun ml_pair => Float.ofNat ml_pair.2)).getD (-1 : Float))`;
-    return `${head} ${pairs}.foldl (fun ml_accumulator ml_pair => ${call}) ${this.expr(e.args[1], depth)})`;
+    const renderedCallback = this.expr(callback, depth);
+    const parameterCount = callback.type.params.length;
+    if (e.op === 'map') return renderArrayFromMapping('Lean', object, renderedCallback, parameterCount, '');
+    const initial = e.op === 'reduce' ? this.expr(e.args[1], depth) : '';
+    return renderFormalArrayCallbackOperation('Lean', e.op, object, renderedCallback, parameterCount, initial, '');
   }
 
   optionalMatch(arg, binder, present, nullCase, undefinedCase, depth) {

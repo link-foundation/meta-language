@@ -31,7 +31,7 @@ export function arrayFromRulesPolicy() {
     sourceClosure: { source: closure, sourceSha256: hash(closure), removedImports: [factBoundary, iterableBoundary],
       inputs: [sourceFile, factsFile, iterableFile].map(file => ({path: file === sourceFile ? 'js/src/translation/array-from-rules.js' : file === factsFile ? 'js/src/translation/fact-column-rules.js' : 'js/src/translation/array-value-rules.js', sourceSha256: hash(readFileSync(file, 'utf8'))})) },
     inferenceBoundary: 'Plans select the original iterable child types, expected element and callback terms. The existing unifier applies parameter pairs in order, followed by the result pair; a callback may declare fewer supplied parameters.',
-    renderingBoundary: 'The map-only formatter retains the existing four target strings. Hosts emit receiver then callback once and retain each target runtime and unsupported boundary.' };
+    renderingBoundary: 'The shared formatters retain array mapping in all four targets and formal array callback operations in Lean and Rocq. Hosts emit receiver then callback once and retain each target runtime and unsupported boundary.' };
 }
 
 export async function generateArrayFromRules({ check = false, native = false } = {}) {

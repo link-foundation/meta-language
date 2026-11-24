@@ -135,3 +135,43 @@ export function renderArrayFromMapping(target, object, callback, parameterCount,
   }
   return '';
 }
+
+/** @param {string} operation @returns {boolean} */
+export function acceptFormalArrayCallbackOperation(operation) {
+  return ['filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'reduce'].includes(operation);
+}
+
+/** @param {string} target @param {string} operation @param {string} object @param {string} callback @param {number} parameterCount @param {string} initial @param {string} element @returns {string} */
+export function renderFormalArrayCallbackOperation(target, operation, object, callback, parameterCount, initial, element) {
+  const reduction = operation === 'reduce';
+  const lean = target === 'Lean';
+  const value = lean ? 'ml_pair.1' : '(fst ml_pair)';
+  const index = lean ? '(Float.ofNat ml_pair.2)' : '(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (snd ml_pair))))';
+  const argumentsText = (reduction ? ['ml_accumulator', value, index, 'ml_values'] : [value, index, 'ml_values'])
+    .slice(0, parameterCount).join(' ');
+  const call = parameterCount ? '(ml_callback ' + argumentsText + ')' : 'ml_callback';
+  if (lean) {
+    const head = '(let ml_values := ' + object + '; let ml_callback := ' + callback + '; ';
+    const pairs = 'ml_values.toList.zipIdx';
+    const predicate = '(fun ml_pair => ' + call + ')';
+    if (operation === 'flatMap') return head + ' (' + pairs + '.flatMap (fun ml_pair => ' + call + '.toList)).toArray)';
+    if (operation === 'some' || operation === 'every') return head + ' ' + pairs + '.' + (operation === 'some' ? 'any' : 'all') + ' ' + predicate + ')';
+    if (operation === 'filter') return head + ' ((' + pairs + '.filter ' + predicate + ').map (fun ml_pair => ml_pair.1)).toArray)';
+    if (operation === 'find') return head + ' (' + pairs + '.find? ' + predicate + ').map (fun ml_pair => ml_pair.1))';
+    if (operation === 'findIndex') return head + ' ((' + pairs + '.find? ' + predicate + ').map (fun ml_pair => Float.ofNat ml_pair.2)).getD (-1 : Float))';
+    if (reduction) return head + ' ' + pairs + '.foldl (fun ml_accumulator ml_pair => ' + call + ') ' + initial + ')';
+  }
+  if (target === 'Rocq') {
+    const head = '(let ml_values := ' + object + ' in let ml_callback := ' + callback + ' in ';
+    const pairs = '(List.combine ml_values (List.seq 0 (List.length ml_values)))';
+    const predicate = '(fun ml_pair => ' + call + ')';
+    if (operation === 'flatMap') return head + ' List.flat_map ' + predicate + ' ' + pairs + ')';
+    if (operation === 'some' || operation === 'every') return head + ' List.' + (operation === 'some' ? 'existsb' : 'forallb') + ' ' + predicate + ' ' + pairs + ')';
+    const first = '(@fst ' + element + ' nat)';
+    if (operation === 'filter') return head + ' List.map ' + first + ' (List.filter ' + predicate + ' ' + pairs + '))';
+    if (operation === 'find') return head + ' option_map ' + first + ' (List.find ' + predicate + ' ' + pairs + '))';
+    if (operation === 'findIndex') return head + ' match List.find ' + predicate + ' ' + pairs + ' with Some ml_pair => ' + index + ' | None => (PrimFloat.opp 1%float) end)';
+    if (reduction) return head + ' List.fold_left (fun ml_accumulator ml_pair => ' + call + ') ' + pairs + ' ' + initial + ')';
+  }
+  return '';
+}

@@ -459,8 +459,18 @@ export function renderJavaScriptClosedClass(source, values, starts, ends, row, p
   const constructorBody = row[5] ?? -1;
   const constructorEnd = row[6] ?? -1;
   const initialization = row[8] ?? -1;
-  const prologue = constructorBody < 0 ? '' : renderJavaScriptClosedClassRange(source, values, starts, ends,
+  let prologue = constructorBody < 0 ? '' : renderJavaScriptClosedClassRange(source, values, starts, ends,
     constructorBody + 1, initialization, '', classNames, staticCalls);
+  // A sole explicit throw completes before the private return continuation.
+  // Retain the receiver type through the unreachable false branch without
+  // admitting unreachable statements in the original constructor source.
+  const firstStatement = constructorBody + 1;
+  if (constructorBody >= 0 && initialization === constructorEnd
+    && (values[firstStatement] ?? '') === 'throw'
+    && source.slice(starts[firstStatement] ?? 0, ends[firstStatement] ?? 0) === 'throw'
+    && findJavaScriptClosedClassFieldEnd(values, firstStatement + 1, constructorEnd) === constructorEnd - 1) {
+    prologue = 'if (true) { ' + prologue + ' }';
+  }
   const remainder = constructorBody < 0 ? '' : renderJavaScriptClosedClassRange(source, values, starts, ends,
     readJavaScriptClosedClassPrefixEnd(row), constructorEnd, receiver, classNames, staticCalls);
   const constructorName = row[2] ?? -1;

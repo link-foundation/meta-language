@@ -187,6 +187,9 @@ impl RocqEmitter<'_> {
                         ),
                     );
                 }
+                if e.ty == super::Type::Nat {
+                    return Ok(format!("(N.of_nat (List.length {}))", self.expr(array)?));
+                }
                 let length = format!("(Z.of_nat (List.length {}))", self.expr(array)?);
                 if !e.ty.is_float() {
                     return Ok(length);

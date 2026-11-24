@@ -6,7 +6,8 @@ use meta_language::translation::{
 };
 use meta_language::{
     BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
-    encode_link_network_binary, encode_typed_program_links, read_structured_data_lino,
+    emit_typed_program_links, encode_link_network_binary, encode_typed_program_links,
+    read_structured_data_lino,
 };
 use serde_json::Value;
 use std::{fs, path::Path, process::Command};
@@ -74,6 +75,50 @@ fn archives(program: &meta_language::translation::ir::Program) -> Vec<meta_langu
         )
         .unwrap(),
     ]
+}
+
+#[test]
+fn standalone_formal_functions_keep_their_local_reference_store_and_scalar_signature() {
+    let source =
+        include_str!("../../../parity/fixtures/translation-corpus/standalone-reference-store.mjs");
+    assert_eq!(
+        observe(&format!(
+            "{source}\nconsole.log(localAliasMutation(true));\nconsole.log(localAliasMutation(false));"
+        )),
+        "true\nfalse\n"
+    );
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let packet = encode_typed_program_links(&program).unwrap();
+    let reloaded = archives(&program);
+    let escaping = check_program(
+        &parse_javascript(
+            "export function escaped(){const values = [false];values.fill(true);return values;}",
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    let escaping = encode_typed_program_links(&escaping).unwrap();
+    for (target, signature) in [
+        ("Lean", "def localAliasMutation (replacement : Bool) : Bool"),
+        (
+            "Rocq",
+            "Definition localAliasMutation (replacement : bool) : bool",
+        ),
+    ] {
+        let emitted = emit_typed_program_links(&packet.network, packet.root, target).unwrap();
+        assert!(emitted.code.contains(signature), "{}", emitted.code);
+        for archive in &reloaded {
+            assert_eq!(
+                emit_typed_program_links(archive, packet.root, target).unwrap(),
+                emitted
+            );
+        }
+        let error = emit_typed_program_links(&escaping.network, escaping.root, target).unwrap_err();
+        assert!(
+            error.to_string().contains("shared reference state"),
+            "{error}"
+        );
+    }
 }
 fn compiled(source: &str) -> (bool, String, String) {
     let directory = TemporaryDirectory::new("reference-identity");

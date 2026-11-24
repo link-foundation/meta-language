@@ -14,6 +14,8 @@
 
 mod callables;
 mod evaluation;
+pub(crate) mod local_cells;
+pub(crate) mod reference_collections;
 
 use std::borrow::Cow;
 use std::collections::HashSet;

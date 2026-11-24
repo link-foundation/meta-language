@@ -197,6 +197,37 @@ impl RocqEmitter<'_> {
                     return Err(unsupported("array copying sort", "this target needs an explicit UTF-16 string ordering interpretation", e.span));
                 }
                 if op=="readJavaScriptRecordPropertyOrder"{let rendered=self.expr(object)?;return crate::translation::ordered_record_values::order_read("Rocq",e,&rendered);}
+                if let Type::Array { element, .. } = &object.ty
+                    && crate::translation::array_from_rules::accept_formal_array_callback_operation(op)
+                {
+                    let callback = args[0].as_ref().expect("the checked array callback");
+                    let Type::Function { params, .. } = &callback.ty else {
+                        unreachable!("the checked callback retains its function type");
+                    };
+                    if params.len() > if op == "reduce" { 2 } else { 1 } || op == "findIndex" {
+                        self.floats();
+                    }
+                    let count = serde_json::Number::from(params.len()).as_f64()
+                        .expect("the checked callback arity has a Number representation");
+                    let object = self.expr(object)?;
+                    let callback = self.expr(callback)?;
+                    let mut initial = String::new();
+                    if op == "reduce" {
+                        let Some(value) = args.get(1).and_then(Option::as_ref) else {
+                            return Err(unsupported("array reduce without an initial value",
+                                "the empty-array TypeError needs an operational abort encoding in Rocq", e.span));
+                        };
+                        initial = self.expr(value)?;
+                    }
+                    let element = if matches!(op.as_str(), "filter" | "find") {
+                        self.ty(element)?
+                    } else {
+                        String::new()
+                    };
+                    return Ok(crate::translation::array_from_rules::render_formal_array_callback_operation(
+                        "Rocq", op, &object, &callback, count, &initial, &element,
+                    ));
+                }
                 if matches!(object.ty, Type::Array { .. }) && op == "map" {
                     let callback = args.first().and_then(Option::as_ref).expect("the checked map has its actual callback");
                     let Type::Function { params, .. } = &callback.ty else {
@@ -334,7 +365,12 @@ impl RocqEmitter<'_> {
                 "(@nil string)"
             }
             .to_owned(),
-            Type::Array { element, .. } => format!("(@nil {})", self.ty(element)?),
+            Type::Array { element, .. } | Type::Set { element, .. } => {
+                format!("(@nil {})", self.ty(element)?)
+            }
+            Type::Map { key, value, .. } => {
+                format!("(@nil ({} * {})%type)", self.ty(key)?, self.ty(value)?)
+            }
             Type::Tuple { elements } => {
                 let mut parts = Vec::new();
                 for element in elements {

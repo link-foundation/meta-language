@@ -6,6 +6,8 @@ import {RECORD_PROPERTY_ORDER_ROCQ_PRELUDE} from './record-property-order-formal
 import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
 import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
 import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
+import { prepareFormalLocalCells } from './formal-local-cells.js';
+import { prepareFormalReferenceCollections } from './formal-reference-collections.js';
 import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
 import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
 import {UNICODE_CASE_ROCQ_PRELUDE} from './unicode-case-formal-runtime.js';
@@ -40,7 +42,7 @@ import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOpe
 import { readCollectionConstructionBinding, renderCollectionConstruction, renderCollectionConstructionType } from './collection-construction-rules.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead } from './array-value-rules.js';
-import { renderArrayFromMapping } from './array-from-rules.js';
+import { acceptFormalArrayCallbackOperation, renderArrayFromMapping, renderFormalArrayCallbackOperation } from './array-from-rules.js';
 import { readPrimitiveMethodRenderingRefusal } from './primitive-method-rules.js';
 import { renderRecordProductField, renderRecordType, renderRecordValue } from './record-emission-rules.js';
 import { readUnionTargetRefusal } from './type-syntax-rules.js';
@@ -302,7 +304,7 @@ function ident(name) {
 
 export function emitRocq(source) {
   checkJavaScriptClassOwners(source);
-  const program = threadOutput(prepareOrderedRecordValues(source), 'Rocq');
+  const program = threadOutput(prepareFormalReferenceCollections(prepareFormalLocalCells(prepareOrderedRecordValues(source))), 'Rocq');
   const state = new EmitState(program, 'Rocq', ident, KEYWORDS, {
     ctorStyle: 'module',
     // Rocq derives these from inductives and Functions in the same namespace.
@@ -891,6 +893,7 @@ class RocqEmitter {
           this.floats();
           return renderStringLengthExpression('Rocq', this.expr(e.array));
         }
+        if (e.type.kind === 'nat') return `(N.of_nat (List.length ${this.expr(e.array)}))`;
         const length = `(Z.of_nat (List.length ${this.expr(e.array)}))`;
         if (e.type.kind !== 'float') return length;
         this.floats();
@@ -916,22 +919,16 @@ class RocqEmitter {
       return `(let ml_values := ${this.expr(e.object)} in let ml_separator := ${this.expr(e.args[0])} in match ml_values with nil => EmptyString | ml_first :: ml_rest => List.fold_left (fun ml_accumulator ml_value => String.append ml_accumulator (String.append ml_separator ${text('ml_value', e.object.type.element)})) ml_rest ${text('ml_first', e.object.type.element)} end)`;
     }
     if (e.op === 'reduce' && e.args.length === 1) throw unsupported('array reduce without an initial value', 'the empty-array TypeError needs an operational abort encoding in Rocq', e.span);
-    if (!['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'reduce'].includes(e.op)) throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Rocq', 'array', e.op) || 'this array operation needs an operational encoding in Rocq', e.span);
+    if (e.op !== 'map' && !acceptFormalArrayCallbackOperation(e.op)) throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Rocq', 'array', e.op) || 'this array operation needs an operational encoding in Rocq', e.span);
     const callback = e.args[0];
-    const number = '(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (snd ml_pair))))';
-    const args = e.op === 'reduce' ? ['ml_accumulator', '(fst ml_pair)', number, 'ml_values'] : ['(fst ml_pair)', number, 'ml_values'];
-    const call = callback.type.params.length ? `(ml_callback ${args.slice(0, callback.type.params.length).join(' ')})` : 'ml_callback';
-    if (callback.type.params.length > (e.op === 'reduce' ? 2 : 1)) this.floats();
-    if (e.op === 'map') return renderArrayFromMapping('Rocq', this.expr(e.object), this.expr(callback), callback.type.params.length, '');
-    const head = `(let ml_values := ${this.expr(e.object)} in let ml_callback := ${this.expr(callback)} in `;
-    const pairs = '(List.combine ml_values (List.seq 0 (List.length ml_values)))';
-    const lambda = `(fun ml_pair => ${call})`;
-    if (e.op === 'flatMap') return `${head} List.flat_map ${lambda} ${pairs})`;
-    if (e.op === 'some' || e.op === 'every') return `${head} List.${e.op === 'some' ? 'existsb' : 'forallb'} ${lambda} ${pairs})`;
-    if (e.op === 'filter') return `${head} List.map (@fst ${this.type(e.object.type.element)} nat) (List.filter ${lambda} ${pairs}))`;
-    if (e.op === 'find') return `${head} option_map (@fst ${this.type(e.object.type.element)} nat) (List.find ${lambda} ${pairs}))`;
-    if (e.op === 'findIndex') { this.floats(); return `${head} match List.find ${lambda} ${pairs} with Some ml_pair => ${number} | None => (PrimFloat.opp 1%float) end)`; }
-    return `${head} List.fold_left (fun ml_accumulator ml_pair => ${call}) ${pairs} ${this.expr(e.args[1])})`;
+    const parameterCount = callback.type.params.length;
+    if (parameterCount > (e.op === 'reduce' ? 2 : 1) || e.op === 'findIndex') this.floats();
+    const object = this.expr(e.object);
+    const renderedCallback = this.expr(callback);
+    if (e.op === 'map') return renderArrayFromMapping('Rocq', object, renderedCallback, parameterCount, '');
+    const initial = e.op === 'reduce' ? this.expr(e.args[1]) : '';
+    const element = e.op === 'filter' || e.op === 'find' ? this.type(e.object.type.element) : '';
+    return renderFormalArrayCallbackOperation('Rocq', e.op, object, renderedCallback, parameterCount, initial, element);
   }
 
   optionalMatch(arg, binder, present, nullCase, undefinedCase) {
@@ -1036,7 +1033,10 @@ class RocqEmitter {
       case 'output':
         return this.utf16Strings?'(@nil (list N))':'(@nil string)';
       case 'array':
+      case 'set':
         return `(@nil ${this.type(type.element)})`;
+      case 'map':
+        return `(@nil (${this.type(type.key)} * ${this.type(type.value)})%type)`;
       case 'option':
         return `(@None ${type.absence === 'both' ? `(option ${this.type(type.element)})` : this.type(type.element)})`;
       case 'tuple':

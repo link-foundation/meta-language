@@ -378,8 +378,9 @@ fn internal(message: String) -> TranslationError {
 pub fn emit_rocq(source: &Program) -> Result<Emitted> {
     super::class_owners::validate_program(source)?;
     let prepared = super::ordered_record_preparation::prepare(source)?;
-    let source = prepared.as_ref();
-    let program = &*thread_output_for_target(source, "Rocq")?;
+    let source = super::output::local_cells::prepare(prepared.as_ref());
+    let source = super::output::reference_collections::prepare(source.as_ref());
+    let program = &*thread_output_for_target(source.as_ref(), "Rocq")?;
     let utf16_strings = super::formal_unit_strings::requires(program);
     let mut state = EmitState::new(
         program,

@@ -29,22 +29,22 @@ pub fn source_ml_temporary_read_java_script_closed_class_parameter_positions_wit
                 } else {
                     {
                         let result_2 = {
-                            let source_ml_source1_concat_value131 = result;
+                            let source_ml_source1_concat_value141 = result;
                             {
-                                let source_ml_source1_concat_value132 = vec![at];
+                                let source_ml_source1_concat_value142 = vec![at];
                                 self::ml_array::append(
                                     self::ml_array::append(
                                         Vec::<f64>::new(),
-                                        source_ml_source1_concat_value131,
+                                        source_ml_source1_concat_value141,
                                     ),
-                                    source_ml_source1_concat_value132,
+                                    source_ml_source1_concat_value142,
                                 )
                             }
                         };
                         {
                             let at_2 = at + 1f64;
                             {
-                                let source_ml_source1_s133 = if ((self::ml_array::optional_at(
+                                let source_ml_source1_s143 = if ((self::ml_array::optional_at(
                                     values,
                                     self::ml_array::number_index(at_2),
                                 ))
@@ -252,7 +252,7 @@ pub fn source_ml_temporary_read_java_script_closed_class_parameter_positions_wit
                                 } else {
                                     self::MlTemporaryReadJavaScriptClosedClassParameterPositionsWithCollectionsJoin3::MlTemporaryReadJavaScriptClosedClassParameterPositionsWithCollectionsJoin3Next(at_2)
                                 };
-                                match source_ml_source1_s133 {
+                                match source_ml_source1_s143 {
                                 self::MlTemporaryReadJavaScriptClosedClassParameterPositionsWithCollectionsJoin3::MlTemporaryReadJavaScriptClosedClassParameterPositionsWithCollectionsJoin3Next(at_9) => {
                                     if at_9 < close {
                                         {
@@ -306,33 +306,33 @@ pub fn source_ml_temporary_render_java_script_closed_class_parameter_arguments_l
         if at < close {
             {
                 let result_2 = {
-                    let source_ml_source1_concat_value139 = result;
+                    let source_ml_source1_concat_value149 = result;
                     {
-                        let source_ml_source1_concat_value140 = vec![{
-                            let source_ml_source1_string_range_operand134 = source.clone();
+                        let source_ml_source1_concat_value150 = vec![{
+                            let source_ml_source1_string_range_operand144 = source.clone();
                             {
-                                let source_ml_source1_string_range_operand135 =
+                                let source_ml_source1_string_range_operand145 =
                                     (self::ml_array::optional_at(
                                         starts,
                                         self::ml_array::number_index(at),
                                     ))
                                     .unwrap_or_else(|| 0f64);
                                 {
-                                    let source_ml_source1_string_range_operand136 =
+                                    let source_ml_source1_string_range_operand146 =
                                         (self::ml_array::optional_at(
                                             ends,
                                             self::ml_array::number_index(at),
                                         ))
                                         .unwrap_or_else(|| 0f64);
                                     {
-                                        let source_ml_source1_string_range_position137 =
-                                            source_ml_source1_string_range_operand135;
+                                        let source_ml_source1_string_range_position147 =
+                                            source_ml_source1_string_range_operand145;
                                         {
-                                            let source_ml_source1_string_range_position138 =
-                                                source_ml_source1_string_range_operand136;
-                                            source_ml_source1_string_range_operand134.slice(
-                                                source_ml_source1_string_range_position137,
-                                                source_ml_source1_string_range_position138,
+                                            let source_ml_source1_string_range_position148 =
+                                                source_ml_source1_string_range_operand146;
+                                            source_ml_source1_string_range_operand144.slice(
+                                                source_ml_source1_string_range_position147,
+                                                source_ml_source1_string_range_position148,
                                             )
                                         }
                                     }
@@ -342,9 +342,9 @@ pub fn source_ml_temporary_render_java_script_closed_class_parameter_arguments_l
                         self::ml_array::append(
                             self::ml_array::append(
                                 Vec::<self::ml_string::Text>::new(),
-                                source_ml_source1_concat_value139,
+                                source_ml_source1_concat_value149,
                             ),
-                            source_ml_source1_concat_value140,
+                            source_ml_source1_concat_value150,
                         )
                     }
                 };
@@ -640,8 +640,8 @@ pub fn source_ml_temporary_find_java_script_closed_class_field_end_loop6(
                             {
                                 let inner = at + 1f64;
                                 {
-                                    let source_ml_source1_s141 = self::source_ml_temporary_find_java_script_closed_class_field_end_loop7(values, end, inner);
-                                    match source_ml_source1_s141 {
+                                    let source_ml_source1_s151 = self::source_ml_temporary_find_java_script_closed_class_field_end_loop7(values, end, inner);
+                                    match source_ml_source1_s151 {
                                                 self::MlTemporaryFindJavaScriptClosedClassFieldEndLoop7Result::MlTemporaryFindJavaScriptClosedClassFieldEndLoop7Done => {
                                                     {
                                                         let at_2 = end;
@@ -703,9 +703,9 @@ pub fn source_ml_temporary_render_java_script_closed_class_field_documentation_l
                     self::ml_string::Text::from_units(vec![32])
                 } else {
                     {
-                        let source_ml_source1_string_unit_operand142 = comment.clone();
+                        let source_ml_source1_string_unit_operand152 = comment.clone();
                         {
-                            let source_ml_source1_string_unit_operand143 = at - 1f64;
+                            let source_ml_source1_string_unit_operand153 = at - 1f64;
                             (std::rc::Rc::new(
                                 move |text: self::ml_string::Text,
                                       position: f64|
@@ -720,19 +720,19 @@ pub fn source_ml_temporary_render_java_script_closed_class_field_documentation_l
                                             self::ml_string::Text::from_units(vec![])
                                         } else {
                                             {
-                                                let source_ml_source1_string_range_operand144 =
+                                                let source_ml_source1_string_range_operand154 =
                                                     text.clone();
                                                 {
-                                                    let source_ml_source1_string_range_operand145 =
+                                                    let source_ml_source1_string_range_operand155 =
                                                         index;
                                                     {
-                                                        let source_ml_source1_string_range_operand146 =
+                                                        let source_ml_source1_string_range_operand156 =
                                                             index + 1f64;
                                                         {
-                                                            let source_ml_source1_string_range_position147 = source_ml_source1_string_range_operand145;
+                                                            let source_ml_source1_string_range_position157 = source_ml_source1_string_range_operand155;
                                                             {
-                                                                let source_ml_source1_string_range_position148 = source_ml_source1_string_range_operand146;
-                                                                source_ml_source1_string_range_operand144.slice(source_ml_source1_string_range_position147, source_ml_source1_string_range_position148)
+                                                                let source_ml_source1_string_range_position158 = source_ml_source1_string_range_operand156;
+                                                                source_ml_source1_string_range_operand154.slice(source_ml_source1_string_range_position157, source_ml_source1_string_range_position158)
                                                             }
                                                         }
                                                     }
@@ -742,17 +742,17 @@ pub fn source_ml_temporary_render_java_script_closed_class_field_documentation_l
                                     }
                                 },
                             ))(
-                                source_ml_source1_string_unit_operand142,
-                                source_ml_source1_string_unit_operand143,
+                                source_ml_source1_string_unit_operand152,
+                                source_ml_source1_string_unit_operand153,
                             )
                         }
                     }
                 };
                 {
                     let after = {
-                        let source_ml_source1_string_unit_operand149 = comment.clone();
+                        let source_ml_source1_string_unit_operand159 = comment.clone();
                         {
-                            let source_ml_source1_string_unit_operand150 = at + 5f64;
+                            let source_ml_source1_string_unit_operand160 = at + 5f64;
                             (std::rc::Rc::new(
                                 move |text: self::ml_string::Text,
                                       position: f64|
@@ -767,19 +767,19 @@ pub fn source_ml_temporary_render_java_script_closed_class_field_documentation_l
                                             self::ml_string::Text::from_units(vec![])
                                         } else {
                                             {
-                                                let source_ml_source1_string_range_operand151 =
+                                                let source_ml_source1_string_range_operand161 =
                                                     text.clone();
                                                 {
-                                                    let source_ml_source1_string_range_operand152 =
+                                                    let source_ml_source1_string_range_operand162 =
                                                         index;
                                                     {
-                                                        let source_ml_source1_string_range_operand153 =
+                                                        let source_ml_source1_string_range_operand163 =
                                                             index + 1f64;
                                                         {
-                                                            let source_ml_source1_string_range_position154 = source_ml_source1_string_range_operand152;
+                                                            let source_ml_source1_string_range_position164 = source_ml_source1_string_range_operand162;
                                                             {
-                                                                let source_ml_source1_string_range_position155 = source_ml_source1_string_range_operand153;
-                                                                source_ml_source1_string_range_operand151.slice(source_ml_source1_string_range_position154, source_ml_source1_string_range_position155)
+                                                                let source_ml_source1_string_range_position165 = source_ml_source1_string_range_operand163;
+                                                                source_ml_source1_string_range_operand161.slice(source_ml_source1_string_range_position164, source_ml_source1_string_range_position165)
                                                             }
                                                         }
                                                     }
@@ -789,13 +789,13 @@ pub fn source_ml_temporary_render_java_script_closed_class_field_documentation_l
                                     }
                                 },
                             ))(
-                                source_ml_source1_string_unit_operand149,
-                                source_ml_source1_string_unit_operand150,
+                                source_ml_source1_string_unit_operand159,
+                                source_ml_source1_string_unit_operand160,
                             )
                         }
                     };
                     {
-                        let source_ml_source1_s161 = if self::ml_array::includes(
+                        let source_ml_source1_s171 = if self::ml_array::includes(
                             &vec![
                                 self::ml_string::Text::from_units(vec![32]),
                                 self::ml_string::Text::from_units(vec![9]),
@@ -823,16 +823,16 @@ pub fn source_ml_temporary_render_java_script_closed_class_field_documentation_l
                         ) {
                             {
                                 let result_2 = result.concat(&({
-                                    let source_ml_source1_string_range_operand162 = comment.clone();
+                                    let source_ml_source1_string_range_operand172 = comment.clone();
                                     {
-                                        let source_ml_source1_string_range_operand163 = previous;
+                                        let source_ml_source1_string_range_operand173 = previous;
                                         {
-                                            let source_ml_source1_string_range_operand164 = at;
+                                            let source_ml_source1_string_range_operand174 = at;
                                             {
-                                                let source_ml_source1_string_range_position165 = source_ml_source1_string_range_operand163;
+                                                let source_ml_source1_string_range_position175 = source_ml_source1_string_range_operand173;
                                                 {
-                                                    let source_ml_source1_string_range_position166 = source_ml_source1_string_range_operand164;
-                                                    source_ml_source1_string_range_operand162.slice(source_ml_source1_string_range_position165, source_ml_source1_string_range_position166)
+                                                    let source_ml_source1_string_range_position176 = source_ml_source1_string_range_operand174;
+                                                    source_ml_source1_string_range_operand172.slice(source_ml_source1_string_range_position175, source_ml_source1_string_range_position176)
                                                 }
                                             }
                                         }
@@ -846,20 +846,20 @@ pub fn source_ml_temporary_render_java_script_closed_class_field_documentation_l
                         } else {
                             self::MlTemporaryRenderJavaScriptClosedClassFieldDocumentationJoin9::MlTemporaryRenderJavaScriptClosedClassFieldDocumentationJoin9Next(result.clone(), previous)
                         };
-                        match source_ml_source1_s161 {
+                        match source_ml_source1_s171 {
                             self::MlTemporaryRenderJavaScriptClosedClassFieldDocumentationJoin9::MlTemporaryRenderJavaScriptClosedClassFieldDocumentationJoin9Next(result_3, previous_3) => {
                                 {
                                     let at_2 = {
-                                        let source_ml_source1_string_search_operand167 = comment.clone();
+                                        let source_ml_source1_string_search_operand177 = comment.clone();
                                         {
-                                            let source_ml_source1_string_search_operand168 = self::ml_string::Text::from_units(vec![64, 116, 121, 112, 101]);
+                                            let source_ml_source1_string_search_operand178 = self::ml_string::Text::from_units(vec![64, 116, 121, 112, 101]);
                                             {
-                                                let source_ml_source1_string_search_operand169 = at + 5f64;
+                                                let source_ml_source1_string_search_operand179 = at + 5f64;
                                                 {
-                                                    let source_ml_source1_string_search_text170 = source_ml_source1_string_search_operand168;
+                                                    let source_ml_source1_string_search_text180 = source_ml_source1_string_search_operand178;
                                                     {
-                                                        let source_ml_source1_string_search_position171 = source_ml_source1_string_search_operand169;
-                                                        source_ml_source1_string_search_operand167.index_of(&source_ml_source1_string_search_text170, source_ml_source1_string_search_position171)
+                                                        let source_ml_source1_string_search_position181 = source_ml_source1_string_search_operand179;
+                                                        source_ml_source1_string_search_operand177.index_of(&source_ml_source1_string_search_text180, source_ml_source1_string_search_position181)
                                                     }
                                                 }
                                             }

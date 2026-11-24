@@ -194,6 +194,29 @@ impl LeanEmitter<'_> {
                         .expect("the checked map has its actual callback");
                     return self.array_map_expression(object, callback, depth);
                 }
+                if object.ty.kind() == "array"
+                    && crate::translation::array_from_rules::accept_formal_array_callback_operation(op)
+                {
+                    let callback = args[0].as_ref().expect("the checked array callback");
+                    let Type::Function { params, .. } = &callback.ty else {
+                        unreachable!("the checked callback retains its function type");
+                    };
+                    let count = serde_json::Number::from(params.len()).as_f64()
+                        .expect("the checked callback arity has a Number representation");
+                    let object = self.expr(object, depth)?;
+                    let callback = self.expr(callback, depth)?;
+                    let mut initial = String::new();
+                    if op == "reduce" {
+                        let Some(value) = args.get(1).and_then(Option::as_ref) else {
+                            return Err(unsupported("array reduce without an initial value",
+                                "the empty-array TypeError needs an operational abort encoding in Lean", e.span));
+                        };
+                        initial = self.expr(value, depth)?;
+                    }
+                    return Ok(crate::translation::array_from_rules::render_formal_array_callback_operation(
+                        "Lean", op, &object, &callback, count, &initial, "",
+                    ));
+                }
                 return Err(unsupported(
                     &format!(".{op}()"),
                     &super::primitive_method_rules::read_primitive_method_rendering_refusal(

@@ -246,6 +246,13 @@ retain their own actual source identities rather than borrow another profile's
 interpretation. Stored/escaping references and additional ownership families
 remain required independent interpretations, not silently erased source facets.
 
+Formal emission can transport checked JavaScript lexical scalar cells into
+immutable bindings when the declaration owns the allocation and each write
+occurs in its ordered initializer or continuation. A read uses the binding
+current at that point. A reference that escapes, a closure with a cell capture,
+or a conditional write requires additional state evidence. Ordered formal
+output threading also includes intrinsic numeric coercions that can abort.
+
 The native exclusive source entry point selects the same versioned loan rules.
 An explicit or implicit owned `Vec` loop transfers its actual vector owner before
 body checking. Its ordered loop transport retains the item type and lexical
