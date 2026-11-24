@@ -12,21 +12,22 @@ export function readSourceLibraryClassFacts(source,path,facts){
  const lexical=tokenize(source,'JavaScript'),values=lexical.tokens.map(token=>['identifier','punct'].includes(token.kind)?token.value:'#'+token.value),kinds=lexical.tokens.map(token=>token.kind);
  if(!acceptJavaScriptClosedClassSourceSize(source.length,lexical.tokens.length))throw new RangeError('class source module exceeds its actual closed frontend size profile in '+path);
  const program=analyzeProgram(source,'JavaScript');if(!program.network.verifyFullMatch().isClean())throw new TypeError('class source closure needs complete actual CST in '+path);
- const declarations=[],classes=[],ranges=[];
+ const declarations=[],classes=[],ranges=[],exportPrefixes=[];
  for(const declared of facts.declarationBindings??facts.declarations.map(name=>({name,kind:'function'}))){
   const binding=program.bindings.find(binding=>binding.scope==='scope:0'&&binding.name===declared.name&&binding.kind===declared.kind);
   if(!binding)throw new TypeError('class source closure lost actual module binding '+declared.name+' in '+path);
   const syntax=program.sourceMappings.filter(node=>acceptSourceLibraryClassDeclarationTerm(node.term,declared.kind)&&node.start<=binding.declaration.start&&node.end>=binding.declaration.end).sort((a,b)=>(a.end-a.start)-(b.end-b.start))[0];
   if(!syntax)throw new TypeError('class source closure needs actual declaration syntax '+declared.name+' in '+path);
   const exported=program.sourceMappings.find(node=>node.term==='export_statement'&&node.start<=syntax.start&&node.end>=syntax.end);
+  const prefix=exported&&lexical.tokens.find(token=>token.start>=exported.start&&token.end<=syntax.start&&token.kind==='identifier'&&token.value==='export');
+  if(exported&&!prefix)throw new TypeError('a declaration export needs its actual owned prefix in '+path);
+  if(prefix)exportPrefixes.push({name:declared.name,kind:declared.kind,start:prefix.start,end:prefix.end});
   ranges.push({start:exported?.start??syntax.start,end:exported?.end??syntax.end});declarations.push({...declared,start:syntax.start,end:syntax.end,coordinateUnit:'UTF-16 code units'});
   if(declared.kind==='class'){
    const first=lexical.tokens.findIndex(token=>token.start===syntax.start),directory=facts.sourceErrorClasses?readJavaScriptErrorClassDirectory(values,kinds,first):readJavaScriptClosedClassDirectory(values,kinds,first);
    if(directory[0]<0)throw new TypeError('class source closure '+path+': '+(facts.sourceErrorClasses?readJavaScriptErrorClassRefusal:readJavaScriptClosedClassRefusal)(directory[0]));
-   const prefix=exported&&tokenize(source.slice(exported.start,syntax.start),'JavaScript').tokens.find(token=>token.kind==='identifier'&&token.value==='export');
-   if(exported&&(!prefix||source.slice(exported.start+prefix.start,exported.start+prefix.end)!=='export'))throw new TypeError('a class export needs its actual owned prefix in '+path);
    let ownedStart=exported?.start??syntax.start;for(const comment of lexical.comments.toReversed())if(comment.end<=ownedStart&&source.slice(comment.end,ownedStart).trim()==='')ownedStart=comment.start;
-   classes.push({name:declared.name,start:syntax.start,end:syntax.end,ownedStart,...(prefix?{exportStart:exported.start+prefix.start,exportEnd:exported.start+prefix.end}:{}),coordinateUnit:'UTF-16 code units'});
+   classes.push({name:declared.name,start:syntax.start,end:syntax.end,ownedStart,...(prefix?{exportStart:prefix.start,exportEnd:prefix.end}:{}),coordinateUnit:'UTF-16 code units'});
   }
  }
  for(const imported of facts.imports){if(!program.sourceMappings.some(node=>node.term==='import_statement'&&node.start===imported.start&&node.end===imported.end))throw new TypeError('class source imports need actual complete CST ownership in '+path);ranges.push(imported);}
@@ -35,7 +36,7 @@ export function readSourceLibraryClassFacts(source,path,facts){
  // cannot acquire an accidental module environment through concatenation.
  for(const binding of program.bindings.filter(binding=>binding.scope==='scope:0'))if(!facts.declarations.includes(binding.name)&&!facts.imports.some(imported=>imported.bindings?.some(row=>row.local===binding.name)))throw new TypeError('class source closure has unrepresented module state '+binding.name+' in '+path);
  for(const token of lexical.tokens)if(token.kind!=='eof'&&token.value!==';'&&!ranges.some(range=>token.start>=range.start&&token.end<=range.end))throw new TypeError('class source closure needs declaration-only module syntax in '+path+':'+token.start);
- return {declarations,classes,unresolvedNames:[...new Set(program.unresolvedReferences.map(reference=>reference.name))]};
+ return {declarations,classes,exportPrefixes,unresolvedNames:[...new Set(program.unresolvedReferences.map(reference=>reference.name))]};
 }
 export function recordSourceLibraryCompositionStep(input,before,after,operation,edits){
  const ordered=[...edits].sort((a,b)=>a.start-b.start),pieces=[];let cursor=0;
@@ -46,14 +47,17 @@ export function recordSourceLibraryCompositionStep(input,before,after,operation,
 export function projectSourceLibraryOriginalInterval(input,start,end){
  let interval=[start,end];for(const step of (input.sourceCompositionSteps??[]).toReversed()){interval=projectSourceLibraryClassEditInterval(step.edits.map(edit=>edit.start),step.edits.map(edit=>edit.end),step.edits.map(edit=>edit.text.length),interval[0],interval[1]);if(interval.length!==2)throw new TypeError('class source interval lost its actual source edit owner');}return {start:interval[0],end:interval[1],coordinateUnit:'UTF-16 code units'};
 }
-export function finishSourceLibraryClassComposition(input,body,readFacts){
+export function finishSourceLibraryClassComposition(input,body,readFacts,publicProviders){
  // Import deletion and export-prefix deletion are separate recorded phases.
  let before=input.transformedSource;
  const removed=[...input.transformedImports,...(input.transformedReExports??[])];
  recordSourceLibraryCompositionStep(input,before,body,input.transformedReExports?'remove actual resolved module dependency statements':'remove actual resolved import statements',removed.map(row=>({start:row.start,end:row.end,text:''})));
- const facts=readFacts(body),edits=facts.sourceErrorClasses?[]:facts.classDeclarations.filter(row=>row.exportStart!==undefined).map(row=>({start:row.exportStart,end:row.exportEnd,text:''}));
+ const facts=readFacts(body);
+ const edits=facts.sourceErrorClasses?[]:facts.classExportPrefixes
+  .filter(row=>row.kind==='class'||!publicProviders.has(row.name))
+  .map(({start,end})=>({start,end,text:''}));
  let source=body;for(const edit of edits.toSorted((a,b)=>b.start-a.start))source=source.slice(0,edit.start)+source.slice(edit.end);
- recordSourceLibraryCompositionStep(input,body,source,'remove actual owned class export prefixes',edits);
+ recordSourceLibraryCompositionStep(input,body,source,'remove actual owned nonpublic export prefixes',edits);
  const compiled=readFacts(source),actual=readSourceLibraryClassFacts(source,input.path,compiled);input.compiledSourceDeclarations=actual.declarations;input.compiledClassDeclarations=compiled.classDeclarations;input.compiledModuleSource=source;
  return source;
 }

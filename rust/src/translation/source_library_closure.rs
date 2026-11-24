@@ -1,6 +1,9 @@
 //! Recompose the actual ordinary source modules retained by a library asset.
 
 use std::collections::{HashMap, HashSet};
+use std::sync::OnceLock;
+
+use serde::Deserialize;
 
 use super::javascript::test_javascript_source_function_start;
 use super::javascript_line_terminator_rules::accept_java_script_line_terminator;
@@ -36,6 +39,47 @@ struct Import {
     span: Span,
     specifier: String,
     bindings: Vec<(String, String)>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PackageImports {
+    #[serde(rename = "schemaVersion")]
+    schema_version: u8,
+    model: String,
+    condition: String,
+    packages: Vec<PackageImport>,
+}
+
+#[derive(Deserialize)]
+struct PackageImport {
+    importer: String,
+    specifier: String,
+    binding: String,
+    provider: String,
+}
+
+fn installed_package_imports() -> Result<&'static [PackageImport], String> {
+    static REGISTRATION: OnceLock<Result<PackageImports, String>> = OnceLock::new();
+    REGISTRATION
+        .get_or_init(|| {
+            let value = crate::read_structured_data_lino(include_str!(
+                "../data/source-package-imports.lino"
+            ))?;
+            let registration: PackageImports =
+                serde_json::from_value(value).map_err(|error| error.to_string())?;
+            if registration.schema_version != 1
+                || registration.model != "Portable source package import resolution 1"
+                || registration.condition != "meta-language-portable-source"
+                || registration.packages.len() > 16
+            {
+                return Err("portable source package imports require their registered Links model and condition".to_owned());
+            }
+            Ok(registration)
+        })
+        .as_ref()
+        .map(|registration| registration.packages.as_slice())
+        .map_err(Clone::clone)
 }
 
 pub(crate) struct Module<'a> {
@@ -201,6 +245,9 @@ fn read_module(source: &str, re_exports: bool) -> Result<ModuleFacts, String> {
             if word(Some(token), "export") {
                 if re_exports && punct(tokens.get(at + 1), "{") {
                     let (dependency, next) = read_import(&tokens, at)?;
+                    if dependency.specifier.starts_with('#') {
+                        return Err("named re-exports require explicit actual relative JavaScript files".to_owned());
+                    }
                     for (imported, exported) in &dependency.bindings {
                         if !accept_source_library_re_export_name("identifier", imported)
                             || !accept_source_library_re_export_name("identifier", exported)
@@ -248,7 +295,21 @@ fn read_module(source: &str, re_exports: bool) -> Result<ModuleFacts, String> {
     Ok(facts)
 }
 
-fn dependency(path: &str, specifier: &str) -> Result<String, String> {
+fn dependency(path: &str, import: &Import) -> Result<String, String> {
+    let specifier = import.specifier.as_str();
+    if specifier.starts_with('#') {
+        let mut matches = installed_package_imports()?
+            .iter()
+            .filter(|rule| rule.importer == path && rule.specifier == specifier);
+        let rule = matches
+            .next()
+            .filter(|_| matches.next().is_none())
+            .ok_or("source closure imports require actual relative files or a registered package import")?;
+        if !matches!(&import.bindings[..], [(imported, local)] if imported == &rule.binding && local == imported) {
+            return Err("portable source package imports require their registered unchanged binding".to_owned());
+        }
+        return Ok(rule.provider.clone());
+    }
     if !(specifier.starts_with("./") || specifier.starts_with("../"))
         || !specifier.ends_with(".js")
         || specifier.contains(['?', '#', '\\', '\0'])
@@ -282,7 +343,7 @@ fn visit<'a>(
     }
     let current = &modules[path];
     for import in current.imports.iter().chain(&current.re_exports) {
-        let requested = dependency(path, &import.specifier)?;
+        let requested = dependency(path, import)?;
         let (provider, facts) = modules
             .get_key_value(requested.as_str())
             .ok_or_else(|| format!("missing actual source dependency {requested}"))?;
@@ -323,7 +384,7 @@ fn resolve_provider(
         if matches.next().is_some() {
             return Err(format!("a named re-export needs exactly one actual declared provider for {name} in {path}"));
         }
-        let next = dependency(&path, &dependency_row.specifier)?;
+        let next = dependency(&path, dependency_row)?;
         name.clone_from(imported);
         path = next;
     }
@@ -506,7 +567,7 @@ pub(crate) fn compose_with_re_exports<'a>(
     let mut names = HashSet::new();
     let mut aliased = HashSet::new();
     let provider = |path: &str, import: &Import, name: &str| {
-        let path = dependency(path, &import.specifier)?;
+        let path = dependency(path, import)?;
         if re_exports {
             resolve_provider(path, name.to_owned(), &modules)
         } else {

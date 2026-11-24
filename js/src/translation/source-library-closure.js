@@ -8,10 +8,12 @@ import {acceptSourceLibraryFunctionExport} from './source-library-export-rules.j
 import {readSourceLibraryClassBindingKind,acceptSourceLibraryClassExport,readSourceLibraryClassProfileError,readSourceLibraryReExportProfileError,acceptSourceLibraryReExportName} from './source-library-class-rules.js';
 import {readSourceLibraryClassFacts,finishSourceLibraryClassComposition,composeSourceLibraryClassDeclarations,readSourceLibraryClassOwnership} from './source-library-classes.js';
 import {readSourceLibraryErrorProfileError} from './source-library-error-rules.js';
+import {readRuntimeProjectData} from '../project-data-loader.js';
 
 const root = new URL('file:///meta-language-supplied-sources/');
 const digest = source => createHash('sha256').update(source).digest('hex');
 const ownerDirectories = new WeakMap();
+let installedPackageImports;
 const actual = (source, token, value) => token?.kind === 'identifier' && token.value === value
   && source.slice(token.start, token.end) === value;
 
@@ -120,7 +122,7 @@ export function readSourceLibraryModuleFacts(source,path,aliases=false,classes='
   }
   const facts={imports,exports:[...exports],declarations:[...declarations],...([...declarationBindings.values()].some(binding=>binding.kind==='const'||binding.kind==='class')?{declarationBindings:[...declarationBindings.values()]}:{}),...(reExports?{namedReExports,directExports}:{})};
   if(errorClasses)facts.sourceErrorClasses=errorClasses;
-  if(acceptsClasses){const actual=readSourceLibraryClassFacts(source,path,facts);facts.classDeclarations=actual.classes;facts.classUnresolvedNames=actual.unresolvedNames;}
+  if(acceptsClasses){const actual=readSourceLibraryClassFacts(source,path,facts);facts.classDeclarations=actual.classes;facts.classUnresolvedNames=actual.unresolvedNames;facts.classExportPrefixes=actual.exportPrefixes;}
   return facts;
 }
 
@@ -141,10 +143,19 @@ export function sourceLibraryLogicalModulePath(url){
 export function readSuppliedSourceLibraryClosure(sourcePath,modules,options={}){
  if(!Array.isArray(modules)||modules.length===0||modules.length>128)throw new TypeError('a complete bounded supplied module directory is required');
  const supplied=new Map();for(const module of modules){sourceLibraryLogicalModuleURL(module.path);if(typeof module.source!=='string'||supplied.has(module.path))throw new TypeError('supplied modules need unique normalized actual source identities');supplied.set(module.path,module.source);}
- const used=new Set(),closure=captureSourceLibraryClosure(sourcePath,options,url=>{
+ installedPackageImports??=readSourceLibraryPackageImports();
+ const used=new Set(),closure=captureSourceLibraryClosure(sourcePath,{...options,packageImports:installedPackageImports},url=>{
   const path=sourceLibraryLogicalModulePath(url);if(!supplied.has(path))throw new TypeError('an imported actual source module is missing from the supplied closure: '+path);used.add(path);return {identity:path,url,path,source:supplied.get(path)};
  });
  if(used.size!==supplied.size)throw new TypeError('the supplied closure must retain exactly every reachable actual source module');return closure;
+}
+
+function readSourceLibraryPackageImports(){
+ const registration=readRuntimeProjectData(new URL('../data/source-package-imports.lino',import.meta.url));
+ if(registration.schemaVersion!==1||registration.model!=='Portable source package import resolution 1'
+   ||registration.condition!=='meta-language-portable-source'||!Array.isArray(registration.packages))
+  throw new TypeError('portable source package imports require their registered Links model and condition');
+ return registration.packages.map(rule=>({...rule,condition:registration.condition}));
 }
 
 export function captureSourceLibraryClosure(sourcePath,{aliases=false,classes='',reExports='',errorClasses='',packageImports=[]}={},readModule) {
@@ -196,7 +207,14 @@ export function captureSourceLibraryClosure(sourcePath,{aliases=false,classes=''
   const entry=visit(sourceLibraryLogicalModuleURL(sourcePath));
   if(aliases){
     let compiled=composeSourceLibraryAliases(captures,entry.path,(source,path)=>{const facts=readSourceLibraryModuleFacts(source,path,true,classes,reExports,errorClasses,packageImports);return reExports?facts:facts.imports;},{classes:acceptsClasses,reExports:Boolean(reExports)});
-    if(acceptsClasses)compiled=compiled.map((source,index)=>finishSourceLibraryClassComposition(captures[index],source,text=>readSourceLibraryModuleFacts(text,captures[index].path,true,classes,reExports,errorClasses,packageImports)));
+    if(acceptsClasses){
+      const publicProviders=entry.compiledExports??entry.exports.map(original=>({source:entry.path,compiled:entry.declarationAliases.find(row=>row.original===original)?.compiled}));
+      compiled=compiled.map((source,index)=>{
+        const input=captures[index];
+        const publicNames=new Set(publicProviders.filter(row=>row.source===input.path).map(row=>row.compiled));
+        return finishSourceLibraryClassComposition(input,source,text=>readSourceLibraryModuleFacts(text,input.path,true,classes,reExports,errorClasses,packageImports),publicNames);
+      });
+    }
     parts.splice(0,parts.length,...compiled);
     let offset=0;
     for(let index=0;index<captures.length;index+=1){captures[index].closureRange={start:offset,end:offset+parts[index].length,coordinateUnit:'UTF-16 code units'};offset+=parts[index].length+2;}

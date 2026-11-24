@@ -8,6 +8,13 @@ import {ordinarySourceArchiveByteLimit} from '../src/typed-program-source-owners
 const mode=process.argv.slice(2).join(' '),check=mode==='--check',reuse=mode==='--draft --reuse-roots';
 if(!check&&mode!=='--draft'&&!reuse)throw new TypeError('use --draft or --check');
 const root=new URL('../../',import.meta.url),directory=new URL('js/src/data/',root),entries=[];
+const packageImportRegistry=readFileSync(new URL('parity/self-translation/source-package-imports.lino',root));
+for(const runtime of ['js','rust']){
+ const installed=new URL(runtime+'/src/data/source-package-imports.lino',root);
+ if(check){
+  if(!packageImportRegistry.equals(readFileSync(installed)))throw new TypeError('stale source package import registry in '+runtime);
+ }else writeFileSync(installed,packageImportRegistry);
+}
 const previous=readSourceDefinitionCatalogAuthorCache(new URL('js/src/data/source-definition-catalog.lino',root),reuse);
 for(const asset of readdirSync(directory).filter(name=>/^[a-z][a-z0-9-]*-program\.lino$/u.test(name)).sort()){
  const file=new URL(asset,directory),nativeFile=new URL('rust/src/data/'+asset,root);
