@@ -1,5 +1,4 @@
-// One measurement worker overlaps source resolution on the runner's other CPU.
-// Message data uses inspectable LiNo; local report runs remain sequential.
+// A worker measures one source at a time, exchanging inspectable LiNo records.
 import { Worker } from 'node:worker_threads';
 import { readStructuredDataLino, structuredDataToLino } from '../src/structured-data-links.js';
 

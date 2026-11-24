@@ -97,7 +97,17 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git switch --create "$BRANCH"
           git commit --all --message "chore(deps): scheduled dependency refresh ($(date -u +%F))"
-          git push --force origin "$BRANCH"
+          if git ls-remote --exit-code --refs origin "refs/heads/$BRANCH"; then
+            git fetch --no-tags --depth=1 origin "refs/heads/$BRANCH"
+            # Keep the previous refresh as a parent and the freshly generated tree as the result.
+            git merge --no-edit --no-ff --allow-unrelated-histories --strategy=ours FETCH_HEAD
+          else
+            status=$?
+            if [ "$status" -ne 2 ]; then
+              exit "$status"
+            fi
+          fi
+          git push origin "$BRANCH"
           body="$RUNNER_TEMP/dependency-refresh-pr.md"
           cat > "$body" <<EOF
           Lockfile updates within the declared ranges and the refreshed dependency audit in docs/dependency-audit.md.

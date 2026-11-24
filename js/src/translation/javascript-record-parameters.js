@@ -15,7 +15,7 @@ export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
   const close = parser.matching(start - 1), closing = c.tokens[close];
   if (closing?.kind !== 'punct' || closing.value !== ')') return null;
   const interval = c.tokens.slice(start, close + 1);
-  const kinds = interval.map(token => token.kind), values = interval.map(token => token.value);
+  const kinds = interval.map(token => token.kind), values = interval.map(token => token.kind === 'template' ? '' : token.value);
   const selected = findJavaScriptRecordParameterPattern(kinds, values, 0);
   if (selected < 0) return null;
   if (!acceptJavaScriptRecordParameterProfile('ordinary named function declaration', asynchronous,
@@ -87,7 +87,7 @@ export function readNamedJavaScriptRecordParameterBody(parser, syntax, readBody)
     if (closing?.kind !== 'punct' || closing.value !== '}') throw unsupported('record parameter directive transport',
       'the original function body needs its complete actual closing brace', c.peek());
     const tokens = c.tokens.slice(opening + 1, close + 1);
-    const kinds = tokens.map(token => token.kind), values = tokens.map(token => token.value);
+    const kinds = tokens.map(token => token.kind), values = tokens.map(token => token.kind === 'template' ? '' : token.value);
     const raws = tokens.map(token => parser.source.slice(token.start, token.end));
     const lines = tokens.map((token, index) => findJavaScriptLineTerminator(parser.source,
       index === 0 ? c.tokens[opening].end : tokens[index - 1].end, token.start) < token.start);

@@ -641,6 +641,16 @@ pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<Ty
             }
         }
     }
+    for (index, external) in program.externals.iter().enumerate() {
+        if names
+            .insert(external.name().to_owned(), child_path("/externals", index))
+            .is_some()
+        {
+            return Err(error(
+                "a checked program has duplicate declaration or external names",
+            ));
+        }
+    }
     let mut targets = HashMap::new();
     let mut reference_remaining = 100_000;
     semantic_targets(

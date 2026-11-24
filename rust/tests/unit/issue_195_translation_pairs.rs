@@ -86,7 +86,7 @@ fn expected_lines() -> Vec<String> {
     lines_of(&String::from_utf8_lossy(expected_bytes()))
 }
 
-fn sha256(bytes: &[u8]) -> String {
+pub(super) fn sha256(bytes: &[u8]) -> String {
     Sha256::digest(bytes)
         .iter()
         .fold(String::with_capacity(64), |mut hex, byte| {

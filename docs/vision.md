@@ -264,7 +264,9 @@ types, bindings or string operations. Native execution remains a CI obligation.
 Owned function calls project through the actual declaration's rooted path,
 including root functions, while rechecking its name, qualified identity and
 module path. Caller-local bindings cannot capture a callee's default initializer
-through a shortened projected name.
+through a shortened projected name. External calls and constant reads retain
+their owned signature records through both codecs and recheck through the same
+surface binding resolver used for source programs.
 These source-free semantic graphs emit canonical target syntax; byte-identical
 unchanged-source preservation remains the separate lossless CST contract.
 Integral metadata uses the value of its linked Number. The fixed type bit-width
@@ -327,7 +329,9 @@ replacement, NaN equality and positive-zero key normalization. The two projectio
 plans append to the existing schema without changing its model, prior plans or
 historical source receipts. Complete JavaScript source and text and binary
 program replays drive automatic native generation; native behavior remains a CI
-verification obligation.
+verification obligation. Map and Set `size` preserve the checked receiver and
+Number result through both program codecs. Native checking and target rendering
+use rules generated from the corresponding JavaScript decisions.
 Owned occurrence paths likewise compare the numeric value of an actual Number
 position, checking the actual array bounds through the shared tuple-index rule.
 Equivalent integral spellings retain their stored scalar, including negative
@@ -3275,6 +3279,13 @@ translated body before restoration. Editing emitted code cannot restore obsolete
 source. This source-preservation metadata does not count carried items as
 executable translation or substitute for the complete CST contract.
 
+Self-translation of a standalone JavaScript program with checked array relative
+element access checks the program as a single scope when its main body has effects.
+The existing array-consumption emitter produces the whole Rust program from
+that scope. A whole-body envelope authenticates reversal, including the shared
+prelude and executable body. Modules with imports, exports or decorators retain
+their item-based translation path.
+
 Owned native reconstruction can separately plan static string-reference
 selection from a caller-supplied existing registry. It authenticates the complete
 owned model and actual captured static reference type before reading occurrence
@@ -3490,7 +3501,13 @@ count once in the original full report. Missing, duplicate, foreign, tampered or
 failed parts provide no complete evidence. The canonical job, report, artifact
 and downstream barriers retain their identities, with full diagnostics retained.
 
-Native tests belong under `rust/tests/`. Private output-comparison tests use an
+Native tests belong under `rust/tests/`. A source file may declare a private
+test-only module for assertions that need access to private production values.
+The source placement check requires an explicit relative module path to an
+existing Rust file under `rust/tests/`. It rejects inline test bodies, public
+test modules, and targets outside that directory.
+
+Private output-comparison tests use an
 isolated fixture extracted automatically from the actual owned Rust concrete
 syntax declarations. Its source receipt binds every selected declaration and
 the complete original test bytes; freshness checks compare the generated model
@@ -3768,10 +3785,13 @@ Import and export candidate discovery uses the shared lexer, retaining opaque
 literals and nested scopes. Unsupported lexical identifiers or syntax use the
 original grammar scan. Every candidate signature still requires checked
 translation; this optimization cannot supply an unchecked signature.
-In CI one JavaScript worker measures a module while the coordinator resolves
-the following module's imports. Contexts and results travel as LiNo records;
-completed rows retain their original order. Local reports remain sequential,
-and CI keeps the same report deadlines and verification gates.
+In CI a coordinator resolves module imports while measurement workers process
+preceding modules. GitHub Actions uses up to two workers on runners with at
+least four available CPUs and six GiB of available memory. Other CI runners
+use one worker. Each worker measures one module at a time. Contexts and
+results travel as LiNo records, and completed rows retain their source order.
+Local reports are sequential. Report deadlines and verification gates remain
+in force.
 
 The initial translation, native grammar and conformance test groups run in disjoint CI file
 partitions. Their union retains every original file exactly once, and each job
@@ -3782,9 +3802,32 @@ The initial native grammar group uses six file partitions after
 Each original three-way partition is exactly the union of two current
 partitions. The JavaScript job deadline remains fifteen minutes.
 Six initial translation partitions retain the fifteen-minute deadline after
-run 39394008799 exhausted it while still progressing. Each
-transports feedback with a LiNo receipt of the exact commit, selected files and
-payload hashes. A required merge validates every partition, permits an empty
+run 39394008799 exhausted it while still progressing. In
+[run 45153024974](https://github.com/link-foundation/meta-language/actions/runs/45153024974/job/137618911601),
+the complete current source descriptor and recursive declaration ownership
+checks each took more than a minute in shard 5. Running both in shard 3 in
+[run 45173065418](https://github.com/link-foundation/meta-language/actions/runs/45173065418/job/137687230067)
+exhausted that shard's deadline after spending 107 seconds fetching history.
+The checks run in shards 3 and 2 respectively. In the same run,
+[shard 1](https://github.com/link-foundation/meta-language/actions/runs/45173065418/job/137687230096)
+also exhausted its deadline after its relative array history check took 95 seconds.
+That complete test file moves to shard 4, which finished in 12 minutes and
+54 seconds, while shard 2 finished in 9 minutes and 39 seconds. The same run's
+[shard 6](https://github.com/link-foundation/meta-language/actions/runs/45173065418/job/137687230298)
+exhausted its deadline after completing the raw descriptor and native library
+receipt history files in 129 and 149 seconds. Those complete files move to
+shards 5 and 2 respectively. Shard 5 finished in eleven minutes.
+Translation checkouts use full commit history and fetch historical blobs on
+demand. [Run 45202064337](https://github.com/link-foundation/meta-language/actions/runs/45202064337)
+recorded 272 passing assertions in shard 5, with the 795-second test process
+leaving no time to upload feedback after checkout and setup. Initial hosted
+translation shards execute up to two isolated test file processes when four
+processors and ten GiB of memory are available. Smaller runners, local checks
+and the separate evidence suite execute the same file scopes sequentially.
+The fifteen-minute deadline and all fixtures and assertions remain in force.
+Every partition transports feedback with a LiNo receipt of the exact
+commit, selected files and payload hashes. A required merge validates every
+partition, permits an empty
 individual partition, rejects missing, stale or conflicting inputs, and restores
 the original combined artifact name, paths and retention. An empty complete
 collection still fails. Acceptance keeps its separate evidence records, with
@@ -3804,6 +3847,13 @@ A separate JavaScript test group checks these published reports after all
 report shards finish. It uses the producers' exact checkout and source hashes,
 reuses their measurements, and must pass before Rust or delivery stages start.
 Standalone JavaScript workflow runs produce and check their own report shards.
+
+The complete raw planning package check keeps full Git commit history and
+checks out every tracked file. It fetches historical blobs on demand after
+[run 45153024974](https://github.com/link-foundation/meta-language/actions/runs/45153024974/job/137669690826)
+spent 95 seconds fetching repository history and reached its ten-minute
+deadline during the injected process contracts. The fresh base-merge check,
+source replays, complete plan contracts and job deadline remain in force.
 
 Real target-tool interchange reports identify the emitted target format, its
 tool and version, the accepted and rejected corpus inputs and any failed cycle.
@@ -3870,6 +3920,12 @@ elapsed-time samples captured automatically from the fourteen complete report
 and grammar job logs of CI 39615628279. Missing or changed sources receive a
 size estimate. All modules and test files still execute exactly once, and
 native and historical modulo partitions keep their existing ownership rules.
+The eight report jobs also account for the cost of checking shared imported
+signatures. [Run 45153024974](https://github.com/link-foundation/meta-language/actions/runs/45153024974)
+spent 13 minutes checking the import graph for `grammar-reconcile.js` in shard
+7, and shard 4 resolved overlapping imports and finished in under 15 minutes.
+Six Rust, Rocq and JavaScript translation measurements assigned to shard 7 can
+reuse those checked imports in shard 4. Each measurement still runs once.
 Job counts, commands, coverage assertions and deadlines remain unchanged.
 These samples and scheduling estimates establish no requirement observation;
 only the next CI execution can confirm actual timing and results.
@@ -3970,6 +4026,18 @@ join the recorded transport provenance. Original commands, assertions, parser
 limits and the ten-minute package deadline stay mandatory. Node's
 [worker resource controls](https://nodejs.org/download/release/v22.15.0/docs/api/worker_threads.html#new-workerfilename-options)
 define the engine bounds; actual large-workload timing remains a CI check.
+The raw planner prepares the complete checked program once and passes that
+same program to the consuming emitter. The consuming emitter still checks all
+106 declarations, rebuilds both source-free typed archives and validates the
+frozen consuming artifact. Each execution boundary freshly reads both emission
+artifacts, the source and every causal producer. One private descriptor can be
+reused only when the profile and every complete input match the verified
+snapshot. Any difference runs full verification again, and the successor
+profiles still verify their own artifacts on every read. In
+[run 45202064337](https://github.com/link-foundation/meta-language/actions/runs/45202064337/job/137859537565),
+checkout and complete source replay consumed most of the ten-minute job, and
+the injected contracts reached the deadline after the matrix was built. The
+same archives, matrix, seven injected contracts and deadline remain required.
 A private planner
 cache keeps only complete profiles, source fingerprints and replay hashes, with
 exact plan ownership and fresh whole-source comparisons. Successor plans retain
@@ -4284,9 +4352,13 @@ capabilities.
 
 Release publication verifies the release tag, checked-out commit, package
 versions and lockfiles before either registry write. A registry preflight fails
-closed when existing publication state cannot be established. The release then
-checks that npm and crates.io expose the same intended version and verifies its
-self-translation API through installed consumers. Trusted-publisher settings
+closed when existing publication state cannot be established. The npm publisher
+checks the downloaded crate's registry checksum and embedded Git revision before
+requesting publish credentials. It verifies npm's published Git revision against
+the same release commit and exercises the native HTML parser offline in a clean
+installation of the exact registry tarball. The release checks that npm and
+crates.io expose the same intended version and verifies its self-translation API
+through installed consumers. Trusted-publisher settings
 and the release-tag workflow are documented alongside the publishing machinery.
 
 ## Documentation consistency

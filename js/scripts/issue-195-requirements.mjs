@@ -13,6 +13,7 @@ export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 export const ISSUE_195_SOURCES = Object.freeze({
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
+  nativeHtmlNpm: 'https://github.com/link-foundation/meta-language/issues/230',
   clarification:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
   acceptanceGate:
@@ -897,6 +898,64 @@ function buildValidationAndDeliveryRequirements(fixtureCatalog, extensions) {
   return requirements;
 }
 
+function buildNativeHtmlNpmRequirements(fixtureCatalog) {
+  fixtureCatalog['npm:html-readme'] = pinnedFixture('js/README.md', 'Parse HTML with source positions');
+  fixtureCatalog['npm:native-html'] = pinnedFixture(
+    'js/tests/downstream-native-html.test.js',
+    'the public entry point parses the HTML fixture with the native grammar and preserves syntax and spans',
+  );
+  const scope = {
+    language: 'JavaScript',
+    version: 'Node.js >=22',
+    edition: 'npm public ESM entry point',
+    aliases: ['HTML'],
+    extensions: ['.html'],
+  };
+  const declarations = [
+    {
+      id: 'I195-NPM-NATIVE-HTML-DOCUMENTATION',
+      area: 'package-documentation',
+      construct: 'native HTML public entry point and tree shape',
+      expectedBehavior: 'The package README demonstrates the native HTML public entry point and how to read tag names, attributes, children, text, UTF-8 byte spans, and JavaScript string offsets.',
+      entryPoints: ['js/README.md', 'js/src/index.js'],
+      suffix: 'example',
+      assertions: ['publicEntryPoint', 'tagAttributesChildrenTextAndSpans'],
+    },
+    {
+      id: 'I195-NPM-NATIVE-HTML-NODE-MINIMUM',
+      area: 'package-documentation',
+      construct: 'minimum Node.js version',
+      expectedBehavior: 'The JavaScript documentation states the same minimum Node.js version as the npm engine declaration.',
+      entryPoints: ['js/README.md', 'js/package.json'],
+      suffix: 'documentation',
+      assertions: ['declaredEngineMatchesDocumentation'],
+    },
+    {
+      id: 'I195-DELIVERY-NPM-NATIVE-HTML-PUBLISHED',
+      area: 'package-delivery',
+      construct: 'published native HTML npm package in lockstep with the Rust 1.0.0 release',
+      version: 'npm and crates.io 1.0.0; Node.js >=22',
+      expectedBehavior: 'The npm and crates.io packages are released from the same v1.0.0 commit, and an offline consumer of that exact npm artifact parses HTML with the native grammar through the public entry point.',
+      entryPoints: ['js/scripts/release-publication.mjs', 'js/scripts/run-issue-195-consumer.mjs', 'js/scripts/run-issue-195-evidence.mjs'],
+      suffix: 'release-delivery',
+      checkpoint: 'release-delivery',
+      fixture: 'npm:native-html',
+      assertions: ['samePublishedRelease', 'installedNativeHtmlTreeAndSpans'],
+    },
+  ];
+  return declarations.map(({ id, area, construct, version = scope.version, expectedBehavior,
+    entryPoints, suffix, assertions, fixture = 'npm:html-readme', checkpoint }) => requirement({
+    id, source: ISSUE_195_SOURCES.nativeHtmlNpm, area,
+    scope: { ...scope, version, construct },
+    expectedBehavior,
+    requiredRuntimes: ['javascript'],
+    implementationEntryPoints: { javascript: entryPoints },
+    verifications: [verification({
+      requirementId: id, runtime: 'javascript', suffix, fixtureIds: [fixture], assertions, checkpoint,
+    })],
+  }));
+}
+
 function buildGateRequirements(fixtureCatalog) {
   const faults = [
     'plain-text-parser-fallback',
@@ -977,6 +1036,7 @@ export async function buildIssue195Manifest(root) {
     ...buildTranslationRequirements(fixtureCatalog, inventory.extensionDispatch),
     ...buildCrossCuttingRequirements(fixtureCatalog, inventory.extensionDispatch),
     ...buildValidationAndDeliveryRequirements(fixtureCatalog, inventory.extensionDispatch),
+    ...buildNativeHtmlNpmRequirements(fixtureCatalog),
     ...buildGateRequirements(fixtureCatalog),
     ...buildCacheCleanupRequirements(fixtureCatalog, {
       requirement, verification, pinnedFixture, source: ISSUE_195_SOURCES.cacheCleanup,

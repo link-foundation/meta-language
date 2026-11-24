@@ -18,6 +18,7 @@ import { parseJavaScript } from '../../js/src/translation/javascript.js';
 import { checkProgram } from '../../js/src/translation/check.js';
 import { emitJavaScript } from '../../js/src/translation/emit-javascript.js';
 import { emitRust } from '../../js/src/translation/emit-rust.js';
+import { readOriginalLinkRawSelectedEmissionProfile } from './raw-native-observations.mjs';
 import {
   ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT,
   ORIGINAL_LINK_RAW_EMISSION_BASELINE, ORIGINAL_LINK_RAW_EMISSION_CHANGES, ORIGINAL_LINK_RAW_EMISSION_PRODUCERS,
@@ -31,6 +32,32 @@ import {
 } from './raw-emission-producer-applicability.mjs';
 
 const rawEmissionDigest = value => createHash('sha256').update(value).digest('hex');
+test('selected raw emission reuses a proof only after freshly comparing every complete input', () => {
+  let replacement;
+  const files = [];
+  const read = (url, encoding) => {
+    files.push(url.href);
+    const value = readFileSync(url, encoding);
+    return replacement?.href === url.href ? replacement.value : value;
+  };
+  const first = readOriginalLinkRawSelectedEmissionProfile('current', read);
+  const inputs = files.splice(0);
+  assert.strictEqual(readOriginalLinkRawSelectedEmissionProfile('current', read), first);
+  assert.deepEqual(files.splice(0), inputs);
+  assert.equal(Object.isFrozen(first), true);
+  assert.ok(first.sourceBytes > 0);
+  assert.equal(first.sourceSha256, ORIGINAL_LINK_RAW_EMISSION_BASELINE.currentSha256);
+
+  const current = first.proof.producerSources[0].file;
+  const producer = new URL('../../' + current, import.meta.url);
+  replacement = { href: producer.href, value: Buffer.concat([readFileSync(producer), Buffer.from('\n// changed')]) };
+  assert.throws(() => readOriginalLinkRawSelectedEmissionProfile('current', read), /bytes|hash|changed/u);
+  assert.deepEqual(files.splice(0), inputs);
+  replacement = undefined;
+  assert.strictEqual(readOriginalLinkRawSelectedEmissionProfile('current', read), first);
+  assert.deepEqual(files.splice(0), inputs);
+});
+
 let originalRawEmissionInputs;
 function rawEmissionFixture() {
   originalRawEmissionInputs ??= {

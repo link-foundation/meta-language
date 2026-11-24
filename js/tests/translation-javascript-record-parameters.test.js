@@ -230,6 +230,10 @@ test('bounded source transport rebases the second actual function and owns whole
     1, 1, open + 3, open + 7, 1, open + 4, open + 6, 0, 2, open + 9]);
   assert.deepEqual(syntax.parameters[1].span, { start: input.tokens[open + 3].start, end: input.tokens[open + 7].end });
   assert.equal(source.slice(syntax.parameters[1].span.start, syntax.parameters[1].span.end), '{left:a}');
+  const [binding] = syntax.bindings;
+  assert.equal(source.slice(binding.parameterSpan.start, binding.parameterSpan.end), '{left:a}');
+  assert.equal(source.slice(binding.span.start, binding.span.end), 'left:a');
+  assert.equal(source.slice(binding.bindingSpan.start, binding.bindingSpan.end), 'a');
   assert.deepEqual(input.tokens, before, 'no fake identifier Token or rewritten source is introduced');
   cursor.index = open + 1;
   parser.recordParameterTokenOwner = input.tokens.slice();
@@ -251,6 +255,24 @@ test('bounded source transport rebases the second actual function and owns whole
     literalBindings: new Map([['record_parameter_value2', { k: 'num', value: '5', type: { kind: 'float' } }]]),
   });
   assert.equal(surface.items.find(item => item.k === 'fn' && item.name === 'selected').params[1].name, 'record_parameter_value3');
+});
+
+test('opaque template tokens keep the same decisions through text column transport', () => {
+  for (const source of ['text=`{a,b}`,after)', '"use strict"\n`text`;}']) {
+    const { tokens, kinds, values, raws, lineBreaks } = directiveFacts(source);
+    const textValues = tokens.map(token => token.kind === 'template' ? '' : token.value);
+    assert.equal(tokens.filter(token => token.kind === 'template').length, 1);
+    for (let end = 0; end <= tokens.length; end += 1) {
+      const prefix = kinds.slice(0, end);
+      const original = values.slice(0, end), transported = textValues.slice(0, end);
+      assert.deepEqual(planJavaScriptRecordParameters(prefix, transported, 0, reserved),
+        planJavaScriptRecordParameters(prefix, original, 0, reserved));
+      assert.equal(findJavaScriptRecordParameterPattern(prefix, transported, 0),
+        findJavaScriptRecordParameterPattern(prefix, original, 0));
+    }
+    assert.equal(findJavaScriptRecordParameterStrictDirective(kinds, textValues, raws, lineBreaks, 0), -1);
+  }
+  assert.throws(() => parseJavaScript('function f({a}){"use strict"\n`text`;return a;}'), /tagged template/u);
 });
 
 test('named declarations bind required fields and aliases without flattening logical arguments', () => {

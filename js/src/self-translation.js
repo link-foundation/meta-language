@@ -21,6 +21,7 @@ import { TranslationError } from './translation/diagnostics.js';
 import { emitJavaScript } from './translation/emit-javascript.js';
 import { emitRust, emitRustConstants } from './translation/emit-rust.js';
 import { parseJavaScript } from './translation/javascript.js';
+import { readPrimitiveMethodLoweringForm } from './translation/primitive-method-rules.js';
 import { requiresReferenceSemantics } from './translation/reference-analysis.js';
 import { tokenize } from './translation/lexer.js';
 import { eraseTypeScript, requiresTypeScriptErasure } from './typescript-erasure.js';
@@ -141,6 +142,15 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
     throw new SelfTranslationError(`the ${from} links of the source do not reproduce it`);
   }
   const items = topLevelItems(bytes, parsed);
+  const header = items.find(item => item.comment && item.text.startsWith(HEADER));
+  if (!signaturesOnly && from === 'Rust' && to === 'JavaScript'
+    && header?.text.startsWith(`${HEADER}source=JavaScript target=Rust `)
+    && header.text.split(' envelope-sha256=', 1)[0].endsWith(' mode=standalone')) {
+    const original = restoreSourceEnvelope(header, bytes, to);
+    if (original !== null) return { translation: freeze(from, to, original, items.map(({ term, start, end, comment }) => ({
+      term, start, end, status: comment ? 'provenance' : 'restored', reason: null,
+    }))), signatures: [] };
+  }
   const usesStringMethods = (node) => (node.term === 'member_expression' && node.children.some((child) =>
     child.field === 'property' && acceptSelfTranslationUtf16Member(bytes.subarray(child.span.byteRange.start, child.span.byteRange.end).toString('utf8'))))
     || node.children.some(usesStringMethods);
@@ -182,6 +192,22 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
       } catch (error) { if (!(error instanceof TranslationError)) throw error; }
     }
   }
+  if (!signaturesOnly && from === 'JavaScript' && to === 'Rust' && set.size === 0
+    && !items.some(item => isMarker(item) || ['ERROR', 'import_statement', 'export_statement'].includes(item.term))) {
+    const spans = new Set();
+    collectRelativeElementCallSpans(parsed.tree, bytes, spans);
+    const complete = spans.size === 0 ? null : emitCompleteRelativeElementProgram(text, spans, {
+      utf16Strings: representation, referenceSemantics: references || undefined,
+    });
+    if (complete !== null) {
+      const tail = `\n\n${RUST_ALLOW}\n\n${complete}`;
+      const standaloneHeader = `${HEADER}source=${from} target=${to} sha256=${sha256(text)} bytes=${bytes.length} mode=standalone`;
+      const code = `${standaloneHeader}${sourceEnvelope(text, tail)}${tail}`;
+      return { translation: freeze(from, to, code, items.map(({ term, start, end, comment }) => ({
+        term, start, end, status: comment ? 'provenance' : 'translated', reason: null,
+      }))), signatures: [] };
+    }
+  }
   const { outs, scans, moduleScopeKnown, ownerCounts } = family(to) === 'Rust'
     ? translateBound(groups, from, to, set, { moduleDirectory, imports, moduleSource: text, utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })
     : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })), scans: [], moduleScopeKnown: true, ownerCounts: new Map() };
@@ -207,24 +233,12 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   }
   const body = `${blocks.join('')}\n`;
   // An unedited translation back gives the source its header describes.
-  const header = items.find((item) => item.comment && item.text.startsWith(HEADER));
   if (header && header.text.includes(` source=${to} `) && header.text.includes(` sha256=${sha256(body)} `)) {
     return { translation: freeze(from, to, body, recorded), signatures };
   }
   if (header) {
-    const envelope = / envelope-sha256=([a-f0-9]{64}) original=(.*)$/u.exec(header.text);
-    if (envelope) {
-      try {
-        const original = JSON.parse(envelope[2]);
-        const length = Number(/(?:^| )bytes=(\d+)(?: |$)/u.exec(header.text)?.[1]);
-        if (typeof original === 'string' && acceptSourceEnvelopeRestoration(
-          header.text.includes(` source=${to} `),
-          sha256(bytes.subarray(header.end).toString('utf8')) === envelope[1],
-          Buffer.byteLength(original, 'utf8') === length &&
-          header.text.includes(` sha256=${sha256(original)} `),
-        )) return { translation: freeze(from, to, original, recorded), signatures };
-      } catch (error) { if (!(error instanceof SyntaxError)) throw error; }
-    }
+    const restored = restoreSourceEnvelope(header, bytes, to);
+    if (restored !== null) return { translation: freeze(from, to, restored, recorded), signatures };
     const originalLength = Number(/(?:^| )bytes=(\d+)(?: |$)/u.exec(header.text)?.[1]);
     const bodyBytes = Buffer.from(body, 'utf8');
     if (Number.isSafeInteger(originalLength) && originalLength >= 0 && originalLength <= bodyBytes.length) {
@@ -245,10 +259,65 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
     !['', '\n'].includes(results.at(-1)?.group.after ?? text),
     results.slice(0, -1).some(({group}) => group.after !== breaks(group.after)))) {
     const tail = `\n${lines.slice(1).join('\n')}\n${body}`;
-    const original = JSON.stringify(text).replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
-    lines[0] += ` envelope-sha256=${sha256(tail)} original=${original}`;
+    lines[0] += sourceEnvelope(text, tail);
   }
   return { translation: freeze(from, to, `${lines.join('\n')}\n${body}`, recorded), signatures };
+}
+
+function sourceEnvelope(text, tail) {
+  const original = JSON.stringify(text).replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
+  return ` envelope-sha256=${sha256(tail)} original=${original}`;
+}
+
+function restoreSourceEnvelope(header, bytes, target) {
+  const envelope = / envelope-sha256=([a-f0-9]{64}) original=(.*)$/u.exec(header.text);
+  if (!envelope) return null;
+  try {
+    const original = JSON.parse(envelope[2]);
+    const length = Number(/(?:^| )bytes=(\d+)(?: |$)/u.exec(header.text)?.[1]);
+    if (typeof original === 'string' && acceptSourceEnvelopeRestoration(
+      header.text.includes(` source=${target} `),
+      sha256(bytes.subarray(header.end).toString('utf8')) === envelope[1],
+      Buffer.byteLength(original, 'utf8') === length && header.text.includes(` sha256=${sha256(original)} `),
+    )) return original;
+  } catch (error) { if (!(error instanceof SyntaxError)) throw error; }
+  return null;
+}
+
+function collectRelativeElementCallSpans(node, bytes, spans) {
+  if (node.term === 'call_expression') {
+    const member = node.children.find(child => child.field === 'function' && child.term === 'member_expression');
+    const name = member?.children.find(child => child.field === 'property');
+    if (name && readPrimitiveMethodLoweringForm('array', bytes.subarray(name.span.byteRange.start, name.span.byteRange.end).toString('utf8')) === 'relative-element-template') {
+      const { start, end } = node.span.byteRange;
+      const prefixLength = bytes.subarray(0, start).toString('utf8').length;
+      const callLength = bytes.subarray(start, end).toString('utf8').length;
+      spans.add(`${prefixLength}:${prefixLength + callLength}`);
+    }
+  }
+  for (const child of node.children) collectRelativeElementCallSpans(child, bytes, spans);
+}
+
+function containsCheckedArrayRelativeElement(value, spans) {
+  if (!value || typeof value !== 'object') return false;
+  if (value.k === 'apply' && value.fn?.k === 'lambda' && value.args?.[0]?.type?.kind === 'array' && value.fn.span) {
+    const { start, end } = value.fn.span;
+    if (spans.has(`${start}:${end}`)) return true;
+  }
+  return Object.values(value).some(child => containsCheckedArrayRelativeElement(child, spans));
+}
+
+function emitCompleteRelativeElementProgram(source, spans, { utf16Strings, referenceSemantics }) {
+  try {
+    const program = checkProgram(parseJavaScript(source, { referenceSemantics }));
+    if (!program.main?.effects.length || program.imports?.length || program.externals?.length) return null;
+    if (!containsCheckedArrayRelativeElement(program, spans)) return null;
+    if (utf16Strings) program.utf16Strings = true;
+    return emitRust(program, { arrayConsumption: true }).text;
+  } catch (error) {
+    if (!(error instanceof TranslationError)) throw error;
+    return null;
+  }
 }
 
 /**

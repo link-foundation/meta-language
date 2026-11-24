@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
@@ -57,6 +57,7 @@ test('main dependency refresh retains failed live findings and delivers their ou
     const stub = `git() {
       if [ "$1" = diff ]; then return 1; fi
       printf '%s\\n' "$*" >> "$CALLS"
+      if [ "$1" = ls-remote ] && [ -z "$EXISTING" ]; then return 2; fi
     }
     gh() {
       if [ "$1 $2" = 'pr list' ]; then printf '%s' "$EXISTING"; return 0; fi
@@ -84,8 +85,41 @@ test('main dependency refresh retains failed live findings and delivers their ou
       assert.match(readFileSync(body, 'utf8'), /Required offline PR checks and current-dependency delivery gates remain unchanged/u);
       const invocations = readFileSync(calls, 'utf8');
       assert.ok(invocations.includes(existing ? 'pr edit 227 --body-file ' : 'pr create --base main --head automation/dependency-refresh'));
-      assert.ok(invocations.includes('push --force origin automation/dependency-refresh'));
+      assert.ok(invocations.includes('push origin automation/dependency-refresh'));
+      assert.equal(invocations.includes('merge --no-edit --no-ff --allow-unrelated-histories --strategy=ours FETCH_HEAD'), existing !== '');
     }
+
+    const branch = 'automation/dependency-refresh';
+    const remote = path.join(directory, 'remote.git'), producer = path.join(directory, 'producer');
+    const checkout = path.join(directory, 'checkout');
+    const git = (cwd, ...args) => {
+      const result = spawnSync('git', args, {cwd, encoding: 'utf8'});
+      assert.equal(result.status, 0, `git ${args.join(' ')}: ${result.stderr}`);
+      return result.stdout.trim();
+    };
+    git(directory, 'init', '--bare', remote);
+    git(remote, 'config', 'receive.denyNonFastForwards', 'true');
+    git(directory, 'init', '--initial-branch=main', producer);
+    git(producer, 'config', 'user.name', 'Dependency Refresh');
+    git(producer, 'config', 'user.email', 'dependency-refresh@example.invalid');
+    writeFileSync(path.join(producer, 'package-lock.json'), 'main lockfile\n');
+    git(producer, 'add', 'package-lock.json');
+    git(producer, 'commit', '-m', 'Initial lockfile');
+    git(producer, 'push', remote, 'main');
+    git(producer, 'switch', '--create', branch);
+    writeFileSync(path.join(producer, 'package-lock.json'), 'previous generated lockfile\n');
+    git(producer, 'commit', '-am', 'Previous scheduled refresh');
+    git(producer, 'push', remote, branch);
+    const previous = git(remote, 'rev-parse', branch);
+    git(directory, 'clone', '--depth=1', '--branch=main', pathToFileURL(remote).href, checkout);
+    writeFileSync(path.join(checkout, 'package-lock.json'), 'current generated lockfile\n');
+    const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c',
+      "gh() { if [ \"$1 $2\" = 'pr list' ]; then printf '227'; fi; }\n" + script(publish)],
+    {cwd: checkout, encoding: 'utf8', env: {...process.env, BRANCH: branch, AUDIT_OUTCOME: 'success', RUNNER_TEMP: directory}});
+    assert.equal(result.status, 0, result.stderr);
+    git(remote, 'merge-base', '--is-ancestor', previous, branch);
+    assert.equal(git(remote, 'show', `${branch}:package-lock.json`), 'current generated lockfile');
+    assert.deepEqual(git(remote, 'log', '-1', '--format=%P', branch).split(' '), [git(checkout, 'rev-parse', 'HEAD^1'), previous]);
   } finally {rmSync(directory, {recursive: true, force: true});}
 });
 

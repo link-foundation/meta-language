@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { readProjectData } from '../scripts/project-data.mjs';
-import { verifyAsciiTextPredicateHosts } from '../scripts/ascii-text-predicate-host-history.mjs';
+import { asciiHostPin, verifyAsciiTextPredicateHosts } from '../scripts/ascii-text-predicate-host-history.mjs';
 import { generateAsciiTextPredicateHosts } from '../scripts/generate-ascii-text-predicate-hosts.mjs';
+import { restoreNativeCompilerSource } from '../scripts/native-compiler-source-history.mjs';
 
 test('complete ASCII native source hosts preserve certified predecessors actual ABI and registered test ownership', () => {
   const { archive, files } = generateAsciiTextPredicateHosts({ check: true });
@@ -11,6 +13,13 @@ test('complete ASCII native source hosts preserve certified predecessors actual 
   assert.equal(files.length, 4);
   assert.equal(archive.registrations.find(row => row.path === 'rust/tests/unit/mod.rs').declaration,
     'mod translation_ascii_text_predicates;');
+  const { path, pin } = archive.sourceArtifact;
+  const current = readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
+  const original = restoreNativeCompilerSource(current, path);
+  assert.notEqual(current, original);
+  assert.deepEqual(asciiHostPin(original), pin);
+  assert.equal(restoreNativeCompilerSource(original, path), original);
+  assert.equal(restoreNativeCompilerSource(current + '\n', path), current + '\n');
 });
 
 test('unknown host edits source corruption and forged predecessor certificates cannot produce a reviewed source view', () => {

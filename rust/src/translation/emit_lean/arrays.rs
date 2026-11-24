@@ -77,6 +77,12 @@ impl LeanEmitter<'_> {
                     "Lean", false, &value,
                 )
             }
+            Node::CollectionSize { object } => {
+                crate::translation::array_value_rules::render_collection_size(
+                    "Lean",
+                    &self.expr(object, depth)?,
+                )
+            }
             Node::CollectionItems { object, op } => {
                 let map = matches!(object.ty, Type::Map { .. });
                 let value = self.expr(object, depth)?;

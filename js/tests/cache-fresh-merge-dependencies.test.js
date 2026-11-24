@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {captureGitArtifactCertificate} from '../scripts/capture-git-artifact-certificate.mjs';
+import {restoreRustObservationToolchain} from '../scripts/current-ci-repair-source-history.mjs';
 const file=new URL('../../.github/workflows/rust.yml',import.meta.url);
 const coverageProfile="          CARGO_PROFILE_TEST_OPT_LEVEL: 3\n"
   +"          CARGO_PROFILE_TEST_DEBUG_ASSERTIONS: 'true'\n"
@@ -25,7 +26,8 @@ test('fresh merge restores the existing successful check cache before every unch
   assert.equal(source.split(block).length,2);
   const original=captureGitArtifactCertificate('90636f9fb52b1b9095defbac041c8089608b8576','.github/workflows/rust.yml');
   assert.equal(source.split(coverageProfile).length,2);
-  const predecessor=removePartitionUploadRetry(source.replace(block,'').replace(coverageProfile,''));
+  const previousToolchain=restoreRustObservationToolchain(source,'.github/workflows/rust.yml');
+  const predecessor=removePartitionUploadRetry(previousToolchain.replace(block,'').replace(coverageProfile,''));
   assert.equal(predecessor,original.blob.toString('utf8'),'every original job, deadline, matrix cell, gate, command and artifact step remains exact');
   assert.match(source,/fresh-merge:[\s\S]*?timeout-minutes: 20/u);
 });
@@ -65,4 +67,22 @@ test('native partition artifact recovery retries the identical complete payload 
   assert.equal(artifact(first),artifact(retry));
   for(const step of [first,retry])assert.match(step.text,/if-no-files-found: error/u);
   assert.notEqual(removePartitionUploadRetry(source),source);
+});
+
+test('native Rust observations use the supported compiler and lint still tracks stable', () => {
+  const workflow = '.github/workflows/rust.yml';
+  const source = readFileSync(file, 'utf8');
+  const current = new Map(parseWorkflow(source).map(job => [job.id, job]));
+  for (const name of ['fresh-merge', 'native-grammar-outcome-experiment', 'test', 'coverage']) {
+    const step = current.get(name).steps.find(step => step.name === 'Setup Rust');
+    assert.match(step.text, /dtolnay\/rust-toolchain@1\.99\.0\b/u, name);
+  }
+  for (const name of ['check', 'lint']) {
+    const step = current.get(name).steps.find(step => step.name === 'Setup Rust');
+    assert.match(step.text, /dtolnay\/rust-toolchain@stable\b/u, name);
+  }
+  assert.notEqual(restoreRustObservationToolchain(source, workflow), source);
+  const changed = source.replace('dtolnay/rust-toolchain@1.99.0', 'dtolnay/rust-toolchain@1.100.0');
+  assert.notEqual(changed, source);
+  assert.equal(restoreRustObservationToolchain(changed, workflow), changed);
 });

@@ -50,7 +50,13 @@ test('the post-merge report needs an active strict rule and an open pull request
   assert.deepEqual(result.notes, []);
   assert.equal(Object.values(result.checks).every(Boolean), true);
   assert.equal(result.blockedPullRequest, 200);
-  assert.equal(result.delivery.releaseRequirements.length, 4);
+  assert.deepEqual(result.delivery.releaseRequirements, [
+    'I195-DELIVERY-CRATE-PUBLISHED',
+    'I195-DELIVERY-NPM-NATIVE-HTML-PUBLISHED',
+    'I195-DELIVERY-NPM-PUBLISHED',
+    'I195-DELIVERY-RML-PUBLISHED',
+    'I195-DOWNSTREAM-FORMAL-AI-PUBLISHED',
+  ]);
   assert.equal(result.delivery.releaseEvidencePassed, false);
 });
 
@@ -149,14 +155,16 @@ test('a newer push to the default branch is a note, not a failure', () => {
   assert.match(result.notes.join('\n'), /newer push supersedes/);
 });
 
-test('release evidence cannot be replaced by pre-merge evidence', () => {
-  const weakened = structuredClone(manifest);
-  const row = weakened.atomicRequirements.find(({ id }) => id === 'I195-DELIVERY-NPM-PUBLISHED');
-  row.verifications[0].checkpoint = 'pre-merge';
-  const result = evaluateMergeEnforcement(snapshot(), { ...options, manifest: weakened });
-  assert.equal(result.checks.publishedDeliverySeparatelyVerified, false);
-  assert.match(result.errors.join('\n'), /release-delivery/);
-});
+for (const id of ['I195-DELIVERY-NPM-PUBLISHED', 'I195-DELIVERY-NPM-NATIVE-HTML-PUBLISHED']) {
+  test(`release evidence for ${id} cannot be replaced by pre-merge evidence`, () => {
+    const weakened = structuredClone(manifest);
+    const row = weakened.atomicRequirements.find((entry) => entry.id === id);
+    row.verifications[0].checkpoint = 'pre-merge';
+    const result = evaluateMergeEnforcement(snapshot(), { ...options, manifest: weakened });
+    assert.equal(result.checks.publishedDeliverySeparatelyVerified, false);
+    assert.match(result.errors.join('\n'), /release-delivery/);
+  });
+}
 
 test('a missing live response fails closed', () => {
   const result = evaluateMergeEnforcement({}, options);

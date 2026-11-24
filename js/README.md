@@ -2,7 +2,7 @@
 
 [![JavaScript](https://github.com/link-foundation/meta-language/actions/workflows/js.yml/badge.svg)](https://github.com/link-foundation/meta-language/actions/workflows/js.yml)
 [![npm](https://img.shields.io/npm/v/meta-language?label=npm&style=flat)](https://www.npmjs.com/package/meta-language)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-blue.svg)](https://nodejs.org/)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D22-blue.svg)](https://nodejs.org/)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://unlicense.org/)
 
 JavaScript implementation of the `meta-language` links-network core. It is the
@@ -42,6 +42,8 @@ full delivery checklist and remaining fallback paths are tracked in
 
 ## Usage
 
+The package requires Node.js 22 or later.
+
 ```js
 import {
   LinkNetwork,
@@ -68,6 +70,67 @@ network.replace(
 console.log(network.reconstructText());
 // const newName = call(newName);
 ```
+
+### Parse HTML with source positions
+
+`LinkNetwork.parse(source, 'HTML')` returns the HTML concrete syntax tree as a
+`LinkNetwork`. The native grammar is identified by `native-html` in
+`network.parseGrammars()`. npm version `0.46.0` predates this grammar. To try it
+from a checkout containing the grammar, run `npm ci --prefix js` and import from
+`./js/src/index.js` in a script at the repository root.
+
+```js
+import { LinkNetwork, LinkType } from 'meta-language';
+
+const source = '<article lang="fr">été <em>🙂</em></article>';
+const network = LinkNetwork.parse(source, 'HTML');
+if (!network.parseGrammars().some(({ id }) => id === 'native-html')) {
+  throw new Error('This package version needs the native HTML grammar');
+}
+
+const isHtmlNode = (link) => {
+  const { linkType, language, named } = link.metadata();
+  return linkType === LinkType.Syntax && language === 'HTML' && named;
+};
+const children = (link) => link.references().map((id) => network.link(id)).filter(isHtmlNode);
+const kind = (link) => link.metadata().term;
+const raw = (link) => network.capturedText(link.id());
+
+const document = network.links().filter(isHtmlNode).find((link) => kind(link) === 'document');
+const article = children(document).find((link) => kind(link) === 'element');
+const opening = children(article).find((link) => kind(link) === 'start_tag');
+const tag = raw(children(opening).find((link) => kind(link) === 'tag_name'));
+const attributes = children(opening).filter((link) => kind(link) === 'attribute').map(raw);
+const content = children(article).filter((link) => ['text', 'element'].includes(kind(link)));
+console.log(tag, attributes, content.map(raw));
+// article [ 'lang="fr"' ] [ 'été', '<em>🙂</em>' ]
+
+const { start, end } = content[0].metadata().span.byteRange;
+const bytes = Buffer.from(source, 'utf8');
+const toStringOffset = (offset) => bytes.subarray(0, offset).toString('utf8').length;
+console.log([start, end], [toStringOffset(start), toStringOffset(end)]);
+// [ 19, 24 ] [ 19, 22 ]
+```
+
+Each node is a `Link` with `id()`, ordered `references()` to child link IDs,
+and `metadata()`. The metadata gives the node kind as `term`, the `language`,
+whether it is `named`, recovery `flags`, and its `span`. Resolve each child
+with `network.link(id)`. Named children of `document` include elements and
+other top-level syntax. An ordinary `element` has a `start_tag`, ordered content,
+and an `end_tag` when one is present. Void elements can have just a `start_tag`.
+An `attribute` has an `attribute_name` and, if assigned, an `attribute_value`
+or a `quoted_attribute_value` that can contain an inner `attribute_value`.
+Traverse nested elements in the same way. The tree can also contain
+`script_element`, `style_element`, `raw_text`, `entity` and `comment` nodes.
+
+`span.byteRange` uses half-open UTF-8 byte offsets. `span.start` and `span.end`
+each contain a zero-based `row` and UTF-8 byte `column`. Convert byte boundaries
+to UTF-16 code-unit offsets before using `source.slice()`, as shown above.
+`capturedText(id)` returns the original spelling within a selected node's span,
+including entity spelling and attribute quotes when applicable. Named-child
+traversal omits punctuation and some whitespace. Use `network.reconstructText()`
+for the complete source and `network.verifyFullMatch().isClean()` to check for
+parse and recovery issues before importing the document.
 
 ## Command line
 

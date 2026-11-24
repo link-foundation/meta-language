@@ -8,6 +8,7 @@ import {generateArrayRelativeElementTemplate} from '../scripts/generate-array-re
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {checkProgram} from '../src/translation/check.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
+import {emitRust} from '../src/translation/emit-rust.js';
 import {selfTranslate} from '../src/self-translation.js';
 import {createTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {recheckLinkedTypedProgram} from '../src/typed-program-checked-projection.js';
@@ -77,9 +78,15 @@ test('independent complete array programs preserve nullable elements and ordered
   const fixture=readProjectData(new URL('../../parity/fixtures/array-relative-element-observations.lino',import.meta.url));
   assert.equal(fixture.programs.length,2);assert.equal(fixture.positions.length,22);
   for(const row of fixture.programs){
-    for(const source of [row.source,emitJavaScript(checkProgram(parseJavaScript(row.source))).text]){
+    const program=checkProgram(parseJavaScript(row.source));
+    for(const source of [row.source,emitJavaScript(program).text]){
       const lines=[];runInNewContext(source,{console:{log:(...values)=>lines.push(format(...values))}});
       assert.equal(lines.join('\n')+'\n',row.expectedStdout,row.id);
     }
+    const translated=selfTranslate(row.source,'JavaScript','Rust');
+    assert.equal(translated.items.filter(item=>item.status==='carried').length,0,row.id);
+    assert.ok(translated.code.endsWith(emitRust(program,{arrayConsumption:true}).text),row.id);
+    assert.equal(selfTranslate(translated.code,'Rust','JavaScript').code,row.source,row.id);
+    assert.notEqual(selfTranslate(`${translated.code}\n// edited`, 'Rust', 'JavaScript').code,row.source,row.id);
   }
 });

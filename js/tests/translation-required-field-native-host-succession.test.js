@@ -10,6 +10,7 @@ import {readCollectionSizeProjectionSchemaPacket,deriveCollectionSizeProjectionV
 import {generateRequiredFieldNativeHostSuccession} from '../scripts/generate-required-field-native-host-succession.mjs';
 import {restoreCurrentNativeHostSource} from '../scripts/current-native-host-source-history.mjs';
 import {restoreScopedIterationNativeHostSource,SCOPED_ITERATION_NATIVE_SOURCE} from '../scripts/scoped-iteration-native-host-source-history.mjs';
+import { restoreNativeCompilerSource } from '../scripts/native-compiler-source-history.mjs';
 import {REQUIRED_FIELD_NATIVE_HOST_OUTPUT,REQUIRED_FIELD_NATIVE_HOST_SOURCES,pinRequiredFieldNativeHostSource,
   verifyRequiredFieldNativeHostSuccession,restoreRequiredFieldNativeHostSource} from '../scripts/required-field-native-host-succession.mjs';
 const root=new URL('../../',import.meta.url);
@@ -100,7 +101,8 @@ test('both mutable-array source hosts keep the actual required-field transport a
     const historical=restoreScopedIterationNativeHostSource(actual,row.file,'required field native host');
     assert.equal(historical,row.current.source);
     if(row.file===SCOPED_ITERATION_NATIVE_SOURCE.file){
-      assert.deepEqual(pinRequiredFieldNativeHostSource(actual),SCOPED_ITERATION_NATIVE_SOURCE.current);
+      const iterationSource=restoreNativeCompilerSource(actual,row.file);
+      assert.deepEqual(pinRequiredFieldNativeHostSource(iterationSource),SCOPED_ITERATION_NATIVE_SOURCE.current);
       assert.ok(actual.includes('&self.owned_array_iteration_sources,'));
       assert.notEqual(actual,historical);
     }else assert.equal(actual,historical);

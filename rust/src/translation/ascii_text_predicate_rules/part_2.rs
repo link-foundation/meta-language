@@ -143,26 +143,25 @@ pub fn plan_rust_ascii_character_callback(
     characters: &[f64],
     start: f64,
 ) -> Vec<f64> {
-    if (((((kinds.len() as f64) != (values.len() as f64))
+    if ((((((kinds.len() as f64) != (values.len() as f64))
         || ((kinds.len() as f64) != (characters.len() as f64)))
         || !(self::ml_math::is_integer(start)))
         || (start < 0f64))
-        || (start >= (kinds.len() as f64))
+        || (start >= (kinds.len() as f64)))
+        || (!(match (
+            self::ml_array::optional_at(kinds, self::ml_array::number_index(start)),
+            self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]),
+        ) {
+            (Some(ml_left), ml_right) => ml_left == ml_right,
+            _ => false,
+        }) || !(match (
+            self::ml_array::optional_at(values, self::ml_array::number_index(start)),
+            self::ml_string::Text::from_units(vec![124]),
+        ) {
+            (Some(ml_left), ml_right) => ml_left == ml_right,
+            _ => false,
+        }))
     {
-        Vec::<f64>::new()
-    } else if !(match (
-        self::ml_array::optional_at(kinds, self::ml_array::number_index(start)),
-        self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]),
-    ) {
-        (Some(ml_left), ml_right) => ml_left == ml_right,
-        _ => false,
-    }) || !(match (
-        self::ml_array::optional_at(values, self::ml_array::number_index(start)),
-        self::ml_string::Text::from_units(vec![124]),
-    ) {
-        (Some(ml_left), ml_right) => ml_left == ml_right,
-        _ => false,
-    }) {
         Vec::<f64>::new()
     } else {
         {
@@ -308,7 +307,8 @@ pub fn ml_plan_rust_ascii_character_callback_loop6(
                             }
                         }
                     }
-                } else {
+                }
+                {
                     {
                         let index_3 = index + 1f64;
                         {
@@ -540,10 +540,7 @@ pub fn ml_plan_rust_ascii_character_callback_loop3(
                                                                     let (
                                                                         ml_append_right,
                                                                         ml_append_left,
-                                                                    ) = (
-                                                                        vec![method.clone()],
-                                                                        methods,
-                                                                    );
+                                                                    ) = (vec![method], methods);
                                                                     self::ml_array::append(
                                                                         ml_append_left,
                                                                         ml_append_right,
@@ -714,8 +711,7 @@ pub fn ml_plan_rust_ascii_character_callback_loop1(
                             f64::NAN
                         } else {
                             ((text.slice(index_2, (index_2 + 1f64))).code_point_at(0f64))
-                                .clone()
-                                .unwrap_or_else(|| f64::NAN)
+                                .unwrap_or(f64::NAN)
                         }
                     }
                 }))(parameter.clone(), index),

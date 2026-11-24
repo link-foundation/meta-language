@@ -4,8 +4,9 @@ import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {checkProjectData,readProjectData,writeProjectData,serializeProjectData} from './project-data.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
+import {verifyDependencyInventoryAppends} from './dependency-inventory-append-history.mjs';
 import {retainDependencyInventoryOrder} from './dependency-inventory-order.mjs';
-import {collectDependencies,checkInventory,renderAuditDocument} from './dependency-inventory.mjs';
+import {collectDependencies,renderAuditDocument} from './dependency-inventory.mjs';
 import {writeFileSync,readFileSync} from 'node:fs';
 
 /** Prove the complete original prefix and every retained current record. */
@@ -18,16 +19,18 @@ export function generateDependencyInventoryOrderHistory({check=false}={}) {
   const first=readStructuredDataLino(original.source),previous=readStructuredDataLino(predecessor.source);
   const actual=readProjectData(new URL(path,root));
   assert.equal(first.items.length,745);assert.equal(previous.items.length,773);
-  const declarations=collectDependencies(fileURLToPath(root));assert.deepEqual(checkInventory(actual,declarations),[]);
+  const declarations=collectDependencies(fileURLToPath(root));
   const byId=new Map(actual.items.map(row=>[row.id,row]));assert.equal(byId.size,actual.items.length);
-  for(const row of previous.items)assert.deepEqual(byId.get(row.id),row,'all complete preceding facts remain exact: '+row.id);
-  for(const row of first.items)assert.deepEqual(byId.get(row.id),row,'all complete original facts remain exact: '+row.id);
   assert.equal(actual.auditDate,first.auditDate);assert.equal(actual.auditDate,previous.auditDate);
   const ordered=retainDependencyInventoryOrder(first,actual);
-  const prefix={...ordered,items:ordered.items.slice(0,first.items.length)};
+  // Check the live declarations and recover the exact original declaration paths.
+  const prefix=verifyDependencyInventoryAppends(ordered,declarations);
+  for(const row of prefix.items)byId.set(row.id,row);
+  for(const row of previous.items)assert.deepEqual(byId.get(row.id),row,'all complete preceding facts remain exact: '+row.id);
+  for(const row of first.items)assert.deepEqual(byId.get(row.id),row,'all complete original facts remain exact: '+row.id);
   assert.equal(serializeProjectData(prefix,path),original.source);
   const oldIds=new Set(previous.items.map(row=>row.id));
-  const inverse={...ordered,items:previous.items.map(row=>ordered.items.find(item=>item.id===row.id))};
+  const inverse={...ordered,items:previous.items.map(row=>byId.get(row.id))};
   assert.equal(serializeProjectData(inverse,path),predecessor.source,'complete current predecessor remains reconstructible');
   const value={schemaVersion:1,original,predecessor,
     retainedIds:previous.items.map(row=>row.id),

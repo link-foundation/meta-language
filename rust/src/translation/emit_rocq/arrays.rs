@@ -79,6 +79,15 @@ impl RocqEmitter<'_> {
                 "this target needs a Unicode code-point iterator over its UTF-8 string encoding",
                 e.span,
             )),
+            Node::CollectionSize { object } => {
+                self.floats();
+                Ok(
+                    crate::translation::array_value_rules::render_collection_size(
+                        "Rocq",
+                        &self.expr(object)?,
+                    ),
+                )
+            }
             Node::CollectionItems { object, op } => {
                 let map = matches!(object.ty, super::Type::Map { .. });
                 let (key, item) = if op == "entries" {

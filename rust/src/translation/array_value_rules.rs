@@ -189,3 +189,23 @@ pub fn render_collection_iteration(
         value.to_owned()
     }
 }
+
+/// Read the shared array value decision.
+#[must_use]
+pub fn accept_collection_size_field(field: &str, kind: &str) -> bool {
+    (field == "size") && ((kind == "map") || (kind == "set"))
+}
+
+/// Read the shared array value decision.
+#[must_use]
+pub fn render_collection_size(target: &str, value: &str) -> String {
+    if target == "JavaScript" {
+        format!("({value}).size")
+    } else if target == "Rust" {
+        format!("({value}.len() as f64)")
+    } else if target == "Lean" {
+        format!("(Float.ofNat {value}.size)")
+    } else {
+        format!("(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length {value}))))")
+    }
+}

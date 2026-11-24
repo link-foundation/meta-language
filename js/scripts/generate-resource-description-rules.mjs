@@ -9,6 +9,7 @@ import { DecoratorSet } from '../src/decorators.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { readProjectFileBytes } from './project-data.mjs';
 import { reviewResourceDescriptionStyles, reuseResourceArrayPrelude } from './resource-description-reviewed-styles.mjs';
+import { applyNativeRuleLastUseStyles } from './binary-last-use-styles.mjs';
 
 const sourceFile = new URL('../src/resource-description-rules.js', import.meta.url);
 const stylesFile = new URL('../../parity/self-translation/resource-description-rules-decorators.lino', import.meta.url);
@@ -111,7 +112,8 @@ if (process.argv.includes('--update-styles')) {
   writeFileSync(stylesFile, styles.toLino());
 }
 const initialItems = formatItems(items.map(item => styles.decorate('emitter', { format: 'Rust', scope: 'raw-item', source: item }).source));
-const styledItems = formatItems(initialItems.map(initial => styles.decorate('emitter', { format: 'Rust', scope: 'formatted-item', source: initial }).source));
+const formattedItems = formatItems(initialItems.map(initial => styles.decorate('emitter', { format: 'Rust', scope: 'formatted-item', source: initial }).source));
+const styledItems = applyNativeRuleLastUseStyles(formattedItems, 'resource_description_rules', format);
 const groups = [];
 let group = [];
 let size = 0;

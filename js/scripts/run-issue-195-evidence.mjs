@@ -22,6 +22,7 @@ import { measureCacheCleanup } from './issue-195-cache-evidence.mjs';
 import {
   DELIVERY_CONSUMER_ASSERTIONS,
   deliveryAssertions,
+  publishedNativeHtmlAssertions,
   supportedPlatformCoverage,
 } from './issue-195-delivery.mjs';
 import { buildEvidencePlan, observedEvidenceForCell } from './issue-195-evidence-plan.mjs';
@@ -679,6 +680,20 @@ async function produceDeliveryEvidence(kind) {
   };
   const reportArtifacts = { commands: [], artifacts: reports.map(({ artifact }) => artifact) };
   const local = reports.find(({ file }) => file === localReport)?.report ?? null;
+  const nativeHtmlRelease = 'i195-delivery-npm-native-html-published-javascript-release-delivery';
+  if (cellsByTestId.has(nativeHtmlRelease) && kind === 'published' && local && candidates.npmRegistry) {
+    const metadata = readProjectData(candidates.npmRegistry, { format: 'lino' });
+    const nativeHtml = publishedNativeHtmlAssertions(local, expected, deliveryContext, {
+      metadata, commit, ref: process.env.GITHUB_REF,
+      fixtureSha256: manifest.fixtureCatalog['npm:native-html'].sha256,
+    });
+    if (nativeHtml.samePublishedRelease) {
+      observe(nativeHtmlRelease, 'samePublishedRelease', 'npm integrity, registry gitHead, clean crate VCS revision and v1.0.0 tag agree');
+    }
+    if (nativeHtml.installedNativeHtmlTreeAndSpans) {
+      observe(nativeHtmlRelease, 'installedNativeHtmlTreeAndSpans', 'offline native HTML test of the installed npm release');
+    }
+  }
   const groups = [];
   for (const deliveryPackage of ['npm', 'crate', 'rml']) {
     for (const runtime of ['javascript', 'rust']) {
@@ -744,11 +759,19 @@ async function candidateArtifacts() {
       artifacts.push(relative(path.join(artifactsDirectory, file)));
     }
   }
+  let npmRegistry = null;
+  if (checkpoint === 'release-delivery') {
+    const name = 'npm-registry.lino';
+    npmRegistry = path.join(artifactsDirectory, name);
+    await copyFile(path.join(source, name), npmRegistry);
+    artifacts.push(relative(npmRegistry));
+  }
   return {
     commands: record.commands,
     artifacts: [...record.artifacts, ...artifacts],
     tarball: path.join(artifactsDirectory, names[0]),
     crate: path.join(artifactsDirectory, names[1]),
+    npmRegistry,
   };
 }
 

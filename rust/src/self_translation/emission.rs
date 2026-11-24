@@ -1,18 +1,173 @@
 //! Existing item emission with an internal representation context.
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::binding::declared_signatures;
 use super::representation::Context;
-use super::{RUST_MAIN, family, project_type_script_typing};
+use super::{
+    Item, RUST_MAIN, SelfTranslation, SelfTranslationItem, SelfTranslationSignature, family,
+    project_type_script_typing, sha256,
+};
+use crate::LinkNetwork;
+use crate::query::QueryIndex;
+use crate::translation::Span;
 use crate::translation::check::check_program;
 use crate::translation::diagnostics::TranslationError;
 use crate::translation::emit_common::Emitted;
 use crate::translation::emit_javascript::emit_javascript;
 use crate::translation::emit_rust::{emit_rust_constants, emit_rust_with_representation};
+use crate::translation::frontend_rules::accept_source_envelope_restoration;
 use crate::translation::ir::Program;
-use crate::translation::javascript::parse_javascript_bound_in_with_module_scope;
+use crate::translation::javascript::{
+    parse_javascript, parse_javascript_bound_in_with_module_scope,
+};
+use crate::translation::primitive_method_rules::read_primitive_method_lowering_form;
 use crate::translation::rust::parse_rust;
 use crate::translation::surface::{External, SExpr};
+use regex::Regex;
+use std::sync::LazyLock;
+
+pub(super) fn relative_element_call_spans(network: &LinkNetwork, source: &str) -> HashSet<Span> {
+    let index = QueryIndex::new(network);
+    network
+        .links()
+        .filter(|link| link.metadata().term() == Some("call_expression"))
+        .filter(|call| {
+            index
+                .field_targets(call.id(), "function")
+                .into_iter()
+                .filter(|member| {
+                    index.link(*member).and_then(|link| link.metadata().term())
+                        == Some("member_expression")
+                })
+                .flat_map(|member| index.field_targets(member, "property"))
+                .filter_map(|name| index.link(name).and_then(|link| link.metadata().span()))
+                .filter_map(|span| {
+                    let range = span.byte_range();
+                    source.get(range.start()..range.end())
+                })
+                .any(|name| {
+                    read_primitive_method_lowering_form("array", name)
+                        == "relative-element-template"
+                })
+        })
+        .filter_map(|call| {
+            let range = call.metadata().span()?.byte_range();
+            let prefix_length = source.get(..range.start())?.encode_utf16().count();
+            let call_length = source
+                .get(range.start()..range.end())?
+                .encode_utf16()
+                .count();
+            Some(Span::new(prefix_length, prefix_length + call_length))
+        })
+        .collect()
+}
+
+fn contains_checked_array_relative_element(
+    value: &serde_json::Value,
+    spans: &HashSet<Span>,
+) -> bool {
+    if value["k"] == "apply"
+        && value["fn"]["k"] == "lambda"
+        && value["args"][0]["type"]["kind"] == "array"
+        && serde_json::from_value::<Span>(value["fn"]["span"].clone())
+            .is_ok_and(|span| spans.contains(&span))
+    {
+        return true;
+    }
+    match value {
+        serde_json::Value::Array(values) => values
+            .iter()
+            .any(|child| contains_checked_array_relative_element(child, spans)),
+        serde_json::Value::Object(fields) => fields
+            .values()
+            .any(|child| contains_checked_array_relative_element(child, spans)),
+        _ => false,
+    }
+}
+
+pub(super) fn emit_complete_relative_element_program(
+    source: &str,
+    spans: &HashSet<Span>,
+    utf16_strings: bool,
+) -> Option<String> {
+    if spans.is_empty() {
+        return None;
+    }
+    let program = check_program(&parse_javascript(source).ok()?).ok()?;
+    if program
+        .main
+        .as_ref()
+        .is_none_or(|main| main.effects.is_empty())
+        || !program.imports.is_empty()
+        || !program.externals.is_empty()
+        || !contains_checked_array_relative_element(&serde_json::to_value(&program).ok()?, spans)
+    {
+        return None;
+    }
+    emit_rust_with_representation(&program, utf16_strings)
+        .ok()
+        .map(|emitted| emitted.text)
+}
+
+pub(super) fn standalone_translation(
+    from: &'static str,
+    to: &'static str,
+    code: String,
+    items: &[Item<'_>],
+    status: &'static str,
+) -> (SelfTranslation, Vec<SelfTranslationSignature>) {
+    let items = items
+        .iter()
+        .map(|item| SelfTranslationItem {
+            term: item.term.clone(),
+            start: item.start,
+            end: item.end,
+            status: if item.comment { "provenance" } else { status },
+            reason: None,
+        })
+        .collect();
+    (
+        SelfTranslation {
+            source_language: from,
+            target_language: to,
+            code,
+            items,
+        },
+        Vec::new(),
+    )
+}
+
+pub(super) fn source_envelope(source: &str, tail: &str) -> String {
+    let original = serde_json::to_string(source)
+        .expect("source text serializes")
+        .replace('\u{2028}', "\\u2028")
+        .replace('\u{2029}', "\\u2029");
+    format!(" envelope-sha256={} original={original}", sha256(tail))
+}
+
+pub(super) fn restore_source_envelope(
+    source: &str,
+    header: &Item<'_>,
+    target: &str,
+) -> Option<String> {
+    static SOURCE_ENVELOPE: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r" envelope-sha256=([a-f0-9]{64}) original=(.*)$").unwrap());
+    let envelope = SOURCE_ENVELOPE.captures(header.text)?;
+    let original = serde_json::from_str::<String>(&envelope[2]).ok()?;
+    accept_source_envelope_restoration(
+        header.text.contains(&format!(" source={target} ")),
+        sha256(&source[header.end..]) == envelope[1],
+        header.text.split_ascii_whitespace().find_map(|field| {
+            field
+                .strip_prefix("bytes=")
+                .and_then(|value| value.parse::<usize>().ok())
+        }) == Some(original.len())
+            && header
+                .text
+                .contains(&format!(" sha256={} ", sha256(&original))),
+    )
+    .then_some(original)
+}
 
 /// The item emitted by the portable core with the signatures it gives the
 /// module's other items, or `None` for a top-level statement.

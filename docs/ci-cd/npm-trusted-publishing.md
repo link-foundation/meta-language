@@ -74,26 +74,35 @@ the step:
 
 ## Publishing versions that were missed
 
-The [October 12 audit](https://github.com/link-foundation/meta-language/pull/201#issuecomment-6116039616)
-recorded npm `0.46.0` and crate `1.0.0`. Once the settings above are saved,
-recover the missing npm artifact from the corresponding existing release tag:
+Recover a missing npm artifact from its existing release tag after verifying
+that the tag contains the intended JavaScript sources, package inputs, and
+publish workflow:
 
 ```bash
-gh workflow run js.yml --ref v1.0.0 -f release_version=1.0.0
+gh workflow run js.yml --ref "v$RELEASE_VERSION" -f release_version="$RELEASE_VERSION"
 ```
 
-Use the tag's version for both arguments when recovering a later release.
 A workflow dispatch on a tag executes the workflow stored on that tag; an
-older tag does not acquire checks added by a later commit. Future releases use
-the updated workflow through the dispatch in step 2.
+older tag does not acquire code or checks added by a later commit.
+
+The published [Rust 1.0.0 release](https://github.com/link-foundation/meta-language/releases/tag/v1.0.0)
+uses commit `a79782093cae3b33606483ac9f3e1d05faf36de0`, which preceded
+the [native HTML grammar](https://github.com/link-foundation/meta-language/commit/5f723fc41).
+Replaying that release can only recover its original package contents. A
+matched release containing native HTML in both packages requires a new tag
+whose commit includes the grammar. [Issue #230](https://github.com/link-foundation/meta-language/issues/230)
 
 `js/scripts/release-publication.mjs` rejects publishing from a branch or a
 different commit. It checks the tag, requested version, npm manifest, both
-lockfile version fields and crate manifest before authentication. The registry
-preflight requires the matching non-yanked crate and its checksum. Only an
-npm HTTP 404 means the npm artifact is absent; authentication, network and
-server failures stop publication. After publishing, the workflow waits for
-the npm artifact and verifies that both registries serve that same version.
+lockfile version fields and crate manifest before authentication. The preflight
+downloads the non-yanked crate, checks its registry SHA-256 and requires
+`.cargo_vcs_info.json` to record a clean checkout of the release commit. Only an
+npm HTTP 404 establishes that the npm artifact is absent. Authentication, network
+and server failures stop publication. After publishing, the workflow waits for
+npm to serve the same version and checks that its `gitHead` matches the release
+commit. It installs the exact registry tarball in a fresh consumer, verifies
+the installed version and integrity, and runs the native HTML fixture with
+network access disabled.
 An already published version runs this verification without requesting a
 publish credential. Registry presence alone does not establish the downstream
 delivery requirements: the post-merge evidence jobs must still install and

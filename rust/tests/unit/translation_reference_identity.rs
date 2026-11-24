@@ -139,7 +139,15 @@ fn reference_identity_keeps_every_explicit_surface_refusal() {
     for row in policy["refusals"].as_array().unwrap() {
         let script = r"
 import {parseJavaScript} from './js/src/translation/javascript.js';
-console.log(JSON.stringify(parseJavaScript(process.argv[1],JSON.parse(process.argv[2]))));
+import {TranslationError} from './js/src/translation/diagnostics.js';
+try {
+  const surface = parseJavaScript(process.argv[1], JSON.parse(process.argv[2]));
+  console.log(JSON.stringify({surface}));
+} catch (error) {
+  if (!(error instanceof TranslationError)) throw error;
+  const {kind, reason, span} = error;
+  console.log(JSON.stringify({diagnostic: {kind, reason, span}}));
+}
 ";
         let source = row["source"].as_str().unwrap();
         let output = run(Command::new("node").current_dir(root).args([
@@ -150,8 +158,25 @@ console.log(JSON.stringify(parseJavaScript(process.argv[1],JSON.parse(process.ar
             &row["options"].to_string(),
         ]));
         assert!(output.ok, "{}", output.stderr);
-        let surface = serde_json::from_str(&output.stdout).unwrap();
-        assert!(check_program(&surface).is_err(), "{}", row["name"]);
+        let observation: Value = serde_json::from_str(&output.stdout).unwrap();
+        match row["name"].as_str().unwrap() {
+            "different structural reference domains are not coerced"
+            | "different element domains are not coerced" => {
+                let diagnostic = &observation["diagnostic"];
+                assert_eq!(diagnostic["kind"], "type", "{}", row["name"]);
+                let actual = parse_javascript(source).unwrap_err();
+                assert_eq!(actual.kind.as_str(), diagnostic["kind"]);
+                assert_eq!(actual.reason, diagnostic["reason"]);
+                assert_eq!(
+                    serde_json::to_value(actual.span).unwrap(),
+                    diagnostic["span"]
+                );
+            }
+            _ => {
+                let surface = serde_json::from_value(observation["surface"].clone()).unwrap();
+                assert!(check_program(&surface).is_err(), "{}", row["name"]);
+            }
+        }
     }
 }
 

@@ -26,6 +26,8 @@ test('six bounded translation partitions retain every previous file once and pre
   const workflow=read('.github/workflows/js.yml');
   const tests=parseWorkflow(workflow).find(job=>job.id==='tests');
   assert.match(tests.header,/timeout-minutes: 15/u);assert.match(tests.header,/fail-fast: false/u);
+  const checkout=tests.steps.find(value=>value.name==='- uses: actions/checkout@v7');
+  assert.match(checkout?.text??'',/fetch-depth: 0\n          filter: \$\{\{ matrix.group == 'translation' && 'blob:none' \|\| '' \}\}\n/u);
   const entries=[...tests.header.matchAll(/\{group: translation, partition: ([0-9]+), shards: ([0-9]+)\}/gu)]
     .map(([,index,count])=>[Number(index),Number(count)]);
   assert.deepEqual(entries,[[1,6],[2,6],[3,6],[4,6],[5,6],[6,6]]);
@@ -39,6 +41,27 @@ test('six bounded translation partitions retain every previous file once and pre
     {cwd:root,encoding:'utf8',maxBuffer:2*1024*1024}).split('\n')
     .filter(file=>/^js\/tests\/[^/]+\.test\.js$/u.test(file)).map(file=>file.slice('js/tests/'.length));
   for(const file of partitionTests(originalFiles).groups.translation)assert.ok(files.includes(file),file);
+});
+
+test('the six translation shards distribute only the five measured checks from the timed-out shards',()=>{
+  const files=partitionTests(testFiles()).groups.translation;
+  const moved=new Map([
+    ['translation-current-own-codebase-raw-source-descriptors.test.js',3],
+    ['translation-self-recursive-declaration-owners.test.js',2],
+    ['translation-array-relative-history.test.js',4],
+    ['translation-current-raw-descriptor-refresh-history.test.js',5],
+    ['translation-native-library-receipt-history.test.js',2],
+  ]);
+  for(const file of moved.keys())assert.ok(files.includes(file),file);
+  for(let shard=1;shard<=6;shard++){
+    const previous=files.filter((file,offset)=>!moved.has(file)&&offset%6===shard-1);
+    const reassigned=[...moved].filter(([,owner])=>owner===shard).map(([file])=>file);
+    const expected=[...previous,...reassigned].sort();
+    assert.deepEqual(partitionGroupFiles(files,shard+'/6'),expected);
+  }
+  for(let shard=1;shard<=3;shard++){
+    assert.deepEqual(partitionGroupFiles(files,shard+'/3'),files.filter((_,offset)=>offset%3===shard-1));
+  }
 });
 
 test('six feedback partitions merge exact scope and bytes while missing foreign and tampered cohorts refuse',(t)=>{

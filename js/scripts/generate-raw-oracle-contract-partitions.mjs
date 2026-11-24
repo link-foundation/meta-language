@@ -58,8 +58,14 @@ export function generateRawOracleContractPartitions({check=false}={}) {
     .replace("matrix.group == 'source-model-raw'","matrix.group == 'source-model-raw-schema'")
     .replace(flag,flag+"\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'schema'");
   const cell='          - group: source-model-raw\n            generated_slice: first\n';
+  const checkout=`          - group: raw-borrowed-emission\n            generated_slice: first\n    steps:\n      - uses: actions/checkout@v7\n        with:\n          fetch-depth: 0\n`;
+  const checkoutFilter="          filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}\n";
+  const translationCheckout=`          - {group: translation, partition: 6, shards: 6}\n    steps:\n      - uses: actions/checkout@v7\n        with:\n          fetch-depth: 0\n`;
+  const translationCheckoutFilter="          filter: ${{ matrix.group == 'translation' && 'blob:none' || '' }}\n";
   const workflowEdits=[{before:cell,after:cell+'          - group: source-model-raw-schema\n            generated_slice: first\n'},
-    {before:step,after:schema+'\n'+plan}];
+    {before:step,after:schema+'\n'+plan},
+    {before:checkout,after:checkout+checkoutFilter},
+    {before:translationCheckout,after:translationCheckout+translationCheckoutFilter}];
   const currentWorkflow=apply(previousWorkflow,workflowEdits);
   const sources=[
     {path:testPath,source,certificate:original.certificate,edits:testsEdits,currentSource:currentTest},

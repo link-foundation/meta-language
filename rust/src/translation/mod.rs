@@ -65,7 +65,7 @@ pub(crate) mod owned_local_state;
 pub(crate) mod parameter_default_rules;
 pub(crate) mod partial_callable_rules;
 pub(crate) mod present_type;
-mod primitive_method_rules;
+pub(crate) mod primitive_method_rules;
 pub mod primitive_value_rules;
 pub mod product_emission_rules;
 pub(crate) mod program_number_projection_rules;

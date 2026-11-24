@@ -8,8 +8,24 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
-import { TEST_GROUPS, partitionGroupFiles, partitionMeasuredWorkloads, partitionProblems, partitionTests, testFiles } from '../scripts/test-groups.mjs';
+import { TEST_GROUPS, partitionGroupFiles, partitionMeasuredWorkloads, partitionProblems, partitionTests, testFileConcurrency, testFiles } from '../scripts/test-groups.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
+
+test('only well provisioned initial hosted translation shards run two isolated files at once', () => {
+  const capacity = {
+    environment: { GITHUB_ACTIONS: 'true', TEST_GROUP: 'translation' },
+    processors: 4,
+    availableBytes: 10 * 1024 ** 3,
+  };
+  assert.equal(testFileConcurrency('translation', '1/6', capacity), 2);
+  assert.equal(testFileConcurrency('translation', '6/6', capacity), 2);
+  assert.equal(testFileConcurrency('translation', '1/6', { ...capacity, processors: 3 }), 1);
+  assert.equal(testFileConcurrency('translation', '1/6', { ...capacity, availableBytes: capacity.availableBytes - 1 }), 1);
+  assert.equal(testFileConcurrency('translation', '1/6', { ...capacity, environment: { GITHUB_ACTIONS: 'true' } }), 1);
+  assert.equal(testFileConcurrency('translation', '1/6', { ...capacity, environment: { TEST_GROUP: 'translation' } }), 1);
+  assert.equal(testFileConcurrency('translation', '1/1', capacity), 1);
+  assert.equal(testFileConcurrency('grammar', '1/6', capacity), 1);
+});
 
 test('CI file partitions preserve every original native, conformance and translation file exactly once', () => {
   const groups = partitionTests(testFiles()).groups;

@@ -108,8 +108,8 @@ impl Sequitur {
             GrammarExpr::Sequence(self.rule_exprs(START_RULE, &names)),
         ));
 
-        for rule_id in 1..self.rules.len() {
-            if self.rules[rule_id].active {
+        for (rule_id, rule) in self.rules.iter().enumerate().skip(1) {
+            if rule.active {
                 let name = names
                     .get(&rule_id)
                     .expect("active generated rules must be named")

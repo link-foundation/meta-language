@@ -118,7 +118,7 @@ pub fn ml_accept_resource_description_language_loop21(
                                         let ml_index9_2 =
                                             ml_index9.add(&super::ml::Big::from_i128(1));
                                         {
-                                            ml_index9 = ml_index9_2.clone();
+                                            ml_index9 = ml_index9_2;
                                             continue;
                                         }
                                     }
@@ -130,7 +130,7 @@ pub fn ml_accept_resource_description_language_loop21(
                     {
                         let ml_index9_3 = ml_index9.add(&super::ml::Big::from_i128(1));
                         {
-                            ml_index9 = ml_index9_3.clone();
+                            ml_index9 = ml_index9_3;
                             continue;
                         }
                     }
@@ -170,8 +170,8 @@ pub fn ml_accept_resource_description_language_loop17(
                             starts.clone(),
                             lengths.clone(),
                             part,
-                            ml_values9.clone(),
-                            ml_index9.clone(),
+                            ml_values9,
+                            ml_index9,
                         );
                         match ml_s21 {
                             super::MlAcceptResourceDescriptionLanguageLoop21Result::MlAcceptResourceDescriptionLanguageLoop21Done => {
@@ -180,7 +180,7 @@ pub fn ml_accept_resource_description_language_loop17(
                                     {
                                         let part_2 = (part + 1f64);
                                         {
-                                            (part, variants) = (part_2, variants_2.clone());
+                                            (part, variants) = (part_2, variants_2);
                                             continue;
                                         }
                                     }
@@ -274,7 +274,7 @@ pub fn ml_accept_resource_description_language_loop11(
                                             let index_2 = (index + 1f64);
                                             {
                                                 (starts, lengths, index) =
-                                                    (starts_2.clone(), lengths_2.clone(), index_2);
+                                                    (starts_2, lengths_2, index_2);
                                                 continue;
                                             }
                                         }
@@ -284,7 +284,7 @@ pub fn ml_accept_resource_description_language_loop11(
                                     {
                                         let index_3 = (index + 1f64);
                                         {
-                                            (lengths, index) = (lengths_2.clone(), index_3);
+                                            (lengths, index) = (lengths_2, index_3);
                                             continue;
                                         }
                                     }

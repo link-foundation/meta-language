@@ -13,6 +13,7 @@ import { spawnSync,execFileSync } from 'node:child_process';
 import { readdirSync,readFileSync } from 'node:fs';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
+import { availableParallelism } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {readProjectData,writeProjectData} from './project-data.mjs';
@@ -151,10 +152,36 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
-  // Only the measured general-grammar cohort changes owners. Native and
-  // historical modulo cohorts retain their independent exact partition rules.
+  // Native and historical modulo cohorts retain their exact partition rules.
+  // Spread the two complete source checks from shard 5 (85 s and 70 s)
+  // across shards 3 and 2. Run 45173065418 showed both together exhausting shard 3.
+  // Shard 1 also timed out in that run. Its relative array history took 95 s.
+  // Shard 6 timed out after running the raw descriptor and native receipt
+  // history files (129 s and 149 s). Move those complete files to shards 5 and 2.
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
+  if (count === 6 && files.includes('translation-owned-number-facts.test.js')) {
+    const measuredPartitions = new Map([
+      ['translation-current-own-codebase-raw-source-descriptors.test.js', 3],
+      ['translation-self-recursive-declaration-owners.test.js', 2],
+      ['translation-array-relative-history.test.js', 4],
+      ['translation-current-raw-descriptor-refresh-history.test.js', 5],
+      ['translation-native-library-receipt-history.test.js', 2],
+    ]);
+    return files.filter((file, offset) => (measuredPartitions.get(file) ?? (offset % count) + 1) === index);
+  }
   return files.filter((_, offset) => offset % count === index - 1);
+}
+
+export function testFileConcurrency(group, shard, {
+  environment = process.env,
+  processors = availableParallelism(),
+  availableBytes = process.availableMemory(),
+} = {}) {
+  // The initial GitHub translation jobs use process-isolated file execution.
+  // Leave room for both test processes and their nested archive or compiler work.
+  const hostedTranslation = environment.GITHUB_ACTIONS === 'true'
+    && group === 'translation' && environment.TEST_GROUP === group && /^[1-6]\/6$/u.test(shard);
+  return hostedTranslation && processors >= 4 && availableBytes >= 10 * 1024 ** 3 ? 2 : 1;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -175,12 +202,15 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const counts = Object.entries(partition.groups).map(([name, files]) => `${name} ${files.length}`);
     console.log(`JavaScript test groups cover every test file: ${counts.join(', ')}`);
   } else if ((mode === '--list' || mode === '--run') && group in partition.groups) {
-    const files = partitionGroupFiles(partition.groups[group], options[1] ?? process.env.TEST_GROUP_SHARD ?? '1/1')
+    const shard = options[1] ?? process.env.TEST_GROUP_SHARD ?? '1/1';
+    const files = partitionGroupFiles(partition.groups[group], shard)
       .map((file) => path.join('tests', file));
     if (mode === '--list') {
       console.log(files.join('\n'));
     } else {
-      const { status, signal } = spawnSync(process.execPath, ['--test', '--test-concurrency=1', ...files], {
+      const concurrency = testFileConcurrency(group, shard);
+      if (concurrency > 1) console.log(`Running at most ${concurrency} test files at a time in translation shard ${shard}.`);
+      const { status, signal } = spawnSync(process.execPath, ['--test', `--test-concurrency=${concurrency}`, ...files], {
         cwd: packageRoot,
         stdio: 'inherit',
       });

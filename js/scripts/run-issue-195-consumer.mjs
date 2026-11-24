@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readProjectData, readProjectFileBytes, writeProjectData } from './project-data.mjs';
@@ -88,12 +88,19 @@ async function npmConsumer() {
     JSON.stringify(Object.keys(lock.packages?.['']?.dependencies ?? {})) === '["meta-language"]';
   checksum.installedIntegrity = installed.integrity ?? null;
   checksum.expectedIntegrity = `sha512-${createHash('sha512').update(bytes).digest('base64')}`;
-  await writeFile(path.join(directory, 'deny-network.mjs'), DENY_NETWORK);
+  await copyFile(new URL('../tests/support/deny-consumer-network.mjs', import.meta.url),
+    path.join(directory, 'deny-network.mjs'));
   await writeFile(path.join(directory, 'consumer.mjs'), NPM_CONSUMER);
   const observationPath = path.join(directory, 'observations.wire.json');
+  const offlineEnvironment = { ...environment, NODE_OPTIONS: '' };
   await run('npm-consumer', process.execPath, [
     '--import', './deny-network.mjs', 'consumer.mjs', corpusWirePath, observationPath,
-  ], { cwd: directory, env: { ...environment, NODE_OPTIONS: '' } });
+  ], { cwd: directory, env: offlineEnvironment });
+  const nativeHtmlFixture = await readFile(path.join(root, 'js/tests/downstream-native-html.test.js'));
+  await writeFile(path.join(directory, 'native-html.test.mjs'), nativeHtmlFixture);
+  await run('npm-native-html', process.execPath, [
+    '--import', './deny-network.mjs', '--test', 'native-html.test.mjs',
+  ], { cwd: directory, env: offlineEnvironment });
   const observed = await consumeWorkloadWireData(observationPath, path.join(directory, 'observations.lino'));
   return {
     version: installedPackage.version,
@@ -102,6 +109,7 @@ async function npmConsumer() {
     publicEntryPoints: observed.publicEntryPoints,
     offline: observed.offline,
     observations: observed.observations,
+    nativeHtmlFixtureSha256: sha256(nativeHtmlFixture),
   };
 }
 
@@ -125,6 +133,11 @@ async function crateConsumer() {
   const crateSource = path.join(extracted, path.basename(crate).replace(/\.crate$/u, ''));
   const manifest = await readFile(path.join(crateSource, 'Cargo.toml'), 'utf8');
   const version = /^version = "([^"]+)"/mu.exec(manifest)?.[1] ?? null;
+  const sourceInformation = path.join(crateSource, '.cargo_vcs_info.json');
+  const crateGit = existsSync(sourceInformation)
+    ? JSON.parse(await readFile(sourceInformation, 'utf8')).git
+    : null;
+  const gitRevision = crateGit?.sha1 ?? null;
   await writeFile(path.join(directory, 'Cargo.toml'), [
     '[package]',
     'name = "issue-195-crate-consumer"',
@@ -179,6 +192,8 @@ async function crateConsumer() {
   const sources = await rustSources(path.join(crateSource, 'src'));
   return {
     version,
+    gitRevision,
+    gitCheckoutClean: gitRevision !== null && (crateGit.dirty === undefined || crateGit.dirty === false),
     checksum,
     clean,
     publicEntryPoints: { ...observed.publicEntryPoints, privatePathRejected },
@@ -330,35 +345,6 @@ function required(name) {
   if (!value) throw new Error(`missing ${name}`);
   return value;
 }
-
-// Loaded with `node --import` before the consumer: every socket, DNS, HTTP and
-// fetch entry point records the attempt and throws, so a parse that needed the
-// network fails instead of silently downloading.
-const DENY_NETWORK = `import dns from 'node:dns';
-import http from 'node:http';
-import https from 'node:https';
-import net from 'node:net';
-import tls from 'node:tls';
-
-globalThis.__issue195NetworkAttempts = [];
-const deny = (name) => function denied(...args) {
-  globalThis.__issue195NetworkAttempts.push(name);
-  throw new Error(\`network access is disabled for the offline consumer: \${name}\`);
-};
-net.Socket.prototype.connect = deny('net.Socket.connect');
-net.connect = deny('net.connect');
-net.createConnection = deny('net.createConnection');
-tls.connect = deny('tls.connect');
-http.request = deny('http.request');
-http.get = deny('http.get');
-https.request = deny('https.request');
-https.get = deny('https.get');
-dns.lookup = deny('dns.lookup');
-dns.resolve = deny('dns.resolve');
-dns.promises.lookup = deny('dns.promises.lookup');
-dns.promises.resolve = deny('dns.promises.resolve');
-globalThis.fetch = deny('fetch');
-`;
 
 const NPM_CONSUMER = `import { readFileSync, writeFileSync } from 'node:fs';
 import * as api from 'meta-language';

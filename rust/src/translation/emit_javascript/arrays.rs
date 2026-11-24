@@ -48,6 +48,12 @@ impl JavaScriptEmitter<'_> {
                     ),
                 )
             }
+            Node::CollectionSize { object } => Ok(
+                crate::translation::array_value_rules::render_collection_size(
+                    "JavaScript",
+                    &self.expr(object)?,
+                ),
+            ),
             Node::CollectionItems { object, op } => {
                 let map = matches!(object.ty, super::Type::Map { .. });
                 let value = self.expr(object)?;
