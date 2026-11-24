@@ -1,11 +1,10 @@
 // Layout adapters preserve actual owning IDs and ordered child/reference edges.
 // Shape declarations are ordinary inspectable Links, never hidden tables.
 import {readRuntimeProjectData} from './project-data-loader.js';
-import {LinkMetadata,LinkType} from './primitives.js';
+import {idKey as key,LinkMetadata,LinkType} from './primitives.js';
 import {LinkNetwork} from './network.js';
 import {readTypedProgramRecordShapeError,readTypedProgramRecordShapeSelectionError,readTypedProgramRecordRoleTextError} from './translation/typed-record-shape-rules.js';
 const profile=Object.freeze(readRuntimeProjectData(new URL('./data/typed-program-record-shapes.lino',import.meta.url)));
-const key=id=>id.asU64();
 const fail=message=>{throw new TypeError('typed program record layout: '+message);};
 export function readTypedProgramRecordShapeProfile(){
  if(profile.schemaVersion!==1||profile.model!=='ordered typed program record fields 1'||profile.recordOccurrences!==false||profile.rootField!=='record layout'||profile.profileTerm!=='typed program record layout'||profile.shapeTerm!=='typed program record field shape')fail('unknown qualified layout profile');
