@@ -2,8 +2,8 @@
 // Installs exact npm and crate candidate artifacts into clean consumers on the
 // current platform, parses the shared consumer corpus offline through public
 // entry points only, and writes a platform report. The issue 195 evidence
-// runner turns these reports into package-delivery execution records, and CI
-// runs this script on every supported platform against the same artifacts.
+// runner turns the full reports into package-delivery execution records.
+// CI uses the same artifacts for every enabled platform.
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';

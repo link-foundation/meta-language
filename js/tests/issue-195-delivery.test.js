@@ -97,6 +97,24 @@ test('supported platforms are observed when every declared platform report passe
   }
 });
 
+test('paused consumers still verify parses and programs without satisfying full delivery', () => {
+  const pausedDelivery = { ...delivery, translations: [] };
+  const pausedContext = { ...context, corpus: { ...corpus, delivery: pausedDelivery } };
+  const reports = allPlatforms();
+  assert.ok(delivery.translations.length > 0);
+  for (const report of reports) {
+    for (const side of ['npm', 'crate']) {
+      report[side].observations = { ...report[side].observations, translations: [] };
+    }
+    const checks = deliveryAssertions(report, ['npm', 'crate'], expected, pausedContext);
+    assert.equal(Object.values(checks).every(Boolean), true);
+    assert.equal(deliveryAssertions(report, ['npm', 'crate'], expected, context).offlineFirstParse, false);
+  }
+  assert.equal(supportedPlatformCoverage(reports, ['npm', 'crate'], expected, context).observed, false);
+  reports[0].crate.observations.programs[0].emitted = false;
+  assert.equal(deliveryAssertions(reports[0], ['npm', 'crate'], expected, pausedContext).offlineFirstParse, false);
+});
+
 test('a missing platform report leaves supported platforms unobserved', () => {
   const reports = allPlatforms().filter(({ platform }) => platform !== 'win32-x64');
   const coverage = supportedPlatformCoverage(reports, ['npm'], expected, context);
