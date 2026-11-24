@@ -20,6 +20,9 @@ const cases = [
   { id: 'grandfathered-language', source: '<urn:s> <urn:p> "hello"@I-klingon .\n',
     triples: [[I('urn:s'), I('urn:p'), L('hello', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#langString', 'i-klingon')]], canonical: '<urn:s> <urn:p> "hello"@i-klingon .\n' },
   { id: 'empty-comment-document', source: '\t# comment 🦀\r\n\n', triples: [], canonical: '' },
+  // N-Triples IRIs use RFC 3987 section 2.2, where an IP-literal is an ihost.
+  { id: 'bracketed-address', source: '<http://[::1]/> <urn:p> <urn:o> .',
+    triples: [[I('http://[::1]/'), I('urn:p'), I('urn:o')]], canonical: '<http://[::1]/> <urn:p> <urn:o> .\n' },
 ];
 const malformed = [
   ['relative-identifier', '<relative> <urn:p> <urn:o> .'],
@@ -43,8 +46,9 @@ const malformed = [
   ['missing-datatype', '<urn:s> <urn:p> "x"^^ .'],
   ['invalid-language', '<urn:s> <urn:p> "x"@en--US .'],
   ['langstring-without-language', '<urn:s> <urn:p> "x"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#langString> .'],
+  ['unclosed-bracketed-address', '<http://[::1/> <urn:p> <urn:o> .'],
 ].map(([id, source]) => ({ id, source, kind: 'malformed' }));
-const unsupported = [{ id: 'bracketed-address', source: '<http://[::1]/> <urn:p> <urn:o> .', kind: 'unsupported' }];
+const unsupported = [];
 for (const item of cases) {
   const graph = importResourceDescriptionNTriples(item.source, { sourceIdentifier: 'syntax-fixture' });
   const emitted = emitResourceDescriptionNTriples(graph.network, graph.root);

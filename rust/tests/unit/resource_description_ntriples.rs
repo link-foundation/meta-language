@@ -209,6 +209,24 @@ fn ntriples_malformed_inputs_and_unsupported_profiles_remain_distinct() {
             assert!(diagnostic.offset <= source.encode_utf16().count());
         }
     }
+    let graph =
+        import_resource_description_ntriples("<http://[::1]/> <urn:p> <urn:o> .", "s", None)
+            .unwrap();
+    let profile = graph
+        .network
+        .links()
+        .find(|link| link.metadata().term() == Some("resource description syntax profile"))
+        .unwrap();
+    let altered = replace_definition(
+        &graph.network,
+        profile.id(),
+        profile.metadata().definition().unwrap(),
+        "unknown syntax profile",
+    );
+    let diagnostic = read_resource_description_ntriples_source(&altered, graph.syntax_root)
+        .unwrap_err();
+    assert_eq!(diagnostic.kind, "unsupported");
+    assert_eq!(diagnostic.offset, 0);
     let source = "<urn:s> <urn:p> \"\\uD800\" .";
     assert_eq!(
         import_resource_description_ntriples(source, "s", None)
