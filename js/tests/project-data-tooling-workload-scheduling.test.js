@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { partitionGroupFiles, partitionTests, testFiles } from '../scripts/test-groups.mjs';
 
@@ -23,4 +25,18 @@ test('four tooling shards redistribute the completed file workload that reached 
   const costByFile = new Map(packet.entries.map(row => [row.file, row.milliseconds]));
   const measuredLoads = assignments.map(shard => shard.reduce((total, file) => total + (costByFile.get('js/tests/' + file) ?? 0), 0));
   assert.ok(Math.max(...measuredLoads) < expired.testMilliseconds * 0.8, measuredLoads.join(', '));
+});
+
+test('versioned Rust behavior runs on the evidence toolchain and compiler gates use stable', () => {
+  const readJobs = file => parseWorkflow(readFileSync(new URL('../../.github/workflows/' + file, import.meta.url), 'utf8'));
+  const rust = new Map(readJobs('rust.yml').map(job => [job.id, job]));
+  const compiler = job => job.steps.flatMap(step => [...step.text.matchAll(/uses: dtolnay\/rust-toolchain@([^\s]+)/gu)].map(match => match[1]));
+  const evidenceVersions = readJobs('ci.yml').flatMap(compiler);
+  assert.deepEqual([...new Set(evidenceVersions)], ['1.99.0']);
+  for (const job of ['test', 'coverage', 'fresh-merge', 'original-link-raw-observations']) {
+    assert.deepEqual(compiler(rust.get(job)), ['1.99.0'], job);
+  }
+  for (const job of ['check', 'lint']) {
+    assert.deepEqual(compiler(rust.get(job)), ['stable'], job);
+  }
 });

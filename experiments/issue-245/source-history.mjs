@@ -14,6 +14,7 @@ export const platformDeadlineTestSource = 'js/tests/issue-195-evidence-platform-
 export const larkEmitterSource = 'rust/src/grammar/emit/lark.rs';
 export const javascriptTestGroupsSource = 'js/scripts/test-groups.mjs';
 export const javascriptWorkflowSource = '.github/workflows/js.yml';
+export const rustWorkflowSource = '.github/workflows/rust.yml';
 export const nodeDependencyTestSource = 'js/tests/issue-195-evidence-node-dependency.test.js';
 export const typedProgramLinksValidationSource = 'js/src/typed-program-links-validation.js';
 export const asciiPredicateAssertionSource = 'js/tests/translation-ascii-text-predicates.test.js';
@@ -94,6 +95,12 @@ const profiles = [
   [javascriptTestGroupsSource, { revision: toolingTimingRevision,
     predecessor: '21b9f6b4ccd7c35468b0e63e1bffd770be5fa1e2f7e1b7998bea9fa40449e38d',
     current: 'c0fb616bde11397df01a4a2b3d0324eaa565fca3c5af1aa8fc6b045ec2622c53' }],
+  [rustWorkflowSource, { revision: mainRevision,
+    predecessor: 'e006605c0c28530a461717e64cf031f42087b9199a8604231bb035a8dce58eba',
+    current: 'cbbfa684b126ddcb29477c66c092d937676445999d995a2e041f3059412fbe03' }],
+  ['js/scripts/dependency-inventory-append-history.mjs', { revision: '18590bea3b3595c008da0ce9f0afa85104bbe205',
+    predecessor: 'b64e713da2f954c37f70e84435408544d9cdedb2cbaf0939634a33298cf27dfa',
+    current: '00cfc27b598cdc9870c48d249ade9c0dfba931fa59ddccc247f51da35a944ef7' }],
 ];
 const reviewedFiles = new Set(profiles.map(([file]) => file));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
