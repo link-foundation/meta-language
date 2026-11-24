@@ -9,7 +9,7 @@ import { verifyGitArtifactCertificate } from '../../js/scripts/git-object-certif
 const root = new URL('../../', import.meta.url);
 const archive = new URL('./verification-pause-history.lino', import.meta.url);
 export const verificationPauseSourceRevision = 'eb11fcf94d1a4332ba336e4b2281f084a1a4e3a9';
-const archiveDigest = '91cbfab6333e7fd24369c6f19b38abc3bf121962ee2aa27647165ce59a5c4b30';
+const archiveDigest = '27e9a24246611ba0431ca1d5a11e57d850b6f56ed1c90873f20d291357e51870';
 const paths = [
   '.github/workflows/ci.yml',
   '.github/workflows/js.yml',

@@ -15,6 +15,7 @@ import { DOCUMENT_TASK_CASES, DOCUMENT_TASK_EXAMPLE, deliveryAssertions, observe
 import { verifyEvaluatedCheckout } from './issue-195-merge-enforcement.mjs';
 import { recordIssue195Observations } from '../tests/support/issue-195-observations.js';
 import { readProjectData, readProjectFileBytes, writeProjectData } from './project-data.mjs';
+import { releaseIdentity, verifyInstalledReleaseArtifacts } from './release-publication.mjs';
 import { consumeWorkloadWireData } from './workload-wire-data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -39,8 +40,8 @@ const NETWORK_APIS = /\bstd::net\b|\bTcpStream\b|\bTcpListener\b|\bUdpSocket\b|\
 const logs = [];
 
 async function main() {
-  const recordCandidate = translationPaused && process.env.ISSUE_195_OBSERVATION_FILE;
-  if (recordCandidate) verifyEvaluatedCheckout(root, process.env.ISSUE_195_COMMIT);
+  const recordDocumentTasks = translationPaused && process.env.ISSUE_195_OBSERVATION_FILE;
+  if (recordDocumentTasks) verifyEvaluatedCheckout(root, process.env.ISSUE_195_COMMIT);
   await rm(workDirectory, { recursive: true, force: true });
   await mkdir(workDirectory, { recursive: true });
   // The installed probe programs retain their JSON wire contract; their input
@@ -76,16 +77,32 @@ async function main() {
     }
     const failed = Object.entries(assertions).filter(([, passed]) => !passed).map(([name]) => name);
     if (failed.length > 0) throw new Error(`clean consumer checks failed: ${failed.join(', ')}`);
-    if (recordCandidate) {
+    if (recordDocumentTasks) {
+      const published = process.env.GITHUB_EVENT_NAME === 'release';
+      if (published) {
+        const identity = releaseIdentity({
+          packageJson: JSON.parse(await readFile(path.join(root, 'js/package.json'), 'utf8')),
+          packageLock: JSON.parse(await readFile(path.join(root, 'js/package-lock.json'), 'utf8')),
+          cargoManifest: await readFile(path.join(root, 'rust/Cargo.toml'), 'utf8'),
+          env: process.env,
+          commit: process.env.ISSUE_195_COMMIT,
+        });
+        await verifyInstalledReleaseArtifacts(identity, {
+          npmIntegrity: report.npm.checksum.expectedIntegrity,
+          crateChecksum: report.crate.checksum.sha256,
+        });
+      }
       verifyEvaluatedCheckout(root, process.env.ISSUE_195_COMMIT);
+      const suffix = published ? 'release-delivery' : 'pre-merge';
+      const artifact = published ? 'published' : 'candidate';
       for (const [id, , scenario, assertion] of DOCUMENT_TASK_CASES) {
         recordIssue195Observations({
           requirementId: id,
-          suffix: 'pre-merge',
+          suffix,
           fixtureId: 'i195-installed-document-tasks',
           fixtureFile: DOCUMENT_TASK_EXAMPLE,
           assertions: [assertion],
-          testName: `candidate npm document example on ${platform}: ${scenario}`,
+          testName: `${artifact} npm document example on ${platform}: ${scenario}`,
         });
       }
     }

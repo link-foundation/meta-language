@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-import { verifyTaggedRegistryRelease } from '../scripts/release-publication.mjs';
+import { verifyInstalledReleaseArtifacts, verifyTaggedRegistryRelease } from '../scripts/release-publication.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const identity = { name: 'meta-language', version: '1.0.0', tag: 'v1.0.0', commit: 'a'.repeat(40) };
@@ -105,4 +105,23 @@ test('publication verifies the crate archive checksum and binds both registries 
     assertions: ['crateArchiveMatchesRegistryChecksum', 'crateArchiveIdentifiesCleanReleaseCommit', 'npmMetadataIdentifiesReleaseCommit'],
     testName: context.name,
   });
+});
+
+test('published clean-consumer evidence binds both installed artifacts to the tag', async () => {
+  const archive = crateArchive();
+  const installed = { npmIntegrity: 'sha512-fixture', crateChecksum: createHash('sha256').update(archive).digest('hex') };
+  const fetchImpl = registryFixture(200, { archive });
+  await verifyInstalledReleaseArtifacts(identity, installed, { fetchImpl });
+  for (const altered of [
+    { ...installed, npmIntegrity: 'sha512-candidate' },
+    { ...installed, crateChecksum: 'b'.repeat(64) },
+  ]) {
+    await assert.rejects(verifyInstalledReleaseArtifacts(identity, altered, { fetchImpl }), /installed npm and crate bytes/u);
+  }
+  await assert.rejects(verifyInstalledReleaseArtifacts(identity, installed, {
+    fetchImpl: registryFixture(404, { archive }),
+  }), /installed npm and crate bytes/u);
+  await assert.rejects(verifyInstalledReleaseArtifacts(identity, installed, {
+    fetchImpl: registryFixture(200, { archive, npmOverrides: { gitHead: 'b'.repeat(40) } }),
+  }), /npm must report release commit/u);
 });

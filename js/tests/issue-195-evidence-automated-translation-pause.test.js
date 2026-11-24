@@ -86,6 +86,10 @@ test('ordinary workflows pause automated translation and fail on independent che
   const release = { github: { event_name: 'release' } };
   assert.equal(when(ci.delivery.header, release), false);
   assert.equal(when(ci.delivery.header, { ...release, ...repositoryOptIn }), true);
+  assert.equal(when(ci.consumers.header, release), true);
+  const cleanConsumer = step(ci.consumers, 'Install and parse the exact artifacts in clean consumers');
+  assert.match(cleanConsumer.text, /ISSUE_195_OBSERVATION_FILE: \$\{\{ matrix\.os == 'ubuntu-latest' && format\('\{0\}\/issue-195-artifacts\/platform\/document-observations\.lino', github\.workspace\) \|\| '' \}\}/u);
+  assert.match(cleanConsumer.text, /RELEASE_TAG: \$\{\{ github\.event\.release\.tag_name \}\}/u);
   for (const [job, name] of [
     [ci.consumers, 'Install and parse the exact artifacts in clean consumers'],
     [ci['formal-ai-workload-parts'], 'Run the link-assistant/formal-ai workloads on the exact artifacts'],

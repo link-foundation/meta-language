@@ -3086,10 +3086,12 @@ Use the CI dispatch inputs `automated_translation` and
 `cross_platform_checks`, or set the repository variables
 `META_LANGUAGE_AUTOMATED_TRANSLATION` and
 `META_LANGUAGE_CROSS_PLATFORM_CHECKS` to `true`. Enable both for the
-complete acceptance workflow and every supported consumer platform. Linux test
-and candidate package observations can still establish their individual
-assertions when the switches are off. The aggregate reports active job failures.
-A paused workflow supplies evidence only for the checks it executes.
+complete acceptance workflow and every supported consumer platform. Linux
+tests and installed package consumers can still establish their individual
+assertions when the switches are off. Published document consumer observations
+require both installed artifacts to match the registry bytes for the tagged
+source. The aggregate reports active job failures. A paused workflow supplies
+evidence only for the checks it executes.
 
 The review of [Router PR #761](https://github.com/link-assistant/router/pull/761)
 at revision `e2ceac6071d90514fb1a37b3fe5964433d61c402` records its source

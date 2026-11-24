@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Publication checks run only in js.yml's standalone release/tag dispatch.
+// Publication and clean-consumer checks bind both registries to the release tag.
 // A registry outage is a failure, never evidence that a version is unpublished.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -132,6 +132,14 @@ export async function verifyTaggedRegistryRelease(identity, {
   await verifyCrateArchive(identity, crateChecksum, fetchImpl);
   const readState = () => registryNpmState(identity, crateChecksum, fetchImpl, true);
   return waitForPublication ? waitForNpmRelease(identity, readState, attempts, delay) : readState();
+}
+
+/** Bind the files actually used by the clean consumer to both tagged releases. */
+export async function verifyInstalledReleaseArtifacts(identity, { npmIntegrity, crateChecksum }, options) {
+  const published = await verifyTaggedRegistryRelease(identity, options);
+  if (!published.alreadyPublished || published.npmIntegrity !== npmIntegrity || published.crateChecksum !== crateChecksum) {
+    throw new Error('the installed npm and crate bytes must match both registries at the tagged release');
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

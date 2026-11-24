@@ -513,7 +513,8 @@ jobs:
         env:
           META_LANGUAGE_AUTOMATED_TRANSLATION: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
           ISSUE_195_COMMIT: ${{ github.sha }}
-          ISSUE_195_OBSERVATION_FILE: ${{ github.event_name != 'release' && matrix.os == 'ubuntu-latest' && format('{0}/issue-195-artifacts/platform/document-observations.lino', github.workspace) || '' }}
+          ISSUE_195_OBSERVATION_FILE: ${{ matrix.os == 'ubuntu-latest' && format('{0}/issue-195-artifacts/platform/document-observations.lino', github.workspace) || '' }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: >-
           node js/scripts/run-issue-195-consumer.mjs
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
