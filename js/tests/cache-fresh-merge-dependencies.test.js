@@ -3,7 +3,9 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {captureGitArtifactCertificate} from '../scripts/capture-git-artifact-certificate.mjs';
+import {restoreAutomatedTranslationPauseSource} from '../scripts/automated-translation-pause-source-history.mjs';
 const file=new URL('../../.github/workflows/rust.yml',import.meta.url);
+const prePause=source=>restoreAutomatedTranslationPauseSource(source,'.github/workflows/rust.yml');
 const coverageProfile="          CARGO_PROFILE_TEST_OPT_LEVEL: 3\n"
   +"          CARGO_PROFILE_TEST_DEBUG_ASSERTIONS: 'true'\n"
   +"          CARGO_PROFILE_TEST_OVERFLOW_CHECKS: 'true'\n";
@@ -22,10 +24,10 @@ test('fresh merge restores the existing successful check cache before every unch
     +"        uses: actions/cache/restore@v6\n        with:\n          path: |\n"
     +"            ~/.cargo/registry\n            ~/.cargo/git\n            rust/target\n"
     +"          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}\n\n";
-  assert.equal(source.split(block).length,2);
+  assert.equal(source.split(block.replace('-cargo-check-', '-cargo-check-1.99.0-')).length,2);
   const original=captureGitArtifactCertificate('90636f9fb52b1b9095defbac041c8089608b8576','.github/workflows/rust.yml');
   assert.equal(source.split(coverageProfile).length,2);
-  const predecessor=removePartitionUploadRetry(source.replace(block,'').replace(coverageProfile,''));
+  const predecessor=removePartitionUploadRetry(prePause(source).replace(block,'').replace(coverageProfile,''));
   assert.equal(predecessor,original.blob.toString('utf8'),'every original job, deadline, matrix cell, gate, command and artifact step remains exact');
   assert.match(source,/fresh-merge:[\s\S]*?timeout-minutes: 20/u);
 });
@@ -58,11 +60,14 @@ test('native partition artifact recovery retries the identical complete payload 
   const first=job.steps.find(row=>row.name==='Retain authenticated native partition');
   const retry=job.steps.find(row=>row.name==='Retry authenticated native partition upload');assert.ok(first&&retry);
   assert.match(first.text,/id: native-partition-upload\n\s+continue-on-error: true/u);
-  assert.ok(retry.text.includes("if: ${{ !cancelled() && steps.native-partition-upload.outcome == 'failure' }}"));
+  const strict="(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true')";
+  assert.ok(first.text.includes(`if: \${{ !cancelled() && ${strict} }}`));
+  assert.ok(retry.text.includes(`if: \${{ !cancelled() && steps.native-partition-upload.outcome == 'failure' && ${strict} }}`));
   assert.doesNotMatch(retry.text,/continue-on-error/u);assert.match(retry.text,/overwrite: true/u);
   assert.equal(job.steps.indexOf(retry),job.steps.indexOf(first)+1);
   const artifact=step=>step.text.split('        with:\n')[1].replace('          overwrite: true\n','');
   assert.equal(artifact(first),artifact(retry));
   for(const step of [first,retry])assert.match(step.text,/if-no-files-found: error/u);
-  assert.notEqual(removePartitionUploadRetry(source),source);
+  const baseline=prePause(source);
+  assert.notEqual(removePartitionUploadRetry(baseline),baseline);
 });

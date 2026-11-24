@@ -106,8 +106,8 @@ fn observe(source: &str, expected: &str, native: bool) {
 
 fn inputs() -> Vec<String> {
     let mut values = [
-        "", "_", "a", "Z", "a0_", "0a", "-a", "a-b", "a\n", "a\r\n", "π", "aπ", "é", "K", "İ",
-        "a\u{301}", "😀", "a😀", "\0", "\u{7f}",
+        "", "_", "a", "Z", "a0_", "0a", "-a", "a-b", "a\n", "a\r\n", "π", "aπ", "é", "\u{212A}",
+        "İ", "a\u{301}", "😀", "a😀", "\0", "\u{7f}",
     ]
     .map(str::to_owned)
     .to_vec();
@@ -138,8 +138,8 @@ fn expected(value: &str, terminal: bool) -> bool {
 
 #[test]
 fn actual_generated_ascii_methods_match_complete_independent_byte_ranges_and_unicode_boundaries() {
-    assert_versions();
     use generated_decisions::{accept_ascii_character_method, ml_string::Text};
+    assert_versions();
     let methods = [
         "is_ascii_alphabetic",
         "is_ascii_alphanumeric",
@@ -171,8 +171,8 @@ fn actual_generated_ascii_methods_match_complete_independent_byte_ranges_and_uni
         8490.0,
         55296.0,
         56320.0,
-        128512.0,
-        1114111.0,
+        128_512.0,
+        1_114_111.0,
     ] {
         for method in methods {
             assert!(!accept_ascii_character_method(
@@ -315,6 +315,10 @@ fn both_actual_whole_helpers_preserve_sources_cst_native_execution_and_bidirecti
 #[test]
 fn pure_queries_keep_one_receiver_evaluation_hygiene_vacuity_and_actual_unicode_behavior() {
     assert_versions();
+    #[allow(
+        clippy::literal_string_with_formatting_args,
+        reason = "The fixture passes literal Rust source to the frontend."
+    )]
     let mut source = "fn provider(value:&str)->&str{value}
 fn first(value:&str)->bool{provider(value).starts_with(|c|c.is_ascii_digit())}
 fn all(value:&str)->bool{provider(value).chars().all(|c|c.is_ascii_digit())}

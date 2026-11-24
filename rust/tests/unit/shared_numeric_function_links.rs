@@ -7,6 +7,7 @@ use meta_language::{
     read_global_concept_space_links, read_structured_data_lino, verify_formal_concept_equivalence,
 };
 use serde_json::{Value, json};
+use std::fmt::Write as _;
 
 fn fixture() -> Value {
     read_structured_data_lino(include_str!(
@@ -476,11 +477,13 @@ fn current_boolean_declarations_keep_actual_const_owners_truths_and_both_archive
                 case["emissions"]["Rust"].as_str().unwrap()
             );
             let mut script = javascript;
-            script.push_str(&format!(
+            write!(
+                script,
                 "\nconsole.log(JSON.stringify({}.map(args=>{}(...args))));",
                 case["inputs"],
                 case["declaration"].as_str().unwrap()
-            ));
+            )
+            .unwrap();
             let output = std::process::Command::new("node")
                 .args(["--input-type=module", "-e", &script])
                 .output()

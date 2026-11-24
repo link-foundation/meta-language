@@ -551,6 +551,10 @@ fn assert_modern_array_identity_translation(source: &str, previous_message: &str
     let original = run(Command::new("node").args(["--input-type=module", "-e", source]));
     assert!(original.ok, "{}", original.stderr);
     assert_eq!(original.stdout, "true\n");
+    #[allow(
+        clippy::literal_string_with_formatting_args,
+        reason = "The JavaScript source contains literal object syntax."
+    )]
     let value_script = r"
 import {parseJavaScript} from './js/src/translation/javascript.js';
 console.log(JSON.stringify(parseJavaScript(process.argv[1],{referenceSemantics:false})));

@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { appendFile } from 'node:fs/promises';
 import { structuredDataRecordToLino } from '../src/structured-data-records.js';
 import { test } from 'node:test';
+import { automatedTranslationTest } from './support/automated-translation-test.js';
 import { runInNewContext } from 'node:vm';
 
 import {
@@ -531,7 +532,7 @@ test('structured programs survive snapshots without retaining an original source
   assert.equal(restoredUnicode.emit(), 'const café = "☕";\n');
 });
 
-test('all 12 translation hooks emit reversible target-native source envelopes', () => {
+test('all 12 translation hooks emit reversible target-native source envelopes', automatedTranslationTest, () => {
   const contracts = translationContracts();
   assert.equal(contracts.length, 12);
   assert.equal(new Set(contracts.map(({ source, target }) => `${source}->${target}`)).size, 12);

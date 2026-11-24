@@ -1,5 +1,5 @@
 //! CI-only actual source, generated decision and complete emitted-program parity.
-use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+use super::issue_195_translation_pairs::{TemporaryDirectory, run, sha256};
 use meta_language::translation::{
     check::check_program,
     emit_javascript::emit_javascript,
@@ -17,7 +17,6 @@ use meta_language::{
     encode_link_network_binary, read_structured_data_lino,
 };
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -71,7 +70,11 @@ fn versions() {
 
 fn javascript_bridge(mode: &str, source: &str) -> Value {
     versions();
-    let script = r#"
+    #[allow(
+        clippy::literal_string_with_formatting_args,
+        reason = "The JavaScript source contains literal object syntax."
+    )]
+    let script = r"
 import {runInNewContext} from 'node:vm';
 import {structuredDataToLino} from './js/src/structured-data-links.js';
 import {parseJavaScript} from './js/src/translation/javascript.js';
@@ -110,7 +113,7 @@ if(mode==='raw-error'){
  process.stdout.write(structuredDataToLino({surface,javascript,rust:emitRust(checked,{arrayConsumption:true}).text,lines}));
  }catch(error){process.stdout.write(structuredDataToLino({error:{kind:error.kind??null,reason:error.reason??String(error),span:error.span??null}}));}
 }
-"#;
+";
     let result = run(Command::new("node").current_dir(root()).args([
         "--input-type=module",
         "-e",
@@ -250,6 +253,10 @@ fn require_source(source: &str, expected: &str) {
 
 #[test]
 fn original_required_field_sources_keep_complete_execution_and_both_source_free_directions() {
+    #[allow(
+        clippy::literal_string_with_formatting_args,
+        reason = "The JavaScript fixtures contain literal object syntax."
+    )]
     for (source, expected) in [
         (
             "function selected({left:a,right:b},scale){return (a+b)*scale;}\nfunction repeated({left:a,left:b}){return a===b;}\nfunction mixed(before,{left,right},after){return before+left+right+after;}\nconsole.log(selected({left:2,right:3},4));\nconsole.log(repeated({left:7}));\nconsole.log(mixed(1,{left:2,right:3},4));",
@@ -328,10 +335,7 @@ fn actual_source_policy_captures_and_scalar_loop_exclusion_keep_their_original_o
     {
         let source = fs::read(root().join(owner["path"].as_str().unwrap())).unwrap();
         assert_eq!(source.len() as u64, owner["bytes"].as_u64().unwrap());
-        assert_eq!(
-            format!("{:x}", Sha256::digest(&source)),
-            owner["sourceSha256"].as_str().unwrap()
-        );
+        assert_eq!(sha256(&source), owner["sourceSha256"].as_str().unwrap());
         if let Some(declaration) = owner["declaration"].as_str() {
             assert!(String::from_utf8(source).unwrap().contains(declaration));
             let concrete =
@@ -341,11 +345,19 @@ fn actual_source_policy_captures_and_scalar_loop_exclusion_keep_their_original_o
             }
         }
     }
+    #[allow(
+        clippy::literal_string_with_formatting_args,
+        reason = "The JavaScript source contains literal object syntax."
+    )]
     let source = "function selected({left:a}){for(;;){return a;}}console.log(selected({left:2}));";
     let surface =
         parse_javascript_with_scalar_loop_model(source, "closed primitive scalar loop 1").unwrap();
     let parsed = serde_json::to_value(surface).unwrap();
     assert!(parsed["items"][0].get("sourceLoop").is_none());
+    #[allow(
+        clippy::literal_string_with_formatting_args,
+        reason = "The JavaScript source contains literal object syntax."
+    )]
     let source = "// prefix π😀\nconst record_parameter_value0=9;\nfunction selected(before,{left:a},after){return before+a+after;}console.log(selected(1,{left:2},3));";
     let context = ModuleContext {
         externals: vec![External::Constant {
@@ -383,6 +395,10 @@ fn generated_decisions_keep_every_truncated_actual_column_and_binding_profile_co
         .iter()
         .map(|name| Text::from_text(name.as_str().unwrap()))
         .collect::<Vec<_>>();
+    #[allow(
+        clippy::literal_string_with_formatting_args,
+        reason = "The JavaScript parameter fragments contain literal object syntax."
+    )]
     for source in [
         "before,{left:a,right:b,left:c,},after)",
         "{left,right:alias},tail)",
@@ -560,7 +576,7 @@ fn generated_standard_owners_and_actual_directive_columns_keep_their_independent
             };
             let kinds = texts("kinds");
             let values = texts("values");
-            let raws = texts("raws");
+            let raw_tokens = texts("raws");
             let lines = row["lineBreaks"]
                 .as_array()
                 .unwrap()
@@ -568,7 +584,11 @@ fn generated_standard_owners_and_actual_directive_columns_keep_their_independent
                 .map(|value| value.as_bool().unwrap())
                 .collect::<Vec<_>>();
             let decision = rules::find_java_script_record_parameter_strict_directive(
-                &kinds, &values, &raws, &lines, 0.0,
+                &kinds,
+                &values,
+                &raw_tokens,
+                &lines,
+                0.0,
             );
             assert_eq!(
                 decision.to_bits(),
@@ -578,42 +598,46 @@ fn generated_standard_owners_and_actual_directive_columns_keep_their_independent
             for start in [-1.0, f64::NAN, f64::INFINITY, 0.5] {
                 assert_eq!(
                     rules::find_java_script_record_parameter_strict_directive(
-                        &kinds, &values, &raws, &lines, start
+                        &kinds,
+                        &values,
+                        &raw_tokens,
+                        &lines,
+                        start
                     )
                     .to_bits(),
                     (-2.0f64).to_bits()
                 );
             }
             if !kinds.is_empty() {
-                for (kinds, values, raws, lines) in [
+                for (kinds, values, raw_tokens, lines) in [
                     (
                         &kinds[1..],
                         values.as_slice(),
-                        raws.as_slice(),
+                        raw_tokens.as_slice(),
                         lines.as_slice(),
                     ),
                     (
                         kinds.as_slice(),
                         &values[1..],
-                        raws.as_slice(),
+                        raw_tokens.as_slice(),
                         lines.as_slice(),
                     ),
                     (
                         kinds.as_slice(),
                         values.as_slice(),
-                        &raws[1..],
+                        &raw_tokens[1..],
                         lines.as_slice(),
                     ),
                     (
                         kinds.as_slice(),
                         values.as_slice(),
-                        raws.as_slice(),
+                        raw_tokens.as_slice(),
                         &lines[1..],
                     ),
                 ] {
                     assert_eq!(
                         rules::find_java_script_record_parameter_strict_directive(
-                            kinds, values, raws, lines, 0.0
+                            kinds, values, raw_tokens, lines, 0.0
                         )
                         .to_bits(),
                         (-2.0f64).to_bits()
@@ -652,6 +676,10 @@ fn actual_parameter_sources_keep_every_unsupported_profile_scope_and_call_bounda
             "{source}"
         );
     }
+    #[allow(
+        clippy::literal_string_with_formatting_args,
+        reason = "The JavaScript arguments contain literal object syntax."
+    )]
     for argument in [
         "null",
         "undefined",

@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 254 | 253 | 1 | 0 |
+| Generators | 255 | 254 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 91 | 0 | 0 | 91 |
+| Published artifact contents | 92 | 0 | 0 | 92 |
 
 ## JavaScript engines
 
@@ -801,6 +801,7 @@ they are.
 | `js/scripts/generate-javascript-identifier-models.mjs` | `js/scripts/generate-javascript-identifier-models.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-reference-identity-rules.mjs` | `js/scripts/generate-reference-identity-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-automated-translation-pause-source-history.mjs` | `js/scripts/generate-automated-translation-pause-source-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -843,7 +844,7 @@ they are.
 | `docker/login-action` | `.github/workflows/rust.yml` | `v4` | v4.6.0 (GitHub release, docker/login-action) | major | current |  |
 | `docker/metadata-action` | `.github/workflows/rust.yml` | `v6` | v6.2.0 (GitHub release, docker/metadata-action) | major | current |  |
 | `docker/setup-buildx-action` | `.github/workflows/rust.yml` | `v4` | v4.4.1 (GitHub release, docker/setup-buildx-action) | major | current |  |
-| `dtolnay/rust-toolchain` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml` | `1.99.0` | 1.99.0 (GitHub release, rust-lang/rust) | version | current |  |
+| `dtolnay/rust-toolchain` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/rust.yml` | `1.99.0` | 1.99.0 (GitHub release, rust-lang/rust) | version | current |  |
 | `dtolnay/rust-toolchain` | `.github/workflows/rust.yml` | `master` |  | floating | current |  |
 | `dtolnay/rust-toolchain` | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `stable` |  | floating | current |  |
 | `ocaml/setup-ocaml` | `.github/workflows/ci.yml` | `v3` | v3.9.0 (GitHub release, ocaml/setup-ocaml) | major | current |  |
@@ -960,6 +961,7 @@ they are.
 | `src/data/array-relative-element-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/string-relative-character-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-identifier-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/unit/self_translation_recursive_declaration_groups/ownership_metadata.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 

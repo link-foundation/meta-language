@@ -14,6 +14,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { automatedTranslationTest } from './support/automated-translation-test.js';
 import {
   CONSUMER_REGISTRIES,
   FOUNDATION_MODEL_PATHS,
@@ -74,7 +75,7 @@ test('foundations are data: every family has distinct models and every language 
   observe(['foundationsRepresentedAsData'], 'foundations are data: every family has distinct models and every language records its own');
 });
 
-test('distinct models stay distinct, and every translation encoding is justified by a recorded correspondence', () => {
+test('distinct models stay distinct, and every translation encoding is justified by a recorded correspondence', async (context) => {
   // Homonyms: the same spelling names different models in different languages.
   const homonyms = FOUNDATION_MODELS.distinctions.map(({ models }) => models.join(' / '));
   assert.ok(homonyms.includes('effect-model.abort / effect-model.panic-with-default-value'), 'panic! differs between Rust and Lean');
@@ -91,28 +92,30 @@ test('distinct models stay distinct, and every translation encoding is justified
   unconditioned.correspondences[0].condition = '';
   assert.deepEqual(kinds(unconditioned), ['unconditioned-correspondence']);
 
-  const rustOverflow = 'fn add(a: u8, b: u8) -> u8 { a + b }\nfn main() { println!("{}", add(200, 50)); }\n';
-  const leanTheorem = stages.programs.find(({ name }) => name === 'check/lean-theorem-cases').source;
-  const cases = [
-    ...['JavaScript', 'Lean', 'Rocq'].map((target) => ['Rust', target, rustOverflow]),
-    ...['JavaScript', 'Rust'].map((target) => ['Lean', target, leanTheorem]),
-  ];
-  const covered = new Set();
-  for (const [source, target, program] of cases) {
-    const { semantics } = translateProgram(program, source, target);
-    const sourceModels = new Set(languageFoundationModels(source).map(({ id }) => id));
-    const targetModels = new Set(languageFoundationModels(target).map(({ id }) => id));
-    const ids = [...semantics.encodings, ...semantics.assumptions].map(({ id }) => id.split(':')[0]);
-    for (const id of ids.filter((candidate) => ['abort-threading', 'machine-integer', 'numbers', 'theorem-properties'].includes(candidate))) {
-      const justified = foundationJustifications(id).some((entry) =>
-        entry.models ? entry.models.some((model) => sourceModels.has(model)) : sourceModels.has(entry.from) && targetModels.has(entry.to),
-      );
-      assert.ok(justified, `${source} -> ${target} encoding ${id} is justified by a correspondence between their models`);
-      covered.add(id);
+  await context.test('actual translation encodings have recorded correspondences', automatedTranslationTest, () => {
+    const rustOverflow = 'fn add(a: u8, b: u8) -> u8 { a + b }\nfn main() { println!("{}", add(200, 50)); }\n';
+    const leanTheorem = stages.programs.find(({ name }) => name === 'check/lean-theorem-cases').source;
+    const cases = [
+      ...['JavaScript', 'Lean', 'Rocq'].map((target) => ['Rust', target, rustOverflow]),
+      ...['JavaScript', 'Rust'].map((target) => ['Lean', target, leanTheorem]),
+    ];
+    const covered = new Set();
+    for (const [source, target, program] of cases) {
+      const { semantics } = translateProgram(program, source, target);
+      const sourceModels = new Set(languageFoundationModels(source).map(({ id }) => id));
+      const targetModels = new Set(languageFoundationModels(target).map(({ id }) => id));
+      const ids = [...semantics.encodings, ...semantics.assumptions].map(({ id }) => id.split(':')[0]);
+      for (const id of ids.filter((candidate) => ['abort-threading', 'machine-integer', 'numbers', 'theorem-properties'].includes(candidate))) {
+        const justified = foundationJustifications(id).some((entry) =>
+          entry.models ? entry.models.some((model) => sourceModels.has(model)) : sourceModels.has(entry.from) && targetModels.has(entry.to),
+        );
+        assert.ok(justified, `${source} -> ${target} encoding ${id} is justified by a correspondence between their models`);
+        covered.add(id);
+      }
     }
-  }
-  assert.deepEqual([...covered].sort(), ['abort-threading', 'machine-integer', 'numbers', 'theorem-properties']);
-  observe(['distinctModelsKeptDistinct'], 'distinct models stay distinct, and every translation encoding is justified by a recorded correspondence');
+    assert.deepEqual([...covered].sort(), ['abort-threading', 'machine-integer', 'numbers', 'theorem-properties']);
+    observe(['distinctModelsKeptDistinct'], context.name);
+  });
 });
 
 test('the check rejects a hard-coded universal logic and a consumer foundation built into production code', () => {

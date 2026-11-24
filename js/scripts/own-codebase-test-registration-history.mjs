@@ -148,10 +148,14 @@ function restoreSource(source,file){
 export function restoreOwnCodebaseTestRegistrationClassifier(source){
   assert.ok(Buffer.isBuffer(source));
   const text=source.toString('utf8');assert.deepEqual(Buffer.from(text),source);
-  return Buffer.from(restoreSource(text,'js/scripts/test-groups.mjs'));
+  const file='js/scripts/test-groups.mjs';
+  return Buffer.from(restoreSource(restoreAutomatedTranslationPauseSource(text,file),file));
 }
 
 /** The preceding helper still independently checks its original two supported source forms. */
 export function restoreOwnCodebaseTestRegistrationTestSource(source){
-  return restoreSource(source,'js/tests/issue-195-evidence-node-dependency.test.js');
+  const file='js/tests/issue-195-evidence-node-dependency.test.js';
+  return restoreSource(restoreAutomatedTranslationPauseSource(source,file),file);
 }
+
+import {restoreAutomatedTranslationPauseSource} from './automated-translation-pause-source-history.mjs';

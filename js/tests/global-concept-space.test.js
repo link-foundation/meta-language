@@ -41,6 +41,41 @@ const observe = (requirementId, assertions, testName) => recordIssue195Observati
   requirementId, suffix: 'behavior', fixtureId: 'global-concept-space',
   fixtureFile: 'parity/fixtures/global-concept-space.json', assertions, testName,
 });
+const sourceURL = new URL('../src/global-concept-space.js', import.meta.url);
+
+function loadModule(source, recordsModule) {
+  // Execute the complete host against its actual dependencies. The optional
+  // record module supplies a bounded input whose iterations are observable.
+  const executable = source.replace(/\bfrom (['"])([^'"\n]+)\1/gu, (_match, _quote, specifier) => {
+    const address = (specifier === './concept-records.js' && recordsModule)
+      || (specifier.startsWith('.') ? new URL(specifier, sourceURL).href : import.meta.resolve(specifier));
+    return `from ${JSON.stringify(address)}`;
+  });
+  return import(`data:text/javascript;base64,${Buffer.from(`${executable}\nexport {prepare,graphOf};\n`).toString('base64')}`);
+}
+
+test('the shipped concept index is reused and caller record changes are visible', async () => {
+  const recordsModule = `data:text/javascript,${encodeURIComponent(`
+    let iterations = 0;
+    const records = ${JSON.stringify(fixture.records)};
+    export const CONCEPT_RECORDS = Object.freeze({
+      [Symbol.iterator]() { iterations += 1; return records.values(); },
+    });
+    export const recordIterations = () => iterations;
+  `)}`;
+  const { recordIterations } = await import(recordsModule);
+  const { createGlobalConceptSpace: create } = await loadModule(readFileSync(sourceURL, 'utf8'), recordsModule);
+  const input = sources();
+  const defaultOptions = options({ records: undefined });
+  const expected = withSourceFormatProvenance(fixture.expectedSpace, fixture.sources);
+  assert.deepEqual(create(input, defaultOptions), expected);
+  const records = [...fixture.records];
+  assert.deepEqual(create(input, { ...defaultOptions, records }), expected);
+  records.length = 0;
+  assert.equal(create(input, { ...defaultOptions, records }).proofs.length, 0);
+  assert.deepEqual(create(input, defaultOptions), expected);
+  assert.equal(recordIterations(), 1);
+});
 
 test('every imported language contributes all productions before proven deduplication', () => {
   const input = sources();
@@ -130,21 +165,11 @@ test('operational matching, scanner, binding and action context constrain corres
 });
 
 test('shared grammar contexts preserve historical graph decisions while reducing stored shape bytes', async () => {
-  const sourceURL = new URL('../src/global-concept-space.js', import.meta.url);
   const baseline = execFileSync('git', ['show', '9659a5d7:js/src/global-concept-space.js'], {
     cwd: new URL('../../', import.meta.url), encoding: 'utf8', maxBuffer: 128 * 1024,
   });
   assert.equal(createHash('sha256').update(baseline).digest('hex'),
     '5f67b2c303c55612279a4d48e51809f5f1a195b606d1df4f7c280cb6544af37e');
-  const loadModule = source => {
-    // Execute each complete implementation with the same actual dependencies;
-    // only expose its private graph builders for this bounded comparison.
-    const executable = source.replace(/\bfrom (['"])([^'"\n]+)\1/gu, (_match, _quote, specifier) => {
-      const address = specifier.startsWith('.') ? new URL(specifier, sourceURL).href : import.meta.resolve(specifier);
-      return `from ${JSON.stringify(address)}`;
-    });
-    return import(`data:text/javascript;base64,${Buffer.from(`${executable}\nexport {prepare,graphOf};\n`).toString('base64')}`);
-  };
   const [historical, current] = await Promise.all([loadModule(baseline), loadModule(readFileSync(sourceURL, 'utf8'))]);
   const originalRecords = JSON.stringify(fixture.records);
   const originalDefinitions = JSON.stringify(fixture.formalDefinitions);

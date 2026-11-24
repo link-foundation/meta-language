@@ -27,8 +27,7 @@ const canonical = (value) => {
 const digest = (value) => createHash('sha256').update(value).digest('hex');
 const copy = (value) => JSON.parse(JSON.stringify(value));
 
-function prepare(sources, records, formalDefinitions = {}) {
-  if (!Array.isArray(sources)) throw new TypeError('global concept sources must be an array');
+function indexConceptRecords(records) {
   const recordsByAlias = new Map();
   const recordsById = new Map();
   for (const record of records) {
@@ -39,6 +38,16 @@ function prepare(sources, records, formalDefinitions = {}) {
       recordsByAlias.get(key).push(record);
     }
   }
+  return { recordsByAlias, recordsById };
+}
+
+let shippedRecordIndex;
+
+function prepare(sources, records, formalDefinitions = {}) {
+  if (!Array.isArray(sources)) throw new TypeError('global concept sources must be an array');
+  const { recordsByAlias, recordsById } = records === CONCEPT_RECORDS
+    ? (shippedRecordIndex ??= indexConceptRecords(records))
+    : indexConceptRecords(records);
   const sourceIds = new Set();
   const aliases = new Map();
   const nodes = [];

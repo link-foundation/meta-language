@@ -2884,6 +2884,26 @@ architecture.
 
 ## JavaScript first and self-translation
 
+[Issue #248](https://github.com/link-foundation/meta-language/issues/248) pauses
+required automated translation until the maintainer resumes it. During the
+pause, contributors may hand-port JavaScript-first batches between the supported
+languages. A manual port follows the same observable behavior contract and uses
+shared fixtures, native tests and the language feature inventory. Keep the
+automated translator, its checks, and its complete acceptance scope available.
+Skipped execution produces no translation evidence. Normal CI continues scoped
+JavaScript and Rust checks, grammar generation, candidate packaging and
+downstream validation. Opt-in enables the complete translation commands and
+their evidence evaluators.
+
+The [PR #250 platform instruction](https://github.com/link-foundation/meta-language/pull/250#issuecomment-7127536709)
+pauses all Windows and macOS CI execution. Native test and clean consumer jobs
+select Linux before allocating runners on pull requests, pushes, releases and
+manual runs. The shared platform and shard definitions, commands, fixtures and
+validators remain available. Full coverage and translation commands still run
+on translation opt-in. The strict platform evidence gates continue to require
+actual reports for all three platforms, so that opt-in alone cannot satisfy
+them during the platform pause.
+
 The review of [Router PR #761](https://github.com/link-assistant/router/pull/761)
 at revision `e2ceac6071d90514fb1a37b3fe5964433d61c402` records its source
 hashes and applicability decisions in
@@ -3020,11 +3040,12 @@ predecessor sources and independent body and source inverses accompany the
 correspondence. This changes the internal library ABI, keeps the checked source
 algorithm intact and disables no lint. Native validation remains CI work.
 
-The port is done by meta-language itself. A self-translation tool, a library
+The long-term porting workflow uses meta-language itself. A self-translation tool, a library
 API and a CLI command in both packages, reads JavaScript or TypeScript into
 meta-language links and writes Rust, and reads Rust and writes JavaScript or
-TypeScript. Code it cannot translate yet is a gap in the translator, not
-something to write by hand. Meta-language's own source is its main acceptance
+TypeScript. Code it cannot translate yet remains a gap in the translator,
+including when a manual port implements equivalent behavior during the pause.
+Meta-language's own source is its main acceptance
 corpus:
 
 - JavaScript → links → JavaScript and Rust → links → Rust are byte-identical;

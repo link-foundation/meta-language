@@ -387,13 +387,17 @@ function collectWorkflows(root, items) {
     }
     for (const match of text.matchAll(/--default-toolchain leanprover\/lean4:(\S+)/gu)) addItem(items, leanItem(file, match[1]));
     collectFloatingTools(items, file, text);
-    for (const match of text.matchAll(/\b((?:ubuntu|macos|windows)-(?:latest|\d[\d.]*))\b/gu)) {
-      const floating = match[1].endsWith('-latest');
+    const runners = [...text.matchAll(/\b((?:ubuntu|macos|windows)-(?:latest|\d[\d.]*))\b/gu)].map(([, runner]) => runner);
+    if (/^ *run: node js\/scripts\/rust-test-shards\.mjs --workflow-matrix (?:test|consumer) *$/mu.test(text)) {
+      runners.push(...readJson(root, 'parity/rust-test-physical-shards.lino').platforms);
+    }
+    for (const runner of runners) {
+      const floating = runner.endsWith('-latest');
       addItem(items, {
         category: 'runner',
-        name: match[1],
+        name: runner,
         declaredIn: file,
-        pinned: floating ? 'latest' : match[1].replace(/^[a-z]+-/u, ''),
+        pinned: floating ? 'latest' : runner.replace(/^[a-z]+-/u, ''),
         compare: floating ? 'floating' : 'unversioned',
         source: { type: 'none' },
       });

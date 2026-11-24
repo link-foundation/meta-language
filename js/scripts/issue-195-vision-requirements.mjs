@@ -1992,6 +1992,61 @@ export const VISION_REQUIREMENTS = Object.freeze([
     ],
     tooling: ['js/scripts/issue-195-documentation.mjs', 'js/scripts/check-documentation.mjs'],
   },
+  ...[
+    {
+      suffix: 'DEFAULT',
+      construct: 'paused by default with a maintainer opt-in',
+      expectedBehavior: 'Normal CI skips automated translation execution until a maintainer opts in. Independent checks continue to report failures.',
+      assertions: ['defaultPausesTranslation', 'explicitOptInRunsTranslation', 'independentFailuresRemainVisible'],
+      tooling: ['.github/workflows/ci.yml', '.github/workflows/js.yml', '.github/workflows/rust.yml'],
+    },
+    {
+      suffix: 'RETAIN',
+      construct: 'retained automated checks and evidence requirements',
+      expectedBehavior: 'Keep the original code, test commands and complete assertion scope available. A paused run never supplies full translation evidence.',
+      assertions: ['originalCommandsRetained', 'pausedRunsCannotSupplyCompleteEvidence'],
+      tooling: ['.github/workflows/ci.yml', 'js/scripts/rust-test-shards.mjs'],
+    },
+    {
+      suffix: 'MANUAL',
+      construct: 'manual ports during the pause',
+      expectedBehavior: 'Permit manual ports between supported languages while retaining shared parity expectations.',
+      assertions: ['manualPortsPermitted', 'sharedParityPreserved'],
+      tooling: ['AGENTS.md', 'CONTRIBUTING.md', 'docs/vision.md', 'docs/self-translation.md'],
+    },
+    {
+      suffix: 'CASE-STUDY',
+      construct: 'recorded case study and solution plans',
+      expectedBehavior: 'Capture issue and failure data in docs/case-studies/issue-248 and document every requirement with researched alternatives and execution plans.',
+      assertions: ['capturedSourceReconstructsIssue', 'caseStudyMapsEveryRequirement', 'caseStudyRecordsResearchAndAlternatives'],
+      tooling: ['docs/case-studies/issue-248/README.md', 'docs/case-studies/issue-248/evidence.lino'],
+    },
+    {
+      suffix: 'OPEN-PULL-REQUESTS',
+      construct: 'application to every open pull request',
+      expectedBehavior: 'Every open pull request uses the default pause in its own eligible GitHub Actions run.',
+      assertions: ['everyOpenPullRequestRunsPausedWorkflow'],
+      checkpoint: 'post-merge',
+      group: 'merge-enforcement',
+      tooling: ['js/scripts/check-automated-translation-rollout.mjs', 'js/tests/issue-195-evidence-automated-translation-rollout.test.js', '.github/workflows/ci.yml'],
+    },
+  ].map(({ suffix, ...row }) => ({
+    id: `I195-AUTOMATED-TRANSLATION-PAUSE-${suffix}`,
+    sourceKey: 'automatedTranslationPause',
+    area: 'automated-translation-pause',
+    specification: 'javascript-first-and-self-translation',
+    ...row,
+  })),
+  {
+    id: 'I195-CI-NATIVE-PLATFORM-PAUSE',
+    sourceKey: 'nativePlatformPause',
+    area: 'automated-translation-pause',
+    specification: 'javascript-first-and-self-translation',
+    construct: 'scheduling the retained native platform checks',
+    expectedBehavior: 'Schedule Linux native tests and clean consumers while retaining all Windows and macOS definitions, commands and strict evidence requirements.',
+    assertions: ['workflowsScheduleOnlyLinuxRunners', 'originalPlatformMatrixAndCommandsRetained', 'strictPlatformEvidenceStillRequired'],
+    tooling: ['.github/workflows/ci.yml', '.github/workflows/rust.yml', 'parity/rust-test-physical-shards.lino', 'js/scripts/rust-test-shards.mjs'],
+  },
 ]);
 
 const RUNTIMES = ['javascript', 'rust', 'tooling'];

@@ -3,18 +3,19 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readProjectData } from './project-data.mjs';
-import { ASCII_HOST_REGISTRATIONS, asciiHostPin, verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
+import { readProjectData, readProjectFileBytes } from './project-data.mjs';
+import { ASCII_HOST_REGISTRATIONS, captureAsciiTextPredicateArtifact, verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
+import { restoreAutomatedTranslationPauseSource } from './automated-translation-pause-source-history.mjs';
 
 const root = new URL('../../', import.meta.url);
 
 export function generateAsciiTextPredicateHosts({ check = false } = {}) {
   const archive = readProjectData(new URL('parity/self-translation/ascii-text-predicate-hosts.lino', root));
   const files = verifyAsciiTextPredicateHosts(archive);
-  const artifact = readFileSync(new URL(archive.sourceArtifact.path, root));
-  assert.deepEqual(asciiHostPin(artifact), archive.sourceArtifact.pin, 'the exact separately generated source artifact supplies this ABI');
-  assert.deepEqual(readProjectData(new URL(archive.sourceArtifact.path, root)).libraryInterface, archive.sourceArtifact.libraryInterface);
+  const { path } = archive.sourceArtifact;
+  const artifact = captureAsciiTextPredicateArtifact(path, readProjectFileBytes(new URL(path, root)));
+  assert.deepEqual(artifact, archive.sourceArtifact, 'the exact separately generated source artifact supplies this ABI');
   assert.equal(readFileSync(new URL(archive.assertionCorrection.path, root), 'utf8'), archive.assertionCorrection.current.source,
     'the exact complete current test retains the documented finite correction');
   for (const row of ASCII_HOST_REGISTRATIONS) {
@@ -24,11 +25,12 @@ export function generateAsciiTextPredicateHosts({ check = false } = {}) {
   const protectedSources = new Set();
   for (const row of files) {
     const file = new URL(row.path, root);
-    if (check) assert.equal(restoreRequiredFieldNativeHostSource(readFileSync(file, 'utf8'), row.path, 'ASCII character host'), row.source, row.path);
-    else if (existsSync(file)) {
+    if (check || existsSync(file)) {
       const physical = readFileSync(file, 'utf8');
-      const actual = restoreRequiredFieldNativeHostSource(physical, row.path, 'ASCII character host');
-      assert.ok(actual === row.source || actual === row.predecessor, 'unknown current source must not be overwritten: ' + row.path);
+      const restored = restoreAutomatedTranslationPauseSource(physical, row.path);
+      const actual = restoreRequiredFieldNativeHostSource(restored, row.path, 'ASCII character host');
+      if (check) assert.equal(actual, row.source, row.path);
+      else assert.ok(actual === row.source || actual === row.predecessor, 'unknown current source must not be overwritten: ' + row.path);
       if (actual !== physical) protectedSources.add(row.path);
     }
   }

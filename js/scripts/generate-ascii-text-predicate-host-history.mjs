@@ -4,10 +4,12 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { captureGitArtifactCertificate } from './capture-git-artifact-certificate.mjs';
-import { checkProjectData, writeProjectData, readProjectData } from './project-data.mjs';
+import { checkProjectData, writeProjectData, readProjectData, readProjectFileBytes } from './project-data.mjs';
 import { ASCII_HOST_REVISION, ASCII_HOST_ADDITIONS, ASCII_HOST_REGISTRATIONS,
-  ASCII_HOST_EDITS, ASCII_ASSERTION_EDITS, asciiHostPin, replayAsciiHostEdits, verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
+  ASCII_HOST_EDITS, ASCII_ASSERTION_EDITS, asciiHostPin, captureAsciiTextPredicateArtifact, replayAsciiHostEdits,
+  verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
+import { restoreAutomatedTranslationPauseSource } from './automated-translation-pause-source-history.mjs';
 
 const root = new URL('../../', import.meta.url);
 
@@ -32,21 +34,23 @@ export function generateAsciiTextPredicateHostHistory({ check = false, assertion
     const source = blob.toString('utf8');
     assert.deepEqual(Buffer.from(source), blob);
     const replay = replayAsciiHostEdits(source, specification.changes);
-    assert.equal(restoreRequiredFieldNativeHostSource(readFileSync(new URL(specification.path, root), 'utf8'), specification.path, 'ASCII character host'), replay.source,
+    const physical = readFileSync(new URL(specification.path, root), 'utf8');
+    const restored = restoreAutomatedTranslationPauseSource(physical, specification.path);
+    assert.equal(restoreRequiredFieldNativeHostSource(restored, specification.path, 'ASCII character host'), replay.source,
       'capture the exact finite reviewed successor, without unrelated source drift');
     return { path: specification.path, source, certificate, current: asciiHostPin(replay.source), edits: replay.edits };
   });
   const additions = ASCII_HOST_ADDITIONS.map(path => {
-    const source = readFileSync(new URL(path, root), 'utf8');
+    const physical = readFileSync(new URL(path, root), 'utf8');
+    const source = restoreAutomatedTranslationPauseSource(physical, path);
     return { path, source, pin: asciiHostPin(source) };
   });
   const artifactPath = 'parity/self-translation/ascii-text-predicate-rules-native.lino';
-  const artifactBytes = readFileSync(new URL(artifactPath, root));
-  const artifact = readProjectData(new URL(artifactPath, root));
+  const sourceArtifact = captureAsciiTextPredicateArtifact(artifactPath, readProjectFileBytes(new URL(artifactPath, root)));
   const archive = { schemaVersion: 1, model: 'Rust ASCII character query host replay 1',
     revision: ASCII_HOST_REVISION, coordinateUnit: 'UTF-16 code units', hosts, additions,
     registrations: ASCII_HOST_REGISTRATIONS, assertionCorrection,
-    sourceArtifact: { path: artifactPath, pin: asciiHostPin(artifactBytes), libraryInterface: artifact.libraryInterface },
+    sourceArtifact,
     boundary: 'Only declared frontend transport edits and complete new adapter/test sources. All predicate/query/callback decisions come from the separately checked complete JavaScript closure and its actual generated Text ABI. Complete predecessor inverses and native registration are checked independently; source capture is not compilation or runtime evidence.' };
   verifyAsciiTextPredicateHosts(archive);
   if (check) checkProjectData(output, archive);

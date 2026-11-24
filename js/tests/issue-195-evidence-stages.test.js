@@ -291,7 +291,8 @@ test('CI runs each stage as its own job and the aggregate only merges and evalua
   }
   // The post-merge report runs on main only and never blocks.
   const postMerge = job('post-merge');
-  assert.match(postMerge, /if: \$\{\{ github\.event_name == 'push' && needs\.js\.result == 'success' \}\}/u);
+  assert.match(postMerge, /!cancelled\(\) && github\.event_name == 'push' && needs\.js\.result == 'success'/u);
+  assert.match(postMerge, /!\(inputs\.automated_translation \|\| vars\.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true'\) \|\| needs\.self-translation-report-validation\.result == 'success'/u);
   assert.match(postMerge, /continue-on-error: true/u);
   assert.match(postMerge, /--checkpoint post-merge/u);
   assert.doesNotMatch(job('acceptance'), /post-merge/u);

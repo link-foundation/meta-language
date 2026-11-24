@@ -7,6 +7,7 @@ import { DecoratorSet } from '../src/decorators.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
 import { partitionPortableRustLibrary, readPortableSourceLintStyles, readPortableSourceParameterStyles } from './portable-source-library-style.mjs';
+import { applyReviewedNativeSourceStyle } from './reviewed-native-source-styles.mjs';
 
 /** Relocate actual module paths while retaining every literal and comment byte. */
 export function readPortableLibraryRelocation(source) {
@@ -55,7 +56,9 @@ export function writeRecordRuleLibrary(emitted, name, { check = false, sourceSty
     directory: name,
   });
   for (const file of files) {
-    const output = new URL('../../rust/src/translation/' + (file.path ?? name + '.rs'), import.meta.url);
+    const path = 'rust/src/translation/' + (file.path ?? name + '.rs');
+    file.source = applyReviewedNativeSourceStyle(path, file.source);
+    const output = new URL('../../' + path, import.meta.url);
     if (check) assert.equal(readFileSync(output, 'utf8'), file.source, 'complete native record family library is fresh');
     else {
       mkdirSync(new URL('.', output), { recursive: true });

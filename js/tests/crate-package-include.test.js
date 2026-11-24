@@ -1,8 +1,6 @@
-// The crate's `include` list in rust/Cargo.toml must name every file the Rust
-// sources embed with include_str! or include_bytes!, otherwise `cargo package`
-// fails when it verifies the archive (the delivery-crate-pack evidence step).
+// The crate's `include` list must ship the files used by the Rust sources.
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -33,11 +31,18 @@ function patternMatcher(pattern) {
 test('the crate package includes every file the Rust sources embed', () => {
   const manifest = readFileSync(path.join(rust, 'Cargo.toml'), 'utf8');
   const include = [...manifest.match(/^include = \[([^\]]*)\]/mu)[1].matchAll(/"([^"]+)"/gu)].map(([, pattern]) => patternMatcher(pattern));
-  const embedded = sources(path.join(rust, 'src')).flatMap((file) =>
-    [...readFileSync(file, 'utf8').matchAll(/include_(?:str|bytes)!\(\s*"([^"]+)"\s*\)/gu)].map(([, target]) =>
-      path.relative(rust, path.resolve(path.dirname(file), target)).split(path.sep).join('/'),
-    ),
-  );
+  const embedded = sources(path.join(rust, 'src')).flatMap((file) => {
+    const source = readFileSync(file, 'utf8');
+    const references = [
+      ...source.matchAll(/include_(?:str|bytes)!\(\s*"([^"]+)"\s*\)/gu),
+      ...source.matchAll(/^#\[path = "([^"]+)"\]\s+mod /gmu),
+    ];
+    return references.map(([, target]) => {
+      const input = path.resolve(path.dirname(file), target);
+      assert.ok(existsSync(input), input);
+      return path.relative(rust, input).split(path.sep).join('/');
+    });
+  });
   assert.ok(embedded.includes('src/data/foundation-models.lino'));
   assert.deepEqual(embedded.filter((file) => !include.some((pattern) => pattern.test(file))), []);
   assert.ok(include.some((pattern) => pattern.test('src/lib.rs')), 'the library entry point is packaged');

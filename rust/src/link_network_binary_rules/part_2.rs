@@ -40,23 +40,20 @@ pub fn ml_transcode_link_network_binary_loop9(
                         {
                             let output_4 = if binary {
                                 {
-                                    let output_2 = output.concat(
-                                        &super::render_link_network_binary_field(entries, binary),
-                                    );
-                                    output_2.clone()
+                                    output.concat(&super::render_link_network_binary_field(
+                                        entries, binary,
+                                    ))
                                 }
                             } else {
                                 {
                                     let index = 0f64;
                                     {
-                                        let output_3 =
-                                            super::ml_transcode_link_network_binary_loop10(
-                                                binary,
-                                                output.clone(),
-                                                entries,
-                                                index,
-                                            );
-                                        output_3.clone()
+                                        super::ml_transcode_link_network_binary_loop10(
+                                            binary,
+                                            output.clone(),
+                                            entries,
+                                            index,
+                                        )
                                     }
                                 }
                             };
@@ -67,7 +64,7 @@ pub fn ml_transcode_link_network_binary_loop9(
                                         input,
                                         binary,
                                         byte_limit,
-                                        output_4.clone(),
+                                        output_4,
                                         cursor_2,
                                         identities.clone(),
                                         section,
@@ -79,7 +76,7 @@ pub fn ml_transcode_link_network_binary_loop9(
                                             {
                                                 let section_2 = (section + 1f64);
                                                 {
-                                                    (output, cursor, section) = (output_5.clone(), cursor_3, section_2);
+                                                    (output, cursor, section) = (output_5, cursor_3, section_2);
                                                     continue;
                                                 }
                                             }
@@ -126,7 +123,7 @@ pub fn ml_transcode_link_network_binary_loop17(
                 {
                     let index_2 = (index + 1f64);
                     {
-                        (output, index) = (output_2.clone(), index_2);
+                        (output, index) = (output_2, index_2);
                         continue;
                     }
                 }
@@ -155,7 +152,7 @@ pub fn ml_transcode_link_network_binary_loop18(
                 {
                     let index_2 = (index + 1f64);
                     {
-                        (output, index) = (output_2.clone(), index_2);
+                        (output, index) = (output_2, index_2);
                         continue;
                     }
                 }
@@ -184,7 +181,7 @@ pub fn ml_transcode_link_network_binary_loop24(
                 {
                     let index_2 = (index + 1f64);
                     {
-                        (encoded_length, index) = (encoded_length_2.clone(), index_2);
+                        (encoded_length, index) = (encoded_length_2, index_2);
                         continue;
                     }
                 }
@@ -225,7 +222,7 @@ pub fn ml_transcode_link_network_binary_loop26(
                 {
                     let index_2 = (index + 1f64);
                     {
-                        (output, index) = (output_2.clone(), index_2);
+                        (output, index) = (output_2, index_2);
                         continue;
                     }
                 }
@@ -262,8 +259,7 @@ pub fn ml_transcode_link_network_binary_loop25(
                                 {
                                     let field_2 = (field + 1f64);
                                     {
-                                        (output, cursor, field) =
-                                            (output_2.clone(), cursor_2, field_2);
+                                        (output, cursor, field) = (output_2, cursor_2, field_2);
                                         continue;
                                     }
                                 }
@@ -282,8 +278,7 @@ pub fn ml_transcode_link_network_binary_loop25(
                                 {
                                     let field_3 = (field + 1f64);
                                     {
-                                        (output, cursor, field) =
-                                            (output_3.clone(), cursor_2, field_3);
+                                        (output, cursor, field) = (output_3, cursor_2, field_3);
                                         continue;
                                     }
                                 }
@@ -324,7 +319,7 @@ pub fn ml_transcode_link_network_binary_loop27(
                 {
                     let index_2 = (index + 1f64);
                     {
-                        (output, index) = (output_2.clone(), index_2);
+                        (output, index) = (output_2, index_2);
                         continue;
                     }
                 }
@@ -366,7 +361,7 @@ pub fn ml_transcode_link_network_binary_loop28(
                             {
                                 let index_2 = (index + 1f64);
                                 {
-                                    (output, cursor, index) = (output_2.clone(), cursor_2, index_2);
+                                    (output, cursor, index) = (output_2, cursor_2, index_2);
                                     continue;
                                 }
                             }
@@ -421,28 +416,26 @@ pub fn ml_transcode_link_network_binary_loop22(
                                             {
                                                 let output_5 = if binary {
                                                     {
-                                                        let output_3 = output_2.concat(&super::render_link_network_binary_field(length, binary));
-                                                        output_3.clone()
+                                                        output_2.concat(&super::render_link_network_binary_field(length, binary))
                                                     }
                                                 } else {
                                                     {
                                                         let index = 0f64;
                                                         {
-                                                            let output_4 = super::ml_transcode_link_network_binary_loop27(binary, output_2.clone(), length, index);
-                                                            output_4.clone()
+                                                            super::ml_transcode_link_network_binary_loop27(binary, output_2, length, index)
                                                         }
                                                     }
                                                 };
                                                 {
                                                     let index_2 = 0f64;
                                                     {
-                                                        let ml_s15 = super::ml_transcode_link_network_binary_loop28(input, binary, output_5.clone(), cursor_3, length, index_2);
+                                                        let ml_s15 = super::ml_transcode_link_network_binary_loop28(input, binary, output_5, cursor_3, length, index_2);
                                                         match ml_s15 {
                                                             super::MlTranscodeLinkNetworkBinaryLoop28Result::MlTranscodeLinkNetworkBinaryLoop28Done(output_6, cursor_4) => {
                                                                 {
                                                                     let text_2 = (text + 1f64);
                                                                     {
-                                                                        (output, cursor, text) = (output_6.clone(), cursor_4, text_2);
+                                                                        (output, cursor, text) = (output_6, cursor_4, text_2);
                                                                         continue;
                                                                     }
                                                                 }
@@ -461,8 +454,7 @@ pub fn ml_transcode_link_network_binary_loop22(
                                 {
                                     let text_3 = (text + 1f64);
                                     {
-                                        (output, cursor, text) =
-                                            (output_2.clone(), cursor_2, text_3);
+                                        (output, cursor, text) = (output_2, cursor_2, text_3);
                                         continue;
                                     }
                                 }
@@ -521,7 +513,7 @@ pub fn ml_transcode_link_network_binary_loop21(
                             {
                                 let field_2 = (field + 1f64);
                                 {
-                                    (output, cursor, field) = (output_2.clone(), cursor_2, field_2);
+                                    (output, cursor, field) = (output_2, cursor_2, field_2);
                                     continue;
                                 }
                             }
@@ -558,7 +550,7 @@ pub fn ml_transcode_link_network_binary_loop29(
                 {
                     let index_2 = (index + 1f64);
                     {
-                        (output, index) = (output_2.clone(), index_2);
+                        (output, index) = (output_2, index_2);
                         continue;
                     }
                 }
@@ -593,7 +585,7 @@ pub fn ml_transcode_link_network_binary_loop30(
                 {
                     let index_2 = (index + 1f64);
                     {
-                        (output, index) = (output_2.clone(), index_2);
+                        (output, index) = (output_2, index_2);
                         continue;
                     }
                 }
@@ -632,7 +624,7 @@ pub fn ml_transcode_link_network_binary_loop19(
                                     let reference_2 = (reference + 1f64);
                                     {
                                         (output, cursor, reference) =
-                                            (output_2.clone(), cursor_2, reference_2);
+                                            (output_2, cursor_2, reference_2);
                                         continue;
                                     }
                                 }
@@ -652,7 +644,7 @@ pub fn ml_transcode_link_network_binary_loop19(
                                     let reference_3 = (reference + 1f64);
                                     {
                                         (output, cursor, reference) =
-                                            (output_3.clone(), cursor_2, reference_3);
+                                            (output_3, cursor_2, reference_3);
                                         continue;
                                     }
                                 }

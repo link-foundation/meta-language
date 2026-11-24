@@ -1,5 +1,7 @@
 //! Declarations, item and type resolution, `main`, propositions and unification.
 
+use std::collections::hash_map::Entry::Vacant;
+
 use super::arrays::array_text;
 use super::{
     BOOL, BinaryOp, Binder, Checker, Comparison, Ctor, DataDecl, Decl, Effect, Entry, Env, Expr,
@@ -54,12 +56,10 @@ impl Checker {
                     // Modules live in their own namespace, so Lean's `namespace Tree` may accompany `inductive Tree`.
                     let mut inner = path.to_vec();
                     inner.push(name.clone());
-                    if !self.scope_mut(path).modules.contains_key(&name) {
-                        self.scope_mut(path)
-                            .modules
-                            .insert(name.clone(), full_name.clone());
+                    if let Vacant(module_entry) = self.scope_mut(path).modules.entry(name) {
+                        module_entry.insert(full_name.clone());
                         self.modules.insert(
-                            full_name.clone(),
+                            full_name,
                             Scope {
                                 path: inner.clone(),
                                 ..Scope::default()

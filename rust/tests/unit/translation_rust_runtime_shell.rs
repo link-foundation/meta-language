@@ -339,7 +339,7 @@ fn strict_actual_link_identity_refuses_cloned_targets_tokens_and_assumption_oper
         let occurrences = packet.network.link(tokens).unwrap().references().to_vec();
         match change {
             0 => {
-                let mut changed = occurrences.clone();
+                let mut changed = occurrences;
                 changed[1] = changed[0];
                 let metadata = packet.network.link(tokens).unwrap().metadata().clone();
                 let duplicate = packet.network.insert_dynamic_link(&changed, metadata);
