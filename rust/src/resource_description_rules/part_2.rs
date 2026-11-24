@@ -13,7 +13,7 @@
 )]
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
-pub fn ml_accept_resource_description_language_loop22(
+pub fn source_ml_temporary_accept_resource_description_language_loop22(
     units: &[f64],
     mut starts: Vec<f64>,
     mut lengths: Vec<f64>,
@@ -82,18 +82,23 @@ pub fn ml_accept_resource_description_language_loop22(
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
-pub fn ml_accept_resource_description_language_loop21(
+pub fn source_ml_temporary_accept_resource_description_language_loop21(
     units: &[f64],
     mut starts: Vec<f64>,
     mut lengths: Vec<f64>,
     mut part: f64,
-    mut ml_values9: Vec<f64>,
-    mut ml_index9: super::ml::Big,
-) -> super::MlAcceptResourceDescriptionLanguageLoop21Result {
+    mut source_ml_temporary_values9: Vec<f64>,
+    mut source_ml_temporary_index9: super::ml::Big,
+) -> super::MlTemporaryAcceptResourceDescriptionLanguageLoop21Result {
     loop {
-        return if (ml_index9 < (super::ml::Big::from_u128(ml_values9.len() as u128))) {
+        return if (source_ml_temporary_index9
+            < (super::ml::Big::from_u128(source_ml_temporary_values9.len() as u128)))
+        {
             {
-                let earlier = super::ml_array::at(&ml_values9, ml_index9.to_index());
+                let earlier = super::ml_array::at(
+                    &source_ml_temporary_values9,
+                    source_ml_temporary_index9.to_index(),
+                );
                 if ((super::resource_description_unit(&lengths, earlier))
                     == (super::resource_description_unit(&lengths, part)))
                 {
@@ -102,23 +107,17 @@ pub fn ml_accept_resource_description_language_loop21(
                         {
                             let offset = 0f64;
                             {
-                                let equal_2 = super::ml_accept_resource_description_language_loop22(
-                                    units,
-                                    starts.clone(),
-                                    lengths.clone(),
-                                    part,
-                                    earlier,
-                                    equal,
-                                    offset,
-                                );
+                                let equal_2 = super::source_ml_temporary_accept_resource_description_language_loop22(units, starts.clone(), lengths.clone(), part, earlier, equal, offset);
                                 if equal_2 {
-                                    super::MlAcceptResourceDescriptionLanguageLoop21Result::MlAcceptResourceDescriptionLanguageLoop21Return(false)
+                                    super::MlTemporaryAcceptResourceDescriptionLanguageLoop21Result::MlTemporaryAcceptResourceDescriptionLanguageLoop21Return(false)
                                 } else {
                                     {
-                                        let ml_index9_2 =
-                                            ml_index9.add(&super::ml::Big::from_i128(1));
+                                        let source_ml_temporary_index9_2 =
+                                            source_ml_temporary_index9
+                                                .add(&super::ml::Big::from_i128(1));
                                         {
-                                            ml_index9 = ml_index9_2.clone();
+                                            source_ml_temporary_index9 =
+                                                source_ml_temporary_index9_2.clone();
                                             continue;
                                         }
                                     }
@@ -128,29 +127,30 @@ pub fn ml_accept_resource_description_language_loop21(
                     }
                 } else {
                     {
-                        let ml_index9_3 = ml_index9.add(&super::ml::Big::from_i128(1));
+                        let source_ml_temporary_index9_3 =
+                            source_ml_temporary_index9.add(&super::ml::Big::from_i128(1));
                         {
-                            ml_index9 = ml_index9_3.clone();
+                            source_ml_temporary_index9 = source_ml_temporary_index9_3.clone();
                             continue;
                         }
                     }
                 }
             }
         } else {
-            super::MlAcceptResourceDescriptionLanguageLoop21Result::MlAcceptResourceDescriptionLanguageLoop21Done
+            super::MlTemporaryAcceptResourceDescriptionLanguageLoop21Result::MlTemporaryAcceptResourceDescriptionLanguageLoop21Done
         };
     }
 }
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
-pub fn ml_accept_resource_description_language_loop17(
+pub fn source_ml_temporary_accept_resource_description_language_loop17(
     units: &[f64],
     mut starts: Vec<f64>,
     mut lengths: Vec<f64>,
     mut part: f64,
     mut variants: Vec<f64>,
-) -> super::MlAcceptResourceDescriptionLanguageLoop17Result {
+) -> super::MlTemporaryAcceptResourceDescriptionLanguageLoop17Result {
     loop {
         return if ((part < (starts.len() as f64))
             && (((super::resource_description_unit(&lengths, part)) >= (5f64))
@@ -161,22 +161,29 @@ pub fn ml_accept_resource_description_language_loop17(
                     )))))
         {
             {
-                let ml_values9 = variants.clone();
+                let source_ml_temporary_values9 = variants.clone();
                 {
-                    let ml_index9 = super::ml::Big::from_i128(0);
+                    let source_ml_temporary_index9 = super::ml::Big::from_i128(0);
                     {
-                        let ml_s21 = super::ml_accept_resource_description_language_loop21(
-                            units,
-                            starts.clone(),
-                            lengths.clone(),
-                            part,
-                            ml_values9.clone(),
-                            ml_index9.clone(),
-                        );
-                        match ml_s21 {
-                            super::MlAcceptResourceDescriptionLanguageLoop21Result::MlAcceptResourceDescriptionLanguageLoop21Done => {
+                        let source_ml_source1_s23 =
+                            super::source_ml_temporary_accept_resource_description_language_loop21(
+                                units,
+                                starts.clone(),
+                                lengths.clone(),
+                                part,
+                                source_ml_temporary_values9.clone(),
+                                source_ml_temporary_index9.clone(),
+                            );
+                        match source_ml_source1_s23 {
+                            super::MlTemporaryAcceptResourceDescriptionLanguageLoop21Result::MlTemporaryAcceptResourceDescriptionLanguageLoop21Done => {
                                 {
-                                    let variants_2 = super::ml_array::append(variants.clone(), vec![part]);
+                                    let variants_2 = {
+                                        let source_ml_source1_concat_value24 = variants.clone();
+                                        {
+                                            let source_ml_source1_concat_value25 = vec![part];
+                                            super::ml_array::append(super::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value24), source_ml_source1_concat_value25)
+                                        }
+                                    };
                                     {
                                         let part_2 = (part + 1f64);
                                         {
@@ -186,32 +193,32 @@ pub fn ml_accept_resource_description_language_loop17(
                                     }
                                 }
                             }
-                            super::MlAcceptResourceDescriptionLanguageLoop21Result::MlAcceptResourceDescriptionLanguageLoop21Return(ml_result21) => {
-                                super::MlAcceptResourceDescriptionLanguageLoop17Result::MlAcceptResourceDescriptionLanguageLoop17Return(ml_result21)
+                            super::MlTemporaryAcceptResourceDescriptionLanguageLoop21Result::MlTemporaryAcceptResourceDescriptionLanguageLoop21Return(source_ml_temporary_result21) => {
+                                super::MlTemporaryAcceptResourceDescriptionLanguageLoop17Result::MlTemporaryAcceptResourceDescriptionLanguageLoop17Return(source_ml_temporary_result21)
                             }
                         }
                     }
                 }
             }
         } else {
-            super::MlAcceptResourceDescriptionLanguageLoop17Result::MlAcceptResourceDescriptionLanguageLoop17Done(part)
+            super::MlTemporaryAcceptResourceDescriptionLanguageLoop17Result::MlTemporaryAcceptResourceDescriptionLanguageLoop17Done(part)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptResourceDescriptionLanguageLoop13Result {
-    MlAcceptResourceDescriptionLanguageLoop13Done,
-    MlAcceptResourceDescriptionLanguageLoop13Return(bool),
+pub enum MlTemporaryAcceptResourceDescriptionLanguageLoop13Result {
+    MlTemporaryAcceptResourceDescriptionLanguageLoop13Done,
+    MlTemporaryAcceptResourceDescriptionLanguageLoop13Return(bool),
 }
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
-pub fn ml_accept_resource_description_language_loop13(
+pub fn source_ml_temporary_accept_resource_description_language_loop13(
     units: &[f64],
     mut lengths: Vec<f64>,
     mut index: f64,
-) -> super::MlAcceptResourceDescriptionLanguageLoop13Result {
+) -> super::MlTemporaryAcceptResourceDescriptionLanguageLoop13Result {
     loop {
         return if (index < (super::resource_description_unit(&lengths, 0f64))) {
             {
@@ -227,29 +234,29 @@ pub fn ml_accept_resource_description_language_loop13(
                     }
                 }
                 {
-                    super::MlAcceptResourceDescriptionLanguageLoop13Result::MlAcceptResourceDescriptionLanguageLoop13Return(false)
+                    super::MlTemporaryAcceptResourceDescriptionLanguageLoop13Result::MlTemporaryAcceptResourceDescriptionLanguageLoop13Return(false)
                 }
             }
         } else {
-            super::MlAcceptResourceDescriptionLanguageLoop13Result::MlAcceptResourceDescriptionLanguageLoop13Done
+            super::MlTemporaryAcceptResourceDescriptionLanguageLoop13Result::MlTemporaryAcceptResourceDescriptionLanguageLoop13Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlAcceptResourceDescriptionLanguageLoop11Result {
-    MlAcceptResourceDescriptionLanguageLoop11Done(Vec<f64>, Vec<f64>),
-    MlAcceptResourceDescriptionLanguageLoop11Return(bool),
+pub enum MlTemporaryAcceptResourceDescriptionLanguageLoop11Result {
+    MlTemporaryAcceptResourceDescriptionLanguageLoop11Done(Vec<f64>, Vec<f64>),
+    MlTemporaryAcceptResourceDescriptionLanguageLoop11Return(bool),
 }
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
-pub fn ml_accept_resource_description_language_loop11(
+pub fn source_ml_temporary_accept_resource_description_language_loop11(
     units: &[f64],
     mut starts: Vec<f64>,
     mut lengths: Vec<f64>,
     mut index: f64,
-) -> super::MlAcceptResourceDescriptionLanguageLoop11Result {
+) -> super::MlTemporaryAcceptResourceDescriptionLanguageLoop11Result {
     loop {
         return if (index <= (units.len() as f64)) {
             if ((index == (units.len() as f64))
@@ -259,17 +266,39 @@ pub fn ml_accept_resource_description_language_loop11(
                     let length = (index
                         - super::resource_description_unit(&starts, (starts.len() as f64) - 1f64));
                     if ((length < (1f64)) || (length > (8f64))) {
-                        super::MlAcceptResourceDescriptionLanguageLoop11Result::MlAcceptResourceDescriptionLanguageLoop11Return(false)
+                        super::MlTemporaryAcceptResourceDescriptionLanguageLoop11Result::MlTemporaryAcceptResourceDescriptionLanguageLoop11Return(false)
                     } else {
                         {
-                            let lengths_2 = super::ml_array::append(lengths.clone(), vec![length]);
+                            let lengths_2 = {
+                                let source_ml_source1_concat_value26 = lengths.clone();
+                                {
+                                    let source_ml_source1_concat_value27 = vec![length];
+                                    super::ml_array::append(
+                                        super::ml_array::append(
+                                            Vec::<f64>::new(),
+                                            source_ml_source1_concat_value26,
+                                        ),
+                                        source_ml_source1_concat_value27,
+                                    )
+                                }
+                            };
                             {
                                 if (index < (units.len() as f64)) {
                                     {
-                                        let starts_2 = super::ml_array::append(
-                                            starts.clone(),
-                                            vec![(index + 1f64)],
-                                        );
+                                        let starts_2 = {
+                                            let source_ml_source1_concat_value28 = starts.clone();
+                                            {
+                                                let source_ml_source1_concat_value29 =
+                                                    vec![(index + 1f64)];
+                                                super::ml_array::append(
+                                                    super::ml_array::append(
+                                                        Vec::<f64>::new(),
+                                                        source_ml_source1_concat_value28,
+                                                    ),
+                                                    source_ml_source1_concat_value29,
+                                                )
+                                            }
+                                        };
                                         {
                                             let index_2 = (index + 1f64);
                                             {
@@ -298,7 +327,7 @@ pub fn ml_accept_resource_description_language_loop11(
             ))) && !(super::resource_description_digit(
                 super::resource_description_unit(units, index),
             ))) {
-                super::MlAcceptResourceDescriptionLanguageLoop11Result::MlAcceptResourceDescriptionLanguageLoop11Return(false)
+                super::MlTemporaryAcceptResourceDescriptionLanguageLoop11Result::MlTemporaryAcceptResourceDescriptionLanguageLoop11Return(false)
             } else {
                 {
                     let index_4 = (index + 1f64);
@@ -309,59 +338,63 @@ pub fn ml_accept_resource_description_language_loop11(
                 }
             }
         } else {
-            super::MlAcceptResourceDescriptionLanguageLoop11Result::MlAcceptResourceDescriptionLanguageLoop11Done(starts, lengths)
+            super::MlTemporaryAcceptResourceDescriptionLanguageLoop11Result::MlTemporaryAcceptResourceDescriptionLanguageLoop11Done(starts, lengths)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSameResourceDescriptionTermLoop24Result {
-    MlSameResourceDescriptionTermLoop24Done,
-    MlSameResourceDescriptionTermLoop24Return(bool),
+pub enum MlTemporarySameResourceDescriptionTermLoop24Result {
+    MlTemporarySameResourceDescriptionTermLoop24Done,
+    MlTemporarySameResourceDescriptionTermLoop24Return(bool),
 }
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
-pub fn ml_same_resource_description_term_loop24(
+pub fn source_ml_temporary_same_resource_description_term_loop24(
     left_fields: &[String],
     right_fields: &[String],
     mut count: f64,
     mut index: f64,
-) -> super::MlSameResourceDescriptionTermLoop24Result {
+) -> super::MlTemporarySameResourceDescriptionTermLoop24Result {
     loop {
         return if (index < count) {
-            {
-                if (match (
-                    super::ml_array::optional_at(left_fields, super::ml_array::number_index(index)),
-                    super::ml_array::optional_at(
+            if {
+                let source_ml_source1_comparison_operand30 =
+                    super::ml_array::optional_at(left_fields, super::ml_array::number_index(index));
+                {
+                    let source_ml_source1_comparison_operand31 = super::ml_array::optional_at(
                         right_fields,
                         super::ml_array::number_index(index),
-                    ),
-                ) {
-                    (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
-                    (None, None) => true,
-                    _ => false,
-                }) {
-                    {
-                        let index_2 = (index + 1f64);
-                        {
-                            index = index_2;
-                            continue;
-                        }
-                    }
+                    );
+                    !(match (
+                        source_ml_source1_comparison_operand30,
+                        source_ml_source1_comparison_operand31,
+                    ) {
+                        (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
+                        (None, None) => true,
+                        _ => false,
+                    })
                 }
+            } {
+                super::MlTemporarySameResourceDescriptionTermLoop24Result::MlTemporarySameResourceDescriptionTermLoop24Return(false)
+            } else {
                 {
-                    super::MlSameResourceDescriptionTermLoop24Result::MlSameResourceDescriptionTermLoop24Return(false)
+                    let index_2 = (index + 1f64);
+                    {
+                        index = index_2;
+                        continue;
+                    }
                 }
             }
         } else {
-            super::MlSameResourceDescriptionTermLoop24Result::MlSameResourceDescriptionTermLoop24Done
+            super::MlTemporarySameResourceDescriptionTermLoop24Result::MlTemporarySameResourceDescriptionTermLoop24Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlSameResourceDescriptionTermJoin23 {
-    MlSameResourceDescriptionTermJoin23Next(f64),
-    MlSameResourceDescriptionTermJoin23Return(bool),
+pub enum MlTemporarySameResourceDescriptionTermJoin23 {
+    MlTemporarySameResourceDescriptionTermJoin23Next(f64),
+    MlTemporarySameResourceDescriptionTermJoin23Return(bool),
 }

@@ -90,7 +90,9 @@ function reviewedPass(source) {
         if (!repeats(node) && tokens.filter(token => token.kind === 'identifier' && token.raw === name).length === 2) changed = changed.replace(new RegExp('\\b' + name + '\\.clone\\(\\)', 'gu'), name);
       }
       // The loop's Done arm returns its two owned position arrays immediately.
-      if (text(field(node, 'name')) === 'ml_accept_resource_description_language_loop11') changed = changed.replace('MlAcceptResourceDescriptionLanguageLoop11Done(starts.clone(), lengths.clone())', 'MlAcceptResourceDescriptionLanguageLoop11Done(starts, lengths)');
+      if (/^(?:ml|source_ml_temporary)_accept_resource_description_language_loop11$/u.test(text(field(node, 'name')))) {
+        changed = changed.replace(/(Ml(?:Temporary)?AcceptResourceDescriptionLanguageLoop11Done)\(starts\.clone\(\), lengths\.clone\(\)\)/u, '$1(starts, lengths)');
+      }
       add(node, changed, 'move single-use owned scalar arrays and terminal continuation payloads');
     }
     if (node.term === 'parenthesized_expression') {
