@@ -63,8 +63,28 @@ async function runHarness(binary, arguments_) {`},
   const receipt={schemaVersion:1,revision:original.certificate.revision,sources:[{file,commit:original.certificate.revision,...pin(original.blob),sourceText:source,certificate:original.certificate,current:pin(current),actions:additions}],
     boundary:'Add bounded retained-text reads and a post-verification artifact only for the selected current native number control in the evidence profile. The original command inventory output digest selection result and complete physical seal algorithms remain exact. Derived artifacts are reproducible from sealed raw inputs; they are not independent CI authentication or complete native reconstruction.'};
   const output=new URL('../../../../parity/self-translation/native-number-publication-runner.lino',import.meta.url);
-  if(check){assert.equal(readFileSync(new URL(file,root),'utf8'),current);checkProjectData(output,receipt);}
-  else{writeFileSync(new URL(file,root),current);writeProjectData(output,receipt);}
+  const previousRecognition = String.raw`  return !relative.startsWith('..') && !paths.isAbsolute(relative)
+    && relative.split(paths.sep).includes('deps')
+    && /-[0-9a-f]+(?:\.exe)?$/u.test(paths.basename(binary));`;
+  const currentRecognition = String.raw`  if (relative.startsWith('..') || paths.isAbsolute(relative)) return false;
+  const artifact = /-([0-9a-f]+)(?:\.exe)?$/u.exec(paths.basename(binary));
+  if (!artifact) return false;
+
+  const directories = relative.split(paths.sep);
+  if (directories.includes('deps')) return true;
+
+  // Cargo 1.100 also passes the per-unit executable to the configured runner.
+  const [buildDirectory, packageName, fingerprint, outputDirectory] = directories.slice(-5, -1);
+  return buildDirectory === 'build' && packageName === 'meta-language'
+    && fingerprint === artifact[1] && outputDirectory === 'out';`;
+  assert.equal(current.split(previousRecognition).length, 2);
+  const currentRunner = current.replace(previousRecognition, () => currentRecognition);
+  assert.equal(currentRunner.replace(currentRecognition, () => previousRecognition), current);
+  const runnerTree = parseNative('native-javascript', currentRunner);
+  assert.equal(runnerTree.hasError, false);
+  assert.equal(runnerTree.end, Buffer.byteLength(currentRunner));
+  if(check){assert.equal(readFileSync(new URL(file,root),'utf8'),currentRunner);checkProjectData(output,receipt);}
+  else{writeFileSync(new URL(file,root),currentRunner);writeProjectData(output,receipt);}
   return receipt;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){

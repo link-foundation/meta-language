@@ -45,6 +45,8 @@ export function restoreRustJobAdmissionSource(source) {
 /** Return the certified predecessor only for a complete integration successor. */
 export function restoreIntegrationSource(source,path) {
   if (path === '.github/workflows/ci.yml') source = restoreRustJobAdmissionSource(source);
+  source = restoreDiagnosticOrderFixture(source, path);
+  source = restoreCargoTestHarnessRecognition(source, path);
   if (path === '.github/workflows/rust.yml'
     && pin(source).sha256 === '9ea1cf322e18b37306b02d3f5d6752a7de26fccbd3e591fbc76f7b1ee9b9296f') {
     source = source.replace(
@@ -101,3 +103,66 @@ export function restoreCurrentCiRepairSource(source,path) {
 import {restoreGrammarContextMetadataHistory} from './grammar-context-metadata-history.mjs';
 import {restoreRawPlanningWorkflowHistory} from './raw-planning-workflow-history.mjs';
 import {restoreBooleanValueGuardHistory} from './boolean-value-source-history.mjs';
+
+/** Preserve the historical fixture before its Cargo manifest receipt was refreshed. */
+function restoreDiagnosticOrderFixture(source, path) {
+  if (path !== 'parity/fixtures/grammar-selection-diagnostic-order.lino'
+    || pin(source).sha256 !== 'bd6aeec0e7a923ea4b96f33f8c0baac99bf708006043edd88f2bcb8534dd3543') return source;
+
+  for (const [currentDefinition, previousDefinition] of [
+    ['8769', '8719'],
+    ['acec16f4f563c7bd92a97e50b5efd59f0a3f3740b49a7c5d308edac62282a5dd', '216c4bbdfc6b033bb2020c1d6b6b3bdff9148d87ccc3df27bcbd386a9071a270'],
+    ['4770', '4720'],
+    ['6100', '6050'],
+  ]) {
+    const definition = `(def: ${currentDefinition})`;
+    assert.equal(source.split(definition).length, 2);
+    source = source.replace(definition, `(def: ${previousDefinition})`);
+  }
+  assert.equal(pin(source).sha256, '7460e44f2f3a8794c4b8c50f1e7ff00b87c1149659c1ceadf4203e2f1ddb76e8');
+  return source;
+}
+
+/** Recover the complete original runner or regression source for historical controls. */
+function restoreCargoTestHarnessRecognition(source, path) {
+  if (path === 'js/scripts/rust-test-shards.mjs'
+    && pin(source).sha256 === 'caae12ca5f69f0e69a780e365b984129fece80c80c24de7798f0fc6c26b8c2ce') {
+    const start = source.indexOf("  if (relative.startsWith('..') || paths.isAbsolute(relative)) return false;");
+    const end = source.indexOf('\n}', start);
+    assert.ok(start > 0 && end > start);
+    const previousRecognition = String.raw`  return !relative.startsWith('..') && !paths.isAbsolute(relative)
+    && relative.split(paths.sep).includes('deps')
+    && /-[0-9a-f]+(?:\.exe)?$/u.test(paths.basename(binary));`;
+    source = source.slice(0, start) + previousRecognition + source.slice(end);
+    assert.equal(pin(source).sha256, '711ef7aa292d9512dcdee2b33fc84e4c6f030181284f3c6114c4e4726a895d43');
+  }
+  if (path === 'js/tests/issue-195-evidence-rust-shards.test.js'
+    && pin(source).sha256 === '55cecf0ccaab886b024c6bdc6a9ce5fdd8deb3dee7b157c6a21d0b6e690d72bf') {
+    const start = source.indexOf("\ntest('Cargo 1.100 test unit paths");
+    assert.ok(start > 0);
+    source = source.slice(0, start);
+    assert.equal(pin(source).sha256, '55ec90a1af432aecfed11e8ff8fc1298cacf8fba4edb6f6b5ce846800f68306f');
+  }
+  if (path === 'experiments/grammar-outcome-network/native-transport/inverse/generate-publication-runner.mjs'
+    && pin(source).sha256 === '8d606fafd21a0e418da10f443a9e8a709e54cac6a4226908fabd8044865d9847') {
+    const start = source.indexOf('  const previousRecognition = ');
+    const end = source.indexOf('\n  return receipt;', start);
+    assert.ok(start > 0 && end > start);
+    const previousPublication = `  if(check){assert.equal(readFileSync(new URL(file,root),'utf8'),current);checkProjectData(output,receipt);}
+  else{writeFileSync(new URL(file,root),current);writeProjectData(output,receipt);}`;
+    source = source.slice(0, start) + previousPublication + source.slice(end);
+    assert.equal(pin(source).sha256, 'b1d49b0139edea9be0830de02e3312b5918ef9e9b4b9efcf00882e734bd0b0c3');
+  }
+  if (path === 'js/tests/translation-native-number-retention.test.js'
+    && pin(source).sha256 === 'db246e7ef2b186ebfa23f9781743e2fdb1dc938c4dc6cebdf62b4387b5867cbd') {
+    source = source.replace(
+      "  const source=readFileSync(new URL(original.file,root),'utf8');\n  let current=restoreIntegrationSource(source,original.file);",
+      "  let current=readFileSync(new URL(original.file,root),'utf8');",
+    ).replace(
+      '  assert.ok(source.includes(\'verifyHarnessExecution(receipt);',
+      "  const source=readFileSync(new URL(original.file,root),'utf8');\n  assert.ok(source.includes('verifyHarnessExecution(receipt);",
+    ).replace("\nimport {restoreIntegrationSource} from '../scripts/current-ci-repair-source-history.mjs';\n", '');
+    assert.equal(pin(source).sha256, '5d8fd3256c8b58f229a6f78c13084138f1ad9ad484455851d477fd3cd4f0c5e9');
+  }
+  return source;
+}

@@ -191,9 +191,17 @@ function writeReceipt(directory, name, value) {
 export function isRootHarness(binary, root = repository) {
   const paths = /^[A-Za-z]:[\\/]/u.test(binary) ? path.win32 : path;
   const relative = paths.relative(paths.join(root, 'rust/target'), paths.resolve(binary));
-  return !relative.startsWith('..') && !paths.isAbsolute(relative)
-    && relative.split(paths.sep).includes('deps')
-    && /-[0-9a-f]+(?:\.exe)?$/u.test(paths.basename(binary));
+  if (relative.startsWith('..') || paths.isAbsolute(relative)) return false;
+  const artifact = /-([0-9a-f]+)(?:\.exe)?$/u.exec(paths.basename(binary));
+  if (!artifact) return false;
+
+  const directories = relative.split(paths.sep);
+  if (directories.includes('deps')) return true;
+
+  // Cargo 1.100 also passes the per-unit executable to the configured runner.
+  const [buildDirectory, packageName, fingerprint, outputDirectory] = directories.slice(-5, -1);
+  return buildDirectory === 'build' && packageName === 'meta-language'
+    && fingerprint === artifact[1] && outputDirectory === 'out';
 }
 
 // Cargo's StringList deserializer splits strings on Unicode whitespace. It
