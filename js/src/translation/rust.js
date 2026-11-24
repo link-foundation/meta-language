@@ -1164,6 +1164,9 @@ class RustParser {
     const result = lets.reduceRight((body, binding) => ({ k: 'let', ...binding, body, span: binding.span }), tail);
     this.origins.mark(result,origin);origin=this.origins.transferOwnedResult(result,path);
     this.origins.expireOwnedBindings(ownershipBefore,origin);
+    // A block yields a value. Borrowing the block borrows its result, while
+    // references carried by that result still keep their original lifetimes.
+    origin.sourceLexicalBindingIdentity=null;
     if(origin.wrappers.length===0&&origin.type?.kind!=='array'){origin.sourcePlaceBindingIdentity=null;origin.sourcePlaceLoanBindingIdentities=[];}
     this.origins.scope = previous;
     return this.origins.mark(result, origin);

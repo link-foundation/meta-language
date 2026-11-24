@@ -1,6 +1,7 @@
 // CI-only observation planning; the complete generated artifact is never trimmed.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {verifyGeneratedOwnedRustModelSource} from '../generated-owned-rust/model-source-closure.mjs';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {readProjectData} from '../../js/scripts/project-data.mjs';
@@ -85,6 +86,7 @@ function scalarOrdinal(result,packet,parent,path){let node=parent;for(const name
 
 export function verifyOriginalLinkCompleteTableNativeModel(read=readFileSync){return Object.entries(digests).map(([file,expected])=>{
  const bytes=read(new URL(file,import.meta.url)),actual=sha256(bytes);
+ if(file==='../generated-owned-rust/model.mjs')return verifyGeneratedOwnedRustModelSource(file,bytes,expected);
  if(file==='../source-native-observations.mjs'){
   const receiptBytes=read(new URL('./data/runner-source-closure.lino',import.meta.url));
   assert.equal(sha256(receiptBytes),runnerClosureReceiptSha256,'the frozen complete-table runner source-closure receipt changed');

@@ -32,12 +32,13 @@ export const OVERLAY_PROVIDER_REFERENCE_REVIEW=Object.freeze(readProjectData(new
 export const OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-optional-domain-provider-review.lino',import.meta.url)));
 export const OVERLAY_PROVIDER_SHARED_ARRAY_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-shared-array-provider-review.lino',import.meta.url)));
 export const OVERLAY_PROVIDER_ORDERED_SOURCE_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-ordered-source-provider-review.lino',import.meta.url)));
+export const OVERLAY_PROVIDER_ROOT_IDENTIFIER_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-root-identifier-provider-review.lino',import.meta.url)));
 export function readReviewedOverlayProviderReview(previous){
-  const reviews=[OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW,OVERLAY_PROVIDER_SHARED_ARRAY_REVIEW,OVERLAY_PROVIDER_ORDERED_SOURCE_REVIEW].filter(row=>row.previous===previous);
+  const reviews=[OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW,OVERLAY_PROVIDER_SHARED_ARRAY_REVIEW,OVERLAY_PROVIDER_ORDERED_SOURCE_REVIEW,OVERLAY_PROVIDER_ROOT_IDENTIFIER_REVIEW].filter(row=>row.previous===previous);
   assert.equal(reviews.length,1,'a source epoch requires exactly one independently reviewed predecessor');
   return reviews[0];
 }
-const packetSha256='3261c7d665db701bf8cf5f945d9f7a3e7a389b50981bf90390b41f8050ef2210';
+const packetSha256='8d2af125d0fb5ac82a14b7ebef8b40fd1c4b997a3e4d61475fe2f260f90077e5';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:hash(value)});
 const exactKeys=(value,keys)=>assert.deepEqual(Object.keys(value).sort(),[...keys].sort());
@@ -51,6 +52,41 @@ export function replayOverlayProviderHost(source){
   assert.equal(inverse,source);return current;
 }
 
+// Historical packets keep their original recipes. The current codec uses an
+// archive-aware return path and passes the linked source-owner context onward.
+export const ROOT_IDENTIFIER_PROVIDER_REVISION='3b9878b524d08f678da62d1eb52b9df8beea4c6c';
+const currentHookReplacements=[
+  ['  return { network, root };', '  if (shapeWriter) shapeWriter.finish(root);'],
+  ['function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, depthLimit = 256 } = {}) {',
+   'function decodeTypedProgramLinksContext(network, root, { nodeLimit, depthLimit = 256, wholeProgram = false } = {}) {'],
+  ['export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {',
+   'export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap(), sourceOwners } = {}) {'],
+  ['export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {',
+   'export function recheckLinkedTypedProgram(program, {wholeProgram=false, sourceOwners}={}) {'],
+];
+
+export function currentOverlayProviderDecorators(original,module,source){
+  const {decorators}=DecoratorSet.fromLino(original);
+  return new DecoratorSet(decorators.map(row=>({...row,actions:row.actions.map((action,index)=>{
+    if(index===0){
+      const current=source.split('\n',1)[0];
+      assert.ok(action.to.endsWith('\n'+action.from),'the import hook must preserve the original first line: '+module);
+      return {...action,from:current,to:action.to.slice(0,-action.from.length)+current};
+    }
+    const hook=currentHookReplacements.find(([from])=>action.from===from);
+    if(!hook)return action;
+    const [previous,current]=hook;
+    assert.equal(source.split(current).length,2,'the current overlay hook must have one exact owner: '+module);
+    let to=action.to.replace(previous,()=>current);
+    if(previous==='  return { network, root };'){
+      to=current+'\n  decodeRustTextCertificateFacet(network, root);';
+    }
+    to=to.replace('{graphPatterns, patternScopes}', '{graphPatterns, patternScopes, sourceOwners}')
+      .replace('{wholeProgram:true}', '{wholeProgram:true,sourceOwners}');
+    return {...action,from:current,to};
+  })}))).toLino();
+}
+
 /** Replay the EXISTING recorded exact-source recipes, retaining every action.
  * The normal model authors independently regenerate these same current rows. */
 export function deriveReviewedOverlayProviderReceipts(packet){
@@ -61,8 +97,10 @@ export function deriveReviewedOverlayProviderReceipts(packet){
     const current=records.map(row=>{
       assert.equal(row.providerRevision,OVERLAY_PROVIDER_PREVIOUS_REVISION);
       const source=sources.get(row.module);assert.equal(typeof source,'string');
-      const decorated=DecoratorSet.fromLino(row.decorators).decorate('translation-rule',{module:row.module,source}).source;
-      return{...row,sourceSha256:hash(source),overlaySha256:hash(decorated),providerRevision:profile.sourceCommit};
+      const decorators=profile.sourceCommit===ROOT_IDENTIFIER_PROVIDER_REVISION
+        ? currentOverlayProviderDecorators(row.decorators,row.module,source) : row.decorators;
+      const decorated=DecoratorSet.fromLino(decorators).decorate('translation-rule',{module:row.module,source}).source;
+      return{...row,decorators,sourceSha256:hash(source),overlaySha256:hash(decorated),providerRevision:profile.sourceCommit};
     });
     const source=serializeProjectData(current,original.file);
     return{file:original.file,...pin(source),source};

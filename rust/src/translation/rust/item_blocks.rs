@@ -236,6 +236,9 @@ impl RustParser {
         let mut origin = self.origins.transfer_owned_result(&result, path)?;
         self.origins
             .expire_owned_bindings(&ownership_before, &origin)?;
+        // Borrowing a block borrows the result value. References contained in
+        // that result retain their original lifetime evidence.
+        origin.source_lexical_binding_identity = None;
         if origin.wrappers.is_empty() && !matches!(origin.ty, Some(Type::Array { .. })) {
             origin.source_place_binding_identity = None;
             origin.source_place_loan_binding_identities.clear();

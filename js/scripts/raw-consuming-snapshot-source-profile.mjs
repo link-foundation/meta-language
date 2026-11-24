@@ -19,7 +19,7 @@ export const RAW_CONSUMING_SNAPSHOT_FILES=Object.freeze([
   Object.freeze({file:'js/src/translation/owned-array-append-rules.js',bytes:4830,sha256:'eb349133f29d2e5944ace3b96975d508a92d265231518ac2b99a604129c7b48a'}),
 ]);
 export const RAW_CONSUMING_SNAPSHOT_BOUNDARY='Five complete source identities serve only the frozen raw consuming artifact and its historical consumers. Three original source certificates are projected automatically from existing archives; only the missing consuming host and checker are captured once. Complete stored source certificates make later freshness independent of those archives. The current producer retains its physical source metadata separately and must reproduce every complete original semantic artifact field and both codecs before snapshot comparison. Source conservation is not general semantic equivalence or native execution evidence.';
-const packetSha256='c970a8ea309bdca2ab4ec579b2e921634e0f21e2752b25b937e200ab08fc3bb8';
+const packetSha256='57143ec04babca3a005ece6726b9292da8517e04e1ded0a2a464ee8124b32408';
 export const pinRawConsumingSnapshotSource=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const keys=(value,names)=>assert.deepEqual(Object.keys(value).sort(),[...names].sort());
 let cached;

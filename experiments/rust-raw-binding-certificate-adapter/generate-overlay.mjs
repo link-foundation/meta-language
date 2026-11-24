@@ -6,11 +6,14 @@ import { writeProjectData, checkProjectData } from '../../js/scripts/project-dat
 import { rawBindingCertificatePolicy } from './generate-rules.mjs';
 import { readReviewedOverlayProviderSources, restoreReviewedOverlayProviderSources, writeReviewedOverlayProviderPolicy } from '../rust-text-certificate-adapter/reviewed-providers.mjs';
 
+import { ROOT_IDENTIFIER_PROVIDER_REVISION } from '../rust-text-certificate-adapter/provider-succession.mjs';
+
 const hash = source => createHash('sha256').update(source).digest('hex');
 const modules = ['typed-program-links.js', 'typed-program-links-validation.js', 'typed-program-checked-projection.js', 'translation/emit-javascript.js', 'translation/emit-rust.js'];
 export function rawBindingCertificateOverlayRecords({sourceCommit} = {}) {
   const options = { experiment: 'rust-raw-binding-certificate-adapter', modules };
   const { sources, revision } = sourceCommit === undefined ? readReviewedOverlayProviderSources(options) : restoreReviewedOverlayProviderSources({...options, sourceCommit});
+  const current = revision.sourceCommit === ROOT_IDENTIFIER_PROVIDER_REVISION;
   const changes = new Map([...sources].map(([module, source]) => [module, [{
     from: source.split('\n')[0],
     to: "import { readRustRawBindingCertificate, captureRustRawBindingCertificate, decorateRustRawBindingCertificateEmission, emitRustRawBindingCertificate } from '"
@@ -21,12 +24,12 @@ export function rawBindingCertificateOverlayRecords({sourceCommit} = {}) {
     '  if (options.' + rawBindingCertificatePolicy.sourceOption + ' !== undefined) {\n'
     + '    const selected = captureRustRawBindingCertificate(source, canonical, options);\n'
     + '    return encodeTypedProgramLinks(selected.program, {provenance: selected.provenance});\n  }');
-  add('typed-program-links-validation.js', 'export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {',
+  add('typed-program-links-validation.js', 'export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap()' + (current ? ', sourceOwners' : '') + ' } = {}) {',
     '  const rawBindingCertificate = readRustRawBindingCertificate(program);\n'
-    + '  if (rawBindingCertificate) return validateLinkedTypedProgram(rawBindingCertificate.core, references, {graphPatterns, patternScopes});');
-  add('typed-program-checked-projection.js', 'export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {',
+    + '  if (rawBindingCertificate) return validateLinkedTypedProgram(rawBindingCertificate.core, references, {graphPatterns, patternScopes' + (current ? ', sourceOwners' : '') + '});');
+  add('typed-program-checked-projection.js', 'export function recheckLinkedTypedProgram(program, {wholeProgram=false' + (current ? ', sourceOwners' : '') + '}={}) {',
     '  const rawBindingCertificate = readRustRawBindingCertificate(program);\n'
-    + '  if (rawBindingCertificate) { recheckLinkedTypedProgram(rawBindingCertificate.core, {wholeProgram:true}); return program; }');
+    + '  if (rawBindingCertificate) { recheckLinkedTypedProgram(rawBindingCertificate.core, {wholeProgram:true' + (current ? ',sourceOwners' : '') + '}); return program; }');
   add('translation/emit-javascript.js', 'export function emitJavaScript(program, options = {}) {',
     '  const rawBindingCertificate = readRustRawBindingCertificate(program);\n'
     + '  if (rawBindingCertificate) return decorateRustRawBindingCertificateEmission(rawBindingCertificate, emitJavaScript(rawBindingCertificate.core, options), options);');

@@ -8,7 +8,7 @@ import {readProjectData,writeProjectData,checkProjectData} from '../../js/script
 import {readStructuredDataLino,structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {tokenize} from '../../js/src/translation/lexer.js';
 import {readRustLibraryItems} from '../../js/scripts/rust-library-packaging.mjs';
-import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
+import {withPreparedOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
 import {readRawArchiveReceiptHistory,restoreRawArchiveReceiptText} from '../../js/scripts/raw-archive-receipt-history.mjs';
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE,readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
 import {ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH} from './raw-emission-producer-applicability.mjs';
@@ -203,7 +203,7 @@ export function readOriginalLinkRawConsumingProfile(currentProfile,read=readFile
 }
 
 /** Emit the same complete checked program, then independently reload both typed archives. */
-export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=true}={}) {
+export async function prepareOriginalLinkRawConsumingEmission(prepared,compiler,{check=true}={}) {
   const currentProfile = readOriginalLinkRawEmissionProfile('current',prepared);
   const {source:currentSource,...predecessor} = currentProfile;
   const {program,rust:copied} = prepared;
@@ -213,8 +213,7 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
     fullName:item.fullName,modulePath:item.modulePath,generated:item.generated===true}));
   assert.deepEqual(inventory.map(row=>row.fullName),predecessor.declarationNames);
   assert.equal(new Set(inventory.map(row=>row.fullName)).size,106);
-  const {emitRust} = await import('../../js/src/translation/emit-rust.js');
-  const {emitJavaScript} = await import('../../js/src/translation/emit-javascript.js');
+  const {emitRust,emitJavaScript,load,readSource} = compiler;
   const emitted = emitRust(program,{arrayConsumption:true});
   const copyOwners = consumingOwners(copied,inventory), emittedOwners = consumingOwners(emitted,inventory);
   for(const field of ['mappings','assumptions','encodings','preludes']) assert.deepEqual(emitted[field],copied[field],
@@ -227,10 +226,10 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
   assert.ok(observedTotals.consuming.cloneCalls < observedTotals.copy.cloneCalls,
     'the selected option removes actual clone calls rather than only declaring a profile');
   assert.equal(observedTotals.consuming.appendCalls,observedTotals.copy.appendCalls);
-  const {encodeTypedProgramLinks,decodeTypedProgramLinks} = await import('../../js/src/typed-program-links.js');
-  const {recheckLinkedTypedProgram} = await import('../../js/src/typed-program-checked-projection.js');
-  const {LinkNetwork} = await import('../../js/src/network.js');
-  const {encodeLinkNetworkBinary,decodeLinkNetworkBinary} = await import('../../js/src/link-network-binary.js');
+  const [{encodeTypedProgramLinks,decodeTypedProgramLinks},{recheckLinkedTypedProgram},{LinkNetwork},
+    {encodeLinkNetworkBinary,decodeLinkNetworkBinary}]=await Promise.all([
+    load('typed-program-links.js'),load('typed-program-checked-projection.js'),load('network.js'),load('link-network-binary.js'),
+  ]);
   const packet = encodeTypedProgramLinks(program), recordCount = packet.network.links().length;
   assert.ok(Number.isSafeInteger(recordCount)&&recordCount>0&&recordCount<=maximumRecords);
   const binaryLimits = {recordLimit:recordCount,byteLimit:maximumArchiveBytes};
@@ -252,7 +251,7 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
   const artifact = {version:1,model:prepared.currentArtifact.model,profile:'consuming',options:{arrayConsumption:true},
     source:{path:'experiments/original-link-complete-table-projection/raw-rules.mjs',
       bytes:Buffer.byteLength(prepared.source),sha256:sha256(prepared.source)},
-    predecessor,decisionSources:decisionSources(readFileSync),definitionCount:106,
+    predecessor,decisionSources:decisionSources(file=>readSource(String(file).slice(String(root).length))),definitionCount:106,
     javaScriptSha256:sha256(emitJavaScript(program).text),
     declarationNames:[...predecessor.declarationNames],owners,totals:observedTotals,
     assumptions:emitted.assumptions,encodings:emitted.encodings,mappings:emitted.mappings,
@@ -263,12 +262,10 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
     nativeCompilation:false,nativeExecution:false,
     boundary:'Whole checked source, all106owners and both complete source-free typed archives. Tokenized clone/append sites observe emitted syntax only; the existing emitter performs its actual checked final-use decisions. No internal proof-node inventory, native timing or completion claim.',
     predecessorConservation:structuredClone(ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR)};
-  // Retain the real producer's physical metadata separately. Only the frozen
-  // snapshot comparison gets certified source identities; every emitted value
-  // and both complete source-free archive replays above remain actual/current.
+  // The compiler's physical files and the working tree's files are recorded
+  // independently. The stored receipt retains its original decision sources.
   const currentArtifact=artifact;
   const currentDecisionSources=decisionSources(readFileSync);
-  assert.deepEqual(currentArtifact.decisionSources,currentDecisionSources,'actual current producer decision sources changed');
   // Both actual complete codec replays above precede this exact historical
   // snapshot view. The returned currentArtifact retains real archive metadata.
   const snapshotArtifact=projectOriginalLinkRawConsumingSnapshot(currentArtifact);
@@ -284,11 +281,8 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
 }
 
 export async function generateOriginalLinkRawConsumingEmission(check=false) {
-  const [{parseJavaScript},{checkProgram},{emitRust}] = await Promise.all([
-    import('../../js/src/translation/javascript.js'),import('../../js/src/translation/check.js'),import('../../js/src/translation/emit-rust.js'),
-  ]);
-  const prepared = prepareCurrentOriginalLinkRawEmission({readProjectData,parseJavaScript,checkProgram,emitRust});
-  const result = await prepareOriginalLinkRawConsumingEmission(prepared,{check});
+  const result = await withPreparedOriginalLinkRawEmission((prepared,compiler)=>
+    prepareOriginalLinkRawConsumingEmission(prepared,compiler,{check}));
   if(!check)writeProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,result.artifact);
   assert.deepEqual(readOriginalLinkRawConsumingProfile(result.artifact.predecessor),result.profile);
   return result;

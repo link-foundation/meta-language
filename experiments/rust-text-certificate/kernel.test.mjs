@@ -132,7 +132,7 @@ test('genuine saved text and binary Links reject other declarations and header p
 test('the entire untrimmed generated certificate kernel executes all thirteen actual transports after complete text and binary Links replay',{timeout:180000},()=>{
  const sourceText=bundledTextCertificateSource();
  let checked=checkProgram(parseJavaScript(sourceText));
- const artifact=readProjectData(new URL('./data/translation.lino',import.meta.url));assert.deepEqual(checked.items.map(row=>row.fullName),artifact.declarations);assert.ok(checked.items.length>=90);assert.ok(checked.declarations.has('checkRustTextCertificate'));
+ const artifact=readProjectData(new URL('./data/current-translation.lino',import.meta.url));assert.deepEqual(checked.items.map(row=>row.fullName),artifact.declarations);assert.ok(checked.items.length>=90);assert.ok(checked.declarations.has('checkRustTextCertificate'));
  let packet=encodeTypedProgramLinks(checked);const root=packet.root;checked=null;
  let serialized=packet.network.toLino();packet=null;
  let network=LinkNetwork.fromLino(serialized);serialized=null;

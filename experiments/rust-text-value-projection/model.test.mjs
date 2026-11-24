@@ -14,7 +14,7 @@ import {encodeTypedProgramLinks,decodeTypedProgramLinks,TYPED_PROGRAM_LINKS_SCHE
 import {rustTextValueProjectionRules} from './generate-rules.mjs';
 import {rustTextValueProjectionFixtures} from './generate-fixtures.mjs';
 import {createRustTextValueProjection,checkRustTextValueProjection,encodeRustTextValueProjection,createRustTextValueProjectionLinks,decodeRustTextValueProjection,emitRustTextValueProjection,emitRustTextValueProjectionLinks,emitGenericRustTextValueProjection,RUST_TEXT_VALUE_PROJECTION_POLICY as policy} from './model.mjs';
-const fixtures=readProjectData(new URL('./data/fixtures.lino',import.meta.url));
+const fixtures=readProjectData(new URL('./data/current-fixtures.lino',import.meta.url));
 const source=id=>fixtures.cases.find(row=>row.id===id).source;
 const text=packet=>({...packet,network:LinkNetwork.fromLino(packet.network.toLino())});
 const binary=packet=>({...packet,network:decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))});

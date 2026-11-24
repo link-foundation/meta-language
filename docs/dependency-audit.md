@@ -6,7 +6,7 @@
 
 # Dependency audit
 
-Audit date: 2026-10-06
+Audit date: 2026-11-24
 
 This inventory lists every runtime, development, build and optional dependency
 of the two published packages and the website crate, every lockfile
@@ -60,16 +60,16 @@ they are.
 | Category | Items | Current | Behind | Not applicable |
 |---|---|---|---|---|
 | JavaScript engines | 1 | 1 | 0 | 0 |
-| npm packages | 39 | 39 | 0 | 0 |
+| npm packages | 39 | 31 | 8 | 0 |
 | Rust package settings | 9 | 9 | 0 | 0 |
-| Rust crates | 310 | 283 | 24 | 3 |
-| Experiment manifests | 8 | 7 | 0 | 1 |
-| Downloaded generated parser sources | 5 | 5 | 0 | 0 |
+| Rust crates | 310 | 181 | 126 | 3 |
+| Experiment manifests | 8 | 2 | 5 | 1 |
+| Downloaded generated parser sources | 5 | 4 | 1 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
-| Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 341 | 340 | 1 | 0 |
-| Toolchains and tools | 20 | 16 | 3 | 1 |
-| GitHub Actions | 22 | 22 | 0 | 0 |
+| Downloaded WebAssembly grammars | 60 | 0 | 60 | 0 |
+| Generators | 341 | 330 | 11 | 0 |
+| Toolchains and tools | 20 | 11 | 8 | 1 |
+| GitHub Actions | 22 | 21 | 1 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 4 | 3 | 0 | 1 |
 | Published artifact contents | 406 | 0 | 0 | 406 |
@@ -78,7 +78,7 @@ they are.
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `node` | `js/package.json` | `>=22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
+| `node` | `js/package.json` | `>=22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24, 26)) | floor | current |  |
 
 ## npm packages
 
@@ -86,7 +86,7 @@ they are.
 |---|---|---|---|---|---|---|---|---|---|
 | `@pdf-lib/standard-fonts` | `js/package-lock.json` | `js/package-lock.json` | `1.0.0` | transitive, development |  | 1.0.0 (npm registry, @pdf-lib/standard-fonts latest) | version | current |  |
 | `@pdf-lib/upng` | `js/package-lock.json` | `js/package-lock.json` | `1.0.1` | transitive, development |  | 1.0.1 (npm registry, @pdf-lib/upng latest) | version | current |  |
-| `@peggyjs/from-mem` | `js/package-lock.json` | `js/package-lock.json` | `3.1.4` | transitive, development |  | 3.1.4 (npm registry, @peggyjs/from-mem latest) | version | current |  |
+| `@peggyjs/from-mem` | `js/package-lock.json` | `js/package-lock.json` | `3.1.4` | transitive, development |  | 4.0.0 (npm registry, @peggyjs/from-mem latest) | version | behind |  |
 | `@typescript/typescript-aix-ppc64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-aix-ppc64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
 | `@typescript/typescript-darwin-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-darwin-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
 | `@typescript/typescript-darwin-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-darwin-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
@@ -108,21 +108,21 @@ they are.
 | `@typescript/typescript-win32-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-win32-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
 | `@typescript/typescript-win32-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-win32-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
 | `collapse-white-space` | `js/package-lock.json` | `js/package-lock.json` | `2.1.0` | transitive, development |  | 2.1.0 (npm registry, collapse-white-space latest) | version | current |  |
-| `commander` | `js/package-lock.json` | `js/package-lock.json` | `15.0.0` | transitive, development |  | 15.0.0 (npm registry, commander latest) | version | current |  |
+| `commander` | `js/package-lock.json` | `js/package-lock.json` | `15.0.0` | transitive, development |  | 15.1.0 (npm registry, commander latest) | version | behind |  |
 | `franc-min` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `6.2.0` | direct, development | `6.2.0` | 6.2.0 (npm registry, franc-min latest) | version | current |  |
-| `links-notation` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.22.0` | direct, runtime | `0.22.0` | 0.22.0 (npm registry, links-notation latest) | version | current |  |
+| `link-cli-links-notation` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.31.8` | direct, runtime | `npm:links-notation@0.31.8` | 0.31.8 (npm registry, links-notation latest) | version | current |  |
+| `links-notation` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.22.0` | direct, runtime | `0.22.0` | 0.31.8 (npm registry, links-notation latest) | version | behind |  |
 | `n-gram` | `js/package-lock.json` | `js/package-lock.json` | `2.0.2` | transitive, development |  | 2.0.2 (npm registry, n-gram latest) | version | current |  |
-| `pako` | `js/package-lock.json` | `js/package-lock.json` | `3.0.2` | transitive, development |  | 3.0.2 (npm registry, pako latest) | version | current |  |
+| `pako` | `js/package-lock.json` | `js/package-lock.json` | `3.0.2` | transitive, development |  | 3.0.3 (npm registry, pako latest) | version | behind |  |
 | `pdf-lib` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `1.17.1` | direct, development | `1.17.1` | 1.17.1 (npm registry, pdf-lib latest) | version | current |  |
-| `peggy` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `5.1.0` | direct, development | `5.1.0` | 5.1.0 (npm registry, peggy latest) | version | current |  |
-| `semver` | `js/package-lock.json` | `js/package-lock.json` | `7.8.5` | transitive, development |  | 7.8.5 (npm registry, semver latest) | version | current |  |
+| `peggy` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `5.1.0` | direct, development | `5.1.0` | 5.1.1 (npm registry, peggy latest) | version | behind |  |
+| `semver` | `js/package-lock.json` | `js/package-lock.json` | `7.8.5` | transitive, development |  | 7.8.6 (npm registry, semver latest) | version | behind |  |
 | `source-map-generator` | `js/package-lock.json` | `js/package-lock.json` | `2.0.7` | transitive, development |  | 2.0.7 (npm registry, source-map-generator latest) | version | current |  |
 | `trigram-utils` | `js/package-lock.json` | `js/package-lock.json` | `2.0.1` | transitive, development |  | 2.0.1 (npm registry, trigram-utils latest) | version | current |  |
-| `tslib` | `js/package-lock.json` | `js/package-lock.json` | `2.8.1` | transitive, development |  | 2.8.1 (npm registry, tslib latest) | version | current |  |
+| `tslib` | `js/package-lock.json` | `js/package-lock.json` | `2.8.1` | transitive, development |  | 2.9.1 (npm registry, tslib latest) | version | behind |  |
 | `typescript` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `7.0.2` | direct, development | `7.0.2` | 7.0.2 (npm registry, typescript latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
-| `web-tree-sitter` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.27.0` | direct, runtime | `0.27.0` | 0.27.0 (npm registry, web-tree-sitter latest) | version | current |  |
+| `web-tree-sitter` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.27.0` | direct, runtime | `0.27.0` | 0.27.2 (npm registry, web-tree-sitter latest) | version | behind |  |
 | `wordnet-db` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `3.1.14` | direct, development | `3.1.14` | 3.1.14 (npm registry, wordnet-db latest) | version | current |  |
-| `link-cli-links-notation` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.31.8` | direct, runtime | `npm:links-notation@0.31.8` | 0.31.8 (npm registry, links-notation latest) | version | current |  |
 
 ## Rust package settings
 
@@ -132,7 +132,7 @@ they are.
 | `edition` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `experiments/issue-195-projects/rust/Cargo.toml` | `experiments/issue-195-projects/rust/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `rust/Cargo.toml` | `rust/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
-| `rust-version` | `rust/Cargo.toml` | `rust/Cargo.toml` | `1.90` | 1.90 (cargo metadata, the highest rust-version of the resolved crates (meta-language 0.58.2, tree-sitter 0.27.0, tree-sitter-graphql 0.3.0)) | floor | current |  |
+| `rust-version` | `rust/Cargo.toml` | `rust/Cargo.toml` | `1.90` | 1.90 (cargo metadata, the highest rust-version of the resolved crates (meta-language 1.0.0, tree-sitter 0.27.0, tree-sitter-graphql 0.3.0)) | floor | current |  |
 | `edition` | `rust/oracles/agda-layout-source-oracle/Cargo.toml` | `rust/oracles/agda-layout-source-oracle/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `rust/oracles/cmake-source-oracle/Cargo.toml` | `rust/oracles/cmake-source-oracle/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `rust/oracles/native-source-oracles/Cargo.toml` | `rust/oracles/native-source-oracles/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
@@ -151,52 +151,52 @@ they are.
 | `anstyle-query` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.1.5` | transitive |  | 1.1.5 (crates.io, anstyle-query) | version | current |  |
 | `anstyle-wincon` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.0.11` | transitive |  | 3.0.11 (crates.io, anstyle-wincon) | version | current |  |
 | `anstyle` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.14` | transitive |  | 1.0.14 (crates.io, anstyle) | version | current |  |
-| `anyhow` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.104` | transitive |  | 1.0.104 (crates.io, anyhow) | version | current |  |
+| `anyhow` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.104` | transitive |  | 1.0.105 (crates.io, anyhow) | version | behind |  |
 | `autocfg` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.1` | transitive |  | 1.5.1 (crates.io, autocfg) | version | current |  |
 | `base64` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.23.1` | transitive |  | 0.23.1 (crates.io, base64) | version | current |  |
 | `beef` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.2` | transitive |  | 0.5.2 (crates.io, beef) | version | current |  |
 | `bitflags` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.13.2` | transitive |  | 2.13.2 (crates.io, bitflags) | version | current |  |
 | `block-buffer` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.12.1` | transitive |  | 0.12.1 (crates.io, block-buffer) | version | current |  |
-| `bumpalo` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.20.3` | transitive |  | 3.20.3 (crates.io, bumpalo) | version | current |  |
+| `bumpalo` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.20.3` | transitive |  | 3.20.4 (crates.io, bumpalo) | version | behind |  |
 | `bytecheck_derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, bytecheck_derive) | version | current |  |
 | `bytecheck` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, bytecheck) | version | current |  |
 | `byteorder` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.0` | transitive |  | 1.5.0 (crates.io, byteorder) | version | current |  |
-| `bytes` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.12.1` | transitive |  | 1.12.1 (crates.io, bytes) | version | current |  |
-| `cc` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `1.2.67` | direct, build | `1; 1.2` | 1.6.0 (crates.io, cc) | version | behind | Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. |
+| `bytes` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.12.1` | transitive |  | 1.12.2 (crates.io, bytes) | version | behind |  |
+| `cc` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `1.2.67` | direct, build | `1; 1.2` | 1.11.3 (crates.io, cc) | version | behind | Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.11.3; it moves when that dependent does. |
 | `cfg-if` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.5` | transitive |  | 1.0.5 (crates.io, cfg-if) | version | current |  |
 | `clap_builder` | `rust/Cargo.lock` | `rust/Cargo.lock` | `4.6.7` | transitive |  | 4.6.7 (crates.io, clap_builder) | version | current |  |
-| `clap_derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `4.6.7` | transitive |  | 4.6.7 (crates.io, clap_derive) | version | current |  |
-| `clap_lex` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.1.1` | transitive |  | 1.1.1 (crates.io, clap_lex) | version | current |  |
-| `clap` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `4.6.7` | direct, runtime | `4.4` | 4.6.7 (crates.io, clap) | version | current |  |
+| `clap_derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `4.6.7` | transitive |  | 4.6.9 (crates.io, clap_derive) | version | behind | Held by the requirement of `clap` 4.6.7 (`=4.6.7`), which does not admit 4.6.9; it moves when that dependent does. |
+| `clap_lex` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.1.1` | transitive |  | 1.1.2 (crates.io, clap_lex) | version | behind |  |
+| `clap` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `4.6.7` | direct, runtime | `4.4` | 4.6.9 (crates.io, clap) | version | behind |  |
 | `colorchoice` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.5` | transitive |  | 1.0.5 (crates.io, colorchoice) | version | current |  |
-| `const-oid` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.10.2` | transitive |  | 0.10.2 (crates.io, const-oid) | version | current |  |
+| `const-oid` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.10.2` | transitive |  | 0.10.3 (crates.io, const-oid) | version | behind |  |
 | `core_detect` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.0` | transitive |  | 1.0.0 (crates.io, core_detect) | version | current |  |
 | `counter` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.7.1` | transitive |  | 0.7.1 (crates.io, counter) | version | current |  |
 | `cpufeatures` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.1` | transitive |  | 0.3.1 (crates.io, cpufeatures) | version | current |  |
 | `crawdad` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.1` | transitive |  | 0.4.1 (crates.io, crawdad) | version | current |  |
-| `crc32fast` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.2` | transitive |  | 1.5.2 (crates.io, crc32fast) | version | current |  |
+| `crc32fast` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.2` | transitive |  | 1.5.6 (crates.io, crc32fast) | version | behind |  |
 | `crossbeam-deque` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.8` | transitive |  | 0.8.8 (crates.io, crossbeam-deque) | version | current |  |
 | `crossbeam-epoch` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.21` | transitive |  | 0.9.21 (crates.io, crossbeam-epoch) | version | current |  |
 | `crossbeam-utils` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.23` | transitive |  | 0.8.23 (crates.io, crossbeam-utils) | version | current |  |
 | `crypto-common` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.2` | transitive |  | 0.2.2 (crates.io, crypto-common) | version | current |  |
 | `csv-core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.13` | transitive |  | 0.1.13 (crates.io, csv-core) | version | current |  |
 | `csv` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.4.0` | transitive |  | 1.4.0 (crates.io, csv) | version | current |  |
-| `daachorse` | `rust/Cargo.lock` | `rust/Cargo.lock` | `5.0.0` | transitive |  | 5.0.0 (crates.io, daachorse) | version | current |  |
+| `daachorse` | `rust/Cargo.lock` | `rust/Cargo.lock` | `5.0.0` | transitive |  | 5.1.0 (crates.io, daachorse) | version | behind |  |
 | `dashmap` | `rust/Cargo.lock` | `rust/Cargo.lock` | `6.2.1` | transitive |  | 6.2.1 (crates.io, dashmap) | version | current |  |
 | `digest` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.3` | transitive |  | 0.11.3 (crates.io, digest) | version | current |  |
 | `displaydoc` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.7` | transitive |  | 0.2.7 (crates.io, displaydoc) | version | current |  |
-| `doublets` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.5.0` | direct, runtime (optional) | `0.5.0` | 0.5.0 (crates.io, doublets) | version | current |  |
-| `either` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.18.0` | transitive |  | 1.18.0 (crates.io, either) | version | current |  |
+| `doublets` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.5.0` | direct, runtime (optional) | `0.5.0` | 0.21.0 (crates.io, doublets) | version | behind |  |
+| `either` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.18.0` | transitive |  | 1.19.0 (crates.io, either) | version | behind |  |
 | `encoding_rs_io` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.8` | transitive |  | 0.1.8 (crates.io, encoding_rs_io) | version | current |  |
-| `encoding_rs` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.42` | transitive |  | 0.8.42 (crates.io, encoding_rs) | version | current |  |
-| `equivalent` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.2` | transitive |  | 1.0.2 (crates.io, equivalent) | version | current |  |
-| `errno` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.14` | transitive |  | 0.3.14 (crates.io, errno) | version | current |  |
+| `encoding_rs` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.42` | transitive |  | 0.8.44 (crates.io, encoding_rs) | version | behind |  |
+| `equivalent` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.2` | transitive |  | 1.0.3 (crates.io, equivalent) | version | behind |  |
+| `errno` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.14` | transitive |  | 0.3.15 (crates.io, errno) | version | behind |  |
 | `fastrand` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.5.0` | transitive |  | 2.5.0 (crates.io, fastrand) | version | current |  |
-| `filetime` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.29` | transitive |  | 0.2.29 (crates.io, filetime) | version | current |  |
-| `find-msvc-tools` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.14` | transitive |  | 0.1.14 (crates.io, find-msvc-tools) | version | current |  |
-| `flate2` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `1.1.10` | direct, build | `1` | 1.1.10 (crates.io, flate2) | version | current |  |
+| `filetime` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.29` | transitive |  | 0.2.30 (crates.io, filetime) | version | behind |  |
+| `find-msvc-tools` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.14` | transitive |  | 0.1.15 (crates.io, find-msvc-tools) | version | behind |  |
+| `flate2` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `1.1.10` | direct, build | `1` | 1.1.11 (crates.io, flate2) | version | behind |  |
 | `foldhash` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.5` | transitive |  | 0.2.0 (crates.io, foldhash) | version | behind | Held by the requirement of `hashbrown` 0.15.5 (`^0.1.2`), which does not admit 0.2.0; it moves when that dependent does. |
-| `form_urlencoded` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.2.2` | transitive |  | 1.2.2 (crates.io, form_urlencoded) | version | current |  |
+| `form_urlencoded` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.2.2` | transitive |  | 1.2.3 (crates.io, form_urlencoded) | version | behind |  |
 | `fst` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.7` | transitive |  | 0.4.7 (crates.io, fst) | version | current |  |
 | `futures-core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.34` | transitive |  | 0.3.34 (crates.io, futures-core) | version | current |  |
 | `futures-task` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.34` | transitive |  | 0.3.34 (crates.io, futures-task) | version | current |  |
@@ -204,20 +204,20 @@ they are.
 | `getrandom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.17` | transitive |  | 0.4.3 (crates.io, getrandom) | version | behind | Held by the requirement of `ring` 0.17.14 (`^0.2.10`), which does not admit 0.4.3; it moves when that dependent does. |
 | `getrandom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.3` | transitive |  | 0.4.3 (crates.io, getrandom) | version | current |  |
 | `glob` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.4` | transitive |  | 0.3.4 (crates.io, glob) | version | current |  |
-| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.14.5` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | behind | Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), which does not admit 0.17.1; it moves when that dependent does. |
-| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.15.5` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | behind | Held by the requirement of `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does. |
-| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.17.1` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | current |  |
+| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.14.5` | transitive |  | 0.17.2 (crates.io, hashbrown) | version | behind | Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), which does not admit 0.17.2; it moves when that dependent does. |
+| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.15.5` | transitive |  | 0.17.2 (crates.io, hashbrown) | version | behind | Held by the requirement of `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.2; it moves when that dependent does. |
+| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.17.1` | transitive |  | 0.17.2 (crates.io, hashbrown) | version | behind |  |
 | `heck` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.0` | transitive |  | 0.5.0 (crates.io, heck) | version | current |  |
 | `http` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.0` | transitive |  | 1.5.0 (crates.io, http) | version | current |  |
 | `httparse` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.10.1` | transitive |  | 1.10.1 (crates.io, httparse) | version | current |  |
 | `hybrid-array` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.15` | transitive |  | 0.4.15 (crates.io, hybrid-array) | version | current |  |
-| `icu_collections` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.0` | transitive |  | 2.3.0 (crates.io, icu_collections) | version | current |  |
-| `icu_locale_core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.0` | transitive |  | 2.3.0 (crates.io, icu_locale_core) | version | current |  |
-| `icu_normalizer_data` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.0` | transitive |  | 2.3.0 (crates.io, icu_normalizer_data) | version | current |  |
-| `icu_normalizer` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.0` | transitive |  | 2.3.0 (crates.io, icu_normalizer) | version | current |  |
-| `icu_properties_data` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.0` | transitive |  | 2.3.0 (crates.io, icu_properties_data) | version | current |  |
-| `icu_properties` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.0` | transitive |  | 2.3.0 (crates.io, icu_properties) | version | current |  |
-| `icu_provider` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.1` | transitive |  | 2.3.1 (crates.io, icu_provider) | version | current |  |
+| `icu_collections` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.0` | transitive |  | 2.4.0 (crates.io, icu_collections) | version | behind | Held by the requirement of `icu_normalizer` 2.3.0 (`~2.3.0`), `icu_properties` 2.3.0 (`~2.3.0`), which does not admit 2.4.0; it moves when that dependent does. |
+| `icu_locale_core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.0` | transitive |  | 2.4.0 (crates.io, icu_locale_core) | version | behind |  |
+| `icu_normalizer_data` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.0` | transitive |  | 2.4.0 (crates.io, icu_normalizer_data) | version | behind | Held by the requirement of `icu_normalizer` 2.3.0 (`~2.3.0`), which does not admit 2.4.0; it moves when that dependent does. |
+| `icu_normalizer` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.0` | transitive |  | 2.4.0 (crates.io, icu_normalizer) | version | behind |  |
+| `icu_properties_data` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.0` | transitive |  | 2.4.0 (crates.io, icu_properties_data) | version | behind | Held by the requirement of `icu_properties` 2.3.0 (`~2.3.0`), which does not admit 2.4.0; it moves when that dependent does. |
+| `icu_properties` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.0` | transitive |  | 2.4.0 (crates.io, icu_properties) | version | behind | Held by the requirement of `icu_normalizer` 2.3.0 (`~2.3.0`), which does not admit 2.4.0; it moves when that dependent does. |
+| `icu_provider` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.1` | transitive |  | 2.4.0 (crates.io, icu_provider) | version | behind |  |
 | `idna_adapter` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.2.2` | transitive |  | 1.2.2 (crates.io, idna_adapter) | version | current |  |
 | `idna` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.1.0` | transitive |  | 1.1.0 (crates.io, idna) | version | current |  |
 | `include_dir_macros` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.7.4` | transitive |  | 0.7.4 (crates.io, include_dir_macros) | version | current |  |
@@ -225,13 +225,13 @@ they are.
 | `indexmap` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.14.2` | direct, runtime | `=2.14.2` | 2.14.2 (crates.io, indexmap) | version | current |  |
 | `is_terminal_polyfill` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.70.2` | transitive |  | 1.70.2 (crates.io, is_terminal_polyfill) | version | current |  |
 | `itertools` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.14.0` | transitive |  | 0.15.0 (crates.io, itertools) | version | behind | Held by the requirement of `lingua` 1.8.0 (`^0.14.0`), which does not admit 0.15.0; it moves when that dependent does. |
-| `itoa` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.18` | transitive |  | 1.0.18 (crates.io, itoa) | version | current |  |
-| `js-sys` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.106` | transitive |  | 0.3.106 (crates.io, js-sys) | version | current |  |
+| `itoa` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.18` | transitive |  | 1.0.19 (crates.io, itoa) | version | behind |  |
+| `js-sys` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.106` | transitive |  | 0.3.107 (crates.io, js-sys) | version | behind |  |
 | `leak_slice` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.0` | transitive |  | 0.2.0 (crates.io, leak_slice) | version | current |  |
-| `libc` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.190` | transitive |  | 0.2.190 (crates.io, libc) | version | current |  |
-| `lindera-dictionary` | `rust/Cargo.lock` | `rust/Cargo.lock` | `6.2.0` | transitive |  | 6.2.0 (crates.io, lindera-dictionary) | version | current |  |
-| `lindera-jieba` | `rust/Cargo.lock` | `rust/Cargo.lock` | `6.2.0` | transitive |  | 6.2.0 (crates.io, lindera-jieba) | version | current |  |
-| `lindera` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `6.2.0` | direct, runtime (optional) | `6.2.0` | 6.2.0 (crates.io, lindera) | version | current |  |
+| `libc` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.190` | transitive |  | 0.2.191 (crates.io, libc) | version | behind |  |
+| `lindera-dictionary` | `rust/Cargo.lock` | `rust/Cargo.lock` | `6.2.0` | transitive |  | 7.0.0 (crates.io, lindera-dictionary) | version | behind | Held by the requirement of `lindera` 6.2.0 (`^6.2.0`), `lindera-jieba` 6.2.0 (`^6.2.0`), which does not admit 7.0.0; it moves when that dependent does. |
+| `lindera-jieba` | `rust/Cargo.lock` | `rust/Cargo.lock` | `6.2.0` | transitive |  | 7.0.0 (crates.io, lindera-jieba) | version | behind | Held by the requirement of `lindera` 6.2.0 (`^6.2.0`), which does not admit 7.0.0; it moves when that dependent does. |
+| `lindera` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `6.2.0` | direct, runtime (optional) | `6.2.0` | 7.0.0 (crates.io, lindera) | version | behind |  |
 | `lingua-arabic-language-model` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.3.0` | transitive |  | 1.3.0 (crates.io, lingua-arabic-language-model) | version | current |  |
 | `lingua-bengali-language-model` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.3.0` | transitive |  | 1.3.0 (crates.io, lingua-bengali-language-model) | version | current |  |
 | `lingua-chinese-language-model` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.3.0` | transitive |  | 1.3.0 (crates.io, lingua-chinese-language-model) | version | current |  |
@@ -243,15 +243,16 @@ they are.
 | `lingua-spanish-language-model` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.3.0` | transitive |  | 1.3.0 (crates.io, lingua-spanish-language-model) | version | current |  |
 | `lingua-urdu-language-model` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.3.0` | transitive |  | 1.3.0 (crates.io, lingua-urdu-language-model) | version | current |  |
 | `lingua` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.8.0` | direct, runtime | `1.8.0` | 1.8.0 (crates.io, lingua) | version | current |  |
-| `links-notation` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.22.0` | direct, development, runtime | `0.22.0` | 0.22.0 (crates.io, links-notation) | version | current |  |
+| `links-notation` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.22.0` | direct, development, runtime | `0.22.0` | 0.31.8 (crates.io, links-notation) | version | behind |  |
+| `links-notation` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.31.8` | direct, runtime | `=0.31.8` | 0.31.8 (crates.io, links-notation) | version | current |  |
 | `linux-raw-sys` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.12.1` | transitive |  | 0.12.1 (crates.io, linux-raw-sys) | version | current |  |
 | `litemap` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, litemap) | version | current |  |
-| `lock_api` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.14` | transitive |  | 0.4.14 (crates.io, lock_api) | version | current |  |
-| `log` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.34` | transitive |  | 0.4.34 (crates.io, log) | version | current |  |
+| `lock_api` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.14` | transitive |  | 0.5.0 (crates.io, lock_api) | version | behind | Held by the requirement of `dashmap` 6.2.1 (`^0.4.13`), which does not admit 0.5.0; it moves when that dependent does. |
+| `log` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.34` | transitive |  | 0.4.35 (crates.io, log) | version | behind |  |
 | `maplit` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.2` | transitive |  | 1.0.2 (crates.io, maplit) | version | current |  |
 | `md5` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.1` | transitive |  | 0.8.1 (crates.io, md5) | version | current |  |
 | `memchr` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.8.3` | transitive |  | 2.8.3 (crates.io, memchr) | version | current |  |
-| `memmap2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.11` | transitive |  | 0.9.11 (crates.io, memmap2) | version | current |  |
+| `memmap2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.11` | transitive |  | 0.9.12 (crates.io, memmap2) | version | behind |  |
 | `miniz_oxide` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.1` | transitive |  | 0.9.1 (crates.io, miniz_oxide) | version | current |  |
 | `multiversion_no_op` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.0` | transitive |  | 1.0.0 (crates.io, multiversion_no_op) | version | current |  |
 | `munge_macro` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.7` | transitive |  | 0.4.7 (crates.io, munge_macro) | version | current |  |
@@ -260,55 +261,55 @@ they are.
 | `num-traits` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.19` | transitive |  | 0.2.19 (crates.io, num-traits) | version | current |  |
 | `once_cell_polyfill` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.70.2` | transitive |  | 1.70.2 (crates.io, once_cell_polyfill) | version | current |  |
 | `once_cell` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.21.4` | transitive |  | 1.21.4 (crates.io, once_cell) | version | current |  |
-| `parking_lot_core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.12` | transitive |  | 0.9.12 (crates.io, parking_lot_core) | version | current |  |
+| `parking_lot_core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.12` | transitive |  | 0.10.0 (crates.io, parking_lot_core) | version | behind | Held by the requirement of `dashmap` 6.2.1 (`^0.9.11`), which does not admit 0.10.0; it moves when that dependent does. |
 | `percent-encoding` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.2` | transitive |  | 2.3.2 (crates.io, percent-encoding) | version | current |  |
-| `pest_derive` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.9.2` | direct, development | `2.8.6` | 2.9.2 (crates.io, pest_derive) | version | current |  |
-| `pest_generator` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.9.2` | transitive |  | 2.9.2 (crates.io, pest_generator) | version | current |  |
-| `pest_meta` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.9.2` | direct, development | `2.8.6` | 2.9.2 (crates.io, pest_meta) | version | current |  |
-| `pest` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.9.2` | direct, development | `2.8.6` | 2.9.2 (crates.io, pest) | version | current |  |
-| `pin-project-lite` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.17` | transitive |  | 0.2.17 (crates.io, pin-project-lite) | version | current |  |
-| `platform-data` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.0` | transitive |  | 2.0.0 (crates.io, platform-data) | version | current |  |
-| `platform-mem` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.0` | direct, runtime (optional) | `0.3.0` | 0.3.0 (crates.io, platform-mem) | version | current |  |
+| `pest_derive` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.9.2` | direct, development | `2.8.6` | 2.9.6 (crates.io, pest_derive) | version | behind |  |
+| `pest_generator` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.9.2` | transitive |  | 2.9.6 (crates.io, pest_generator) | version | behind |  |
+| `pest_meta` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.9.2` | direct, development | `2.8.6` | 2.9.6 (crates.io, pest_meta) | version | behind |  |
+| `pest` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.9.2` | direct, development | `2.8.6` | 2.9.6 (crates.io, pest) | version | behind |  |
+| `pin-project-lite` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.17` | transitive |  | 0.2.18 (crates.io, pin-project-lite) | version | behind |  |
+| `platform-data` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.0` | transitive |  | 3.0.0 (crates.io, platform-data) | version | behind | Held by the requirement of `doublets` 0.5.0 (`^2.0.0`), which does not admit 3.0.0; it moves when that dependent does. |
+| `platform-mem` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.0` | direct, runtime (optional) | `0.3.0` | 0.4.0 (crates.io, platform-mem) | version | behind |  |
 | `platform-num` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.0` | transitive |  | 0.8.0 (crates.io, platform-num) | version | current |  |
-| `platform-trees` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.4` | transitive |  | 0.3.4 (crates.io, platform-trees) | version | current |  |
+| `platform-trees` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.4` | transitive |  | 0.3.5 (crates.io, platform-trees) | version | behind |  |
 | `potential_utf` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.6` | transitive |  | 0.1.6 (crates.io, potential_utf) | version | current |  |
 | `proc-macro2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.107` | transitive |  | 1.0.107 (crates.io, proc-macro2) | version | current |  |
 | `ptr_meta_derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.2` | transitive |  | 0.3.2 (crates.io, ptr_meta_derive) | version | current |  |
 | `ptr_meta` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.2` | transitive |  | 0.3.2 (crates.io, ptr_meta) | version | current |  |
 | `quote` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.47` | transitive |  | 1.0.47 (crates.io, quote) | version | current |  |
-| `r-efi` | `rust/Cargo.lock` | `rust/Cargo.lock` | `6.0.0` | transitive |  | 7.1.0 (crates.io, r-efi) | version | behind | Held by the requirement of `getrandom` 0.4.3 (`^6`), which does not admit 7.1.0; it moves when that dependent does. |
+| `r-efi` | `rust/Cargo.lock` | `rust/Cargo.lock` | `6.0.0` | transitive |  | 7.2.0 (crates.io, r-efi) | version | behind | Held by the requirement of `getrandom` 0.4.3 (`^6`), which does not admit 7.2.0; it moves when that dependent does. |
 | `rancor` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.3` | transitive |  | 0.1.3 (crates.io, rancor) | version | current |  |
 | `rand_core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.10.1` | transitive |  | 0.10.1 (crates.io, rand_core) | version | current |  |
-| `rand` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.10.3` | transitive |  | 0.10.3 (crates.io, rand) | version | current |  |
+| `rand` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.10.3` | transitive |  | 0.10.4 (crates.io, rand) | version | behind |  |
 | `rayon-core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.13.0` | transitive |  | 1.13.0 (crates.io, rayon-core) | version | current |  |
 | `rayon` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.12.0` | transitive |  | 1.12.0 (crates.io, rayon) | version | current |  |
-| `redox_syscall` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.18` | transitive |  | 0.9.4 (crates.io, redox_syscall) | version | behind | Held by the requirement of `parking_lot_core` 0.9.12 (`^0.5`), which does not admit 0.9.4; it moves when that dependent does. |
-| `regex-automata` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.18` | transitive |  | 0.4.18 (crates.io, regex-automata) | version | current |  |
-| `regex-syntax` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.11` | transitive |  | 0.8.11 (crates.io, regex-syntax) | version | current |  |
-| `regex` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.13.1` | direct, development, runtime | `1` | 1.13.1 (crates.io, regex) | version | current |  |
+| `redox_syscall` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.18` | transitive |  | 0.10.0 (crates.io, redox_syscall) | version | behind | Held by the requirement of `parking_lot_core` 0.9.12 (`^0.5`), which does not admit 0.10.0; it moves when that dependent does. |
+| `regex-automata` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.18` | transitive |  | 0.4.19 (crates.io, regex-automata) | version | behind |  |
+| `regex-syntax` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.11` | transitive |  | 0.8.12 (crates.io, regex-syntax) | version | behind |  |
+| `regex` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.13.1` | direct, development, runtime | `1` | 1.13.2 (crates.io, regex) | version | behind |  |
 | `rend` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.4` | transitive |  | 0.5.4 (crates.io, rend) | version | current |  |
 | `ring` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.17.14` | transitive |  | 0.17.14 (crates.io, ring) | version | current |  |
 | `rkyv_derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.18` | transitive |  | 0.8.18 (crates.io, rkyv_derive) | version | current |  |
 | `rkyv` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.18` | transitive |  | 0.8.18 (crates.io, rkyv) | version | current |  |
-| `rustix` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.1.5` | transitive |  | 1.1.5 (crates.io, rustix) | version | current |  |
-| `rustls-pki-types` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.15.1` | transitive |  | 1.15.1 (crates.io, rustls-pki-types) | version | current |  |
-| `rustls-webpki` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.103.15` | transitive |  | 0.103.15 (crates.io, rustls-webpki) | version | current |  |
-| `rustls` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.23.45` | transitive |  | 0.23.45 (crates.io, rustls) | version | current |  |
+| `rustix` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.1.5` | transitive |  | 1.1.6 (crates.io, rustix) | version | behind |  |
+| `rustls-pki-types` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.15.1` | transitive |  | 1.16.0 (crates.io, rustls-pki-types) | version | behind |  |
+| `rustls-webpki` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.103.15` | transitive |  | 0.103.17 (crates.io, rustls-webpki) | version | behind |  |
+| `rustls` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.23.45` | transitive |  | 0.23.46 (crates.io, rustls) | version | behind |  |
 | `rustversion` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.23` | transitive |  | 1.0.23 (crates.io, rustversion) | version | current |  |
 | `ryu` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.23` | transitive |  | 1.0.23 (crates.io, ryu) | version | current |  |
 | `same-file` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.6` | transitive |  | 1.0.6 (crates.io, same-file) | version | current |  |
 | `scopeguard` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.2.0` | transitive |  | 1.2.0 (crates.io, scopeguard) | version | current |  |
 | `serde_core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.229` | transitive |  | 1.0.229 (crates.io, serde_core) | version | current |  |
 | `serde_derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.229` | transitive |  | 1.0.229 (crates.io, serde_derive) | version | current |  |
-| `serde_json` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.0.151` | direct, development, runtime | `1` | 1.0.151 (crates.io, serde_json) | version | current |  |
+| `serde_json` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.0.151` | direct, development, runtime | `1` | 1.0.154 (crates.io, serde_json) | version | behind |  |
 | `serde-wasm-bindgen` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.5` | transitive |  | 0.6.5 (crates.io, serde-wasm-bindgen) | version | current |  |
 | `serde` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.0.229` | direct, runtime | `1` | 1.0.229 (crates.io, serde) | version | current |  |
-| `sha2` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.11.0` | direct, runtime | `0.11` | 0.11.0 (crates.io, sha2) | version | current |  |
+| `sha2` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.11.0` | direct, runtime | `0.11` | 0.11.1 (crates.io, sha2) | version | behind |  |
 | `shlex` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.1` | transitive |  | 2.0.1 (crates.io, shlex) | version | current |  |
 | `simd-adler32` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.10` | transitive |  | 0.3.10 (crates.io, simd-adler32) | version | current |  |
 | `simdutf8` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.5` | transitive |  | 0.1.5 (crates.io, simdutf8) | version | current |  |
 | `slab` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.12` | transitive |  | 0.4.12 (crates.io, slab) | version | current |  |
-| `smallvec` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.16.2` | transitive |  | 1.16.2 (crates.io, smallvec) | version | current |  |
+| `smallvec` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.16.2` | transitive |  | 1.16.6 (crates.io, smallvec) | version | behind |  |
 | `stable_deref_trait` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.2.1` | transitive |  | 1.2.1 (crates.io, stable_deref_trait) | version | current |  |
 | `streaming-iterator` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.9` | transitive |  | 0.1.9 (crates.io, streaming-iterator) | version | current |  |
 | `strsim` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.1` | transitive |  | 0.11.1 (crates.io, strsim) | version | current |  |
@@ -317,27 +318,27 @@ they are.
 | `strum` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.27.2` | transitive |  | 0.28.0 (crates.io, strum) | version | behind | Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does. |
 | `strum` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.28.0` | transitive |  | 0.28.0 (crates.io, strum) | version | current |  |
 | `subtle` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.6.1` | transitive |  | 2.6.1 (crates.io, subtle) | version | current |  |
-| `syn` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.119` | transitive |  | 3.0.6 (crates.io, syn) | version | behind | Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), which does not admit 3.0.6; it moves when that dependent does. |
-| `syn` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.0.6` | transitive |  | 3.0.6 (crates.io, syn) | version | current |  |
+| `syn` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.119` | transitive |  | 3.0.10 (crates.io, syn) | version | behind | Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), which does not admit 3.0.10; it moves when that dependent does. |
+| `syn` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.0.6` | transitive |  | 3.0.10 (crates.io, syn) | version | behind |  |
 | `synstructure` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.14.0` | transitive |  | 0.14.0 (crates.io, synstructure) | version | current |  |
 | `tap` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.1` | transitive |  | 1.0.1 (crates.io, tap) | version | current |  |
 | `tar` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.46` | transitive |  | 0.4.46 (crates.io, tar) | version | current |  |
 | `tempfile` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.27.0` | transitive |  | 3.27.0 (crates.io, tempfile) | version | current |  |
 | `thiserror-impl` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.21` | transitive |  | 2.0.21 (crates.io, thiserror-impl) | version | current |  |
 | `thiserror` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.21` | transitive |  | 2.0.21 (crates.io, thiserror) | version | current |  |
-| `tinystr` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.4` | transitive |  | 0.8.4 (crates.io, tinystr) | version | current |  |
+| `tinystr` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.4` | transitive |  | 0.8.5 (crates.io, tinystr) | version | behind |  |
 | `tinyvec` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.13.3` | transitive |  | 1.13.3 (crates.io, tinyvec) | version | current |  |
 | `tree-sitter-agda` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.3` | direct, development | `=1.3.3` | 1.3.3 (crates.io, tree-sitter-agda) | version | current |  |
 | `tree-sitter-bash` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.1` | direct, runtime | `=0.25.1` | 0.25.1 (crates.io, tree-sitter-bash) | version | current |  |
-| `tree-sitter-c-sharp` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.5` | direct, runtime | `=0.23.5` | 0.23.5 (crates.io, tree-sitter-c-sharp) | version | current |  |
+| `tree-sitter-c-sharp` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.5` | direct, runtime | `=0.23.5` | 0.24.0 (crates.io, tree-sitter-c-sharp) | version | behind |  |
 | `tree-sitter-c` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.2` | direct, development | `=0.24.2` | 0.24.2 (crates.io, tree-sitter-c) | version | current |  |
 | `tree-sitter-cpp` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.4` | direct, development | `=0.23.4` | 0.23.4 (crates.io, tree-sitter-cpp) | version | current |  |
 | `tree-sitter-css` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-css) | version | current |  |
-| `tree-sitter-dart` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.2.0` | direct, development | `=0.2.0` | 0.2.0 (crates.io, tree-sitter-dart) | version | current |  |
+| `tree-sitter-dart` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.2.0` | direct, development | `=0.2.0` | 0.3.0 (crates.io, tree-sitter-dart) | version | behind |  |
 | `tree-sitter-diff` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.0` | direct, development | `=0.1.0` | 0.1.0 (crates.io, tree-sitter-diff) | version | current |  |
 | `tree-sitter-elixir` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.5` | direct, runtime | `=0.3.5` | 0.3.5 (crates.io, tree-sitter-elixir) | version | current |  |
 | `tree-sitter-elm` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `5.9.4` | direct, runtime | `=5.9.4` | 5.9.4 (crates.io, tree-sitter-elm) | version | current |  |
-| `tree-sitter-erlang` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.20.0` | direct, development | `=0.20.0` | 0.20.0 (crates.io, tree-sitter-erlang) | version | current |  |
+| `tree-sitter-erlang` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.20.0` | direct, development | `=0.20.0` | 0.22.0 (crates.io, tree-sitter-erlang) | version | behind |  |
 | `tree-sitter-go` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-go) | version | current |  |
 | `tree-sitter-graphql` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.0` | direct, development | `=0.3.0` | 0.3.0 (crates.io, tree-sitter-graphql) | version | current |  |
 | `tree-sitter-groovy` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.2` | direct, development | `=0.1.2` | 0.1.2 (crates.io, tree-sitter-groovy) | version | current |  |
@@ -348,28 +349,28 @@ they are.
 | `tree-sitter-java` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.5` | direct, development | `=0.23.5` | 0.23.5 (crates.io, tree-sitter-java) | version | current |  |
 | `tree-sitter-javascript` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-javascript) | version | current |  |
 | `tree-sitter-json` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.8` | direct, development | `=0.24.8` | 0.24.8 (crates.io, tree-sitter-json) | version | current |  |
-| `tree-sitter-json5-orchard` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.0` | direct, development | `=0.1.0` | 0.1.0 (crates.io, tree-sitter-json5-orchard) | version | current |  |
+| `tree-sitter-json5-orchard` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.0` | direct, development | `=0.1.0` | 0.1.1 (crates.io, tree-sitter-json5-orchard) | version | behind |  |
 | `tree-sitter-kotlin-ng` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.0` | direct, runtime | `=1.1.0` | 1.1.0 (crates.io, tree-sitter-kotlin-ng) | version | current |  |
-| `tree-sitter-language` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `0.1.8` | direct, runtime | `0.1.8` | 0.1.8 (crates.io, tree-sitter-language) | version | current |  |
+| `tree-sitter-language` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `0.1.8` | direct, runtime | `0.1.8` | 0.1.9 (crates.io, tree-sitter-language) | version | behind |  |
 | `tree-sitter-lua` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.5.0` | direct, development | `=0.5.0` | 0.5.0 (crates.io, tree-sitter-lua) | version | current |  |
 | `tree-sitter-make` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.1` | direct, development | `=1.1.1` | 1.1.1 (crates.io, tree-sitter-make) | version | current |  |
-| `tree-sitter-matlab` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.1` | direct, runtime | `=1.3.1` | 1.3.1 (crates.io, tree-sitter-matlab) | version | current |  |
+| `tree-sitter-matlab` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.1` | direct, runtime | `=1.3.1` | 1.3.4 (crates.io, tree-sitter-matlab) | version | behind |  |
 | `tree-sitter-md-025` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.5.6` | direct, runtime | `=0.5.6` | 0.5.6 (crates.io, tree-sitter-md-025) | version | current |  |
 | `tree-sitter-nix` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.0` | direct, development | `=0.3.0` | 0.3.0 (crates.io, tree-sitter-nix) | version | current |  |
 | `tree-sitter-ocaml` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.26.0` | direct, runtime | `=0.26.0` | 0.26.0 (crates.io, tree-sitter-ocaml) | version | current |  |
 | `tree-sitter-odin` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.0` | direct, development | `=1.3.0` | 1.3.0 (crates.io, tree-sitter-odin) | version | current |  |
 | `tree-sitter-pascal` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.10.2` | direct, development | `=0.10.2` | 0.10.2 (crates.io, tree-sitter-pascal) | version | current |  |
-| `tree-sitter-php` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.2` | direct, runtime | `=0.24.2` | 0.24.2 (crates.io, tree-sitter-php) | version | current |  |
-| `tree-sitter-powershell` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.26.4` | direct, development | `=0.26.4` | 0.26.4 (crates.io, tree-sitter-powershell) | version | current |  |
-| `tree-sitter-proto` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.6.0` | direct, development | `=0.6.0` | 0.6.0 (crates.io, tree-sitter-proto) | version | current |  |
+| `tree-sitter-php` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.2` | direct, runtime | `=0.24.2` | 0.25.2 (crates.io, tree-sitter-php) | version | behind |  |
+| `tree-sitter-powershell` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.26.4` | direct, development | `=0.26.4` | 0.26.6 (crates.io, tree-sitter-powershell) | version | behind |  |
+| `tree-sitter-proto` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.6.0` | direct, development | `=0.6.0` | 0.6.1 (crates.io, tree-sitter-proto) | version | behind |  |
 | `tree-sitter-python` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-python) | version | current |  |
 | `tree-sitter-r` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.0` | direct, development | `=1.3.0` | 1.3.0 (crates.io, tree-sitter-r) | version | current |  |
 | `tree-sitter-racket` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-racket) | version | current |  |
 | `tree-sitter-regex` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-regex) | version | current |  |
 | `tree-sitter-ruby` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.1` | direct, runtime | `=0.23.1` | 0.23.1 (crates.io, tree-sitter-ruby) | version | current |  |
-| `tree-sitter-scala` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.26.2` | direct, runtime | `=0.26.2` | 0.26.2 (crates.io, tree-sitter-scala) | version | current |  |
-| `tree-sitter-scheme` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.7` | direct, development | `=0.24.7` | 0.24.7 (crates.io, tree-sitter-scheme) | version | current |  |
-| `tree-sitter-sequel` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.11` | direct, development | `=0.3.11` | 0.3.11 (crates.io, tree-sitter-sequel) | version | current |  |
+| `tree-sitter-scala` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.26.2` | direct, runtime | `=0.26.2` | 0.26.13 (crates.io, tree-sitter-scala) | version | behind |  |
+| `tree-sitter-scheme` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.7` | direct, development | `=0.24.7` | 0.25.0 (crates.io, tree-sitter-scheme) | version | behind |  |
+| `tree-sitter-sequel` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.11` | direct, development | `=0.3.11` | 0.3.13 (crates.io, tree-sitter-sequel) | version | behind |  |
 | `tree-sitter-solidity` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.2.13` | direct, development | `=1.2.13` | 1.2.13 (crates.io, tree-sitter-solidity) | version | current |  |
 | `tree-sitter-swift` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.4` | direct, runtime | `=0.7.4` | 0.7.4 (crates.io, tree-sitter-swift) | version | current |  |
 | `tree-sitter-toml-ng` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.0` | direct, development | `=0.7.0` | 0.7.0 (crates.io, tree-sitter-toml-ng) | version | current |  |
@@ -378,29 +379,29 @@ they are.
 | `tree-sitter-xml` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.0` | direct, development | `=0.7.0` | 0.7.0 (crates.io, tree-sitter-xml) | version | current |  |
 | `tree-sitter-yaml` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.2` | direct, runtime | `=0.7.2` | 0.7.2 (crates.io, tree-sitter-yaml) | version | current |  |
 | `tree-sitter-zig` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.2` | direct, development | `=1.1.2` | 1.1.2 (crates.io, tree-sitter-zig) | version | current |  |
-| `tree-sitter` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.27.0` | direct, runtime | `=0.27.0` | 0.27.0 (crates.io, tree-sitter) | version | current |  |
-| `ts-parser-perl` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.0.0` | direct, runtime | `=2.0.0` | 2.0.0 (crates.io, ts-parser-perl) | version | current |  |
+| `tree-sitter` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.27.0` | direct, runtime | `=0.27.0` | 0.27.2 (crates.io, tree-sitter) | version | behind |  |
+| `ts-parser-perl` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.0.0` | direct, runtime | `=2.0.0` | 2.1.2 (crates.io, ts-parser-perl) | version | behind |  |
 | `typenum` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.20.1` | transitive |  | 1.20.1 (crates.io, typenum) | version | current |  |
-| `ucd-trie` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.7` | transitive |  | 0.1.7 (crates.io, ucd-trie) | version | current |  |
+| `ucd-trie` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.7` | transitive |  | 0.1.8 (crates.io, ucd-trie) | version | behind |  |
 | `unicode-bidi` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.18` | direct, runtime | `0.3.18` | 0.3.18 (crates.io, unicode-bidi) | version | current |  |
-| `unicode-ident` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.26` | transitive |  | 1.0.26 (crates.io, unicode-ident) | version | current |  |
-| `unicode-normalization` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.25` | direct, runtime | `0.1.25` | 0.1.25 (crates.io, unicode-normalization) | version | current |  |
+| `unicode-ident` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.26` | transitive |  | 1.0.27 (crates.io, unicode-ident) | version | behind |  |
+| `unicode-normalization` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.25` | direct, runtime | `0.1.25` | 0.1.26 (crates.io, unicode-normalization) | version | behind |  |
 | `unicode-segmentation` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.13.3` | direct, runtime | `1.13.3` | 1.13.3 (crates.io, unicode-segmentation) | version | current |  |
 | `untrusted` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.0` | transitive |  | 0.9.0 (crates.io, untrusted) | version | current |  |
-| `ureq-proto` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.4` | transitive |  | 0.6.4 (crates.io, ureq-proto) | version | current |  |
-| `ureq` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.4.2` | transitive |  | 3.4.2 (crates.io, ureq) | version | current |  |
-| `url` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.5.8` | transitive |  | 2.5.8 (crates.io, url) | version | current |  |
-| `utf8_iter` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.4` | transitive |  | 1.0.4 (crates.io, utf8_iter) | version | current |  |
+| `ureq-proto` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.4` | transitive |  | 0.7.1 (crates.io, ureq-proto) | version | behind | Held by the requirement of `ureq` 3.4.2 (`^0.6.3`), which does not admit 0.7.1; it moves when that dependent does. |
+| `ureq` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.4.2` | transitive |  | 3.5.2 (crates.io, ureq) | version | behind |  |
+| `url` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.5.8` | transitive |  | 2.5.9 (crates.io, url) | version | behind |  |
+| `utf8_iter` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.4` | transitive |  | 1.1.0 (crates.io, utf8_iter) | version | behind |  |
 | `utf8-zero` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.1` | transitive |  | 0.8.1 (crates.io, utf8-zero) | version | current |  |
 | `utf8parse` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.2` | transitive |  | 0.2.2 (crates.io, utf8parse) | version | current |  |
-| `uuid` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.27.0` | transitive |  | 1.27.0 (crates.io, uuid) | version | current |  |
-| `walkdir` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.5.0` | direct, development | `2` | 2.5.0 (crates.io, walkdir) | version | current |  |
+| `uuid` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.27.0` | transitive |  | 1.29.3 (crates.io, uuid) | version | behind |  |
+| `walkdir` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.5.0` | direct, development | `2` | 2.5.1 (crates.io, walkdir) | version | behind |  |
 | `wasi` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.1+wasi-snapshot-preview1` | transitive |  | 0.14.7+wasi-0.2.4 (crates.io, wasi) | version | behind | Held by the requirement of `getrandom` 0.2.17 (`^0.11`), which does not admit 0.14.7+wasi-0.2.4; it moves when that dependent does. |
-| `wasm-bindgen-macro-support` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.129` | transitive |  | 0.2.129 (crates.io, wasm-bindgen-macro-support) | version | current |  |
-| `wasm-bindgen-macro` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.129` | transitive |  | 0.2.129 (crates.io, wasm-bindgen-macro) | version | current |  |
-| `wasm-bindgen-shared` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.129` | transitive |  | 0.2.129 (crates.io, wasm-bindgen-shared) | version | current |  |
-| `wasm-bindgen` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.129` | transitive |  | 0.2.129 (crates.io, wasm-bindgen) | version | current |  |
-| `webpki-roots` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.9` | transitive |  | 1.0.9 (crates.io, webpki-roots) | version | current |  |
+| `wasm-bindgen-macro-support` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.129` | transitive |  | 0.2.130 (crates.io, wasm-bindgen-macro-support) | version | behind | Held by the requirement of `wasm-bindgen-macro` 0.2.129 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. |
+| `wasm-bindgen-macro` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.129` | transitive |  | 0.2.130 (crates.io, wasm-bindgen-macro) | version | behind | Held by the requirement of `wasm-bindgen` 0.2.129 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. |
+| `wasm-bindgen-shared` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.129` | transitive |  | 0.2.130 (crates.io, wasm-bindgen-shared) | version | behind | Held by the requirement of `wasm-bindgen` 0.2.129 (`=0.2.129`), `wasm-bindgen-macro-support` 0.2.129 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. |
+| `wasm-bindgen` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.129` | transitive |  | 0.2.130 (crates.io, wasm-bindgen) | version | behind | Held by the requirement of `js-sys` 0.3.106 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. |
+| `webpki-roots` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.9` | transitive |  | 1.0.12 (crates.io, webpki-roots) | version | behind |  |
 | `whatlang` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.18.0` | direct, runtime | `0.18.0` | 0.18.0 (crates.io, whatlang) | version | current |  |
 | `winapi-util` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.11` | transitive |  | 0.1.11 (crates.io, winapi-util) | version | current |  |
 | `windows_aarch64_gnullvm` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.52.6` | transitive |  | 0.53.1 (crates.io, windows_aarch64_gnullvm) | version | behind | Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. |
@@ -416,24 +417,24 @@ they are.
 | `windows-sys` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.61.2` | transitive |  | 0.61.2 (crates.io, windows-sys) | version | current |  |
 | `windows-targets` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.52.6` | transitive |  | 0.53.5 (crates.io, windows-targets) | version | behind | Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does. |
 | `writeable` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.4` | transitive |  | 0.6.4 (crates.io, writeable) | version | current |  |
-| `xattr` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.6.1` | transitive |  | 1.6.1 (crates.io, xattr) | version | current |  |
+| `xattr` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.6.1` | transitive |  | 1.7.0 (crates.io, xattr) | version | behind |  |
 | `yoke-derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.4` | transitive |  | 0.8.4 (crates.io, yoke-derive) | version | current |  |
-| `yoke` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, yoke) | version | current |  |
+| `yoke` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.4 (crates.io, yoke) | version | behind |  |
 | `zerofrom-derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.8` | transitive |  | 0.1.8 (crates.io, zerofrom-derive) | version | current |  |
 | `zerofrom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.8` | transitive |  | 0.1.8 (crates.io, zerofrom) | version | current |  |
-| `zeroize` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.9.0` | transitive |  | 1.9.0 (crates.io, zeroize) | version | current |  |
+| `zeroize` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.9.0` | transitive |  | 1.9.2 (crates.io, zeroize) | version | behind |  |
 | `zerotrie` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.5` | transitive |  | 0.2.5 (crates.io, zerotrie) | version | current |  |
-| `zerovec-derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.6` | transitive |  | 0.11.6 (crates.io, zerovec-derive) | version | current |  |
-| `zerovec` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.8` | transitive |  | 0.11.8 (crates.io, zerovec) | version | current |  |
-| `zlib-rs` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.8` | transitive |  | 0.6.8 (crates.io, zlib-rs) | version | current |  |
+| `zerovec-derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.6` | transitive |  | 0.11.7 (crates.io, zerovec-derive) | version | behind |  |
+| `zerovec` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.8` | transitive |  | 0.11.9 (crates.io, zerovec) | version | behind |  |
+| `zlib-rs` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.8` | transitive |  | 0.6.9 (crates.io, zlib-rs) | version | behind |  |
 | `zmij` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.23` | transitive |  | 1.0.23 (crates.io, zmij) | version | current |  |
 | `agda-layout-source-oracle` | `rust/Cargo.toml` | `rust/Cargo.toml` | `oracles/agda-layout-source-oracle` | direct, development |  |  | unversioned | not applicable |  |
-| `cmake-source-oracle` | `rust/Cargo.toml` | `rust/Cargo.toml` | `oracles/cmake-source-oracle` | direct, development |  | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | unversioned | not applicable |  |
+| `cmake-source-oracle` | `rust/Cargo.toml` | `rust/Cargo.toml` | `oracles/cmake-source-oracle` | direct, development |  |  | unversioned | not applicable |  |
 | `native-source-oracles` | `rust/Cargo.toml` | `rust/Cargo.toml` | `oracles/native-source-oracles` | direct, development |  |  | unversioned | not applicable |  |
-| `bumpalo` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `3.20.3` | transitive |  | 3.20.3 (crates.io, bumpalo) | version | current |  |
+| `bumpalo` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `3.20.3` | transitive |  | 3.20.4 (crates.io, bumpalo) | version | behind |  |
 | `cfg-if` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.5` | transitive |  | 1.0.5 (crates.io, cfg-if) | version | current |  |
-| `itoa` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.18` | transitive |  | 1.0.18 (crates.io, itoa) | version | current |  |
-| `links-notation` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock`, `rust/web/Cargo.toml` | `0.22.0` | direct, runtime | `0.22.0` | 0.22.0 (crates.io, links-notation) | version | current |  |
+| `itoa` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.18` | transitive |  | 1.0.19 (crates.io, itoa) | version | behind |  |
+| `links-notation` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock`, `rust/web/Cargo.toml` | `0.22.0` | direct, runtime | `0.22.0` | 0.31.8 (crates.io, links-notation) | version | behind |  |
 | `memchr` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `2.8.3` | transitive |  | 2.8.3 (crates.io, memchr) | version | current |  |
 | `nom` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `8.0.0` | transitive |  | 8.0.0 (crates.io, nom) | version | current |  |
 | `once_cell` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.21.4` | transitive |  | 1.21.4 (crates.io, once_cell) | version | current |  |
@@ -442,28 +443,27 @@ they are.
 | `rustversion` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.23` | transitive |  | 1.0.23 (crates.io, rustversion) | version | current |  |
 | `serde_core` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.229` | transitive |  | 1.0.229 (crates.io, serde_core) | version | current |  |
 | `serde_derive` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.229` | transitive |  | 1.0.229 (crates.io, serde_derive) | version | current |  |
-| `serde_json` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock`, `rust/web/Cargo.toml` | `1.0.151` | direct, runtime | `1` | 1.0.151 (crates.io, serde_json) | version | current |  |
+| `serde_json` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock`, `rust/web/Cargo.toml` | `1.0.151` | direct, runtime | `1` | 1.0.154 (crates.io, serde_json) | version | behind |  |
 | `serde` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.229` | transitive |  | 1.0.229 (crates.io, serde) | version | current |  |
-| `syn` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `3.0.6` | transitive |  | 3.0.6 (crates.io, syn) | version | current |  |
-| `unicode-ident` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.26` | transitive |  | 1.0.26 (crates.io, unicode-ident) | version | current |  |
-| `wasm-bindgen-macro-support` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `0.2.129` | transitive |  | 0.2.129 (crates.io, wasm-bindgen-macro-support) | version | current |  |
-| `wasm-bindgen-macro` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `0.2.129` | transitive |  | 0.2.129 (crates.io, wasm-bindgen-macro) | version | current |  |
-| `wasm-bindgen-shared` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `0.2.129` | transitive |  | 0.2.129 (crates.io, wasm-bindgen-shared) | version | current |  |
-| `wasm-bindgen` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock`, `rust/web/Cargo.toml` | `0.2.129` | direct, runtime | `0.2` | 0.2.129 (crates.io, wasm-bindgen) | version | current |  |
+| `syn` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `3.0.6` | transitive |  | 3.0.10 (crates.io, syn) | version | behind |  |
+| `unicode-ident` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.26` | transitive |  | 1.0.27 (crates.io, unicode-ident) | version | behind |  |
+| `wasm-bindgen-macro-support` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `0.2.129` | transitive |  | 0.2.130 (crates.io, wasm-bindgen-macro-support) | version | behind | Held by the requirement of `wasm-bindgen-macro` 0.2.129 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. |
+| `wasm-bindgen-macro` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `0.2.129` | transitive |  | 0.2.130 (crates.io, wasm-bindgen-macro) | version | behind | Held by the requirement of `wasm-bindgen` 0.2.129 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. |
+| `wasm-bindgen-shared` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `0.2.129` | transitive |  | 0.2.130 (crates.io, wasm-bindgen-shared) | version | behind | Held by the requirement of `wasm-bindgen` 0.2.129 (`=0.2.129`), `wasm-bindgen-macro-support` 0.2.129 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. |
+| `wasm-bindgen` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock`, `rust/web/Cargo.toml` | `0.2.129` | direct, runtime | `0.2` | 0.2.130 (crates.io, wasm-bindgen) | version | behind |  |
 | `zmij` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.23` | transitive |  | 1.0.23 (crates.io, zmij) | version | current |  |
-| `links-notation` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.31.8` | direct, runtime | `=0.31.8` | 0.31.8 (crates.io, links-notation) | version | current |  |
 
 ## Experiment manifests
 
 | Item | Scope | Declared in | Pinned | Role | Requirement | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|---|---|---|
-| `serde_json` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `=1.0.151` | runtime |  | 1.0.151 (crates.io, serde_json) | version | current |  |
-| `serde` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `=1.0.229` | runtime |  | 1.0.229 (crates.io, serde) | version | current |  |
-| `sha2` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `=0.11.0` | runtime |  | 0.11.0 (crates.io, sha2) | version | current |  |
-| `cc` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=1.6.0` | build |  | 1.6.0 (crates.io, cc) | version | current |  |
-| `tree-sitter-language` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.1.8` | runtime |  | 0.1.8 (crates.io, tree-sitter-language) | version | current |  |
-| `tree-sitter` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.27.0` | runtime |  | 0.27.0 (crates.io, tree-sitter) | version | current |  |
 | `Crucio learner` |  | `.github/workflows/ci.yml` | `ce913637763f0b25017d38e0e01944f54cf86d38` |  |  | ce913637763f0b25017d38e0e01944f54cf86d38 (GitHub, Sinpersrect/crucio main head) | revision | current |  |
+| `serde_json` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `=1.0.151` | runtime |  | 1.0.154 (crates.io, serde_json) | version | behind |  |
+| `serde` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `=1.0.229` | runtime |  | 1.0.229 (crates.io, serde) | version | current |  |
+| `sha2` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `=0.11.0` | runtime |  | 0.11.1 (crates.io, sha2) | version | behind |  |
+| `cc` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=1.6.0` | build |  | 1.11.3 (crates.io, cc) | version | behind |  |
+| `tree-sitter-language` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.1.8` | runtime |  | 0.1.9 (crates.io, tree-sitter-language) | version | behind |  |
+| `tree-sitter` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.27.0` | runtime |  | 0.27.2 (crates.io, tree-sitter) | version | behind |  |
 | `holdout Node oracle contract` |  | `experiments/grammar-inference/attributed-holdout.mjs`, `experiments/grammar-inference/json-holdout.mjs` | `24.14.0` |  |  |  | unversioned | not applicable |  |
 
 ## Downloaded generated parser sources
@@ -473,79 +473,79 @@ they are.
 | `aruzdh/tree-sitter-rocq` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-rocq/NOTICE.md` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` | v0.2.0 (GitHub release, aruzdh/tree-sitter-rocq (the pin is ahead of it)) | revision | current |  |
 | `tree-sitter-grammars/tree-sitter-csv` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-csv/NOTICE.md` | `f6bf6e35eb0b95fbadea4bb39cb9709507fcb181` | v1.2.0 (GitHub release, tree-sitter-grammars/tree-sitter-csv (the pin is ahead of it)) | revision | current |  |
 | `tree-sitter/tree-sitter-rust` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-rust/NOTICE.md` | `v0.24.2` | v0.24.2 (GitHub release, tree-sitter/tree-sitter-rust (the pin is identical of it)) | revision | current |  |
-| `uyha/tree-sitter-cmake` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-cmake/NOTICE.md` | `v0.7.5` | v0.7.5 (GitHub release, uyha/tree-sitter-cmake (the pin is identical of it)) | revision | current |  |
+| `uyha/tree-sitter-cmake` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-cmake/NOTICE.md` | `v0.7.5` | v0.7.6 (GitHub release, uyha/tree-sitter-cmake (the pin is behind of it)) | revision | behind |  |
 | `wvhulle/tree-sitter-lean` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-lean/NOTICE.md` | `bd942cd2795016239be02b3b3d5ef635645ddd38` | v0.2.2 (GitHub release, wvhulle/tree-sitter-lean (the pin is ahead of it)) | revision | current |  |
 
 ## Vendored runtime
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz` | `js/src/vendor/web-tree-sitter/runtime-lock.lino` | `0.27.0` | v0.27.0 (GitHub release, tree-sitter/tree-sitter) | version | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
+| `js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz` | `js/src/vendor/web-tree-sitter/runtime-lock.lino` | `0.27.0` | v0.27.2 (GitHub release, tree-sitter/tree-sitter) | version | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
 
 ## Downloaded WebAssembly grammars
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `js/oracles/grammars/agda.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.3` |  | derived | current |  |
-| `js/oracles/grammars/c.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.2` |  | derived | current |  |
-| `js/oracles/grammars/cmake.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `v0.7.5` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
-| `js/oracles/grammars/cpp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.4` |  | derived | current |  |
-| `js/oracles/grammars/css.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/csv.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `f6bf6e35eb0b95fbadea4bb39cb9709507fcb181` |  | derived | current |  |
-| `js/oracles/grammars/dart.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.2.0` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
-| `js/oracles/grammars/diff.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.0` |  | derived | current |  |
-| `js/oracles/grammars/dtd.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.0` |  | derived | current |  |
-| `js/oracles/grammars/erlang.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.20.0` |  | derived | current |  |
-| `js/oracles/grammars/go.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/graphql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.0` |  | derived | current |  |
-| `js/oracles/grammars/groovy.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.2` |  | derived | current |  |
-| `js/oracles/grammars/hcl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.0` |  | derived | current |  |
-| `js/oracles/grammars/html.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.2` |  | derived | current |  |
-| `js/oracles/grammars/ini.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.4.0` |  | derived | current |  |
-| `js/oracles/grammars/java.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.5` |  | derived | current |  |
-| `js/oracles/grammars/javascript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/json.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.8` |  | derived | current |  |
-| `js/oracles/grammars/json5.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.0` |  | derived | current |  |
-| `js/oracles/grammars/lean.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `bd942cd2795016239be02b3b3d5ef635645ddd38` |  | derived | current |  |
-| `js/oracles/grammars/lua.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.5.0` |  | derived | current |  |
-| `js/oracles/grammars/make.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.1` |  | derived | current |  |
-| `js/oracles/grammars/nix.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.0` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
-| `js/oracles/grammars/odin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.0` |  | derived | current |  |
-| `js/oracles/grammars/pascal.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.10.2` |  | derived | current |  |
-| `js/oracles/grammars/powershell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.4` |  | derived | current |  |
-| `js/oracles/grammars/proto.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.6.0` |  | derived | current |  |
-| `js/oracles/grammars/python.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/r.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.0` |  | derived | current |  |
-| `js/oracles/grammars/racket.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/regex.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/rocq.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` |  | derived | current |  |
-| `js/oracles/grammars/rust.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `v0.24.2` |  | derived | current |  |
-| `js/oracles/grammars/scheme.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.7` |  | derived | current |  |
-| `js/oracles/grammars/solidity.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.2.13` |  | derived | current |  |
-| `js/oracles/grammars/sql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.11` |  | derived | current |  |
-| `js/oracles/grammars/toml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.0` |  | derived | current |  |
-| `js/oracles/grammars/tsx.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.2` |  | derived | current |  |
-| `js/oracles/grammars/typescript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.2` |  | derived | current |  |
-| `js/oracles/grammars/vb.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.0` |  | derived | current |  |
-| `js/oracles/grammars/xml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.0` |  | derived | current |  |
-| `js/oracles/grammars/zig.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.2` |  | derived | current |  |
-| `js/src/vendor/grammars/bash.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.1` |  | derived | current |  |
-| `js/src/vendor/grammars/csharp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.5` |  | derived | current |  |
-| `js/src/vendor/grammars/elixir.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.5` |  | derived | current |  |
-| `js/src/vendor/grammars/elm.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `5.9.4` |  | derived | current |  |
-| `js/src/vendor/grammars/haskell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.1` |  | derived | current |  |
-| `js/src/vendor/grammars/kotlin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.0` |  | derived | current |  |
-| `js/src/vendor/grammars/markdown_inline.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.5.6` |  | derived | current |  |
-| `js/src/vendor/grammars/markdown.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.5.6` |  | derived | current |  |
-| `js/src/vendor/grammars/matlab.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.1` |  | derived | current |  |
-| `js/src/vendor/grammars/ocaml_interface.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.0` |  | derived | current |  |
-| `js/src/vendor/grammars/ocaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.0` |  | derived | current |  |
-| `js/src/vendor/grammars/perl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `2.0.0` |  | derived | current |  |
-| `js/src/vendor/grammars/php.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.2` |  | derived | current |  |
-| `js/src/vendor/grammars/ruby.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.1` |  | derived | current |  |
-| `js/src/vendor/grammars/scala.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.2` |  | derived | current |  |
-| `js/src/vendor/grammars/swift.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.4` |  | derived | current |  |
-| `js/src/vendor/grammars/yaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.2` |  | derived | current |  |
+| `js/oracles/grammars/agda.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.3` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/c.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.2` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/cmake.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `v0.7.5` |  | derived | behind | Built from `downloaded-parser uyha/tree-sitter-cmake@v0.7.5`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/cpp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.4` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/css.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/csv.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `f6bf6e35eb0b95fbadea4bb39cb9709507fcb181` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/dart.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.2.0` |  | derived | behind | Built from `crate rust/Cargo.lock tree-sitter-dart@0.2.0`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/diff.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/dtd.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/erlang.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.20.0` |  | derived | behind | Built from `crate rust/Cargo.lock tree-sitter-erlang@0.20.0`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/go.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/graphql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/groovy.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.2` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/hcl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/html.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.2` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/ini.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.4.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/java.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.5` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/javascript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/json.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.8` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/json5.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.0` |  | derived | behind | Built from `crate rust/Cargo.lock tree-sitter-json5-orchard@0.1.0`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/lean.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `bd942cd2795016239be02b3b3d5ef635645ddd38` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/lua.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.5.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/make.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.1` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/nix.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/odin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/pascal.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.10.2` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/powershell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.4` |  | derived | behind | Built from `crate rust/Cargo.lock tree-sitter-powershell@0.26.4`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/proto.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.6.0` |  | derived | behind | Built from `crate rust/Cargo.lock tree-sitter-proto@0.6.0`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/python.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/r.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/racket.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/regex.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/rocq.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/rust.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `v0.24.2` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/scheme.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.7` |  | derived | behind | Built from `crate rust/Cargo.lock tree-sitter-scheme@0.24.7`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/solidity.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.2.13` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/sql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.11` |  | derived | behind | Built from `crate rust/Cargo.lock tree-sitter-sequel@0.3.11`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/toml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/tsx.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.2` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/typescript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.2` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/vb.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/xml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/oracles/grammars/zig.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.2` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/bash.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.1` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/csharp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.5` |  | derived | behind | Built from `crate rust/Cargo.lock tree-sitter-c-sharp@0.23.5`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/elixir.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.5` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/elm.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `5.9.4` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/haskell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.1` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/kotlin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/markdown_inline.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.5.6` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/markdown.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.5.6` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/matlab.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.1` |  | derived | behind | Built from `crate rust/Cargo.lock tree-sitter-matlab@1.3.1`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/ocaml_interface.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/ocaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.0` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/perl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `2.0.0` |  | derived | behind | Built from `crate rust/Cargo.lock ts-parser-perl@2.0.0`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/php.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.2` |  | derived | behind | Built from `crate rust/Cargo.lock tree-sitter-php@0.24.2`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/ruby.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.1` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/scala.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.2` |  | derived | behind | Built from `crate rust/Cargo.lock tree-sitter-scala@0.26.2`, `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/swift.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.4` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/src/vendor/grammars/yaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.2` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
 
 ## Generators
 
@@ -557,7 +557,7 @@ they are.
 | `js/scripts/build-foundation-models.mjs` | `js/scripts/build-foundation-models.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-language-catalog.mjs` | `js/scripts/build-language-catalog.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-language-identification.mjs` | `js/scripts/build-language-identification.mjs` | `script` |  | derived | current |  |
-| `js/scripts/build-lean-root-names.mjs` | `js/scripts/build-lean-root-names.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-lean-root-names.mjs` | `js/scripts/build-lean-root-names.mjs` | `script` |  | derived | behind | Built from `toolchain lean@v4.34.1`, which is behind (see its reason). |
 | `js/scripts/build-merge-quality-evidence.mjs` | `js/scripts/build-merge-quality-evidence.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-native-grammar-concept-reuse.mjs` | `js/scripts/build-native-grammar-concept-reuse.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-native-text-grammars.mjs` | `js/scripts/build-native-text-grammars.mjs` | `script` |  | derived | current |  |
@@ -566,29 +566,73 @@ they are.
 | `js/scripts/build-rust-unicode-escape-fixtures.mjs` | `js/scripts/build-rust-unicode-escape-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-translation-stage-fixtures.mjs` | `js/scripts/build-translation-stage-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-unicode-identifier-properties.mjs` | `js/scripts/build-unicode-identifier-properties.mjs` | `script` |  | derived | current |  |
-| `js/scripts/build-vendored-grammars.mjs` | `js/scripts/build-vendored-grammars.mjs` | `script` |  | derived | current |  |
-| `js/scripts/build-web-tree-sitter-runtime.mjs` | `js/scripts/build-web-tree-sitter-runtime.mjs` | `script` |  | derived | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
+| `js/scripts/build-vendored-grammars.mjs` | `js/scripts/build-vendored-grammars.mjs` | `script` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/scripts/build-web-tree-sitter-runtime.mjs` | `js/scripts/build-web-tree-sitter-runtime.mjs` | `script` |  | derived | behind | Built from `image emscripten/emsdk@4.0.15`, `npm js/package-lock.json web-tree-sitter@0.27.0`, which is behind (see its reason). |
 | `js/scripts/generate-agda-oracle-profiles.mjs` | `js/scripts/generate-agda-oracle-profiles.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-antlr-reverse-fixture.mjs` | `js/scripts/generate-antlr-reverse-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-binding-rules.mjs` | `js/scripts/generate-array-binding-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-callback-fixtures.mjs` | `js/scripts/generate-array-callback-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-callback-rules.mjs` | `js/scripts/generate-array-callback-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-classification-rules.mjs` | `js/scripts/generate-array-classification-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-from-rules.mjs` | `js/scripts/generate-array-from-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-relative-element-history.mjs` | `js/scripts/generate-array-relative-element-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-relative-element-template.mjs` | `js/scripts/generate-array-relative-element-template.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-state-method-fixtures.mjs` | `js/scripts/generate-array-state-method-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-state-method-rules.mjs` | `js/scripts/generate-array-state-method-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-value-rules.mjs` | `js/scripts/generate-array-value-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ascii-text-predicate-host-history.mjs` | `js/scripts/generate-ascii-text-predicate-host-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ascii-text-predicate-hosts.mjs` | `js/scripts/generate-ascii-text-predicate-hosts.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ascii-text-predicate-rules.mjs` | `js/scripts/generate-ascii-text-predicate-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-assertion-version-policy.mjs` | `js/scripts/generate-assertion-version-policy.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-builtin-cst-expectations.mjs` | `js/scripts/generate-builtin-cst-expectations.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-big-integer-bitwise-fixtures.mjs` | `js/scripts/generate-big-integer-bitwise-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-big-integer-bitwise-rules.mjs` | `js/scripts/generate-big-integer-bitwise-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-big-integer-conversion-fixtures.mjs` | `js/scripts/generate-big-integer-conversion-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-big-integer-division-fixtures.mjs` | `js/scripts/generate-big-integer-division-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-big-integer-source-fixtures.mjs` | `js/scripts/generate-big-integer-source-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-binding-default-fixtures.mjs` | `js/scripts/generate-binding-default-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-declaration-value-hosts.mjs` | `js/scripts/generate-boolean-declaration-value-hosts.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-declaration-value-rules.mjs` | `js/scripts/generate-boolean-declaration-value-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-parameter-tuples.mjs` | `js/scripts/generate-boolean-parameter-tuples.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-value-source-history.mjs` | `js/scripts/generate-boolean-value-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-borrowed-javascript-body-source-history.mjs` | `js/scripts/generate-borrowed-javascript-body-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-builtin-cst-expectations.mjs` | `js/scripts/generate-builtin-cst-expectations.mjs` | `script` |  | derived | behind | Built from `npm js/package-lock.json links-notation@0.22.0`, which is behind (see its reason). |
 | `js/scripts/generate-callable-emission-rules.mjs` | `js/scripts/generate-callable-emission-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-callable-source-rules.mjs` | `js/scripts/generate-callable-source-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ci-39496927203-lint-dependency-hosts.mjs` | `js/scripts/generate-ci-39496927203-lint-dependency-hosts.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ci-39496927203-lint-repairs.mjs` | `js/scripts/generate-ci-39496927203-lint-repairs.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ci-test-partition-history.mjs` | `js/scripts/generate-ci-test-partition-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-collection-access-fixtures.mjs` | `js/scripts/generate-collection-access-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-collection-access-rules.mjs` | `js/scripts/generate-collection-access-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-collection-construction-rules.mjs` | `js/scripts/generate-collection-construction-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-collection-size-projection-schema.mjs` | `js/scripts/generate-collection-size-projection-schema.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-concept-view-fixture.mjs` | `js/scripts/generate-concept-view-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-concept-view-rules.mjs` | `js/scripts/generate-concept-view-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concrete-program-graph-fixtures.mjs` | `js/scripts/generate-concrete-program-graph-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concrete-program-native-inputs.mjs` | `js/scripts/generate-concrete-program-native-inputs.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concrete-program-origin-fixtures.mjs` | `js/scripts/generate-concrete-program-origin-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-continuation-historical-inputs.mjs` | `js/scripts/generate-continuation-historical-inputs.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-contributor-instruction-coverage.mjs` | `js/scripts/generate-contributor-instruction-coverage.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-csharp-pattern-fixture.mjs` | `js/scripts/generate-csharp-pattern-fixture.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-default-cst-expectations.mjs` | `js/scripts/generate-default-cst-expectations.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-ci-repair-source-history.mjs` | `js/scripts/generate-current-ci-repair-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-native-host-source-history.mjs` | `js/scripts/generate-current-native-host-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-own-codebase-raw-source-descriptors.mjs` | `js/scripts/generate-current-own-codebase-raw-source-descriptors.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-own-codebase-raw-source-history.mjs` | `js/scripts/generate-current-own-codebase-raw-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-raw-descriptor-cohort.mjs` | `js/scripts/generate-current-raw-descriptor-cohort.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-shared-boolean-function-fixtures.mjs` | `js/scripts/generate-current-shared-boolean-function-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-declaration-dependency-branch-fixture.mjs` | `js/scripts/generate-declaration-dependency-branch-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-declaration-dependency-rules.mjs` | `js/scripts/generate-declaration-dependency-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-default-cst-expectations.mjs` | `js/scripts/generate-default-cst-expectations.mjs` | `script` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, `npm js/package-lock.json web-tree-sitter@0.27.0`, which is behind (see its reason). |
+| `js/scripts/generate-dependency-inventory-append-history.mjs` | `js/scripts/generate-dependency-inventory-append-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-dependency-inventory-order-history.mjs` | `js/scripts/generate-dependency-inventory-order-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-discovered-concept-fixture.mjs` | `js/scripts/generate-discovered-concept-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-discovered-concept-rules.mjs` | `js/scripts/generate-discovered-concept-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-dynamic-meta-language-rules.mjs` | `js/scripts/generate-dynamic-meta-language-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-elm-candidate-fixtures.mjs` | `js/scripts/generate-elm-candidate-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-embedded-region-rules.mjs` | `js/scripts/generate-embedded-region-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-exponentiation-fixtures.mjs` | `js/scripts/generate-exponentiation-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-export-parity.mjs` | `js/scripts/generate-export-parity.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-external-emission-rules.mjs` | `js/scripts/generate-external-emission-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-fixed-integer-cast-rules.mjs` | `js/scripts/generate-fixed-integer-cast-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-formal-concept-fixtures.mjs` | `js/scripts/generate-formal-concept-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-formal-function-fixtures.mjs` | `js/scripts/generate-formal-function-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-formal-function-rules.mjs` | `js/scripts/generate-formal-function-rules.mjs` | `script` |  | derived | current |  |
@@ -601,6 +645,8 @@ they are.
 | `js/scripts/generate-global-concept-space-fixture.mjs` | `js/scripts/generate-global-concept-space-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-attribute-order-fixtures.mjs` | `js/scripts/generate-grammar-attribute-order-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-attribute-order-rules.mjs` | `js/scripts/generate-grammar-attribute-order-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-inference-rules.mjs` | `js/scripts/generate-grammar-inference-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-lazy-comparison-baseline.mjs` | `js/scripts/generate-grammar-lazy-comparison-baseline.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-lexer-rules.mjs` | `js/scripts/generate-grammar-lexer-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-merge-decisions.mjs` | `js/scripts/generate-grammar-merge-decisions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `script` |  | derived | current |  |
@@ -612,31 +658,61 @@ they are.
 | `js/scripts/generate-grammar-selection-mapping-fixtures.mjs` | `js/scripts/generate-grammar-selection-mapping-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-mapping-rules.mjs` | `js/scripts/generate-grammar-selection-mapping-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-rules.mjs` | `js/scripts/generate-grammar-selection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-test-partition-history.mjs` | `js/scripts/generate-grammar-test-partition-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-guarded-private-array-write-rules.mjs` | `js/scripts/generate-guarded-private-array-write-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-issue-195-conformance.mjs` | `js/scripts/generate-issue-195-conformance.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-issue-195-generative.mjs` | `js/scripts/generate-issue-195-generative.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-inert-module-binding-rules.mjs` | `js/scripts/generate-inert-module-binding-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-issue-195-conformance.mjs` | `js/scripts/generate-issue-195-conformance.mjs` | `script` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/scripts/generate-issue-195-generative.mjs` | `js/scripts/generate-issue-195-generative.mjs` | `script` |  | derived | behind | Built from `toolchain tree-sitter-cli@0.27.0`, which is behind (see its reason). |
+| `js/scripts/generate-javascript-identifier-fixtures.mjs` | `js/scripts/generate-javascript-identifier-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-identifier-models.mjs` | `js/scripts/generate-javascript-identifier-models.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-identifier-rules.mjs` | `js/scripts/generate-javascript-identifier-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-line-terminator-rules.mjs` | `js/scripts/generate-javascript-line-terminator-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-mutable-array-bindings.mjs` | `js/scripts/generate-javascript-mutable-array-bindings.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-optional-call-fixtures.mjs` | `js/scripts/generate-javascript-optional-call-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-property-call-fixtures.mjs` | `js/scripts/generate-javascript-property-call-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-property-call-rules.mjs` | `js/scripts/generate-javascript-property-call-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-record-parameter-rules.mjs` | `js/scripts/generate-javascript-record-parameter-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-scoped-binding-emission-fixtures.mjs` | `js/scripts/generate-javascript-scoped-binding-emission-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-scoped-binding-emission-rules.mjs` | `js/scripts/generate-javascript-scoped-binding-emission-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-string-unit-fixtures.mjs` | `js/scripts/generate-javascript-string-unit-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-surface-rules.mjs` | `js/scripts/generate-javascript-surface-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-tag-context-rules.mjs` | `js/scripts/generate-javascript-tag-context-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-allocation-fixtures.mjs` | `js/scripts/generate-link-allocation-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-allocation-rules.mjs` | `js/scripts/generate-link-allocation-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-foundation-fixtures.mjs` | `js/scripts/generate-link-foundation-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-buffer-rules.mjs` | `js/scripts/generate-link-network-binary-buffer-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-fixtures.mjs` | `js/scripts/generate-link-network-binary-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-record-rules.mjs` | `js/scripts/generate-link-network-binary-record-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-rules.mjs` | `js/scripts/generate-link-network-binary-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-lino-grammar-cases.mjs` | `js/scripts/generate-lino-grammar-cases.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-lino-grammar-cases.mjs` | `js/scripts/generate-lino-grammar-cases.mjs` | `script` |  | derived | behind | Built from `npm js/package-lock.json links-notation@0.22.0`, which is behind (see its reason). |
+| `js/scripts/generate-meta-language-archive-rules.mjs` | `js/scripts/generate-meta-language-archive-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-modern-javascript-array-parity-fixtures.mjs` | `js/scripts/generate-modern-javascript-array-parity-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-native-grammar-fixtures.mjs` | `js/scripts/generate-native-grammar-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-native-recovery.mjs` | `js/scripts/generate-native-recovery.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-module-binding-fixtures.mjs` | `js/scripts/generate-module-binding-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-module-scope-declaration-history.mjs` | `js/scripts/generate-module-scope-declaration-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-module-scope-naming.mjs` | `js/scripts/generate-module-scope-naming.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-naming-source-binding-codec-profile.mjs` | `js/scripts/generate-naming-source-binding-codec-profile.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-naming-source-bindings.mjs` | `js/scripts/generate-naming-source-bindings.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-native-compiler-host-source-history.mjs` | `js/scripts/generate-native-compiler-host-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-native-compiler-style-fixtures.mjs` | `js/scripts/generate-native-compiler-style-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-native-grammar-fixtures.mjs` | `js/scripts/generate-native-grammar-fixtures.mjs` | `script` |  | derived | behind | Built from `npm js/package-lock.json web-tree-sitter@0.27.0`, which is behind (see its reason). |
+| `js/scripts/generate-native-recovery.mjs` | `js/scripts/generate-native-recovery.mjs` | `script` |  | derived | behind | Built from `npm js/package-lock.json web-tree-sitter@0.27.0`, which is behind (see its reason). |
 | `js/scripts/generate-native-scanner-profile-fixtures.mjs` | `js/scripts/generate-native-scanner-profile-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-scanner-profiles.mjs` | `js/scripts/generate-native-scanner-profiles.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-network-projection-rules.mjs` | `js/scripts/generate-network-projection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-node-dependency-test-placement.mjs` | `js/scripts/generate-node-dependency-test-placement.mjs` | `script` |  | derived | behind | Built from `toolchain node@24.22.0`, which is behind (see its reason). |
 | `js/scripts/generate-nullable-type-syntax-rules.mjs` | `js/scripts/generate-nullable-type-syntax-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-number-bitwise-rules.mjs` | `js/scripts/generate-number-bitwise-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-numeric-operation-error-fixtures.mjs` | `js/scripts/generate-numeric-operation-error-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-optional-rules.mjs` | `js/scripts/generate-optional-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-own-codebase-baseline-naming-history.mjs` | `js/scripts/generate-own-codebase-baseline-naming-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-own-codebase-raw-source-descriptors.mjs` | `js/scripts/generate-own-codebase-raw-source-descriptors.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-own-codebase-test-registration-sources.mjs` | `js/scripts/generate-own-codebase-test-registration-sources.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-owned-array-append-rules.mjs` | `js/scripts/generate-owned-array-append-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-parameter-default-rules.mjs` | `js/scripts/generate-parameter-default-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-partial-callable-rules.mjs` | `js/scripts/generate-partial-callable-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-pdf-grammar-cases.mjs` | `js/scripts/generate-pdf-grammar-cases.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-primitive-comparison-fixtures.mjs` | `js/scripts/generate-primitive-comparison-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-primitive-method-rules.mjs` | `js/scripts/generate-primitive-method-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-primitive-value-rules.mjs` | `js/scripts/generate-primitive-value-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-private-output-test-model.mjs` | `js/scripts/generate-private-output-test-model.mjs` | `script` |  | derived | current |  |
@@ -645,15 +721,44 @@ they are.
 | `js/scripts/generate-product-unit-fixture.mjs` | `js/scripts/generate-product-unit-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-program-number-projection-rules.mjs` | `js/scripts/generate-program-number-projection-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-program-numeric-metadata-rules.mjs` | `js/scripts/generate-program-numeric-metadata-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-string-host-registration-history.mjs` | `js/scripts/generate-program-string-host-registration-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-string-representation-rules.mjs` | `js/scripts/generate-program-string-representation-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-string-source-descriptors.mjs` | `js/scripts/generate-program-string-source-descriptors.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-project-data-tooling-fixture.mjs` | `js/scripts/generate-project-data-tooling-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-project-translation-rules.mjs` | `js/scripts/generate-project-translation-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-archive-receipt-history.mjs` | `js/scripts/generate-raw-archive-receipt-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-consuming-snapshot-source-profile.mjs` | `js/scripts/generate-raw-consuming-snapshot-source-profile.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-contract-partition-history.mjs` | `js/scripts/generate-raw-contract-partition-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-descriptor-historical-cohort.mjs` | `js/scripts/generate-raw-descriptor-historical-cohort.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-emission-decision-source-history.mjs` | `js/scripts/generate-raw-emission-decision-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-oracle-contract-partitions.mjs` | `js/scripts/generate-raw-oracle-contract-partitions.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-planning-workflow-history.mjs` | `js/scripts/generate-raw-planning-workflow-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-record-emission-rules.mjs` | `js/scripts/generate-record-emission-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-record-parameter-write-fixtures.mjs` | `js/scripts/generate-record-parameter-write-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-record-type-syntax-rules.mjs` | `js/scripts/generate-record-type-syntax-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-record-value-rules.mjs` | `js/scripts/generate-record-value-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-record-write-fixtures.mjs` | `js/scripts/generate-record-write-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-record-write-rules.mjs` | `js/scripts/generate-record-write-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-reference-array-projection-fixtures.mjs` | `js/scripts/generate-reference-array-projection-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-reference-array-projection-rules.mjs` | `js/scripts/generate-reference-array-projection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-reference-identity-rules.mjs` | `js/scripts/generate-reference-identity-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-reference-method-fixtures.mjs` | `js/scripts/generate-reference-method-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-reference-method-rules.mjs` | `js/scripts/generate-reference-method-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-regular-grammar-inference-fixtures.mjs` | `js/scripts/generate-regular-grammar-inference-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-relative-array-current-frontend-history.mjs` | `js/scripts/generate-relative-array-current-frontend-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-relative-array-frontend-source-history.mjs` | `js/scripts/generate-relative-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-relative-array-owned-rule-source-history.mjs` | `js/scripts/generate-relative-array-owned-rule-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-report-workload-costs.mjs` | `js/scripts/generate-report-workload-costs.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-required-field-native-host-succession.mjs` | `js/scripts/generate-required-field-native-host-succession.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-address-fixtures.mjs` | `js/scripts/generate-resource-description-address-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-address-rules.mjs` | `js/scripts/generate-resource-description-address-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-resource-description-fixture.mjs` | `js/scripts/generate-resource-description-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-resource-description-ntriples-characters.mjs` | `js/scripts/generate-resource-description-ntriples-characters.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-resource-description-ntriples-fixture.mjs` | `js/scripts/generate-resource-description-ntriples-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-resource-description-ntriples-rules.mjs` | `js/scripts/generate-resource-description-ntriples-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-resource-description-rules.mjs` | `js/scripts/generate-resource-description-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-root-type-fixtures.mjs` | `js/scripts/generate-root-type-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-root-type-option-history.mjs` | `js/scripts/generate-root-type-option-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-expression-syntax-fixture.mjs` | `js/scripts/generate-ruby-expression-syntax-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-heredoc-fixture.mjs` | `js/scripts/generate-ruby-heredoc-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `script` |  | derived | current |  |
@@ -662,11 +767,13 @@ they are.
 | `js/scripts/generate-rust-array-rules.mjs` | `js/scripts/generate-rust-array-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-array-runtime.mjs` | `js/scripts/generate-rust-array-runtime.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-array-source-fixtures.mjs` | `js/scripts/generate-rust-array-source-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-binding-fixtures.mjs` | `js/scripts/generate-rust-binding-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-borrowed-call-interface-fixtures.mjs` | `js/scripts/generate-rust-borrowed-call-interface-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-borrowed-call-interface-rules.mjs` | `js/scripts/generate-rust-borrowed-call-interface-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-cast-syntax-rules.mjs` | `js/scripts/generate-rust-cast-syntax-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-character-literal-fixtures.mjs` | `js/scripts/generate-rust-character-literal-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-character-rules.mjs` | `js/scripts/generate-rust-character-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-completion-carrier-fixtures.mjs` | `js/scripts/generate-rust-completion-carrier-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-fixtures.mjs` | `js/scripts/generate-rust-completion-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-rules.mjs` | `js/scripts/generate-rust-completion-rules.mjs` | `script` |  | derived | current |  |
@@ -680,43 +787,80 @@ they are.
 | `js/scripts/generate-rust-float-predicate-fixtures.mjs` | `js/scripts/generate-rust-float-predicate-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-float-predicate-rules.mjs` | `js/scripts/generate-rust-float-predicate-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-function-output-fixtures.mjs` | `js/scripts/generate-rust-function-output-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-indirection-rules.mjs` | `js/scripts/generate-rust-indirection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-inherent-fixtures.mjs` | `js/scripts/generate-rust-inherent-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-inherent-rules.mjs` | `js/scripts/generate-rust-inherent-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-let-else-fixtures.mjs` | `js/scripts/generate-rust-let-else-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-literal-match-hosts.mjs` | `js/scripts/generate-rust-literal-match-hosts.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-literal-match-rules.mjs` | `js/scripts/generate-rust-literal-match-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-number-rules.mjs` | `js/scripts/generate-rust-number-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-ordinary-return-fixtures.mjs` | `js/scripts/generate-rust-ordinary-return-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-pattern-condition-fixtures.mjs` | `js/scripts/generate-rust-pattern-condition-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-primitive-bitwise-fixtures.mjs` | `js/scripts/generate-rust-primitive-bitwise-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-primitive-bitwise-rules.mjs` | `js/scripts/generate-rust-primitive-bitwise-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-primitive-owner-fixtures.mjs` | `js/scripts/generate-rust-primitive-owner-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-primitive-owner-rules.mjs` | `js/scripts/generate-rust-primitive-owner-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-product-rules.mjs` | `js/scripts/generate-rust-product-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-public-pure-unit-call-fixtures.mjs` | `js/scripts/generate-rust-public-pure-unit-call-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-pure-unit-call-fixtures.mjs` | `js/scripts/generate-rust-pure-unit-call-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-pure-unit-call-rules.mjs` | `js/scripts/generate-rust-pure-unit-call-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-raw-identifier-fixtures.mjs` | `js/scripts/generate-rust-raw-identifier-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-raw-string-rules.mjs` | `js/scripts/generate-rust-raw-string-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-read-only-query-rules.mjs` | `js/scripts/generate-rust-read-only-query-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-record-fixtures.mjs` | `js/scripts/generate-rust-record-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-record-rules.mjs` | `js/scripts/generate-rust-record-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-runtime-shell-fixtures.mjs` | `js/scripts/generate-rust-runtime-shell-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-runtime-shell-rules.mjs` | `js/scripts/generate-rust-runtime-shell-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-scalar-parameter-fixtures.mjs` | `js/scripts/generate-rust-scalar-parameter-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-scalar-parameter-rules.mjs` | `js/scripts/generate-rust-scalar-parameter-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-shared-array-handle-rules.mjs` | `js/scripts/generate-rust-shared-array-handle-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-shift-fixtures.mjs` | `js/scripts/generate-rust-shift-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-shift-rules.mjs` | `js/scripts/generate-rust-shift-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-header-emission-fixtures.mjs` | `js/scripts/generate-rust-source-header-emission-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-header-emission-rules.mjs` | `js/scripts/generate-rust-source-header-emission-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-signature-fixtures.mjs` | `js/scripts/generate-rust-source-signature-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-signature-rules.mjs` | `js/scripts/generate-rust-source-signature-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-whitespace-rules.mjs` | `js/scripts/generate-rust-source-whitespace-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-statement-value-fixtures.mjs` | `js/scripts/generate-rust-statement-value-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-string-rules.mjs` | `js/scripts/generate-rust-string-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-terminal-return-fixtures.mjs` | `js/scripts/generate-rust-terminal-return-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-tuple-pattern-fixtures.mjs` | `js/scripts/generate-rust-tuple-pattern-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-type-namespace-fixtures.mjs` | `js/scripts/generate-rust-type-namespace-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-type-namespace-rules.mjs` | `js/scripts/generate-rust-type-namespace-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-unicode-escape-rules.mjs` | `js/scripts/generate-rust-unicode-escape-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-unit-value-fixtures.mjs` | `js/scripts/generate-rust-unit-value-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-scalar-assignment-fixtures.mjs` | `js/scripts/generate-scalar-assignment-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-scalar-loop-rules.mjs` | `js/scripts/generate-scalar-loop-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-schema-command-source-profile.mjs` | `js/scripts/generate-schema-command-source-profile.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-scoped-iteration-native-host-source-history.mjs` | `js/scripts/generate-scoped-iteration-native-host-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-representation.mjs` | `js/scripts/generate-self-translation-representation.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-semantic-input-rules.mjs` | `js/scripts/generate-semantic-input-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-sequence-expression-fixtures.mjs` | `js/scripts/generate-sequence-expression-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-shared-array-native-frontend-history.mjs` | `js/scripts/generate-shared-array-native-frontend-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-shared-boolean-function-fixtures.mjs` | `js/scripts/generate-shared-boolean-function-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-shared-boolean-function-model.mjs` | `js/scripts/generate-shared-boolean-function-model.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-shared-numeric-function-rules.mjs` | `js/scripts/generate-shared-numeric-function-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-exception-fixtures.mjs` | `js/scripts/generate-source-exception-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-identifier-fixtures.mjs` | `js/scripts/generate-source-identifier-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-identifier-rules.mjs` | `js/scripts/generate-source-identifier-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-source-span-fixtures.mjs` | `js/scripts/generate-source-span-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-source-span-rules.mjs` | `js/scripts/generate-source-span-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-source-text-byte-fixtures.mjs` | `js/scripts/generate-source-text-byte-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-source-text-byte-rules.mjs` | `js/scripts/generate-source-text-byte-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-stateful-extra-fixtures.mjs` | `js/scripts/generate-stateful-extra-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-string-code-unit-template.mjs` | `js/scripts/generate-string-code-unit-template.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-construction-fixtures.mjs` | `js/scripts/generate-string-construction-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-number-fixtures.mjs` | `js/scripts/generate-string-number-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-relative-character-template.mjs` | `js/scripts/generate-string-relative-character-template.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-replacement-fixtures.mjs` | `js/scripts/generate-string-replacement-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-split-fixtures.mjs` | `js/scripts/generate-string-split-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-unit-call-fixtures.mjs` | `js/scripts/generate-string-unit-call-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-link-rules.mjs` | `js/scripts/generate-structured-data-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-migration-revisions.mjs` | `js/scripts/generate-structured-data-migration-revisions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-scanner-fixtures.mjs` | `js/scripts/generate-structured-scanner-fixtures.mjs` | `script` |  | derived | current |  |
@@ -724,174 +868,30 @@ they are.
 | `js/scripts/generate-structured-type-rules.mjs` | `js/scripts/generate-structured-type-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-surface-raw-metadata-rules.mjs` | `js/scripts/generate-surface-raw-metadata-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-surface-reference-analysis-rules.mjs` | `js/scripts/generate-surface-reference-analysis-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-syntax-projection-rules.mjs` | `js/scripts/generate-syntax-projection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-tooling-frozen-source-history.mjs` | `js/scripts/generate-tooling-frozen-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-tooling-partition-history.mjs` | `js/scripts/generate-tooling-partition-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-translation-source-layout.mjs` | `js/scripts/generate-translation-source-layout.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-translation-stage-refresh-receipt.mjs` | `js/scripts/generate-translation-stage-refresh-receipt.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-translation-workflow-history.mjs` | `js/scripts/generate-translation-workflow-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-truthy-projection-schema.mjs` | `js/scripts/generate-truthy-projection-schema.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-type-syntax-rules.mjs` | `js/scripts/generate-type-syntax-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-link-rules.mjs` | `js/scripts/generate-typed-program-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-links-fixtures.mjs` | `js/scripts/generate-typed-program-links-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-neutral-default-fixtures.mjs` | `js/scripts/generate-typed-program-neutral-default-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-tuple-fixtures.mjs` | `js/scripts/generate-typed-program-tuple-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typed-source-descriptor-host-history.mjs` | `js/scripts/generate-typed-source-descriptor-host-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-documentation-fixtures.mjs` | `js/scripts/generate-typescript-documentation-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-rules.mjs` | `js/scripts/generate-typescript-erasure-rules.mjs` | `script` |  | derived | current |  |
-| `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
-| `js/scripts/generate-node-dependency-test-placement.mjs` | `js/scripts/generate-node-dependency-test-placement.mjs` | `script` | (undefined; local source placement generation uses the recorded Node runtime) | derived | current |  |
-| `js/scripts/generate-array-relative-element-history.mjs` | `js/scripts/generate-array-relative-element-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-array-relative-element-template.mjs` | `js/scripts/generate-array-relative-element-template.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-boolean-parameter-tuples.mjs` | `js/scripts/generate-boolean-parameter-tuples.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-boolean-value-source-history.mjs` | `js/scripts/generate-boolean-value-source-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-concrete-program-graph-fixtures.mjs` | `js/scripts/generate-concrete-program-graph-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-concrete-program-native-inputs.mjs` | `js/scripts/generate-concrete-program-native-inputs.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-concrete-program-origin-fixtures.mjs` | `js/scripts/generate-concrete-program-origin-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-continuation-historical-inputs.mjs` | `js/scripts/generate-continuation-historical-inputs.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-contributor-instruction-coverage.mjs` | `js/scripts/generate-contributor-instruction-coverage.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-current-ci-repair-source-history.mjs` | `js/scripts/generate-current-ci-repair-source-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-dependency-inventory-append-history.mjs` | `js/scripts/generate-dependency-inventory-append-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-link-foundation-fixtures.mjs` | `js/scripts/generate-link-foundation-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-naming-source-bindings.mjs` | `js/scripts/generate-naming-source-bindings.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-program-string-representation-rules.mjs` | `js/scripts/generate-program-string-representation-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-program-string-source-descriptors.mjs` | `js/scripts/generate-program-string-source-descriptors.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-raw-contract-partition-history.mjs` | `js/scripts/generate-raw-contract-partition-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-raw-planning-workflow-history.mjs` | `js/scripts/generate-raw-planning-workflow-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-root-type-fixtures.mjs` | `js/scripts/generate-root-type-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-root-type-option-history.mjs` | `js/scripts/generate-root-type-option-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-schema-command-source-profile.mjs` | `js/scripts/generate-schema-command-source-profile.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-shared-boolean-function-fixtures.mjs` | `js/scripts/generate-shared-boolean-function-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-shared-boolean-function-model.mjs` | `js/scripts/generate-shared-boolean-function-model.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-string-relative-character-template.mjs` | `js/scripts/generate-string-relative-character-template.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-tooling-partition-history.mjs` | `js/scripts/generate-tooling-partition-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-translation-workflow-history.mjs` | `js/scripts/generate-translation-workflow-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-typescript-typed-graph-fixtures.mjs` | `js/scripts/generate-typescript-typed-graph-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-dependency-inventory-order-history.mjs` | `js/scripts/generate-dependency-inventory-order-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-grammar-test-partition-history.mjs` | `js/scripts/generate-grammar-test-partition-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-receiver-fixtures.mjs` | `js/scripts/generate-typescript-receiver-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-receiver-parameters.mjs` | `js/scripts/generate-typescript-receiver-parameters.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-raw-oracle-contract-partitions.mjs` | `js/scripts/generate-raw-oracle-contract-partitions.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-javascript-mutable-array-bindings.mjs` | `js/scripts/generate-javascript-mutable-array-bindings.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-literal-match-hosts.mjs` | `js/scripts/generate-rust-literal-match-hosts.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-literal-match-rules.mjs` | `js/scripts/generate-rust-literal-match-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-boolean-declaration-value-hosts.mjs` | `js/scripts/generate-boolean-declaration-value-hosts.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-boolean-declaration-value-rules.mjs` | `js/scripts/generate-boolean-declaration-value-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-ci-39496927203-lint-dependency-hosts.mjs` | `js/scripts/generate-ci-39496927203-lint-dependency-hosts.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-ci-39496927203-lint-repairs.mjs` | `js/scripts/generate-ci-39496927203-lint-repairs.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-current-shared-boolean-function-fixtures.mjs` | `js/scripts/generate-current-shared-boolean-function-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-own-codebase-baseline-naming-history.mjs` | `js/scripts/generate-own-codebase-baseline-naming-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-ascii-text-predicate-rules.mjs` | `js/scripts/generate-ascii-text-predicate-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-own-codebase-test-registration-sources.mjs` | `js/scripts/generate-own-codebase-test-registration-sources.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-ascii-text-predicate-host-history.mjs` | `js/scripts/generate-ascii-text-predicate-host-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-ascii-text-predicate-hosts.mjs` | `js/scripts/generate-ascii-text-predicate-hosts.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-own-codebase-raw-source-descriptors.mjs` | `js/scripts/generate-own-codebase-raw-source-descriptors.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-program-string-host-registration-history.mjs` | `js/scripts/generate-program-string-host-registration-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-relative-array-frontend-source-history.mjs` | `js/scripts/generate-relative-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-tooling-frozen-source-history.mjs` | `js/scripts/generate-tooling-frozen-source-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-collection-size-projection-schema.mjs` | `js/scripts/generate-collection-size-projection-schema.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-current-own-codebase-raw-source-descriptors.mjs` | `js/scripts/generate-current-own-codebase-raw-source-descriptors.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-javascript-record-parameter-rules.mjs` | `js/scripts/generate-javascript-record-parameter-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-required-field-native-host-succession.mjs` | `js/scripts/generate-required-field-native-host-succession.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-current-native-host-source-history.mjs` | `js/scripts/generate-current-native-host-source-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-declaration-dependency-rules.mjs` | `js/scripts/generate-declaration-dependency-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-external-emission-rules.mjs` | `js/scripts/generate-external-emission-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-relative-array-current-frontend-history.mjs` | `js/scripts/generate-relative-array-current-frontend-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-current-own-codebase-raw-source-history.mjs` | `js/scripts/generate-current-own-codebase-raw-source-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-relative-array-owned-rule-source-history.mjs` | `js/scripts/generate-relative-array-owned-rule-source-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-current-raw-descriptor-cohort.mjs` | `js/scripts/generate-current-raw-descriptor-cohort.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-raw-consuming-snapshot-source-profile.mjs` | `js/scripts/generate-raw-consuming-snapshot-source-profile.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-truthy-projection-schema.mjs` | `js/scripts/generate-truthy-projection-schema.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-grammar-lazy-comparison-baseline.mjs` | `js/scripts/generate-grammar-lazy-comparison-baseline.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-naming-source-binding-codec-profile.mjs` | `js/scripts/generate-naming-source-binding-codec-profile.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-raw-descriptor-historical-cohort.mjs` | `js/scripts/generate-raw-descriptor-historical-cohort.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-scoped-iteration-native-host-source-history.mjs` | `js/scripts/generate-scoped-iteration-native-host-source-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-array-classification-rules.mjs` | `js/scripts/generate-array-classification-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-javascript-identifier-models.mjs` | `js/scripts/generate-javascript-identifier-models.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-reference-identity-rules.mjs` | `js/scripts/generate-reference-identity-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-raw-archive-receipt-history.mjs` | `js/scripts/generate-raw-archive-receipt-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-ci-test-partition-history.mjs` | `js/scripts/generate-ci-test-partition-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-shared-array-handle-rules.mjs` | `js/scripts/generate-rust-shared-array-handle-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-inert-module-binding-rules.mjs` | `js/scripts/generate-inert-module-binding-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-module-scope-naming.mjs` | `js/scripts/generate-module-scope-naming.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-report-workload-costs.mjs` | `js/scripts/generate-report-workload-costs.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-shared-array-native-frontend-history.mjs` | `js/scripts/generate-shared-array-native-frontend-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-typed-source-descriptor-host-history.mjs` | `js/scripts/generate-typed-source-descriptor-host-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-native-compiler-style-fixtures.mjs` | `js/scripts/generate-native-compiler-style-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-borrowed-javascript-body-source-history.mjs` | `js/scripts/generate-borrowed-javascript-body-source-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-native-compiler-host-source-history.mjs` | `js/scripts/generate-native-compiler-host-source-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-module-scope-declaration-history.mjs` | `js/scripts/generate-module-scope-declaration-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-array-state-method-fixtures.mjs` | `js/scripts/generate-array-state-method-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-array-state-method-rules.mjs` | `js/scripts/generate-array-state-method-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-big-integer-bitwise-fixtures.mjs` | `js/scripts/generate-big-integer-bitwise-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-big-integer-bitwise-rules.mjs` | `js/scripts/generate-big-integer-bitwise-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-big-integer-conversion-fixtures.mjs` | `js/scripts/generate-big-integer-conversion-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-big-integer-division-fixtures.mjs` | `js/scripts/generate-big-integer-division-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-big-integer-source-fixtures.mjs` | `js/scripts/generate-big-integer-source-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-binding-default-fixtures.mjs` | `js/scripts/generate-binding-default-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-collection-access-fixtures.mjs` | `js/scripts/generate-collection-access-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-collection-access-rules.mjs` | `js/scripts/generate-collection-access-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-declaration-dependency-branch-fixture.mjs` | `js/scripts/generate-declaration-dependency-branch-fixture.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-dynamic-meta-language-rules.mjs` | `js/scripts/generate-dynamic-meta-language-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-exponentiation-fixtures.mjs` | `js/scripts/generate-exponentiation-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-fixed-integer-cast-rules.mjs` | `js/scripts/generate-fixed-integer-cast-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-grammar-inference-rules.mjs` | `js/scripts/generate-grammar-inference-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-javascript-identifier-fixtures.mjs` | `js/scripts/generate-javascript-identifier-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-javascript-identifier-rules.mjs` | `js/scripts/generate-javascript-identifier-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-javascript-optional-call-fixtures.mjs` | `js/scripts/generate-javascript-optional-call-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-javascript-property-call-fixtures.mjs` | `js/scripts/generate-javascript-property-call-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-javascript-property-call-rules.mjs` | `js/scripts/generate-javascript-property-call-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-javascript-string-unit-fixtures.mjs` | `js/scripts/generate-javascript-string-unit-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-link-allocation-fixtures.mjs` | `js/scripts/generate-link-allocation-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-link-allocation-rules.mjs` | `js/scripts/generate-link-allocation-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-meta-language-archive-rules.mjs` | `js/scripts/generate-meta-language-archive-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-module-binding-fixtures.mjs` | `js/scripts/generate-module-binding-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-number-bitwise-rules.mjs` | `js/scripts/generate-number-bitwise-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-numeric-operation-error-fixtures.mjs` | `js/scripts/generate-numeric-operation-error-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-primitive-comparison-fixtures.mjs` | `js/scripts/generate-primitive-comparison-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-project-translation-rules.mjs` | `js/scripts/generate-project-translation-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-record-parameter-write-fixtures.mjs` | `js/scripts/generate-record-parameter-write-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-record-write-fixtures.mjs` | `js/scripts/generate-record-write-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-record-write-rules.mjs` | `js/scripts/generate-record-write-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-reference-array-projection-fixtures.mjs` | `js/scripts/generate-reference-array-projection-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-reference-array-projection-rules.mjs` | `js/scripts/generate-reference-array-projection-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-reference-method-fixtures.mjs` | `js/scripts/generate-reference-method-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-reference-method-rules.mjs` | `js/scripts/generate-reference-method-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-regular-grammar-inference-fixtures.mjs` | `js/scripts/generate-regular-grammar-inference-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-resource-description-address-fixtures.mjs` | `js/scripts/generate-resource-description-address-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-resource-description-address-rules.mjs` | `js/scripts/generate-resource-description-address-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-binding-fixtures.mjs` | `js/scripts/generate-rust-binding-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-completion-carrier-fixtures.mjs` | `js/scripts/generate-rust-completion-carrier-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-function-output-fixtures.mjs` | `js/scripts/generate-rust-function-output-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-inherent-fixtures.mjs` | `js/scripts/generate-rust-inherent-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-inherent-rules.mjs` | `js/scripts/generate-rust-inherent-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-let-else-fixtures.mjs` | `js/scripts/generate-rust-let-else-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-ordinary-return-fixtures.mjs` | `js/scripts/generate-rust-ordinary-return-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-pattern-condition-fixtures.mjs` | `js/scripts/generate-rust-pattern-condition-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-primitive-bitwise-fixtures.mjs` | `js/scripts/generate-rust-primitive-bitwise-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-primitive-bitwise-rules.mjs` | `js/scripts/generate-rust-primitive-bitwise-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-raw-identifier-fixtures.mjs` | `js/scripts/generate-rust-raw-identifier-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-record-fixtures.mjs` | `js/scripts/generate-rust-record-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-record-rules.mjs` | `js/scripts/generate-rust-record-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-shift-fixtures.mjs` | `js/scripts/generate-rust-shift-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-shift-rules.mjs` | `js/scripts/generate-rust-shift-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-statement-value-fixtures.mjs` | `js/scripts/generate-rust-statement-value-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-terminal-return-fixtures.mjs` | `js/scripts/generate-rust-terminal-return-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-tuple-pattern-fixtures.mjs` | `js/scripts/generate-rust-tuple-pattern-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-rust-unit-value-fixtures.mjs` | `js/scripts/generate-rust-unit-value-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-scalar-assignment-fixtures.mjs` | `js/scripts/generate-scalar-assignment-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-semantic-input-rules.mjs` | `js/scripts/generate-semantic-input-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-sequence-expression-fixtures.mjs` | `js/scripts/generate-sequence-expression-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-source-exception-fixtures.mjs` | `js/scripts/generate-source-exception-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-source-identifier-fixtures.mjs` | `js/scripts/generate-source-identifier-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-source-identifier-rules.mjs` | `js/scripts/generate-source-identifier-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-string-construction-fixtures.mjs` | `js/scripts/generate-string-construction-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-string-number-fixtures.mjs` | `js/scripts/generate-string-number-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-string-replacement-fixtures.mjs` | `js/scripts/generate-string-replacement-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-string-split-fixtures.mjs` | `js/scripts/generate-string-split-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-string-unit-call-fixtures.mjs` | `js/scripts/generate-string-unit-call-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-syntax-projection-rules.mjs` | `js/scripts/generate-syntax-projection-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-translation-source-layout.mjs` | `js/scripts/generate-translation-source-layout.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typescript-typed-graph-fixtures.mjs` | `js/scripts/generate-typescript-typed-graph-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-unicode-case-fixtures.mjs` | `js/scripts/generate-unicode-case-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-unicode-identifier-fixtures.mjs` | `js/scripts/generate-unicode-identifier-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-unicode-scalar-rules.mjs` | `js/scripts/generate-unicode-scalar-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-raw-emission-decision-source-history.mjs` | `js/scripts/generate-raw-emission-decision-source-history.mjs` | `script` |  | derived | current |  |
+| `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -899,24 +899,24 @@ they are.
 |---|---|---|---|---|---|---|---|
 | `@secretlint/secretlint-rule-preset-recommend` |  | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 | `cargo-llvm-cov` |  | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `elan` |  | `.github/workflows/ci.yml` | `v4.2.4` | v4.2.4 (GitHub release, leanprover/elan) | version | current |  |
-| `lean` |  | `.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.34.1` | v4.34.1 (GitHub release, leanprover/lean4) | version | current |  |
-| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
-| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24.22.0` | 24.22.0 (nodejs.org, newest LTS release (Krypton); observed 2026-10-19; other entries retain the 2026-10-06 full audit) | version | current |  |
-| `npm` |  | `.github/workflows/js.yml` | `12` | 12.2.0 (npm registry, npm latest) | major | current |  |
-| `ocaml` |  | `.github/workflows/ci.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
+| `elan` |  | `.github/workflows/ci.yml` | `v4.2.4` | v4.4.0 (GitHub release, leanprover/elan) | version | behind |  |
+| `lean` |  | `.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.34.1` | v4.36.0 (GitHub release, leanprover/lean4) | version | behind |  |
+| `link-cli` |  | `experiments/link-cli-archive-reconstruction.mjs`, `js/scripts/link-cli-archive-reconstruction-assertions.mjs` | `3.1.1` | 3.1.2 (crates.io, link-cli) | version | behind | Registry release checked 2026-11-22 for the native store replay. |
+| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24, 26)) | floor | current |  |
+| `node` |  | `.github/workflows/ci.yml` | `24.14.0` | 26.13.1 (nodejs.org, newest LTS release (Lithium)) | version | behind | The issue #224 holdout oracles require Node.js 24.14.0 to reproduce their measured observations. |
+| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24.22.0` | 26.13.1 (nodejs.org, newest LTS release (Lithium)) | version | behind |  |
+| `npm` |  | `.github/workflows/js.yml` | `12` | 12.2.3 (npm registry, npm latest) | major | current |  |
+| `ocaml` |  | `.github/workflows/ci.yml` | `5.4` | 5.5.2 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
 | `pre-commit/pre-commit-hooks` |  | `.pre-commit-config.yaml` | `v6.0.0` | v6.0.0 (GitHub release, pre-commit/pre-commit-hooks) | version | current |  |
+| `colored` | `pypi` | `.github/workflows/ci.yml` | `1.4.4` | 2.3.2 (PyPI JSON registry, colored newest non-yanked stable release) | version | behind | The pinned Crucio learner requires colored~=1.4.4 for the issue #224 reproduction. |
 | `lark` | `pypi` | `.github/workflows/js.yml` | `1.3.1` | 1.3.1 (PyPI JSON registry, lark newest non-yanked stable release) | version | current |  |
 | `rocq-core` |  | `.github/workflows/ci.yml` | `9.3.0` | V9.3.0 (GitHub release, rocq-prover/rocq) | version | current |  |
 | `rocq-prover` |  | `.github/workflows/ci.yml` | `meta.1` |  | unversioned | not applicable |  |
 | `rocq-stdlib` |  | `.github/workflows/ci.yml` | `9.2.0` | V9.2.0 (GitHub release, rocq-prover/stdlib) | version | current |  |
 | `rust-script` |  | `rust/scripts/install-rust-script.sh` | `latest` |  | floating | current |  |
 | `secretlint` |  | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `tree-sitter-cli` |  | `js/src/vendor/grammars/grammar-lock.lino`, `rust/src/data/grammar-lock.lino` | `0.27.0` | 0.27.0 (npm registry, tree-sitter-cli latest) | version | current |  |
+| `tree-sitter-cli` |  | `js/src/vendor/grammars/grammar-lock.lino`, `rust/src/data/grammar-lock.lino` | `0.27.0` | 0.27.2 (npm registry, tree-sitter-cli latest) | version | behind |  |
 | `wasm-pack` |  | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `link-cli` |  | `experiments/link-cli-archive-reconstruction.mjs`, `js/scripts/link-cli-archive-reconstruction-assertions.mjs` | `3.1.1` | 3.1.1 (crates.io, link-cli) | version | current | Registry release checked 2026-11-22 for the native store replay. |
-| `node` |  | `.github/workflows/ci.yml` | `24.14.0` | 26.13.1 (nodejs.org, newest LTS release (Lithium)) | version | behind | The issue #224 holdout oracles require Node.js 24.14.0 to reproduce their measured observations. |
-| `colored` | `pypi` | `.github/workflows/ci.yml` | `1.4.4` | 2.3.2 (PyPI JSON registry, colored newest non-yanked stable release) | version | behind | The pinned Crucio learner requires colored~=1.4.4 for the issue #224 reproduction. |
 
 ## GitHub Actions
 
@@ -928,37 +928,37 @@ they are.
 | `actions/checkout` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/checkout) | major | current |  |
 | `actions/configure-pages` | `.github/workflows/rust.yml` | `v6` | v6.0.0 (GitHub release, actions/configure-pages) | major | current |  |
 | `actions/deploy-pages` | `.github/workflows/rust.yml` | `v5` | v5.0.1 (GitHub release, actions/deploy-pages) | major | current |  |
-| `actions/download-artifact` | `.github/workflows/ci.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v8` | v8.0.1 (GitHub release, actions/download-artifact) | major | current |  |
-| `actions/setup-node` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.0 (GitHub release, actions/setup-node) | major | current |  |
-| `actions/upload-artifact` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/upload-artifact) | major | current |  |
+| `actions/download-artifact` | `.github/workflows/ci.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v8` | v8.0.2 (GitHub release, actions/download-artifact) | major | current |  |
+| `actions/setup-node` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.1.0 (GitHub release, actions/setup-node) | major | current |  |
+| `actions/upload-artifact` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.2 (GitHub release, actions/upload-artifact) | major | current |  |
 | `actions/upload-pages-artifact` | `.github/workflows/rust.yml` | `v5` | v5.0.0 (GitHub release, actions/upload-pages-artifact) | major | current |  |
 | `codecov/codecov-action` | `.github/workflows/rust.yml` | `v7` | v7.1.1 (GitHub release, codecov/codecov-action) | major | current |  |
 | `docker/build-push-action` | `.github/workflows/rust.yml` | `v7` | v7.4.0 (GitHub release, docker/build-push-action) | major | current |  |
-| `docker/login-action` | `.github/workflows/rust.yml` | `v4` | v4.6.0 (GitHub release, docker/login-action) | major | current |  |
+| `docker/login-action` | `.github/workflows/rust.yml` | `v4` | v4.8.0 (GitHub release, docker/login-action) | major | current |  |
 | `docker/metadata-action` | `.github/workflows/rust.yml` | `v6` | v6.2.0 (GitHub release, docker/metadata-action) | major | current |  |
 | `docker/setup-buildx-action` | `.github/workflows/rust.yml` | `v4` | v4.4.1 (GitHub release, docker/setup-buildx-action) | major | current |  |
-| `dtolnay/rust-toolchain` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml` | `1.99.0` | 1.99.0 (GitHub release, rust-lang/rust) | version | current |  |
+| `dtolnay/rust-toolchain` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml` | `1.99.0` | 1.100.0 (GitHub release, rust-lang/rust) | version | behind |  |
 | `dtolnay/rust-toolchain` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `master` |  | floating | current |  |
 | `dtolnay/rust-toolchain` | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `stable` |  | floating | current |  |
-| `ocaml/setup-ocaml` | `.github/workflows/ci.yml` | `v3` | v3.9.0 (GitHub release, ocaml/setup-ocaml) | major | current |  |
-| `peter-evans/create-pull-request` | `.github/workflows/rust.yml` | `v8` | v8.1.1 (GitHub release, peter-evans/create-pull-request) | major | current |  |
+| `ocaml/setup-ocaml` | `.github/workflows/ci.yml` | `v3` | v3.9.1 (GitHub release, ocaml/setup-ocaml) | major | current |  |
+| `peter-evans/create-pull-request` | `.github/workflows/rust.yml` | `v8` | v8.1.3 (GitHub release, peter-evans/create-pull-request) | major | current |  |
 | `taiki-e/install-action` | `.github/workflows/rust.yml` | `cargo-llvm-cov` |  | floating | current |  |
-| `taiki-e/install-action` | `.github/workflows/rust.yml` | `v2` | v2.87.25 (GitHub release, taiki-e/install-action) | major | current |  |
+| `taiki-e/install-action` | `.github/workflows/rust.yml` | `v2` | v2.90.8 (GitHub release, taiki-e/install-action) | major | current |  |
 
 ## Build images
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `emscripten/emsdk` | `js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.lino` | `4.0.15` | 6.0.11 (Docker Hub, emscripten/emsdk tags) | version | behind | Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. |
+| `emscripten/emsdk` | `js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.lino` | `4.0.15` | 7.0.1 (Docker Hub, emscripten/emsdk tags) | version | behind | Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. |
 
 ## Runners
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
 | `macos-latest` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `ubuntu-24.04` | `.github/workflows/ci.yml` | `24.04` |  | unversioned | not applicable |  |
 | `ubuntu-latest` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 | `windows-latest` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `ubuntu-24.04` | `.github/workflows/ci.yml` | `24.04` |  | unversioned | not applicable |  |
 
 ## Published artifact contents
 
@@ -970,130 +970,100 @@ they are.
 | `examples/**/*.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `README.md` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/**/*.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/array-bindings.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/array-callback-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/array-from-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/array-values.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/callable-emission-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/callable-source-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/collection-construction-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/concept-records.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/formal-concept-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/foundation-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-attribute-order-fixtures.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-attribute-order-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-lexer-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-lock.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-rule-composition-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-selection-field-range-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-selection-included-range-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-selection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/guarded-private-array-write-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/guarded-private-array-write-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-line-terminators.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-scoped-binding-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-tag-context-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/language-catalog.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/language-trigrams.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/link-network-binary-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/native-grammars/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/native-text-grammar.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/native-text-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/network-projection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/nullable-type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/optional-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/owned-array-append.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/parameter-default-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/partial-callable-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/program-number-projection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/program-numeric-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/record-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/record-type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/record-values.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/reference-operations.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/resource-description-ntriples-profile.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-borrowed-call-interface.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-cast-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-character-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-character-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-const-branches.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-const-functions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-cooked-string-escapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-diagnostic-attributes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-empty-options.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-number-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-owned-local-state.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-owned-tuple-calls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-primitive-owners.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-pure-unit-calls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-raw-string-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-read-only-queries.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-runtime-shell.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-scalar-loops.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-source-header-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-source-signatures.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-source-whitespace.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-type-namespace.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-unicode-escapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/self-translation-representation.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/source-span.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/source-text-byte-model.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/string-code-unit-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/surface-raw-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/surface-reference-analysis.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/typed-program-links-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/typescript-erasure.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/typescript-portable-typing.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/translation/runtime/array-*.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/translation/rust/completions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/translation/rust/float-predicates.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `README.md` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
-| `src` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
-| `src/data/array-relative-element-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/string-relative-character-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-identifier-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/empty-module-collections.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/numeric-module-bindings.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/abrupt-result-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/absence-conversion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/absence-only-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/array-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-bindings.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-callback-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/array-classification-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/array-formal-parameter-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-from-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-relative-element-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/array-state-method-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-values.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/big-integer-bitwise-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/big-integer-conversion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/binding-initialization-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/boolean-constructor-match-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/callable-data-derivation-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/callable-emission-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/callable-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/callable-source-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/closed-source-class-composition-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/collection-access-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/collection-construction-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/collection-copy-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/concept-records.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/conditional-chain-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/conditional-constructor-sharing-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/datatype-dependency-group-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/disjoint-collection-iteration-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/disjoint-collection-projection-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/dynamic-language-command-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/empty-module-collections.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/excess-argument-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/fixed-integer-cast-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/formal-concept-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/formal-datatype-alias-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/formal-datatype-module-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/formal-string-unit-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/foundation-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-active-learning-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-attribute-inference-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-attribute-order-fixtures.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-attribute-order-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-composition-batch-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-discovery-parser-oracle-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-inference-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-inference-refinement-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-lexer-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-lock.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-rule-composition-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-scanner-character-class-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-scanner-inference-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-scanner-mode-stack-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-selection-field-range-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-selection-included-range-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-selection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-structural-inference-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/guarded-private-array-write-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/guarded-private-array-write-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/inert-module-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-array-assignment-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-array-objects-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-arrays-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-call-machine-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-call-natural-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-call-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-call-templates-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-class-observation-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-class-owner-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-class-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-collection-call-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-collection-iteration-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-collection-iterator-call-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-collection-iterator-results-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-collection-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-comparison-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-data-field-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-descriptor-conversion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-error-class-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-error-class-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-error-construction-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-fixed-integer-cast-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-host-capability-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-identifier-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-identifier-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-line-terminators.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-literal-property-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-module-initialization-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-module-initialization-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-nominal-spread-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-nullish-field-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-optional-call-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-optional-chain-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-ordinary-class-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-ordinary-heap-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-own-property-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-primitive-conversion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -1103,63 +1073,112 @@ they are.
 | `src/data/javascript-property-key-conversion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-record-order-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-record-parameter-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-scoped-binding-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-source-text-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-string-argument-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-string-range-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-string-unit-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-tag-context-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/language-catalog.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/language-trigrams.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/let-else-completion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/lexical-declaration-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/LICENSE-UNICODE.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/link-allocation-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/link-cli-archive-topology-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/link-network-binary-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/missing-argument-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/module-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/named-default-callable-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/native-grammars/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/native-text-grammar.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/native-text-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/network-projection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/nominal-array-loan-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/nullable-type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/number-bitwise-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/numeric-module-bindings.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/object-entry-pair-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/object-rest-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/optional-callable-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/optional-policy-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/optional-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/optional-value-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/owned-array-allocation-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/owned-array-append.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/owned-array-reader-domain-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/parameter-default-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/partial-callable-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/pattern-alias-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/program-number-projection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/program-numeric-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/project-translation-archive-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/proposition-value-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/record-callable-parameter-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/record-closure-parameter-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/record-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/record-order-surface-library.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/record-type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/record-value-order-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/record-values.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/record-write-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/recursive-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/recursive-object-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/reference-array-projection-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/reference-identity-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/reference-method-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/reference-operations.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/resource-description-address-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/resource-description-ntriples-profile.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-array-element-owner-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-array-index-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-array-length-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-array-lookup-option-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-array-lookup-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-borrowed-call-interface.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-borrowed-iterator-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-borrowed-source-region-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-borrowed-vector-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-byte-ascii-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-byte-pattern-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-byte-string-expression-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-byte-string-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-callable-owner-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-cast-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-character-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-character-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-checked-integer-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-concrete-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-const-branches.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-const-functions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-constant-integer-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-constructed-string-interface-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-contextual-closure-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-cooked-string-escapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-copy-closure-parameter-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-copy-closure-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-data-type-field-signature-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-declaration-header-controls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-declaration-header-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-diagnostic-attributes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-displayed-string-interface-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-empty-options.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-exclusive-source-compound-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-exclusive-source-loan-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-exclusive-source-string-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-exclusive-source-vector-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-expression-completion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-fnmut-source-abi-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-fnmut-source-declaration-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-fnmut-source-token-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-formatting-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-fresh-vector-argument-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-fresh-vector-call-result-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-fresh-vector-result-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-function-pointer-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-function-qualifier-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-generic-type-alias-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-inherent-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-integer-bit-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-integer-float-plan-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -1169,10 +1188,25 @@ they are.
 | `src/data/rust-iterator-pipeline-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-iterator-reduction-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-module-value-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-mutable-record-loan-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-named-formatting-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-nominal-copy-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-nominal-ownership-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-number-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-numeric-pattern-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-owned-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-local-state.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-record-effect-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-record-loop-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-record-place-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-record-state-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-record-update-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-recursive-datatype-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-standard-sum-callback-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-standard-sum-method-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-standard-sum-observer-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-standard-sum-predicate-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-tuple-calls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-panic-value-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-pattern-match-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-pointer-integer-owner-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -1185,12 +1219,19 @@ they are.
 | `src/data/rust-primitive-inherent-copy-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-primitive-integer-constant-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-primitive-owner-path-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-owners.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-primitive-selection-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-primitive-try-from-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-project-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-pure-unit-calls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-raw-string-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-read-only-queries.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-record-place-owner-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-record-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-runtime-shell.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-saturating-integer-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-saturating-multiplication-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-scalar-loops.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-scalar-mathematical-interface-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-scalar-source-interface-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-scalar-vector-copy-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -1199,10 +1240,27 @@ they are.
 | `src/data/rust-signed-integer-property-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-source-constant-evaluation-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-source-constant-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-header-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-namespace-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-source-owner-retention-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-signatures.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-type-origin-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-source-version-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-whitespace.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-collection-value-packet-program-source.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-collection-value-packet-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-standard-owned-call-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-standard-string-view-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-sum-combinator-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-sum-conversion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-sum-guard-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-sum-method-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-sum-nested-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-sum-ownership-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-sum-predicate-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-sum-signature-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-sum-source-metadata-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-sum-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-string-addition-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-string-byte-kernel-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-string-byte-length-controls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -1213,13 +1271,17 @@ they are.
 | `src/data/rust-string-predicate-interface-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-textual-source-interface-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-type-alias-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-type-namespace.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-type-token-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-unicode-escapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-unit-value-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-usize-index-expression-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-wrapping-integer-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-wrapping-shift-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/scalar-assignment-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/scalar-closure-default-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/self-translation-representation.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/sequential-parameter-default-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-construct-signal-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-definition-catalog-controls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -1228,18 +1290,31 @@ they are.
 | `src/data/source-exception-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-identifier-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-library-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-library-class-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-library-error-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-library-export-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-module-request-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-package-imports.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-parameter-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-project-archive-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-span.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-text-byte-model.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-version-column-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/string-array-sort-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/string-code-unit-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/string-construction-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/string-number-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/string-relative-character-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/surface-raw-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/surface-reference-analysis.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/type-query-evaluation-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typed-program-links-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typed-program-record-shapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typed-program-value-sharing.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typed-record-shape-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typescript-erasure.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typescript-portable-typing.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/unicode-case-emission-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/unicode-case-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/unicode-scalar-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -1253,6 +1328,7 @@ they are.
 | `src/data/utf16-text-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/whole-parameter-default-bab148f9-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/whole-parameter-default-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/array-*.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/translation/runtime/big-integer-conversion.js` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/translation/runtime/big-integer-conversion.lean` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/translation/runtime/big-integer-conversion.v` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -1268,86 +1344,8 @@ they are.
 | `src/translation/runtime/utf16-text.js` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/translation/runtime/utf16-text.lean` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/translation/runtime/utf16-text.v` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/callable-data-derivation-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/closed-source-class-composition-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/collection-copy-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/datatype-dependency-group-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/disjoint-collection-iteration-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/disjoint-collection-projection-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/formal-datatype-alias-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/formal-datatype-module-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-array-objects-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-class-observation-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-class-owner-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-collection-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-error-class-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-host-capability-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-module-initialization-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-module-initialization-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-source-text-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/link-cli-archive-topology-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/proposition-value-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-array-lookup-option-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-borrowed-iterator-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-borrowed-source-region-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-borrowed-vector-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-expression-completion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-generic-type-alias-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-mutable-record-loan-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-nominal-ownership-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-owned-record-effect-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-owned-record-loop-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-owned-record-place-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-owned-record-state-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-owned-record-update-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-owned-recursive-datatype-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-owned-standard-sum-callback-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-owned-standard-sum-method-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-owned-standard-sum-observer-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-owned-standard-sum-predicate-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-source-namespace-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-source-type-origin-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-standard-sum-combinator-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-standard-sum-conversion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-standard-sum-guard-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-standard-sum-method-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-standard-sum-nested-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-standard-sum-ownership-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-standard-sum-predicate-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-standard-sum-signature-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-standard-sum-source-metadata-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-standard-sum-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/source-library-class-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/source-library-error-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-active-learning-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-attribute-inference-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-discovery-parser-oracle-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-scanner-character-class-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-scanner-inference-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-scanner-mode-stack-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-structural-inference-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-array-assignment-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-arrays-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-call-templates-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-collection-call-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-collection-iteration-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-collection-iterator-call-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-collection-iterator-results-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-error-class-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-error-construction-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/javascript-ordinary-class-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-concrete-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-exclusive-source-compound-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-exclusive-source-loan-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-exclusive-source-string-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-exclusive-source-vector-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-fnmut-source-abi-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-fnmut-source-declaration-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-fnmut-source-token-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-record-place-owner-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-standard-collection-value-packet-program-source.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/rust-standard-collection-value-packet-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/source-package-imports.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/rust/completions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/rust/float-predicates.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `tests/internal/grammar_inference/refinement.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `tests/internal/source_definition_catalog.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `tests/internal/translation/callable_data.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -1370,26 +1368,122 @@ they are.
 | `tests/internal/translation/source_fn_mut_specializations.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `tests/internal/translation/source_vector_mutations.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `tests/internal/translation/surface_reference_facts.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `README.md` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
+| `src` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 
-28 retained items are behind their current stable release on 2026-10-06, each for the recorded reason.
-28 of them are at their newest compatible release, verified against the requirements that hold them;
-0 are stale and fail the delivery check.
+151 retained items are behind their current stable release on 2026-11-24, each for the recorded reason.
+27 of them are at their newest compatible release, verified against the requirements that hold them;
+124 are stale and fail the delivery check.
 
+- `@peggyjs/from-mem` `3.1.4` → `4.0.0` (`js/package-lock.json`): no recorded reason Stale: no newest compatible release is recorded.
+- `commander` `15.0.0` → `15.1.0` (`js/package-lock.json`): no recorded reason Stale: no newest compatible release is recorded.
+- `links-notation` `0.22.0` → `0.31.8` (`js/package-lock.json`, `js/package.json`): no recorded reason Stale: no newest compatible release is recorded.
+- `pako` `3.0.2` → `3.0.3` (`js/package-lock.json`): no recorded reason Stale: no newest compatible release is recorded.
+- `peggy` `5.1.0` → `5.1.1` (`js/package-lock.json`, `js/package.json`): no recorded reason Stale: no newest compatible release is recorded.
+- `semver` `7.8.5` → `7.8.6` (`js/package-lock.json`): no recorded reason Stale: no newest compatible release is recorded.
+- `tslib` `2.8.1` → `2.9.1` (`js/package-lock.json`): no recorded reason Stale: no newest compatible release is recorded.
+- `web-tree-sitter` `0.27.0` → `0.27.2` (`js/package-lock.json`, `js/package.json`): no recorded reason Stale: no newest compatible release is recorded.
 - `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does. Delivered at its newest compatible release `0.2.21`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.2.9`).
-- `cc` `1.2.67` → `1.6.0` (`rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. Delivered at its newest compatible release `1.2.67`, held by `crate rust/Cargo.lock tree-sitter-sequel@0.3.11` (`~1.2.1`).
+- `anyhow` `1.0.104` → `1.0.105` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `bumpalo` `3.20.3` → `3.20.4` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `bytes` `1.12.1` → `1.12.2` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `cc` `1.2.67` → `1.11.3` (`rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.11.3; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock tree-sitter-sequel@0.3.11 is itself stale.
+- `clap_derive` `4.6.7` → `4.6.9` (`rust/Cargo.lock`): Held by the requirement of `clap` 4.6.7 (`=4.6.7`), which does not admit 4.6.9; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock clap@4.6.7 is itself stale.
+- `clap_lex` `1.1.1` → `1.1.2` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `clap` `4.6.7` → `4.6.9` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `const-oid` `0.10.2` → `0.10.3` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `crc32fast` `1.5.2` → `1.5.6` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `daachorse` `5.0.0` → `5.1.0` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `doublets` `0.5.0` → `0.21.0` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `either` `1.18.0` → `1.19.0` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `encoding_rs` `0.8.42` → `0.8.44` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `equivalent` `1.0.2` → `1.0.3` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `errno` `0.3.14` → `0.3.15` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `filetime` `0.2.29` → `0.2.30` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `find-msvc-tools` `0.1.14` → `0.1.15` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `flate2` `1.1.10` → `1.1.11` (`rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
 - `foldhash` `0.1.5` → `0.2.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.1.2`), which does not admit 0.2.0; it moves when that dependent does. Delivered at its newest compatible release `0.1.5`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.1.2`).
+- `form_urlencoded` `1.2.2` → `1.2.3` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
 - `getrandom` `0.2.17` → `0.4.3` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.2.10`), which does not admit 0.4.3; it moves when that dependent does. Delivered at its newest compatible release `0.2.17`, held by `crate rust/Cargo.lock ring@0.17.14` (`^0.2.10`).
-- `hashbrown` `0.14.5` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), which does not admit 0.17.1; it moves when that dependent does. Delivered at its newest compatible release `0.14.5`, held by `crate rust/Cargo.lock dashmap@6.2.1` (`^0.14.5`).
-- `hashbrown` `0.15.5` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does. Delivered at its newest compatible release `0.15.5`, held by `crate rust/Cargo.lock whatlang@0.18.0` (`^0.15`).
+- `hashbrown` `0.14.5` → `0.17.2` (`rust/Cargo.lock`): Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), which does not admit 0.17.2; it moves when that dependent does. Delivered at its newest compatible release `0.14.5`, held by `crate rust/Cargo.lock dashmap@6.2.1` (`^0.14.5`).
+- `hashbrown` `0.15.5` → `0.17.2` (`rust/Cargo.lock`): Held by the requirement of `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.2; it moves when that dependent does. Delivered at its newest compatible release `0.15.5`, held by `crate rust/Cargo.lock whatlang@0.18.0` (`^0.15`).
+- `hashbrown` `0.17.1` → `0.17.2` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `icu_collections` `2.3.0` → `2.4.0` (`rust/Cargo.lock`): Held by the requirement of `icu_normalizer` 2.3.0 (`~2.3.0`), `icu_properties` 2.3.0 (`~2.3.0`), which does not admit 2.4.0; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock icu_normalizer@2.3.0 is itself stale.
+- `icu_locale_core` `2.3.0` → `2.4.0` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `icu_normalizer_data` `2.3.0` → `2.4.0` (`rust/Cargo.lock`): Held by the requirement of `icu_normalizer` 2.3.0 (`~2.3.0`), which does not admit 2.4.0; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock icu_normalizer@2.3.0 is itself stale.
+- `icu_normalizer` `2.3.0` → `2.4.0` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `icu_properties_data` `2.3.0` → `2.4.0` (`rust/Cargo.lock`): Held by the requirement of `icu_properties` 2.3.0 (`~2.3.0`), which does not admit 2.4.0; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock icu_properties@2.3.0 is itself stale.
+- `icu_properties` `2.3.0` → `2.4.0` (`rust/Cargo.lock`): Held by the requirement of `icu_normalizer` 2.3.0 (`~2.3.0`), which does not admit 2.4.0; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock icu_normalizer@2.3.0 is itself stale.
+- `icu_provider` `2.3.1` → `2.4.0` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
 - `itertools` `0.14.0` → `0.15.0` (`rust/Cargo.lock`): Held by the requirement of `lingua` 1.8.0 (`^0.14.0`), which does not admit 0.15.0; it moves when that dependent does. Delivered at its newest compatible release `0.14.0`, held by `crate rust/Cargo.lock lingua@1.8.0` (`^0.14.0`).
-- `r-efi` `6.0.0` → `7.1.0` (`rust/Cargo.lock`): Held by the requirement of `getrandom` 0.4.3 (`^6`), which does not admit 7.1.0; it moves when that dependent does. Delivered at its newest compatible release `6.0.0`, held by `crate rust/Cargo.lock getrandom@0.4.3` (`^6`).
-- `redox_syscall` `0.5.18` → `0.9.4` (`rust/Cargo.lock`): Held by the requirement of `parking_lot_core` 0.9.12 (`^0.5`), which does not admit 0.9.4; it moves when that dependent does. Delivered at its newest compatible release `0.5.18`, held by `crate rust/Cargo.lock parking_lot_core@0.9.12` (`^0.5`).
+- `itoa` `1.0.18` → `1.0.19` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `js-sys` `0.3.106` → `0.3.107` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `libc` `0.2.190` → `0.2.191` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `lindera-dictionary` `6.2.0` → `7.0.0` (`rust/Cargo.lock`): Held by the requirement of `lindera` 6.2.0 (`^6.2.0`), `lindera-jieba` 6.2.0 (`^6.2.0`), which does not admit 7.0.0; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock lindera@6.2.0 is itself stale.
+- `lindera-jieba` `6.2.0` → `7.0.0` (`rust/Cargo.lock`): Held by the requirement of `lindera` 6.2.0 (`^6.2.0`), which does not admit 7.0.0; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock lindera@6.2.0 is itself stale.
+- `lindera` `6.2.0` → `7.0.0` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `links-notation` `0.22.0` → `0.31.8` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `lock_api` `0.4.14` → `0.5.0` (`rust/Cargo.lock`): Held by the requirement of `dashmap` 6.2.1 (`^0.4.13`), which does not admit 0.5.0; it moves when that dependent does. Delivered at its newest compatible release `0.4.14`, held by `crate rust/Cargo.lock dashmap@6.2.1` (`^0.4.13`).
+- `log` `0.4.34` → `0.4.35` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `memmap2` `0.9.11` → `0.9.12` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `parking_lot_core` `0.9.12` → `0.10.0` (`rust/Cargo.lock`): Held by the requirement of `dashmap` 6.2.1 (`^0.9.11`), which does not admit 0.10.0; it moves when that dependent does. Delivered at its newest compatible release `0.9.12`, held by `crate rust/Cargo.lock dashmap@6.2.1` (`^0.9.11`).
+- `pest_derive` `2.9.2` → `2.9.6` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `pest_generator` `2.9.2` → `2.9.6` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `pest_meta` `2.9.2` → `2.9.6` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `pest` `2.9.2` → `2.9.6` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `pin-project-lite` `0.2.17` → `0.2.18` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `platform-data` `2.0.0` → `3.0.0` (`rust/Cargo.lock`): Held by the requirement of `doublets` 0.5.0 (`^2.0.0`), which does not admit 3.0.0; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock doublets@0.5.0 is itself stale.
+- `platform-mem` `0.3.0` → `0.4.0` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `platform-trees` `0.3.4` → `0.3.5` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `r-efi` `6.0.0` → `7.2.0` (`rust/Cargo.lock`): Held by the requirement of `getrandom` 0.4.3 (`^6`), which does not admit 7.2.0; it moves when that dependent does. Delivered at its newest compatible release `6.0.0`, held by `crate rust/Cargo.lock getrandom@0.4.3` (`^6`).
+- `rand` `0.10.3` → `0.10.4` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `redox_syscall` `0.5.18` → `0.10.0` (`rust/Cargo.lock`): Held by the requirement of `parking_lot_core` 0.9.12 (`^0.5`), which does not admit 0.10.0; it moves when that dependent does. Delivered at its newest compatible release `0.5.18`, held by `crate rust/Cargo.lock parking_lot_core@0.9.12` (`^0.5`).
+- `regex-automata` `0.4.18` → `0.4.19` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `regex-syntax` `0.8.11` → `0.8.12` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `regex` `1.13.1` → `1.13.2` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `rustix` `1.1.5` → `1.1.6` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `rustls-pki-types` `1.15.1` → `1.16.0` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `rustls-webpki` `0.103.15` → `0.103.17` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `rustls` `0.23.45` → `0.23.46` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `serde_json` `1.0.151` → `1.0.154` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `sha2` `0.11.0` → `0.11.1` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `smallvec` `1.16.2` → `1.16.6` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
 - `strum_macros` `0.27.2` → `0.28.0` (`rust/Cargo.lock`): Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does. Delivered at its newest compatible release `0.27.2`, held by `crate rust/Cargo.lock lingua@1.8.0` (`^0.27.2`).
 - `strum` `0.27.2` → `0.28.0` (`rust/Cargo.lock`): Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does. Delivered at its newest compatible release `0.27.2`, held by `crate rust/Cargo.lock lingua@1.8.0` (`^0.27.2`).
-- `syn` `2.0.119` → `3.0.6` (`rust/Cargo.lock`): Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), which does not admit 3.0.6; it moves when that dependent does. Delivered at its newest compatible release `2.0.119`, held by `crate rust/Cargo.lock munge_macro@0.4.7` (`^2`), `crate rust/Cargo.lock pest_generator@2.9.2` (`^2.0`), `crate rust/Cargo.lock strum_macros@0.27.2` (`^2.0`), `crate rust/Cargo.lock strum_macros@0.28.0` (`^2.0`).
+- `syn` `2.0.119` → `3.0.10` (`rust/Cargo.lock`): Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), which does not admit 3.0.10; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock pest_generator@2.9.2 is itself stale.
+- `syn` `3.0.6` → `3.0.10` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `tinystr` `0.8.4` → `0.8.5` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-c-sharp` `0.23.5` → `0.24.0` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-dart` `0.2.0` → `0.3.0` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-erlang` `0.20.0` → `0.22.0` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-json5-orchard` `0.1.0` → `0.1.1` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-language` `0.1.8` → `0.1.9` (`rust/Cargo.lock`, `rust/Cargo.toml`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-matlab` `1.3.1` → `1.3.4` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-php` `0.24.2` → `0.25.2` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-powershell` `0.26.4` → `0.26.6` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-proto` `0.6.0` → `0.6.1` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-scala` `0.26.2` → `0.26.13` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-scheme` `0.24.7` → `0.25.0` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-sequel` `0.3.11` → `0.3.13` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter` `0.27.0` → `0.27.2` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `ts-parser-perl` `2.0.0` → `2.1.2` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `ucd-trie` `0.1.7` → `0.1.8` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `unicode-ident` `1.0.26` → `1.0.27` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `unicode-normalization` `0.1.25` → `0.1.26` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `ureq-proto` `0.6.4` → `0.7.1` (`rust/Cargo.lock`): Held by the requirement of `ureq` 3.4.2 (`^0.6.3`), which does not admit 0.7.1; it moves when that dependent does. Stale: the newest compatible release is 0.6.5.
+- `ureq` `3.4.2` → `3.5.2` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `url` `2.5.8` → `2.5.9` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `utf8_iter` `1.0.4` → `1.1.0` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `uuid` `1.27.0` → `1.29.3` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `walkdir` `2.5.0` → `2.5.1` (`rust/Cargo.lock`, `rust/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
 - `wasi` `0.11.1+wasi-snapshot-preview1` → `0.14.7+wasi-0.2.4` (`rust/Cargo.lock`): Held by the requirement of `getrandom` 0.2.17 (`^0.11`), which does not admit 0.14.7+wasi-0.2.4; it moves when that dependent does. Delivered at its newest compatible release `0.11.1+wasi-snapshot-preview1`, held by `crate rust/Cargo.lock getrandom@0.2.17` (`^0.11`).
+- `wasm-bindgen-macro-support` `0.2.129` → `0.2.130` (`rust/Cargo.lock`): Held by the requirement of `wasm-bindgen-macro` 0.2.129 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock wasm-bindgen-macro@0.2.129 is itself stale.
+- `wasm-bindgen-macro` `0.2.129` → `0.2.130` (`rust/Cargo.lock`): Held by the requirement of `wasm-bindgen` 0.2.129 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock wasm-bindgen@0.2.129 is itself stale.
+- `wasm-bindgen-shared` `0.2.129` → `0.2.130` (`rust/Cargo.lock`): Held by the requirement of `wasm-bindgen` 0.2.129 (`=0.2.129`), `wasm-bindgen-macro-support` 0.2.129 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock wasm-bindgen@0.2.129 is itself stale.
+- `wasm-bindgen` `0.2.129` → `0.2.130` (`rust/Cargo.lock`): Held by the requirement of `js-sys` 0.3.106 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. Stale: the holder crate rust/Cargo.lock js-sys@0.3.106 is itself stale.
+- `webpki-roots` `1.0.9` → `1.0.12` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
 - `windows_aarch64_gnullvm` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).
 - `windows_aarch64_msvc` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).
 - `windows_i686_gnu` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).
@@ -1401,7 +1495,36 @@ they are.
 - `windows-link` `0.2.1` → `0.100.0` (`rust/Cargo.lock`): Held by the requirement of `parking_lot_core` 0.9.12 (`^0.2.0`), `windows-sys` 0.61.2 (`^0.2.1`), which does not admit 0.100.0; it moves when that dependent does. Delivered at its newest compatible release `0.2.1`, held by `crate rust/Cargo.lock parking_lot_core@0.9.12` (`^0.2.0`), `crate rust/Cargo.lock windows-sys@0.61.2` (`^0.2.1`).
 - `windows-sys` `0.52.0` → `0.61.2` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.52`), which does not admit 0.61.2; it moves when that dependent does. Delivered at its newest compatible release `0.52.0`, held by `crate rust/Cargo.lock ring@0.17.14` (`^0.52`).
 - `windows-targets` `0.52.6` → `0.53.5` (`rust/Cargo.lock`): Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-sys@0.52.0` (`^0.52.0`).
-- `ocaml` `5.4` → `5.5.1` (`.github/workflows/ci.yml`): Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. Delivered at its newest compatible release `5.4.1`, held by `opam ocamlfind 1.9.8` (`<5.5.0`).
-- `emscripten/emsdk` `4.0.15` → `6.0.11` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.lino`): Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. Delivered at its newest compatible release `4.0.15`, held by `npm js/package-lock.json web-tree-sitter@0.27.0` (`=4.0.15`).
+- `xattr` `1.6.1` → `1.7.0` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `yoke` `0.8.3` → `0.8.4` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `zeroize` `1.9.0` → `1.9.2` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `zerovec-derive` `0.11.6` → `0.11.7` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `zerovec` `0.11.8` → `0.11.9` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `zlib-rs` `0.6.8` → `0.6.9` (`rust/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `bumpalo` `3.20.3` → `3.20.4` (`rust/web/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `itoa` `1.0.18` → `1.0.19` (`rust/web/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `links-notation` `0.22.0` → `0.31.8` (`rust/web/Cargo.lock`, `rust/web/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `serde_json` `1.0.151` → `1.0.154` (`rust/web/Cargo.lock`, `rust/web/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `syn` `3.0.6` → `3.0.10` (`rust/web/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `unicode-ident` `1.0.26` → `1.0.27` (`rust/web/Cargo.lock`): no recorded reason Stale: no newest compatible release is recorded.
+- `wasm-bindgen-macro-support` `0.2.129` → `0.2.130` (`rust/web/Cargo.lock`): Held by the requirement of `wasm-bindgen-macro` 0.2.129 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. Stale: the holder crate rust/web/Cargo.lock wasm-bindgen-macro@0.2.129 is itself stale.
+- `wasm-bindgen-macro` `0.2.129` → `0.2.130` (`rust/web/Cargo.lock`): Held by the requirement of `wasm-bindgen` 0.2.129 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. Stale: the holder crate rust/web/Cargo.lock wasm-bindgen@0.2.129 is itself stale.
+- `wasm-bindgen-shared` `0.2.129` → `0.2.130` (`rust/web/Cargo.lock`): Held by the requirement of `wasm-bindgen` 0.2.129 (`=0.2.129`), `wasm-bindgen-macro-support` 0.2.129 (`=0.2.129`), which does not admit 0.2.130; it moves when that dependent does. Stale: the holder crate rust/web/Cargo.lock wasm-bindgen@0.2.129 is itself stale.
+- `wasm-bindgen` `0.2.129` → `0.2.130` (`rust/web/Cargo.lock`, `rust/web/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `serde_json` `=1.0.151` → `1.0.154` (`experiments/grammar-merge-rust-stub/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `sha2` `=0.11.0` → `0.11.1` (`experiments/grammar-merge-rust-stub/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `cc` `=1.6.0` → `1.11.3` (`experiments/issue-195-cmake-scanner/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter-language` `=0.1.8` → `0.1.9` (`experiments/issue-195-cmake-scanner/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `tree-sitter` `=0.27.0` → `0.27.2` (`experiments/issue-195-cmake-scanner/Cargo.toml`): no recorded reason Stale: no newest compatible release is recorded.
+- `uyha/tree-sitter-cmake` `v0.7.5` → `v0.7.6` (`js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-cmake/NOTICE.md`): no recorded reason Stale: no newest compatible release is recorded.
+- `js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz` `0.27.0` → `v0.27.2` (`js/src/vendor/web-tree-sitter/runtime-lock.lino`): no recorded reason Stale: no newest compatible release is recorded.
+- `elan` `v4.2.4` → `v4.4.0` (`.github/workflows/ci.yml`): no recorded reason Stale: no newest compatible release is recorded.
+- `lean` `v4.34.1` → `v4.36.0` (`.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain`): no recorded reason Stale: no newest compatible release is recorded.
+- `link-cli` `3.1.1` → `3.1.2` (`experiments/link-cli-archive-reconstruction.mjs`, `js/scripts/link-cli-archive-reconstruction-assertions.mjs`): no recorded reason Stale: no newest compatible release is recorded.
 - `node` `24.14.0` → `26.13.1` (`.github/workflows/ci.yml`): The issue #224 holdout oracles require Node.js 24.14.0 to reproduce their measured observations. Delivered at its newest compatible release `24.14.0`, held by `experiment holdout Node oracle contract@24.14.0` (`=24.14.0`).
+- `node` `24.22.0` → `26.13.1` (`.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml`): no recorded reason Stale: no newest compatible release is recorded.
+- `ocaml` `5.4` → `5.5.2` (`.github/workflows/ci.yml`): Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. Delivered at its newest compatible release `5.4.1`, held by `opam ocamlfind 1.9.8` (`<5.5.0`).
 - `colored` `1.4.4` → `2.3.2` (`.github/workflows/ci.yml`): The pinned Crucio learner requires colored~=1.4.4 for the issue #224 reproduction. Delivered at its newest compatible release `1.4.4`, held by `experiment Crucio learner@ce913637763f0b25017d38e0e01944f54cf86d38` (`>=1.4.4 <1.5.0`).
+- `tree-sitter-cli` `0.27.0` → `0.27.2` (`js/src/vendor/grammars/grammar-lock.lino`, `rust/src/data/grammar-lock.lino`): no recorded reason Stale: no newest compatible release is recorded.
+- `dtolnay/rust-toolchain` `1.99.0` → `1.100.0` (`.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`): no recorded reason Stale: no newest compatible release is recorded.
+- `emscripten/emsdk` `4.0.15` → `7.0.1` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.lino`): Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. Stale: the holder npm js/package-lock.json web-tree-sitter@0.27.0 is itself stale.

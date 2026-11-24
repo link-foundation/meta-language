@@ -976,7 +976,7 @@ jobs:
       - name: Check complete Rust text value projection experiment fixtures
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
-        run: node ../experiments/rust-text-value-projection/generate-fixtures.mjs --check
+        run: node ../experiments/rust-text-value-projection/current-fixtures.mjs --check
 
       - name: Run Rust text value projection experiment
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
@@ -1002,7 +1002,7 @@ jobs:
       - name: Check generated complete Rust text certificate kernel
         if: ${{ !cancelled() && matrix.group == 'source-models' }}
         working-directory: js
-        run: node ../experiments/rust-text-certificate/generate.mjs --check
+        run: node ../experiments/rust-text-certificate/current-generation.mjs --check
 
       - name: Run portable Rust text certificate feasibility checks
         if: ${{ !cancelled() && matrix.group == 'source-models' }}

@@ -15,7 +15,7 @@ export const rawEmissionProducerFiles = Object.freeze([
   'js/tests/translation-collection-construction.test.js',
 ]);
 export const rawEmissionHistoryFile = new URL('./data/raw-emission-source-history.lino', import.meta.url);
-const historyDigest = 'd023cbc8e6869c438e3b5aa95cb57880ec049c079af553f52d180822bba721f8';
+const historyDigest = '4b6aecc528bd7e0e1c80a32454639d9daba39e53f11f2b9191597315b9bc6913';
 export const rawEmissionSourceIdentity = bytes => ({ bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') });
 let history;
 

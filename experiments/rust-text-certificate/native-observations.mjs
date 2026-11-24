@@ -62,8 +62,11 @@ function nativeHeader(source,order){
  return{functionName:'check_rust_text_certificate',parameterModes:order.map(()=> 'Vec<f64>'),resultMode:'Vec<f64>',tokenCount:tokens.length};
 }
 function kernelObservation(artifact){
+ const current=readProjectData(new URL('./data/current-translation.lino',import.meta.url));
  const program=checkProgram(parseJavaScript(bundledTextCertificateSource()));
- assert.deepEqual(program.items.map(item=>item.fullName),artifact.declarations,'all actual generated module declarations must remain in order');assert.equal(artifact.declarations.length,92);assert.equal(artifact.definitions.length,92);
+ assert.deepEqual(program.items.map(item=>item.fullName),current.declarations,'all actual generated module declarations must remain in order');
+ assert.equal(current.declarations.length,92);assert.equal(current.definitions.length,92);
+ assert.equal(artifact.declarations.length,92);assert.equal(artifact.definitions.length,92);
  for(const definition of artifact.definitions)assert.ok(artifact.completeRust.includes(definition),'the complete artifact must contain every actual generated definition');
  const entry=program.declarations.get('checkRustTextCertificate');assert.ok(entry&&entry.k==='fn');
  const vector={kind:'array',element:{kind:'float'}};

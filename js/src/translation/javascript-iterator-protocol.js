@@ -19,6 +19,11 @@ import {convertJavaScriptSemanticBoolean} from './javascript-descriptor-conversi
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSynchronousIteratorRecord} record @returns {string} */
 export function readJavaScriptSynchronousIteratorRecordError(heap,record){
  const heapError=readJavaScriptOrdinaryHeapError(heap);if(heapError!=='')return heapError;
+ return readJavaScriptSynchronousIteratorSlotsError(heap,record);
+}
+/** Check the record against a heap already checked at the current boundary.
+ * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSynchronousIteratorRecord} record @returns {string} */
+export function readJavaScriptSynchronousIteratorSlotsError(heap,record){
  if(record.$!=='synchronousIteratorRecord'||record.iterator.$!=='object'||typeof record.done!=='boolean')return 'an iterator record retains its actual Object and done slot';
  for(const value of [record.iterator,record.nextMethod]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}return '';
 }
@@ -30,7 +35,7 @@ export function readJavaScriptIteratorProtocolStateError(heap,state){
  if(state.$!=='iteratorProtocol'||!phases.includes(state.phase)||typeof state.record.done!=='boolean')return 'iterator work retains its actual operation and continuation phase';
  for(const value of [state.input,state.key,state.record.iterator,state.record.nextMethod,state.result,state.completion.value]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
  if(state.operation==='acquire'&&state.key.$!=='symbol')return 'iterator acquisition retains its actual well-known iterator Symbol';
- if(state.operation!=='acquire'||['next','next getter'].includes(state.phase)){const error=readJavaScriptSynchronousIteratorRecordError(heap,state.record);if(error!=='')return error;}
+ if(state.operation!=='acquire'||['next','next getter'].includes(state.phase)){const error=readJavaScriptSynchronousIteratorSlotsError(heap,state.record);if(error!=='')return error;}
  if(!['normal','throw','return','break','continue'].includes(state.completion.kind)||!Number.isSafeInteger(state.completion.target)||Object.is(state.completion.target,-0)||state.completion.target< -1||state.completion.target>=65536||!['break','continue'].includes(state.completion.kind)&&state.completion.target!==-1)return 'iterator cleanup retains its complete actual abrupt completion and control target';
  if(state.call!==undefined){
   if(!state.phase.endsWith('getter')&&!state.phase.endsWith('call')||state.call.callee.$!=='object'||!state.call.callee.callable||state.call.arguments.length!==0)return 'iterator callbacks retain their actual selected zero-argument getter or method';

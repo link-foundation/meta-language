@@ -37,6 +37,11 @@ function observe(code, entry) {
   vm.runInNewContext(code, context, {timeout: 1000});
   for (const [arguments_, expected] of entry.observations) assert.ok(Object.is(context[entry.name](...arguments_), expected), `${entry.name}(${arguments_}): exact scalar value including NaN and signed zero`);
 }
+function observeEmission(emission, entry, sourceName = entry.name) {
+  const mappings = emission.mappings.filter(row => row.kind === 'function' && row.source === sourceName);
+  assert.equal(mappings.length, 1, sourceName);
+  observe(emission.code ?? emission.text, { ...entry, name: mappings[0].target });
+}
 test('ordinary scalar state lowers iteratively before exact authentic generated-name replay', () => {
   assert.ok(moduleSource.includes(authentic));
   for (const entry of cases) {
@@ -45,22 +50,25 @@ test('ordinary scalar state lowers iteratively before exact authentic generated-
     assert.equal(surface.items[0].name, entry.name);
     assert.equal(surface.items[0].generated, undefined);
     const program = checkProgram(surface);
-    const javascript = emitJavaScript(program).text;
-    assert.match(javascript, /for \(;;\)/u);
-    observe(javascript, entry);
+    const javascript = emitJavaScript(program);
+    assert.match(javascript.text, /for \(;;\)/u);
+    observeEmission(javascript, entry);
     const definitions = emitRust(program).definitions.join('\n\n');
     const replay = checkProgram(parseRust(definitions + suffix, options));
-    assert.equal(replay.items[0].name, entry.name);
-    observe(emitJavaScript(replay).text, entry);
+    const rustTarget = emitRust(program).mappings.find(row => row.kind === 'function' && row.source === entry.name).target;
+    assert.equal(replay.items[0].name, rustTarget);
+    observeEmission(emitJavaScript(replay), entry, rustTarget);
     const actualJavaScriptDefinitions = emitJavaScript(program).definitions.join('\n\n');
-    assert.throws(() => checkProgram(parseJavaScript(actualJavaScriptDefinitions)), /reserved identifier/u);
+    assert.throws(() => checkProgram(parseJavaScript(actualJavaScriptDefinitions)), /assignment expression target: this target needs its actual reference and property state operation/u);
     const reverse = checkProgram(parseJavaScript(actualJavaScriptDefinitions, options));
-    assert.equal(reverse.items[0].name, entry.name);
+    const javascriptTarget = javascript.mappings.find(row => row.kind === 'function' && row.source === entry.name).target;
+    assert.equal(reverse.items[0].name, javascriptTarget);
     assert.equal(reverse.items[0].sourceSignature, undefined);
     assert.equal(reverse.items[0].sourceLoop.interface.model, 'JavaScript Number and Boolean scalar loop values 1');
-    observe(emitJavaScript(reverse).text, entry);
-    const reverseRust = emitRust(reverse).definitions.join('\n\n');
-    observe(emitJavaScript(checkProgram(parseRust(reverseRust + suffix, options))).text, entry);
+    observeEmission(emitJavaScript(reverse), entry, javascriptTarget);
+    const reverseRust = emitRust(reverse);
+    const reverseRustTarget = reverseRust.mappings.find(row => row.kind === 'function' && row.source === javascriptTarget).target;
+    observeEmission(emitJavaScript(checkProgram(parseRust(reverseRust.definitions.join('\n\n') + suffix, options))), entry, reverseRustTarget);
   }
 });
 test('owned header, state, write order and profile survive checked source-free Links reload', () => {
@@ -75,16 +83,39 @@ test('owned header, state, write order and profile survive checked source-free L
     assert.ok(emitTypedProgramLinks(network, imported.root, 'Rust').code.includes(`pub fn ${entry.name}(`));
     assert.ok(network.links().some(link => link.metadata().definition === model));
     assert.ok(network.fieldRelations().some(row => row.label === 'source loop proof'));
-    const actualJavaScript = emitJavaScript(decodeTypedProgramLinks(network, imported.root)).definitions.join('\n\n');
+    const javascript = emitJavaScript(decodeTypedProgramLinks(network, imported.root));
+    const name = javascript.mappings.find(row => row.kind === 'function' && row.source === entry.name).target;
+    const actualJavaScript = javascript.definitions.join('\n\n');
     const reverse = createTypedProgramLinks(actualJavaScript, 'JavaScript', {javaScriptScalarLoopModel: model, provenance: {caller: 'reverse prototype'}});
     const reverseNetwork = LinkNetwork.fromLino(reverse.network.toLino());
-    assert.equal(decodeTypedProgramLinks(reverseNetwork, reverse.root).declarations.get(entry.name).sourceLoop.language, 'JavaScript');
-    observe(emitTypedProgramLinks(reverseNetwork, reverse.root, 'JavaScript').code, entry);
-    assert.ok(emitTypedProgramLinks(reverseNetwork, reverse.root, 'Rust').code.includes(`pub fn ${entry.name}(`));
+    assert.equal(decodeTypedProgramLinks(reverseNetwork, reverse.root).declarations.get(name).sourceLoop.language, 'JavaScript');
+    observeEmission(emitTypedProgramLinks(reverseNetwork, reverse.root, 'JavaScript'), entry, name);
+    const reverseRust = emitTypedProgramLinks(reverseNetwork, reverse.root, 'Rust');
+    const target = reverseRust.mappings.find(row => row.kind === 'function' && row.source === name).target;
+    assert.ok(reverseRust.code.includes(`pub fn ${target}(`));
+  }
+});
+test('current hygienic snapshot bindings preserve execution and require the same immutable owners', () => {
+  const entry = cases[1];
+  const actual = emitJavaScript(checkProgram(parseRust(entry.source + suffix, options))).definitions.join('\n\n');
+  assert.match(actual, /const source_ml_scalar_write0 = b;/u);
+  const withCollisionSuffix = actual.replaceAll('source_ml_scalar_write0', 'source_ml_scalar_write0_2');
+  for (const source of [actual, withCollisionSuffix]) {
+    const checked = checkProgram(parseJavaScript(source, options));
+    observe(emitJavaScript(checked).text, entry);
+  }
+  for (const malformed of [
+    actual.replaceAll('source_ml_scalar_write0', 'source_ml_scalar_write00'),
+    actual.replaceAll('source_ml_scalar_write0', 'source_ml_scalar_write0_1'),
+    actual.replace('const source_ml_scalar_write0', 'let source_ml_scalar_write0'),
+  ]) {
+    assert.notEqual(malformed, actual);
+    assert.throws(() => checkProgram(parseJavaScript(malformed, options)));
   }
 });
 test('JavaScript reverse refuses unproved snapshots, owners, state order and interface meanings', () => {
-  const actual = emitJavaScript(checkProgram(parseRust(cases[1].source + suffix, options))).definitions.join('\n\n');
+  const actual = emitJavaScript(checkProgram(parseRust(cases[1].source + suffix, options))).definitions.join('\n\n')
+    .replaceAll('source_ml_scalar_write', 'ml_scalar_write');
   const invalid = [
     actual.replaceAll('ml_scalar_write0', 'ml_scalar_write00'),
     actual.replace('const ml_scalar_write0 = b;', 'const ml_unrelated = b;'),

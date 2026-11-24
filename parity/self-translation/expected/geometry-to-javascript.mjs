@@ -49,7 +49,7 @@ function is_even(n) {
   return (ml_divide(n, 2n, 'trunc', "attempt to calculate the remainder with a divisor of zero", true, [0n, 4294967295n, "attempt to calculate the remainder with overflow"]) === 0n);
 }
 
-// meta-language:carried Rust struct_item (syntax)
+// meta-language:carried Rust struct_item (no definition)
 // | pub struct Point {
 // |     x: i32,
 // | }

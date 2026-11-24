@@ -1,12 +1,14 @@
 // Complete source-compiler proofs only. No corpus, grammar parse or native process.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {readProjectData} from '../../js/scripts/project-data.mjs';
 import {restoreCompleteDeclarationReceipt} from '../../js/scripts/complete-declaration-receipts.mjs';
 import {readRawArchiveReceiptHistory} from '../../js/scripts/raw-archive-receipt-history.mjs';
+import {ORIGINAL_LINK_RAW_COMPILER_REVISION} from './generate-raw-current-emission.mjs';
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE,ORIGINAL_LINK_RAW_CURRENT_ARTIFACT,ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT} from './raw-emission-profiles.mjs';
 import {ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,ORIGINAL_LINK_RAW_CONSUMING_HISTORICAL_ARTIFACT,
   ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR,generateOriginalLinkRawConsumingEmission,
@@ -30,7 +32,11 @@ test('raw consuming token inventories ignore text and retain actual complete own
 test('raw consuming emission keeps all106owners and both complete typed archives without changing either predecessor',async()=>{
   const historical=readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT), current=readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT);
   const {artifact,profile,currentArtifact,currentDecisionSources}=await generation();
-  assert.deepEqual(currentArtifact.decisionSources,currentDecisionSources,'the real current producer retains its physical source metadata');
+  assert.deepEqual(currentArtifact.decisionSources,artifact.decisionSources.map(row=>{
+    const bytes=execFileSync('git',['show',ORIGINAL_LINK_RAW_COMPILER_REVISION+':'+row.file],
+      {cwd:new URL('../../',import.meta.url),maxBuffer:512*1024});
+    return{file:row.file,bytes:bytes.length,sha256:sha256(bytes)};
+  }),'the replay retains the historical compiler source metadata');
   assert.deepEqual(currentDecisionSources,artifact.decisionSources.map(row=>{
     const bytes=readFileSync(new URL('../../'+row.file,import.meta.url));
     return{file:row.file,bytes:bytes.length,sha256:sha256(bytes)};
@@ -49,7 +55,7 @@ test('raw consuming emission keeps all106owners and both complete typed archives
   const {decisionSources:snapshotSources,...snapshotSemanticFields}=artifact;
   assert.deepEqual(historicalSources,snapshotSources);
   assert.deepEqual(actualSemanticFields,snapshotSemanticFields,'every actual complete emission archive owner mapping and original field stays exact');
-  assert.deepEqual(actualSources,currentDecisionSources);
+  assert.notDeepEqual(actualSources,currentDecisionSources);
   assert.equal(snapshotSources,artifact.decisionSources);
   assert.deepEqual(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT),historical);
   assert.deepEqual(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT),current);

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 
-export function withHistoricalJavaScriptSource(revision, frozenPaths, run, producerPaths = []) {
+function prepareHistoricalJavaScriptSource(revision, frozenPaths, producerPaths) {
   const directory = mkdtempSync(join(tmpdir(), 'meta-language-javascript-source-'));
   try {
     execFileSync('git', ['diff', '--exit-code', revision, '--', ...frozenPaths], { cwd: root, stdio: 'inherit' });
@@ -17,7 +17,26 @@ export function withHistoricalJavaScriptSource(revision, frozenPaths, run, produ
     execFileSync('tar', ['-xf', archive, '-C', directory], { stdio: 'inherit' });
     rmSync(archive);
     symlinkSync(join(root, 'js/node_modules'), join(directory, 'js/node_modules'), 'dir');
+    return directory;
+  } catch (error) {
+    rmSync(directory, { recursive: true, force: true });
+    throw error;
+  }
+}
+
+export function withHistoricalJavaScriptSource(revision, frozenPaths, run, producerPaths = []) {
+  const directory = prepareHistoricalJavaScriptSource(revision, frozenPaths, producerPaths);
+  try {
     return run(directory);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+export async function withHistoricalJavaScriptModules(revision, frozenPaths, run, producerPaths = []) {
+  const directory = prepareHistoricalJavaScriptSource(revision, frozenPaths, producerPaths);
+  try {
+    return await run(directory);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

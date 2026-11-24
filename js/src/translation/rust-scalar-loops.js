@@ -93,7 +93,7 @@ export function checkRustScalarLoopProof(item, language, declaredName = item.ful
           || !scope.has(write.binding) || names.has(write.binding)) fail('a continuation must write distinct declared mutable state slots', node.span);
         writes.set(write.target, write.binding);
         usedSnapshots.add(write.binding);
-        if (language === 'JavaScript' && !snapshots.has(write.binding)) fail('a JavaScript write must use its exact scalar snapshot binding', node.span);
+        if (language === 'JavaScript' && !new RegExp(policy.snapshotBindingPattern, 'u').test(write.binding)) fail('a JavaScript write must use its exact scalar snapshot binding', node.span);
         const position = [...scope.keys()].indexOf(write.binding);
         if (position <= order) fail('parallel writes must retain their actual evaluation order', node.span);
         order = position;

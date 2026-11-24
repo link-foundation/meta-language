@@ -23,7 +23,7 @@ import {constructJavaScriptSymbolFunctionName} from './javascript-function-names
 import {readJavaScriptCallArgumentListsError,retainJavaScriptCallArgumentLists} from './javascript-call-argument-lists.js';
 import {createJavaScriptPropertyDescriptor} from './javascript-property-descriptors.js';
 import {stepJavaScriptArgumentRest} from './javascript-argument-rest.js';
-import {readJavaScriptIteratorRegionsError,insertJavaScriptIteratorRegion,updateJavaScriptIteratorRegion,removeJavaScriptIteratorRegion,testJavaScriptIteratorRegionSlot} from './javascript-iterator-regions.js';
+import {readJavaScriptIteratorRegionSlotsError,insertJavaScriptIteratorRegion,updateJavaScriptIteratorRegion,removeJavaScriptIteratorRegion,testJavaScriptIteratorRegionSlot} from './javascript-iterator-regions.js';
 import {stepJavaScriptIteratorProtocol,resumeJavaScriptIteratorProtocolCall,provideJavaScriptIteratorPrimitivePrototype} from './javascript-iterator-protocol.js';
 import {provideJavaScriptArraySpreadPrimitivePrototype,stepJavaScriptArraySpread,resumeJavaScriptArraySpread} from './javascript-array-spread.js';
 import {stepJavaScriptArrayIteratorNext,resumeJavaScriptArrayIteratorCall,finishJavaScriptArrayIteratorCursor} from './javascript-array-iteration.js';
@@ -155,10 +155,22 @@ export function runJavaScriptCallMachine(program,machine,limit,objectIdentities)
  const error=readJavaScriptCallMachineError(program,machine);
  if(error!=='')return {$:'callExecution',transition:{$:'machineInvalid',heap:machine.heap,reason:error},steps:0,objectIdentitiesUsed:0};
  let current=readJavaScriptCallExecutionTransition({$:'machineContinue',machine});
+ let validatedHeap=machine.heap;
  let steps=0,used=0;
  while(steps<limit){
   const active=readJavaScriptCallExecutionTransition(current);
-  if(active.$==='machineContinue')current=stepJavaScriptCallMachine(program,active.machine);
+  if(active.$==='machineContinue'){
+   const nextMachine=active.machine;
+   const error=nextMachine.heap===validatedHeap ? readJavaScriptCallStackError(program,nextMachine)
+    : readJavaScriptCallMachineError(program,nextMachine);
+   if(error!=='')current={$:'machineInvalid',heap:nextMachine.heap,reason:error};
+   else{
+    // Pure steps share their heap. Recheck the program's heap-dependent
+    // identities and code whenever an instruction replaces that heap.
+    validatedHeap=nextMachine.heap;
+    current=stepValidatedJavaScriptCallMachine(program,nextMachine);
+   }
+  }
   else if(active.$==='machineAllocateObject'){
    const identity=objectIdentities[used];
    if(identity===undefined)return {$:'callExecution',transition:current,steps,objectIdentitiesUsed:used};
@@ -386,6 +398,11 @@ export function readJavaScriptTextCallSourceOperation(fn,frame,destination,realm
  * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @returns {string} */
 export function readJavaScriptCallMachineError(program,machine){
   const error=readJavaScriptCallProgramError(program,machine.heap);if(error!=='')return error;
+  return readJavaScriptCallStackError(program,machine);
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @returns {string} */
+function readJavaScriptCallStackError(program,machine){
   if(machine.frames.length===0||machine.frames.length>1024)return 'a call machine requires its complete bounded active stack';
   let slots=0,argumentSlots=0;
   for(let index=0;index<machine.frames.length;index+=1){
@@ -393,7 +410,7 @@ export function readJavaScriptCallMachineError(program,machine){
     const fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);if(fn===undefined)return 'every call frame retains its actual registered function';
     if(frame.registers.length!==fn.registers||!testJavaScriptCallCoordinate(frame.position,fn.instructions.length+1))return 'call frames retain their complete register and instruction coordinates';
     slots+=frame.registers.length;argumentSlots+=frame.arguments.length;for(const list of frame.argumentLists??[])argumentSlots+=list.values.length;if(slots>1048576||argumentSlots>1048576||frame.handlers.length>1024)return 'call frame storage exceeds its explicit resource budget';
-    const frameError=readJavaScriptCallFrameError(program,machine.heap,frame,fn,index<machine.frames.length-1);
+    const frameError=readJavaScriptCallFrameSlotsError(program,machine.heap,frame,fn,index<machine.frames.length-1);
     if(frameError!=='')return frameError;
     if(frame.activeJoin!==undefined&&machine.frames.slice(0,index).some(parent=>parent.activeJoin!==undefined&&readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity)?.realm===fn.realm&&testJavaScriptSemanticSameValue(parent.activeJoin,frame.activeJoin)))return 'join activations in the same realm cannot own the same receiver guard';
     const selectedParent=machine.frames[index-1];
@@ -448,6 +465,14 @@ export function testJavaScriptCallPendingDestination(pending,registers){
  * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
  * @param {boolean} suspended @returns {string} */
 export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
+    const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return error;
+    return readJavaScriptCallFrameSlotsError(program,heap,frame,fn,suspended);
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @returns {string} */
+function readJavaScriptCallFrameSlotsError(program,heap,frame,fn,suspended){
     for(const value of frame.registers)if(readJavaScriptOrdinaryValueError(heap,value)!=='')return 'call registers belong to the latest global context';
     for(const value of frame.arguments)if(readJavaScriptOrdinaryValueError(heap,value)!=='')return 'call arguments belong to the latest global context';
     const closure=heap.objects[findJavaScriptOrdinaryObject(heap.objects,frame.identity)];
@@ -456,7 +481,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
       for(let index=0;index<closure.captures.length;index++)if(!testJavaScriptSemanticSameValue(frame.registers[fn.parameters+1+index]??{$:'undefined'},closure.captures[index]??{$:'undefined'}))return 'an arrow frame retains its actual immutable captured values';
     }
     if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)){const receiver=frame.registers[0]??{$:'undefined'},object=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;if(receiver.$!=='object'||receiver.callable||object?.$!=='ordinaryObject')return 'an active base constructor retains its actual allocated ordinary receiver';}
-    const iteratorError=readJavaScriptIteratorRegionsError(heap,frame.iterators??[]);if(iteratorError!=='')return iteratorError;
+    const iteratorError=readJavaScriptIteratorRegionSlotsError(heap,frame.iterators??[]);if(iteratorError!=='')return iteratorError;
     const argumentListError=readJavaScriptCallArgumentListsError(heap,frame.argumentLists??[],frame.handlers.length);if(argumentListError!=='')return argumentListError;
     const controlError=readJavaScriptCallFrameControlError(program,heap,frame,fn);if(controlError!=='')return controlError;
     const pending=frame.pending;
@@ -953,6 +978,11 @@ export function executeJavaScriptCallPrimitiveInstruction(program,machine,frame,
  * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @returns {JavaScriptCallMachineTransition} */
 export function stepJavaScriptCallMachine(program,machine){
   const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};
+  return stepValidatedJavaScriptCallMachine(program,machine);
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @returns {JavaScriptCallMachineTransition} */
+function stepValidatedJavaScriptCallMachine(program,machine){
   const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a call step needs its actual active frame'};
   const pending=frame.pending;
   switch(pending.$){

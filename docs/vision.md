@@ -3060,7 +3060,8 @@ inventory, field-role and resource controls remain in the independently required
 fifty-five-group JavaScript suite; this oracle does not native-observe them.
 Actual native results, runtime fit and saved observations remain CI evidence.
 Historical raw emission artifacts and their forty-seven source bindings remain
-immutable. A separate current profile checks fresh whole-program emission,
+immutable. The frozen current profile replays the compiler revision associated
+with its complete typed-archive comparison and checks fresh whole-program emission,
 all 106 declaration identities and the public interface, with an exact five-line
 inverse for the concrete facet capture and 103 unchanged definitions. Its
 applicability retains the deferred-equality inference contract and original
@@ -3078,6 +3079,12 @@ checked current plan and reuses its entire carrier, premises, observations and
 consumer by identity and hash. Historical and current copy artifacts remain
 unchanged. The consuming oracle retains every fixture and the existing process,
 heap, source and output bounds; successful execution remains CI evidence.
+The active compiler also checks the complete original JavaScript program with
+its current schema and lowering rules. It records all 106 declared and
+generated owners, preserves the public entry signature and reproduces the
+complete JavaScript, copying Rust and consuming Rust emissions from both typed
+archives. This profile binds active source hashes independently of the
+historical source and archive hashes.
 A further explicit profile mechanically borrows immutable internal parameters
 using the existing checked-library styles. Its compact Links receipt binds all
 106 definitions, actual style decisions and complete before/after source hashes.

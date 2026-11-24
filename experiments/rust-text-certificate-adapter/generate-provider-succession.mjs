@@ -164,10 +164,12 @@ export async function updateReviewedOverlayProviderSuccession({check=false,revis
   const currentOutputs=outputs(packet);
   for(const row of currentOutputs){
     const actual=readFileSync(new URL(row.file,root),'utf8');
+    if(actual===row.source)continue;
+    if(check)assert.equal(actual,row.source);
     const known=[packet.historicalOutputs.find(old=>old.file===row.file).source];
-    for(let length=1;length<=packet.profiles.length;length++)known.push(outputs({...packet,profiles:packet.profiles.slice(0,length)}).find(value=>value.file===row.file).source);
+    for(let length=1;length<packet.profiles.length;length++)known.push(outputs({...packet,profiles:packet.profiles.slice(0,length)}).find(value=>value.file===row.file).source);
     assert.ok(known.includes(actual),'unknown complete current policy/receipt bytes refuse normal authoring: '+row.file);
-    if(check)assert.equal(actual,row.source);else writeFileSync(new URL(row.file,root),row.source);
+    writeFileSync(new URL(row.file,root),row.source);
   }
   const{rustTextCertificateOverlayRecords}=await import('./generate.mjs');
   const{rawBindingCertificateOverlayRecords}=await import('../rust-raw-binding-certificate-adapter/generate-overlay.mjs');

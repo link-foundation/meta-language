@@ -2,13 +2,14 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
+import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {readProjectData,serializeProjectData} from '../scripts/project-data.mjs';
 import {reviewedOverlayProviderPolicy,readReviewedOverlayProviderSources,restoreReviewedOverlayProviderSources}
   from '../../experiments/rust-text-certificate-adapter/reviewed-providers.mjs';
 import {readReviewedOverlayProviderSuccession,verifyReviewedOverlayProviderSuccession,
   restoreReviewedOverlayProviderPolicy,restoreReviewedOverlayProviderReceiptSource,
   OVERLAY_PROVIDER_ORIGINAL_PACKET,OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,deriveReviewedOverlayProviderPolicy,
-  verifyReviewedOverlayProviderSuccessionHistory,restoreReviewedOverlayProviderModuleSource}
+  verifyReviewedOverlayProviderSuccessionHistory,restoreReviewedOverlayProviderModuleSource,currentOverlayProviderDecorators}
   from '../../experiments/rust-text-certificate-adapter/provider-succession.mjs';
 import {generateReviewedOverlayProviderSuccession} from '../../experiments/rust-text-certificate-adapter/generate-provider-succession.mjs';
 import {rustTextCertificateOverlayRecords} from '../../experiments/rust-text-certificate-adapter/generate.mjs';
@@ -43,11 +44,16 @@ test('actual five-provider profiles have one exact reviewed revision and complet
   assert.equal(serializeProjectData(original,packet.historicalOutputs[0].file),packet.historicalOutputs[0].source);
 });
 
-test('both current overlay receipts retain every old decorator action and exact committed historical bytes',()=>{
+test('current overlay hooks preserve every action and the exact historical receipt bytes',()=>{
   const packet=readReviewedOverlayProviderSuccession();
   for(const[index,author]of [rustTextCertificateOverlayRecords,rawBindingCertificateOverlayRecords].entries()){
     const row=packet.historicalOutputs[index+1],actual=read(row.file).toString('utf8');
-    assert.equal(actual,serializeProjectData(author(),row.file));
+    const current=author(),original=readStructuredDataLino(row.source);
+    assert.equal(actual,serializeProjectData(current,row.file));
+    for(const [position,record] of current.entries()){
+      assert.equal(record.changes,original[position].changes);
+      assert.equal(record.decorators,currentOverlayProviderDecorators(original[position].decorators,record.module,read('js/src/'+record.module).toString('utf8')));
+    }
     assert.equal(restoreReviewedOverlayProviderReceiptSource(actual,row.file),row.source);
     assert.equal(restoreReviewedOverlayProviderReceiptSource(row.source,row.file),row.source);
     assert.throws(()=>restoreReviewedOverlayProviderReceiptSource(actual+'\n',row.file),assert.AssertionError);
