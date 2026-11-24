@@ -36,7 +36,10 @@ impl Checker {
         expected: ExpectedType<'_>,
     ) -> Result<Expr> {
         let variable = env.local(scrutinee).map(str::to_owned);
-        if let Some(variable) = &variable
+        // Links may retain a nested match inside a source-authoring projection.
+        // Check its cases without running the source-only specialization again.
+        if !self.checked_projection
+            && let Some(variable) = &variable
             && let Some(fact) = env.known.get(variable)
         {
             let fact = fact.clone();

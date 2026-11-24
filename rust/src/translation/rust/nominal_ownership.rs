@@ -40,9 +40,9 @@ impl RustParser{
 pub(super) struct NominalOwnershipFacts{pub(super) profile:String,pub(super) clone_implemented:bool,pub(super) closed_owned_container:bool,pub(super) owner:String}
 fn ordered(names:&mut [String]){names.sort_by(|left,right|left.encode_utf16().cmp(right.encode_utf16()));}
 fn actual_declaration_owner(origins:&SourceOrigins,origin:&SourceOrigin,source:&SourceOwner,declared:&str)->SourceOwner{let mut owner=source.clone();if owner.kind=="declaration"&&owner.arguments.is_empty()&&origins.lookup_type_owner(&owner.path,&origin.path).is_some_and(|entry|matches!(entry.declaration,SourceDeclaration::Data)&&entry.full_name==declared){owner.path=declared.split('.').map(str::to_owned).collect();}owner}
-struct Projection<'a>{origins:&'a SourceOrigins,positions:HashMap<String,usize>,kinds:Vec<String>,ends:Vec<f64>,edges:Vec<f64>,targets:Vec<f64>,element_leaves:Vec<bool>,visits:usize}
+struct Projection<'a>{origins:&'a SourceOrigins,positions:HashMap<String,usize>,kinds:Vec<String>,ends:Vec<f64>,edges:Vec<f64>,targets:Vec<f64>,element_leaves:Vec<bool>,recursive_leaves:Vec<bool>,visits:usize}
 impl Projection<'_>{
- fn node(&mut self,kind:&str,children:Vec<usize>,target:f64)->Result<usize>{let error=rules::read_rust_nominal_ownership_graph_error((self.kinds.len()+1) as f64,(self.edges.len()+children.len()) as f64,0.0);if !error.is_empty(){return Err(unsupported("Rust nominal ownership",&error,None));}let index=self.kinds.len();self.kinds.push(kind.into());self.edges.extend(children.into_iter().map(|child|child as f64));self.ends.push(self.edges.len() as f64);self.targets.push(target);self.element_leaves.push(false);Ok(index)}
+ fn node(&mut self,kind:&str,children:Vec<usize>,target:f64)->Result<usize>{let error=rules::read_rust_nominal_ownership_graph_error((self.kinds.len()+1) as f64,(self.edges.len()+children.len()) as f64,0.0);if !error.is_empty(){return Err(unsupported("Rust nominal ownership",&error,None));}let index=self.kinds.len();self.kinds.push(kind.into());self.edges.extend(children.into_iter().map(|child|child as f64));self.ends.push(self.edges.len() as f64);self.targets.push(target);self.element_leaves.push(false);self.recursive_leaves.push(false);Ok(index)}
  fn value(&mut self,origin:&SourceOrigin,depth:usize)->Result<usize>{
   self.visits+=1;let error=rules::read_rust_nominal_ownership_graph_error(self.visits as f64,self.edges.len() as f64,depth as f64);if !error.is_empty(){return Err(unsupported("Rust nominal ownership",&error,None));}
   let Some(ty)=origin.ty.as_ref()else{return self.node("unknown",Vec::new(),-1.0);};let origins=self.origins;let declared=match ty{Type::Named{path,..}=>origins.lookup_type_owner(path,&origin.path),_=>None};let canonical_owner=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()).map(|source|declared.as_ref().map_or_else(||source.clone(),|entry|actual_declaration_owner(origins,origin,source,&entry.full_name)));let owner=canonical_owner.as_ref();
@@ -58,7 +58,11 @@ impl Projection<'_>{
   if kind=="named"{let target=declared.and_then(|entry|self.positions.get(&entry.full_name).copied()).map_or(-1.0,|index|index as f64);return self.node("reference",Vec::new(),target);}
   if kind=="tuple"{let children=origin.fields.iter().flatten().map(|child|self.value(child,depth+1)).collect::<Result<Vec<_>>>()?;return self.node("tuple",children,-1.0);}
   if (kind=="vector"||kind=="pending vector")&&let Type::Array{element,..}=ty{let mut child=SourceOrigin::with_type(element.as_ref().clone(),&origin.path,Vec::new());child.source_owner=owner.and_then(|owner|owner.arguments.first()).cloned();let child=self.value(&child,depth+1)?;return self.node(&kind,vec![child],-1.0);}
-  let index=self.node(&kind,Vec::new(),-1.0)?;self.element_leaves[index]=rules::accept_rust_nominal_vector_element_leaf(ty.kind(),source_policy_column(&origin.wrappers));Ok(index)
+  let index = self.node(&kind, Vec::new(), -1.0)?;
+  self.element_leaves[index] = rules::accept_rust_nominal_vector_element_leaf(ty.kind(), source_policy_column(&origin.wrappers));
+  self.recursive_leaves[index] = self.element_leaves[index]
+      || kind == "copy" && matches!(ty, Type::Function { .. }) && origin.wrappers.is_empty();
+  Ok(index)
  }
 }
 impl SourceOrigins{
@@ -90,7 +94,7 @@ impl SourceOrigins{
   }
   self.nominal_ownership_declarations=rows;
   let mut owners=self.nominal_ownership_declarations.keys().cloned().collect::<Vec<_>>();ordered(&mut owners);
-  let mut projection=Projection{origins:self,positions:owners.iter().enumerate().map(|(index,name)|(name.clone(),index)).collect(),kinds:Vec::new(),ends:Vec::new(),edges:Vec::new(),targets:Vec::new(),element_leaves:Vec::new(),visits:0};let mut roots=Vec::new();
+  let mut projection=Projection{origins:self,positions:owners.iter().enumerate().map(|(index,name)|(name.clone(),index)).collect(),kinds:Vec::new(),ends:Vec::new(),edges:Vec::new(),targets:Vec::new(),element_leaves:Vec::new(),recursive_leaves:Vec::new(),visits:0};let mut roots=Vec::new();
   for name in &owners{let row=&self.nominal_ownership_declarations[name];let mut constructors=Vec::new();for name in &row.constructors{let mut path=vec!["crate".into()];path.extend(name.split('.').map(str::to_owned));let fields=match self.lookup_value_owner(&path,&[]).map(|entry|entry.declaration){Some(SourceDeclaration::Constructor{fields,..})=>fields,_=>vec![SourceOrigin::unknown()]};let children=fields.iter().map(|field|projection.value(field,0)).collect::<Result<Vec<_>>>()?;constructors.push(projection.node("constructor",children,-1.0)?);}roots.push(projection.node("nominal",constructors,-1.0)? as f64);}
   let copies=owners.iter().map(|name|self.nominal_ownership_declarations[name].copy).collect::<Vec<_>>();let clones=owners.iter().map(|name|self.nominal_ownership_declarations[name].derives_clone).collect::<Vec<_>>();
   let owner_column = source_policy_column(&owners);
@@ -105,7 +109,7 @@ impl SourceOrigins{
   let elements = rules::plan_rust_nominal_vector_element_owners(
       owner_column.clone(), copy_column.clone(), clone_column.clone(),
       kind_column.clone(), end_column.clone(), edge_column.clone(), target_column.clone(),
-      root_column.clone(), leaf_column.clone(),
+      root_column.clone(), leaf_column,
   );
   if elements.borrow().len()!=owners.len(){return Err(unsupported("Rust nominal vector element","the actual closed nominal element graph exceeds its finite profile",None));}
   let resolved = rules::plan_rust_nominal_ownership_vector_nodes(
@@ -121,7 +125,7 @@ impl SourceOrigins{
   if plan[0]=="error"{return Err(unsupported("Rust nominal ownership",&plan[1],None));}
   let recursive = recursive_rules::plan_rust_owned_recursive_nominal_owners(
       owner_column, copy_column, clone_column, kind_column, end_column,
-      edge_column, target_column, root_column, leaf_column,
+      edge_column, target_column, root_column, source_policy_column(&projection.recursive_leaves),
   );
   let recursive = recursive.borrow();
   if recursive[0]=="error"{return Err(unsupported("Rust recursive nominal ownership",&recursive[1],None));}
@@ -150,7 +154,7 @@ impl SourceOrigins{
   }
   let Some(owner)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref())else{return false;};let (bits,signed)=match ty{Type::Fixed{bits,signed}=>(bits.to_string(),*signed),_=>(String::new(),false)};
   if let Type::Array{element,..}=ty{let mut child=SourceOrigin::with_type(element.as_ref().clone(),&origin.path,Vec::new());child.source_owner=owner.arguments.first().cloned();if rules::accept_rust_nominal_verified_vector_clone(ty.kind(),source_policy_column(&origin.wrappers),origin.proven,&owner.kind,&owner.path.join("::"),owner.arguments.len() as f64,origin.array_source_model.unwrap_or(""),self.nominal_vector_element(&child)){return true;}}
-  let leaf=rules::read_rust_nominal_ownership_leaf(ty.kind(),&bits,signed,source_policy_column(&origin.wrappers),origin.proven,origin.direct_copy_value(),&owner.kind,&owner.path.join("::"),owner.path.len() as f64,owner.arguments.len() as f64,origin.array_source_model.or(origin.text_source_model).unwrap_or(""),false,match ty{Type::Function{params,..}=>params.len() as f64,_=>-1.0},true,true,match ty{Type::Array{element,..}=>element.kind(),_=>"");
+  let leaf=rules::read_rust_nominal_ownership_leaf(ty.kind(),&bits,signed,source_policy_column(&origin.wrappers),origin.proven,origin.direct_copy_value(),&owner.kind,&owner.path.join("::"),owner.path.len() as f64,owner.arguments.len() as f64,origin.array_source_model.or(origin.text_source_model).unwrap_or(""),false,match ty{Type::Function{params,..}=>params.len() as f64,_=>-1.0},true,true,match ty{Type::Array{element,..}=>element.kind(),_=>""});
   if leaf=="copy"||leaf=="string"{return true;}if leaf=="tuple"{return origin.fields.as_ref().is_some_and(|fields|fields.iter().all(|field|self.source_clone_implementation_bounded(field,depth+1,active,visits)));}if leaf=="vector"&&let Type::Array{element,..}=ty{let mut child=SourceOrigin::with_type(element.as_ref().clone(),&origin.path,Vec::new());child.source_owner=owner.arguments.first().cloned();return self.source_clone_implementation_bounded(&child,depth+1,active,visits);}false
  }
 }

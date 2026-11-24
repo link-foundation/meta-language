@@ -18,6 +18,8 @@ fn callable_data_actual_originals_emit_without_identity_debug_or_equality_instan
         "type Mapper<T,U>=fn(T)->U;fn widen(value:u8)->u16{u16::from(value)}fn main(){let map:Option<Mapper<u8,u16>>=Some(widen);match map{Some(read)=>println!(\"{}\",read(7u8)),None=>println!(\"none\")}}",
         "fn widen(value:u8)->u16{u16::from(value)}fn main(){let map:Result<fn(u8)->u16,u8>=Ok(widen);match map{Ok(read)=>println!(\"{}\",read(7u8)),Err(error)=>println!(\"{}\",error)}}",
         "enum Callback{Value(fn(u8)->u16)}fn widen(value:u8)->u16{u16::from(value)}fn main(){let map=Callback::Value(widen);match map{Callback::Value(read)=>println!(\"{}\",read(7u8))}}",
+        "enum Callback{Value(fn(u8)->u16)}enum Wrapped{Value(Callback)}fn widen(value:u8)->u16{u16::from(value)}fn main(){let map=Wrapped::Value(Callback::Value(widen));match map{Wrapped::Value(Callback::Value(read))=>println!(\"{}\",read(7u8))}}",
+        "enum Chain{End,Link(fn(u8)->u8,Box<Chain>)}fn read(value:u8)->u8{value}fn main(){let chain=Chain::Link(read,Box::new(Chain::End));match chain{Chain::Link(callback,tail)=>println!(\"{}\",callback(7u8)),Chain::End=>println!(\"empty\")}}",
         "enum Chain{Link(fn(u8)->u8,Box<Chain>),End}fn read(value:u8)->u8{value}fn main(){let chain=Chain::Link(read,Box::new(Chain::End));match chain{Chain::Link(callback,tail)=>println!(\"{}\",callback(7u8)),Chain::End=>println!(\"empty\")}}",
     ]{for version in ["1.90.0","1.99.0"]{
         let program=check_program(&parse_rust_with_source_version(source,version).unwrap()).unwrap();

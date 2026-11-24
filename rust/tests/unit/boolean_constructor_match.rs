@@ -3,6 +3,9 @@
 mod native;
 use super::issue_195_translation_pairs::run;
 use meta_language::read_structured_data_lino;
+use meta_language::translation::{
+    check::check_program, emit_javascript::emit_javascript, javascript::parse_javascript,
+};
 use std::process::Command;
 
 #[test]
@@ -155,5 +158,34 @@ fn boolean_constructor_match_retains_every_plan_and_refusal() {
             "{}",
             row["name"]
         );
+    }
+}
+
+#[test]
+fn effectful_tag_receiver_keeps_single_evaluation_and_exact_text() {
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/boolean-constructor-match.lino"
+    ))
+    .unwrap();
+    for row in fixture["textPrograms"].as_array().unwrap() {
+        let name = row["name"].as_str().unwrap();
+        let source = row["source"].as_str().unwrap();
+        let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+        let emitted = emit_javascript(&program).unwrap();
+        let entry = &emitted
+            .mappings
+            .iter()
+            .find(|mapping| mapping.kind == "function" && mapping.source == "compute")
+            .unwrap()
+            .target;
+        for (body, function) in [(source, "compute"), (emitted.text.as_str(), entry.as_str())] {
+            let script = format!(
+                "{body}\nconst result = {function}();\nconsole.log(JSON.stringify(result.split('').map(unit => unit.charCodeAt(0))));"
+            );
+            let observation = run(Command::new("node").args(["--input-type=module", "-e", &script]));
+            assert!(observation.ok, "{name}: {}", observation.stderr);
+            let units: serde_json::Value = serde_json::from_str(&observation.stdout).unwrap();
+            assert_eq!(units, row["expectedUnits"], "{name}");
+        }
     }
 }

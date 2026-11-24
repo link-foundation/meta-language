@@ -2303,7 +2303,11 @@ class Checker {
       ? node.scrutinee.path[0]
       : null;
     const fact = variable && env.get(KNOWN)?.get(variable);
-    if (fact&&!this.recordPlaceMatches?.has(node)) return this.knownMatch(node, fact, variable, env, path, expected, allowLiteral);
+    // Source optimizations may introduce an enclosing match around already
+    // checked code. Rechecking Links still validates every retained case.
+    if (fact && !this.checkedProjection && !this.recordPlaceMatches?.has(node)) {
+      return this.knownMatch(node, fact, variable, env, path, expected, allowLiteral);
+    }
     const scrutinee = this.expr(node.scrutinee, env, path, undefined);
     const type = scrutinee.type;
     const cases = [];

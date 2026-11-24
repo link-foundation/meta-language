@@ -1851,9 +1851,10 @@ class JavaScriptParser {
    * reads fields of the subject, it is one row per remaining alternative.
    */
   defaultRows(node, body, where) {
-    const subject = node.discriminant.object.path[0];
+    const receiver = node.discriminant.object;
+    const subject = receiver.k === 'name' && receiver.path.length === 1 ? receiver.path[0] : null;
     const covered = new Set(node.clauses.flatMap((clause) => clause.tests.filter((test) => test.k === 'tag').map((test) => test.tag)));
-    if (!readsFields(body, subject)) return [{ patterns: [{ k: 'wild', span: where }], body, span: where }];
+    if (subject === null || !readsFields(body, subject)) return [{ patterns: [{ k: 'wild', span: where }], body, span: where }];
     return node.data.ctors.filter((ctor) => !covered.has(ctor.name)).map((ctor) => this.tagRow(node, { k: 'tag', tag: ctor.name, span: where }, body, where));
   }
 

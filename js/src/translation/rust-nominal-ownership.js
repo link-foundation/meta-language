@@ -15,8 +15,8 @@ import {readRustNominalOwnershipGraphError,readRustNominalOwnershipLeaf,readRust
 const empty=()=>({profile:'',cloneImplemented:false,owner:'',definitionName:'',roles:[]});
 function actualDeclarationOwner(origins,origin,source,declared){if(source?.kind==='declaration'&&source.arguments.length===0&&declared?.k==='data'&&origins.lookupTypeOwner(source.path,origin.path)?.fullName===declared.fullName)return {...source,path:declared.fullName.split('.')};return source;}
 function graph(origins,rows){
- const owners=[...rows.keys()].sort(),positions=new Map(owners.map((name,index)=>[name,index])),kinds=[],ends=[],edges=[],targets=[],roots=[],elementLeaves=[];let visits=0;
- const node=(kind,children=[],target=-1)=>{const error=readRustNominalOwnershipGraphError(kinds.length+1,edges.length+children.length,0);if(error)throw unsupported('Rust nominal ownership',error);const index=kinds.length;kinds.push(kind);edges.push(...children);ends.push(edges.length);targets.push(target);elementLeaves.push(false);return index;};
+ const owners=[...rows.keys()].sort(),positions=new Map(owners.map((name,index)=>[name,index])),kinds=[],ends=[],edges=[],targets=[],roots=[],elementLeaves=[],recursiveLeaves=[];let visits=0;
+ const node=(kind,children=[],target=-1)=>{const error=readRustNominalOwnershipGraphError(kinds.length+1,edges.length+children.length,0);if(error)throw unsupported('Rust nominal ownership',error);const index=kinds.length;kinds.push(kind);edges.push(...children);ends.push(edges.length);targets.push(target);elementLeaves.push(false);recursiveLeaves.push(false);return index;};
  function value(origin,depth){
   const error=readRustNominalOwnershipGraphError(++visits,edges.length,depth);if(error)throw unsupported('Rust nominal ownership',error);
   if(!origin?.type)return node('unknown');const type=origin.type,declared=type.kind==='named'?origins.lookupTypeOwner(type.path,origin.path):null,owner=actualDeclarationOwner(origins,origin,origin.expandedSourceOwner??origin.sourceOwner,declared),stored=declared?.standardSumSourceOrigin,sum=stored?.standardSumSource;
@@ -29,13 +29,17 @@ function graph(origins,rows){
   if(kind==='named')return node('reference',[],positions.get(declared.fullName)??-1);
   if(kind==='tuple')return node('tuple',(origin.fields??[]).map(child=>value(child,depth+1)));
   if(kind==='vector'||kind==='pending vector'){const element={...origins.typeOrigin(type.element,origin.path),sourceOwner:owner.arguments[0]};return node(kind,[value(element,depth+1)]);}
-  const index=node(kind);elementLeaves[index]=acceptRustNominalVectorElementLeaf(type.kind,origin.wrappers);return index;
+  const index=node(kind);
+  elementLeaves[index]=acceptRustNominalVectorElementLeaf(type.kind,origin.wrappers);
+  // The nominal ownership rule already proved this unwrapped function pointer is Copy.
+  recursiveLeaves[index]=elementLeaves[index]||kind==='copy'&&type.kind==='function'&&origin.wrappers.length===0;
+  return index;
  }
  for(const name of owners){const row=rows.get(name),constructors=row.constructors.map(name=>origins.lookupValueOwner(['crate',...name.split('.')],[]));roots.push(node('nominal',constructors.map(entry=>node('constructor',(entry?.k==='ctor'?entry.fields:[null]).map(origin=>value(origin,0))))));}
  const elements=planRustNominalVectorElementOwners(owners,owners.map(name=>rows.get(name).copy),owners.map(name=>rows.get(name).derivesClone),kinds,ends,edges,targets,roots,elementLeaves);if(elements.length!==owners.length)throw unsupported('Rust nominal vector element','the actual closed nominal element graph exceeds its finite profile');
  const resolved=planRustNominalOwnershipVectorNodes(kinds,ends,edges,targets,elements);if(resolved.length!==kinds.length)throw unsupported('Rust nominal vector element','the actual vector field edges need their complete finite element witness');
  const plan=planRustNominalOwnershipOwners(owners,owners.map(name=>rows.get(name).copy),owners.map(name=>rows.get(name).derivesClone),resolved,ends,edges,targets,roots);if(plan[0]==='error')throw unsupported('Rust nominal ownership',plan[1]);
- const recursive=planRustOwnedRecursiveNominalOwners(owners,owners.map(name=>rows.get(name).copy),owners.map(name=>rows.get(name).derivesClone),kinds,ends,edges,targets,roots,elementLeaves);if(recursive[0]==='error')throw unsupported('Rust recursive nominal ownership',recursive[1]);
+ const recursive=planRustOwnedRecursiveNominalOwners(owners,owners.map(name=>rows.get(name).copy),owners.map(name=>rows.get(name).derivesClone),kinds,ends,edges,targets,roots,recursiveLeaves);if(recursive[0]==='error')throw unsupported('Rust recursive nominal ownership',recursive[1]);
  owners.forEach((name,index)=>{const row=rows.get(name);row.recursiveProfile=recursive[1+5*index];row.recursiveCloneImplemented=recursive[2+5*index]==='Clone';row.vectorElement=elements[index];row.closedOwnedContainer=recursive[3+5*index]==='closed';row.constructorWitnessRank=Number(recursive[4+5*index]);row.constructorWitness=Number(recursive[5+5*index]);const runtime=planRustOwnedNominalRuntimeFacts(origins.ownedContainerSourceEnabled===true,plan[1+2*index],plan[2+2*index]==='Clone',row.recursiveProfile,row.recursiveCloneImplemented,row.closedOwnedContainer,row.constructorWitnessRank,row.constructorWitness);row.profile=runtime[0];row.cloneImplemented=runtime[1]==='Clone';});
 }
 export function finishRustNominalOwnershipDeclarations(origins){
