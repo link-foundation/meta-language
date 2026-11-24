@@ -25,8 +25,12 @@ mod owned_local_state;
 mod runtime_shell;
 #[path = "codec_scopes.rs"]
 mod scopes;
-pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<TypedProgramLinks> {
-    encoding::encode(program, provenance)
+pub(super) fn encode(
+    program: &Program,
+    provenance: Option<&Value>,
+    node_limit: usize,
+) -> Result<TypedProgramLinks> {
+    encoding::encode(program, provenance, node_limit)
 }
 
 #[derive(Clone)]

@@ -246,6 +246,10 @@ constructor arity and match coverage before emission. The data, constructor and
 match projections reuse the existing surface checker and compare the complete
 rechecked semantic program. Shared decision data supplies reference roles,
 operand traversal, projection instructions and role-specific absent fields.
+Callers submitting a larger checked program can choose a finite node budget
+for import or encoding and for decoding or emission. The default remains
+100,000 nodes, and decoding defaults to a structural depth of 256. An explicit
+budget still applies the same ownership, type and archive validation.
 Type records also distinguish serializer-owned neutral values from unknown
 fields. The actual native type declarations define five omitted false flags:
 array, record, map and set references, and record openness. A source-checked

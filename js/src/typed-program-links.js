@@ -22,8 +22,9 @@ const fieldOf = (label) => Object.entries(schema.fields).find(([, value]) => val
   ?? label.replace(/ ([a-z])/gu, (_, letter) => letter.toUpperCase());
 const metadata = (term, definition) => LinkMetadata.new().withLinkType(LinkType.Semantic)
   .withLanguage(schema.language).withNamed(true).withTerm(term).withDefinition(definition);
+const defaultNodeLimit = 100_000;
 
-function bindingTargets(program) {
+function bindingTargets(program, nodeLimit) {
   const targets = new WeakMap();
   const patternOverrides = new WeakMap();
   const declarations = new Map(program.declarations);
@@ -52,7 +53,7 @@ function bindingTargets(program) {
   }
   function walk(node, environment) {
     if (!node || typeof node !== 'object') return;
-    if (++referenceVisits > 100_000) throw new TypeError('the linked program exceeds its reference resource limit');
+    if (++referenceVisits > nodeLimit) throw new TypeError('the linked program exceeds its reference resource limit');
     for (const field of ['type', 'domain', 'from', 'to']) walkType(node[field]);
     if (node.k === 'var' && environment.has(node.name)) reference(node, 'name', schema.references.binding, environment.get(node.name));
     if (['call', 'functionRef'].includes(node.k) && declarations.has(node.fn)) reference(node, 'fn', schema.references.declaration, declarations.get(node.fn));
@@ -119,12 +120,13 @@ function bindingTargets(program) {
   return { targets, patternOverrides };
 }
 
-export function encodeTypedProgramLinks(program, { provenance } = {}) {
+export function encodeTypedProgramLinks(program, { provenance, nodeLimit = defaultNodeLimit } = {}) {
+  if (!Number.isSafeInteger(nodeLimit) || nodeLimit < 0) throw new TypeError('the linked program has an invalid node limit');
   validateLinkedTypedProgram(program);
   recheckLinkedTypedProgram(program);
   const network = new LinkNetwork();
   const identities = new WeakMap();
-  const { targets, patternOverrides } = bindingTargets(program);
+  const { targets, patternOverrides } = bindingTargets(program, nodeLimit);
   const pending = [];
   function encode(value) {
     if (value && typeof value === 'object') {
@@ -158,7 +160,10 @@ export function encodeTypedProgramLinks(program, { provenance } = {}) {
   return { network, root };
 }
 
-function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, depthLimit = 256 } = {}) {
+function decodeTypedProgramLinksContext(network, root, { nodeLimit = defaultNodeLimit, depthLimit = 256 } = {}) {
+  if (!Number.isSafeInteger(nodeLimit) || nodeLimit < 0 || !Number.isSafeInteger(depthLimit) || depthLimit < 0) {
+    throw new TypeError('the linked program has invalid structural limits');
+  }
   const rootLink = network.link(root);
   if (!rootLink || !acceptProgramSchemaRoot(rootLink.metadata().term ?? '', rootLink.metadata().definition ?? '', String(rootLink.references().length))) throw new TypeError('the linked program root or schema is invalid');
   const fields = new Map();
@@ -358,7 +363,7 @@ export function createTypedProgramLinks(source, language, options = {}) {
 }
 
 export function emitTypedProgramLinks(network, root, target, options = {}) {
-  const program = decodeTypedProgramLinks(network, root);
+  const program = decodeTypedProgramLinks(network, root, options);
   const emit = /^(?:rust|rs)$/iu.test(target) ? emitRust : /^(?:javascript|js|mjs)$/iu.test(target) ? emitJavaScript : null;
   if (!emit) throw new TypeError('typed linked emission currently writes JavaScript and Rust');
   if (options.rustSourceHeaderEmissionModel !== undefined && emit !== emitRust) throw new TypeError('a Rust source header emission model requires Rust target');

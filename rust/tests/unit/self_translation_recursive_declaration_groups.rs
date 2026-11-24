@@ -2,8 +2,10 @@
 use super::issue_195_translation_pairs::{TemporaryDirectory, run, sha256};
 use meta_language::{
     BinaryLinksOptions, LinkNetwork, ParseConfiguration, SelfTranslationOptions,
-    create_typed_program_links, decode_link_network_binary, decode_typed_program_links,
-    emit_typed_program_links, encode_link_network_binary, encode_typed_program_links,
+    TypedProgramLinksEmissionOptions, TypedProgramLinksLimits, create_typed_program_links,
+    create_typed_program_links_with_limits, decode_link_network_binary, decode_typed_program_links,
+    decode_typed_program_links_with_limits, emit_typed_program_links,
+    emit_typed_program_links_with_limits, encode_link_network_binary, encode_typed_program_links,
     read_structured_data_lino, self_translate, self_translate_with, self_translation_signatures,
 };
 use serde_json::{Value, json};

@@ -81,23 +81,43 @@ fn the_complete_original_shared_algorithm_and_every_three_node_graph_execute_thr
     source.push_str("\nconsole.log(acceptDeclarationSignatureBinding(false,1));\n");
     expected.push_str("false\n");
     observe_complete_javascript(&source, &expected, "recursive-original-graphs");
-    let packet = create_typed_program_links(&source, "JavaScript").unwrap();
-    let program = decode_typed_program_links(&packet.network, packet.root).unwrap();
+    let default_error = create_typed_program_links(&source, "JavaScript").unwrap_err();
+    assert!(
+        default_error
+            .to_string()
+            .contains("reference resource limit")
+    );
+    // The same complete source expands to over 226,000 values in the measured
+    // JavaScript IR. Allow room for native serializer fields and keep a finite limit.
+    let limits = TypedProgramLinksLimits {
+        node_limit: 350_000,
+        ..TypedProgramLinksLimits::default()
+    };
+    let packet = create_typed_program_links_with_limits(&source, "JavaScript", limits).unwrap();
+    let program =
+        decode_typed_program_links_with_limits(&packet.network, packet.root, limits).unwrap();
+    let options = TypedProgramLinksEmissionOptions::default();
     for restored in archives(&packet.network) {
         assert_eq!(
-            decode_typed_program_links(&restored, packet.root).unwrap(),
+            decode_typed_program_links_with_limits(&restored, packet.root, limits).unwrap(),
             program
         );
         compile_complete_and_observe(
-            &emit_typed_program_links(&restored, packet.root, "Rust")
+            &emit_typed_program_links_with_limits(&restored, packet.root, "Rust", &options, limits)
                 .unwrap()
                 .code,
             &expected,
             "recursive-dependency-graphs",
         );
-        let code = emit_typed_program_links(&restored, packet.root, "JavaScript")
-            .unwrap()
-            .code;
+        let code = emit_typed_program_links_with_limits(
+            &restored,
+            packet.root,
+            "JavaScript",
+            &options,
+            limits,
+        )
+        .unwrap()
+        .code;
         observe_complete_javascript(&code, &expected, "recursive-javascript-graphs");
     }
 }
