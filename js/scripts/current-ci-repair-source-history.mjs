@@ -47,6 +47,13 @@ export function restoreIntegrationSource(source,path) {
   if (path === '.github/workflows/ci.yml') source = restoreRustJobAdmissionSource(source);
   source = restoreDiagnosticOrderFixture(source, path);
   source = restoreCargoTestHarnessRecognition(source, path);
+  if (path === 'js/scripts/dependency-inventory-append-history.mjs'
+    && pin(source).sha256 === '80e4ed4842f8b5bf3a212e3bcda0ba656694320ef3c510aa374cec9c31a25c4c') {
+    source = source.replace("import {isDeepStrictEqual} from 'node:util';\n", '')
+      .replace(/\/\*\* Restore the earlier declared locations[^\n]*\n[\s\S]*?\n\}\n\n/u, '')
+      .replace(/  \/\/ The Rust workflow now also uses[^\n]*\n[\s\S]*?  prefix\.items\[toolchainIndex\]=[^\n]*\n/u, '');
+    assert.equal(pin(source).sha256, '331f2216a841436adc1c630ed89ec248bd843982735196c8de4e8a050be88cb1');
+  }
   if (path === '.github/workflows/rust.yml'
     && pin(source).sha256 === '9ea1cf322e18b37306b02d3f5d6752a7de26fccbd3e591fbc76f7b1ee9b9296f') {
     source = source.replace(

@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 255 | 254 | 1 | 0 |
+| Generators | 256 | 255 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -802,6 +802,7 @@ they are.
 | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-reference-identity-rules.mjs` | `js/scripts/generate-reference-identity-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-collection-size-rules.mjs` | `js/scripts/generate-collection-size-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-self-translation-relative-array-rules.mjs` | `js/scripts/generate-self-translation-relative-array-rules.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
