@@ -727,7 +727,9 @@ impl<'schema> Importer<'schema> {
             .filter(|name| formats(name).is_some())
             .map(|name| EXPRESSION.nt(format!("json_format_{}", name.replace('-', "_"))));
         if let Some(pattern) = schema.get("pattern").and_then(Value::as_str) {
-            match lower_json_string_pattern(pattern, |expression| self.pattern_rule(expression)) {
+            match lower_json_string_pattern(pattern, false, |expression| {
+                self.pattern_rule(expression)
+            }) {
                 Some(PatternLowering::Match(expression)) => {
                     let pattern =
                         EXPRESSION.seq([EXPRESSION.term("\""), expression, EXPRESSION.term("\"")]);
@@ -761,6 +763,7 @@ impl<'schema> Importer<'schema> {
         &mut self,
         schema: &Value,
         combination: Option<&str>,
+        decoded: bool,
     ) -> Option<Option<Vec<Expression>>> {
         if schema.as_object().is_some_and(|rules| {
             rules.keys().any(|key| {
@@ -779,15 +782,19 @@ impl<'schema> Importer<'schema> {
         let mut expressions = Vec::new();
         if let Some(format) = schema["format"].as_str() {
             formats(format)?;
-            expressions.push(EXPRESSION.nt(format!("json_format_{}", format.replace('-', "_"))));
+            let suffix = if decoded { "_scalars" } else { "" };
+            expressions
+                .push(EXPRESSION.nt(format!("json_format_{}{suffix}", format.replace('-', "_"))));
         }
         if let Some(pattern) = schema["pattern"].as_str() {
-            match lower_json_string_pattern(pattern, |expression| self.pattern_rule(expression))? {
-                PatternLowering::Match(expression) => expressions.push(EXPRESSION.seq([
-                    EXPRESSION.term("\""),
-                    expression,
-                    EXPRESSION.term("\""),
-                ])),
+            match lower_json_string_pattern(pattern, decoded, |expression| {
+                self.pattern_rule(expression)
+            })? {
+                PatternLowering::Match(expression) => expressions.push(if decoded {
+                    expression
+                } else {
+                    EXPRESSION.seq([EXPRESSION.term("\""), expression, EXPRESSION.term("\"")])
+                }),
                 PatternLowering::Impossible => return Some(None),
             }
         }
@@ -795,7 +802,13 @@ impl<'schema> Importer<'schema> {
             let strings: Vec<_> = constants
                 .into_iter()
                 .filter_map(Value::as_str)
-                .map(quoted)
+                .map(|value| {
+                    if decoded {
+                        EXPRESSION.term(value)
+                    } else {
+                        quoted(value)
+                    }
+                })
                 .collect();
             if strings.is_empty() {
                 return Some(None);
@@ -825,6 +838,7 @@ impl<'schema> Importer<'schema> {
         &mut self,
         layers: &[&Value],
         combination: Option<&str>,
+        decoded: bool,
     ) -> Option<Option<Vec<Expression>>> {
         let mut conjunction = Vec::new();
         for (index, layer) in layers.iter().enumerate() {
@@ -833,7 +847,8 @@ impl<'schema> Importer<'schema> {
             } else {
                 Some("$ref")
             };
-            let Some(expressions) = self.regular_string_constraints(layer, ignored)? else {
+            let Some(expressions) = self.regular_string_constraints(layer, ignored, decoded)?
+            else {
                 return Some(None);
             };
             conjunction.extend(expressions);

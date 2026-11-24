@@ -814,6 +814,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-MEMBER-FORMATS',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON and JSON Schema draft 2020-12 semantics',
+      construct: 'exclusive collection alternatives combining an email member format with regular patterns',
+      expectedBehavior: 'Within the shared construction bounds, enforce exact branch membership for email and pattern constraints on array items and object properties. An escaped spelling has the same membership as its decoded string. Enforce sibling assertions and combine string membership with the numeric and unrestricted instance type memberships of the same branches.',
+      fixture: 'parity/fixtures/json-schema-exclusive-member-formats.lino',
+      selector: 'email and pattern overlap, linked and sibling constraints, mixed instance types, repeated items, Unicode and escaped spellings, and numeric endpoints',
+      assertions: ['decoderCombinesExclusiveCollectionMemberFormatsWithPatterns'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/src/grammar-importers/json-schema-patterns.js', 'js/src/grammar-importers/json-schema-string-intersection.js', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import/exclusive_alternatives.rs', 'rust/src/grammar/json_document/patterns.rs', 'rust/src/grammar/json_document/string_intersection.rs', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-PROPERTY',
       source: ISSUE_195_SOURCES.jsonSchema,
       language: 'JSON with draft 2020-12 schemas',

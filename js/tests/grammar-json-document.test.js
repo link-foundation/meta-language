@@ -383,6 +383,17 @@ test('exclusive collection alternatives combine numeric and regular string membe
   });
 });
 
+test('exclusive collection member formats combine with decoded patterns within the state limit', context => {
+  const fixture = 'parity/fixtures/json-schema-exclusive-member-formats.lino';
+  checkExclusiveAlternatives(fixture);
+  recordIssue195Observations({
+    requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-MEMBER-FORMATS', suffix: 'behavior',
+    fixtureId: 'i195-i240-json-schema-exclusive-member-formats', fixtureFile: fixture,
+    assertions: ['decoderCombinesExclusiveCollectionMemberFormatsWithPatterns'],
+    testName: context.name,
+  });
+});
+
 test('exclusive object alternatives count values of a single differing property', context => {
   checkExclusiveAlternatives(exclusiveObjectPropertyFixture);
   recordIssue195Observations({

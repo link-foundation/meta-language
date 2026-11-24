@@ -428,6 +428,22 @@ fn exclusive_collection_alternatives_combine_numeric_and_regular_string_member_c
 }
 
 #[test]
+fn exclusive_collection_member_formats_combine_with_decoded_patterns_within_the_state_limit() {
+    const FIXTURE: &str = "parity/fixtures/json-schema-exclusive-member-formats.lino";
+    check_exclusive_alternatives(include_str!(
+        "../../../parity/fixtures/json-schema-exclusive-member-formats.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I240-JSON-SCHEMA-EXCLUSIVE-MEMBER-FORMATS",
+        suffix: "behavior",
+        fixture_id: "i195-i240-json-schema-exclusive-member-formats",
+        fixture_file: FIXTURE,
+        assertions: &["decoderCombinesExclusiveCollectionMemberFormatsWithPatterns"],
+        test_name: "exclusive_collection_member_formats_combine_with_decoded_patterns_within_the_state_limit",
+    });
+}
+
+#[test]
 fn exclusive_object_alternatives_count_values_of_a_single_differing_property() {
     check_exclusive_alternatives(include_str!(
         "../../../parity/fixtures/json-schema-exclusive-object-property.lino"

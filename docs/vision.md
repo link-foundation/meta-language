@@ -4888,9 +4888,13 @@ or constants, the decoder constructs one product of the supported string
 grammars. It groups reachable accepting states by the branches that match and
 emits a production for each distinct branch set. Reference siblings and the
 parent member schema contribute constraints to the same product. Other
-unrestricted instance types contribute their type memberships. The shared
-string product work limit applies across these member products during one
-import, and the collection budget also counts the resulting productions.
+unrestricted instance types contribute their type memberships. When every
+active string branch has a regular constraint, the product uses decoded Unicode
+scalars. The decoder then expands each transition into its JSON spellings and
+reuses the same production for repeated character sets. A branch with an
+unrestricted string uses the existing JSON string grammar. The shared string
+product work limit applies across these member products during one import, and
+the collection budget also counts the resulting productions.
 Numeric item and property schemas partition their supported bounds into
 open intervals and individual endpoints. Sibling and reference constraints
 restrict each branch before that partition. When an integral value and a

@@ -141,6 +141,13 @@ switch types, a required object property with sibling and reference constraints,
 the date format, integer and number boundaries, Boolean and null branches,
 escaped strings, exponent validation and an empty exclusive language.
 
+Run `node experiments/issue-245/json-schema-exclusive-member-formats.mjs`
+to check email format and pattern constraints on exclusive collection members.
+The earlier decoder accepted `{"amount":3}` after the string product ran out
+of work, even though the number matches both branches. The fixture also
+checks raw and escaped Unicode, quoted email local parts, 63-character domain
+labels, and arrays that use successive items to narrow the matching branches.
+
 Run `node experiments/issue-245/json-schema-exclusive-object-property.mjs`
 to check overlapping property enumerations in objects with an unrestricted
 text field. The previous grammar accepted the shared choice. It now rejects

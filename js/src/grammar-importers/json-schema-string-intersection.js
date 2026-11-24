@@ -1,8 +1,9 @@
 import { GrammarBuilder as Expression } from '../grammar.js';
 import { stringIntersectionLimits } from './json-schema-pattern-policy.js';
-import { complementScalarRanges } from './json-schema-patterns.js';
+import { complementScalarRanges, scalarClass } from './json-schema-patterns.js';
+import { jsonStringCharacter } from './json-schema-property-names.js';
 
-const { charClass, choice, empty, ref, seq } = Expression;
+const { choice, empty, literal, ref, seq } = Expression;
 const [maximumSourceStates, maximumProductStates, maximumWork] = stringIntersectionLimits();
 const exhausted = Symbol('string intersection budget');
 
@@ -123,7 +124,7 @@ export function selectExclusiveJsonStringExpressions(branches, resolve, rulePref
 }
 
 /** Each returned expression accepts strings with exactly its listed branch memberships. */
-export function partitionJsonStringExpressions(branches, resolve, rulePrefix, budget) {
+export function partitionJsonStringExpressions(branches, resolve, rulePrefix, budget, decoded = false) {
   return withProductBudget(charge => {
     const rows = buildProduct(branches, resolve, charge, branches.length);
     const groups = new Map();
@@ -138,7 +139,7 @@ export function partitionJsonStringExpressions(branches, resolve, rulePrefix, bu
     charge(compilationWork * groups.size);
     return [...groups.values()].map(({ matches, accepted }, index) => ({
       matches,
-      ...compileProduct(rows, accepted, `${rulePrefix}_${index}`),
+      ...compileProduct(rows, accepted, `${rulePrefix}_${index}`, decoded),
     }));
   }, budget);
 }
@@ -226,7 +227,7 @@ function buildProduct(branches, resolve, charge, maximumMatches) {
   return rows;
 }
 
-function compileProduct(rows, accepted, rulePrefix) {
+function compileProduct(rows, accepted, rulePrefix, decoded = false) {
   const accepting = new Set(accepted);
   const productive = new Set(accepted);
   const pending = [...accepted];
@@ -240,6 +241,7 @@ function compileProduct(rows, accepted, rulePrefix) {
   if (!productive.has(0)) return null;
   const name = index => `${rulePrefix}_${index}`;
   const rules = [];
+  const encodedCharacters = new Map();
   for (const [index, row] of rows.entries()) {
     if (!productive.has(index)) continue;
     const alternatives = accepting.has(index) ? [empty()] : [];
@@ -247,12 +249,23 @@ function compileProduct(rows, accepted, rulePrefix) {
     for (const { first, last, target } of row.edges) {
       if (!productive.has(target)) continue;
       if (!transitions.has(target)) transitions.set(target, []);
-      transitions.get(target).push(first === last
-        ? { kind: 'char', value: String.fromCodePoint(first) }
-        : { kind: 'range', start: String.fromCodePoint(first), end: String.fromCodePoint(last) });
+      transitions.get(target).push([first, last]);
     }
-    for (const [target, characters] of transitions) alternatives.push(seq(charClass(characters), ref(name(target))));
+    for (const [target, intervals] of transitions) {
+      let characters;
+      if (decoded) {
+        const key = JSON.stringify(intervals);
+        if (!encodedCharacters.has(key)) {
+          const name = `${rulePrefix}_character_${encodedCharacters.size}`;
+          rules.push([name, jsonStringCharacter(intervals)]);
+          encodedCharacters.set(key, ref(name));
+        }
+        characters = encodedCharacters.get(key);
+      } else characters = scalarClass(intervals);
+      alternatives.push(seq(characters, ref(name(target))));
+    }
     rules.push([name(index), choice(...alternatives)]);
   }
-  return { expression: ref(name(0)), rules };
+  const start = ref(name(0));
+  return { expression: decoded ? seq(literal('"'), start, literal('"')) : start, rules };
 }

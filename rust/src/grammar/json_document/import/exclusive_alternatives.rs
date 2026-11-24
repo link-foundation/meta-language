@@ -9,7 +9,7 @@ impl<'schema> Importer<'schema> {
         keyword: &str,
     ) -> Option<Option<Expression>> {
         let string = type_membership("string");
-        let Some(guard) = self.regular_string_constraints(schema, Some(keyword))? else {
+        let Some(guard) = self.regular_string_constraints(schema, Some(keyword), false)? else {
             return Some(None);
         };
         let mut choices = Vec::new();
@@ -27,7 +27,7 @@ impl<'schema> Importer<'schema> {
             if membership != string {
                 return None;
             }
-            if let Some(constraints) = self.regular_string_chain(&layers, None)? {
+            if let Some(constraints) = self.regular_string_chain(&layers, None, false)? {
                 choices.push(constraints);
             }
         }
@@ -757,9 +757,8 @@ impl<'schema> Importer<'schema> {
         if guard & string == 0 {
             return None;
         }
-        let guard_constraints = self.regular_string_chain(&guard_layers, None)?;
         let mut domains = Vec::new();
-        let mut branches = Vec::new();
+        let mut string_layers = Vec::new();
         let mut work = guard_layers.len().checked_add(
             JSON_TYPES
                 .len()
@@ -788,11 +787,30 @@ impl<'schema> Importer<'schema> {
                 return None;
             }
             domains.push(other_types);
-            if (domain & string) != 0
-                && guard_constraints.is_some()
-                && let Some(constraints) = self.regular_string_chain(&layers, None)?
-            {
-                branches.push((index, constraints));
+            if domain & string != 0 {
+                string_layers.push((index, layers));
+            }
+        }
+        // Unconstrained branches still use the full JSON string production.
+        let has_constraint = |layers: &[&Value]| {
+            layers.iter().any(|layer| {
+                layer["pattern"].is_string()
+                    || layer["format"].is_string()
+                    || layer.get("const").is_some()
+                    || layer["enum"].is_array()
+            })
+        };
+        let decoded = has_constraint(&guard_layers)
+            || string_layers
+                .iter()
+                .all(|(_, layers)| has_constraint(layers));
+        let guard_constraints = self.regular_string_chain(&guard_layers, None, decoded)?;
+        let mut branches = Vec::new();
+        if guard_constraints.is_some() {
+            for (index, layers) in string_layers {
+                if let Some(constraints) = self.regular_string_chain(&layers, None, decoded)? {
+                    branches.push((index, constraints));
+                }
             }
         }
         *remaining_work -= work;
@@ -818,6 +836,7 @@ impl<'schema> Importer<'schema> {
             &conjunctions,
             &rule_prefix,
             &mut self.collection_string_work,
+            decoded,
         )?;
         let product_work: usize = product.iter().map(|variant| 1 + variant.rules.len()).sum();
         *remaining_work = remaining_work.checked_sub(product_work)?;

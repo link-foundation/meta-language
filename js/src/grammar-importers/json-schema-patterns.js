@@ -11,7 +11,12 @@ const whitespace = [[9, 13], [32, 32], [160, 160], [0x1680, 0x1680], [0x2000, 0x
   [0x2028, 0x2029], [0x202f, 0x202f], [0x205f, 0x205f], [0x3000, 0x3000], [0xfeff, 0xfeff]];
 const classes = new Map([['d', digit], ['w', word], ['s', whitespace]]);
 const controls = new Map([['0', 0], ['b', 8], ['t', 9], ['n', 10], ['v', 11], ['f', 12], ['r', 13]]);
-const wild = repeat0(Expression.ref('json_pattern_character'));
+
+export function scalarClass(ranges) {
+  return ranges.length ? Expression.charClass(ranges.map(([first, last]) => first === last
+    ? { kind: 'char', value: String.fromCodePoint(first) }
+    : { kind: 'range', start: String.fromCodePoint(first), end: String.fromCodePoint(last) })) : null;
+}
 
 function union(ranges) {
   const result = [];
@@ -87,10 +92,11 @@ function quantify(atom, spelling) {
   return { nullable: min === 0, consuming: repeat(atom.consuming, Math.max(1, min), maximum) };
 }
 
-export function lowerJsonStringPattern(source, registerPatternRule) {
+export function lowerJsonStringPattern(source, registerPatternRule, decoded = false) {
   if (typeof source !== 'string' || Buffer.byteLength(source) > 1024 || !source.isWellFormed()) return null;
   try { new RegExp(source, 'u'); } catch { return null; }
-  if (source === '') return { expression: wild };
+  const wildcard = decoded ? scalarClass(scalars) : Expression.ref('json_pattern_character');
+  if (source === '') return { expression: repeat0(wildcard) };
   // Consume escaped backslashes before looking for Unicode-mode pairs.
   source = source.replace(/\\\\|\\u([dD][89a-bA-B][0-9a-fA-F]{2})\\u([dD][c-fC-F][0-9a-fA-F]{2})/gu,
     (escape, lead, trail) => lead
@@ -135,7 +141,7 @@ export function lowerJsonStringPattern(source, registerPatternRule) {
     if (!ranges) return null;
     const key = JSON.stringify(ranges);
     if (!characters.has(key)) {
-      const expression = jsonStringCharacter(ranges);
+      const expression = decoded ? scalarClass(ranges) : jsonStringCharacter(ranges);
       characters.set(key, expression && registerPatternRule(expression));
     }
     const consuming = characters.get(key);
@@ -154,7 +160,7 @@ export function lowerJsonStringPattern(source, registerPatternRule) {
       if (!value) return null;
       result = concatenate(result, value);
     }
-    const longer = { nullable: true, consuming: repeat(Expression.ref('json_pattern_character'), 1, null) };
+    const longer = { nullable: true, consuming: repeat(wildcard, 1, null) };
     if (outer && !start) result = concatenate(longer, result);
     if (outer && !end) result = concatenate(result, longer);
     return result;

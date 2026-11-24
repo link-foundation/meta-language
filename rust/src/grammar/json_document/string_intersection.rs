@@ -2,7 +2,8 @@ use std::collections::{BTreeSet, HashMap};
 
 use super::super::{CharClassItem, ExprBuilder, Grammar, GrammarExpr, GrammarRule};
 use super::pattern_policy::string_intersection_limits;
-use super::patterns::complement_scalar_ranges;
+use super::patterns::{complement_scalar_ranges, scalar_class};
+use super::property_names::json_string_character;
 
 const EXPRESSION: ExprBuilder = ExprBuilder;
 
@@ -304,6 +305,7 @@ impl Product {
         &self,
         rule_prefix: &str,
         accepted: Vec<usize>,
+        decoded: bool,
     ) -> Option<(GrammarExpr, Vec<GrammarRule>)> {
         let accepting: BTreeSet<_> = accepted.iter().copied().collect();
         let mut productive = accepting.clone();
@@ -324,6 +326,7 @@ impl Product {
         }
         let name = |index| format!("{rule_prefix}_{index}");
         let mut rules = Vec::new();
+        let mut encoded_characters = HashMap::<Vec<(u32, u32)>, GrammarExpr>::new();
         for (index, row) in self.rows.iter().enumerate() {
             if !productive.contains(&index) {
                 continue;
@@ -333,7 +336,7 @@ impl Product {
             } else {
                 Vec::new()
             };
-            let mut transitions: Vec<(usize, Vec<CharClassItem>)> = Vec::new();
+            let mut transitions: Vec<(usize, Vec<(u32, u32)>)> = Vec::new();
             let mut indices = HashMap::new();
             for &Edge {
                 first,
@@ -344,31 +347,41 @@ impl Product {
                 if !productive.contains(&target) {
                     continue;
                 }
-                let first = char::from_u32(first).expect("JSON source scalar boundary");
-                let last = char::from_u32(last).expect("JSON source scalar boundary");
                 let offset = *indices.entry(target).or_insert_with(|| {
                     let offset = transitions.len();
                     transitions.push((target, Vec::new()));
                     offset
                 });
-                transitions[offset].1.push(if first == last {
-                    CharClassItem::Char(first)
-                } else {
-                    CharClassItem::Range(first, last)
-                });
+                transitions[offset].1.push((first, last));
             }
-            alternatives.extend(transitions.into_iter().map(|(target, characters)| {
-                EXPRESSION.seq([
-                    EXPRESSION.char_class(false, characters),
-                    EXPRESSION.nt(name(target)),
-                ])
-            }));
+            for (target, intervals) in transitions {
+                let characters = if decoded {
+                    if let Some(expression) = encoded_characters.get(&intervals) {
+                        expression.clone()
+                    } else {
+                        let name = format!("{rule_prefix}_character_{}", encoded_characters.len());
+                        let expression = EXPRESSION.nt(&name);
+                        rules.push(GrammarRule::new(&name, json_string_character(&intervals)?));
+                        encoded_characters.insert(intervals, expression.clone());
+                        expression
+                    }
+                } else {
+                    scalar_class(&intervals)?
+                };
+                alternatives.push(EXPRESSION.seq([characters, EXPRESSION.nt(name(target))]));
+            }
             rules.push(GrammarRule::new(
                 name(index),
                 EXPRESSION.choice_unordered(alternatives),
             ));
         }
-        Some((EXPRESSION.nt(name(0)), rules))
+        let start = EXPRESSION.nt(name(0));
+        let expression = if decoded {
+            EXPRESSION.seq([EXPRESSION.term("\""), start, EXPRESSION.term("\"")])
+        } else {
+            start
+        };
+        Some((expression, rules))
     }
 }
 
@@ -422,7 +435,7 @@ pub(super) fn select_exclusive_json_string_expressions(
         .enumerate()
         .filter_map(|(index, row)| (row.matches.len() == 1).then_some(index))
         .collect();
-    Some(match product.compile(rule_prefix, accepting) {
+    Some(match product.compile(rule_prefix, accepting, false) {
         Some((expression, rules)) => StringIntersection::Match(expression, rules),
         None => StringIntersection::Impossible,
     })
@@ -440,6 +453,7 @@ pub(super) fn partition_json_string_expressions(
     branches: &[Vec<&GrammarExpr>],
     rule_prefix: &str,
     work: &mut StringProductWork,
+    decoded: bool,
 ) -> Option<Vec<StringMembership>> {
     let product = build_product(grammar, branches, branches.len(), work)?;
     let mut groups = Vec::<(Vec<usize>, Vec<usize>)>::new();
@@ -463,7 +477,7 @@ pub(super) fn partition_json_string_expressions(
         .enumerate()
         .map(|(index, (branches, accepted))| {
             let (expression, rules) =
-                product.compile(&format!("{rule_prefix}_{index}"), accepted)?;
+                product.compile(&format!("{rule_prefix}_{index}"), accepted, decoded)?;
             Some(StringMembership {
                 branches,
                 expression,

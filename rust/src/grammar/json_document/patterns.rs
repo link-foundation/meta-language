@@ -8,7 +8,7 @@ use regex::{Captures, Regex};
 
 use crate::native_grammar_parser::{NativeNode, parse_native};
 
-use super::super::{ExprBuilder, GrammarExpr};
+use super::super::{CharClassItem, ExprBuilder, GrammarExpr};
 use super::pattern_policy::{
     bounded_pattern_repetition, consuming_pattern_lower_bound, scalar_from_surrogate_pair,
 };
@@ -32,6 +32,22 @@ const WHITESPACE: [(u32, u32); 10] = [
 ];
 
 type Intervals = Vec<(u32, u32)>;
+
+pub(super) fn scalar_class(ranges: &[(u32, u32)]) -> Option<GrammarExpr> {
+    if ranges.is_empty() {
+        return None;
+    }
+    let characters = ranges.iter().map(|&(first, last)| {
+        let first = char::from_u32(first)?;
+        let last = char::from_u32(last)?;
+        Some(if first == last {
+            CharClassItem::Char(first)
+        } else {
+            CharClassItem::Range(first, last)
+        })
+    });
+    Some(EXPRESSION.char_class(false, characters.collect::<Option<Vec<_>>>()?))
+}
 
 fn union(mut ranges: Intervals) -> Intervals {
     ranges.sort_unstable();
@@ -346,6 +362,8 @@ struct Lowering<'a, Register> {
     source: &'a str,
     register_pattern_rule: Register,
     characters: BTreeMap<Intervals, Option<GrammarExpr>>,
+    decoded: bool,
+    wildcard: GrammarExpr,
 }
 
 impl<Register: FnMut(GrammarExpr) -> GrammarExpr> Lowering<'_, Register> {
@@ -367,7 +385,14 @@ impl<Register: FnMut(GrammarExpr) -> GrammarExpr> Lowering<'_, Register> {
         let consuming = self
             .characters
             .entry(ranges.clone())
-            .or_insert_with(|| json_string_character(&ranges).map(&mut self.register_pattern_rule))
+            .or_insert_with(|| {
+                let expression = if self.decoded {
+                    scalar_class(&ranges)
+                } else {
+                    json_string_character(&ranges)
+                };
+                expression.map(&mut self.register_pattern_rule)
+            })
             .clone();
         Some(Match {
             nullable: false,
@@ -403,7 +428,7 @@ impl<Register: FnMut(GrammarExpr) -> GrammarExpr> Lowering<'_, Register> {
         }
         let longer = || Match {
             nullable: true,
-            consuming: Some(EXPRESSION.repeat(EXPRESSION.nt("json_pattern_character"), 1, None)),
+            consuming: Some(EXPRESSION.repeat(self.wildcard.clone(), 1, None)),
         };
         if outer && !start {
             result = longer().concatenate(result);
@@ -456,17 +481,19 @@ pub(super) enum PatternLowering {
 /// Lower a supported pattern even when its language is empty.
 pub(super) fn lower_json_string_pattern(
     source: &str,
+    decoded: bool,
     register_pattern_rule: impl FnMut(GrammarExpr) -> GrammarExpr,
 ) -> Option<PatternLowering> {
     if source.len() > 1024 {
         return None;
     }
+    let wildcard = if decoded {
+        scalar_class(&SCALARS)?
+    } else {
+        EXPRESSION.nt("json_pattern_character")
+    };
     if source.is_empty() {
-        return Some(PatternLowering::Match(EXPRESSION.repeat(
-            EXPRESSION.nt("json_pattern_character"),
-            0,
-            None,
-        )));
+        return Some(PatternLowering::Match(EXPRESSION.repeat(wildcard, 0, None)));
     }
     let source = normalize_surrogate_pair_escapes(source);
     let root = regular_expression(&source)?;
@@ -474,6 +501,8 @@ pub(super) fn lower_json_string_pattern(
         source: &source,
         register_pattern_rule,
         characters: BTreeMap::new(),
+        decoded,
+        wildcard,
     }
     .pattern(&root, true, 0)
     .map(|result| {

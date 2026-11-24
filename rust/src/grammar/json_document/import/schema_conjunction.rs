@@ -166,7 +166,9 @@ impl<'schema> Importer<'schema> {
                     ConjunctionEntry::Number(name, limits)
                 }
                 "string" => {
-                    let Some(conjunction) = self.regular_string_chain(layers, combination)? else {
+                    let Some(conjunction) =
+                        self.regular_string_chain(layers, combination, false)?
+                    else {
                         continue;
                     };
                     let expression = if conjunction.is_empty() {

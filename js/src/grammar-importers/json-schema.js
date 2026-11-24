@@ -203,7 +203,9 @@ export function buildJsonDecoderBase() {
     }
   }
   for (const [format, expression] of formatExpressions) {
-    builder.rule(formatRule(format), seq(literal('"'), encoded(expression()), literal('"')));
+    const decoded = expression();
+    builder.rule(formatRule(format), seq(literal('"'), encoded(decoded), literal('"')));
+    builder.rule(`${formatRule(format)}_scalars`, decoded);
   }
   return builder.build();
 }
@@ -661,26 +663,26 @@ export function importJsonSchema(schema) {
     }
     return format ?? ref('string');
   }
-  function regularStringConstraints(rules, combination) {
+  function regularStringConstraints(rules, combination, decoded) {
     if (Object.keys(rules).some(key => key !== combination && appliesToType(key, jsonTypes.get('string')) && (key === '$ref'
       || (!referenceKeys.has(key) && !['type', 'const', 'enum', 'pattern', 'format'].includes(key))))) return undefined;
     const expressions = [];
     if (rules.format !== undefined) {
       if (!formatExpressions.has(rules.format)) return undefined;
-      expressions.push(ref(formatRule(rules.format)));
+      expressions.push(ref(formatRule(rules.format) + (decoded ? '_scalars' : '')));
     }
     if (rules.pattern !== undefined) {
-      const result = lowerJsonStringPattern(rules.pattern, patternRule);
+      const result = lowerJsonStringPattern(rules.pattern, patternRule, decoded);
       if (!result) return undefined;
       if (!result.expression) return null;
-      expressions.push(seq(literal('"'), result.expression, literal('"')));
+      expressions.push(decoded ? result.expression : seq(literal('"'), result.expression, literal('"')));
     }
     const constants = finiteConstants(rules);
     if (constants) {
       const strings = constants.filter(item => typeof item === 'string');
       if (!strings.length) return null;
       if (strings.some(item => !item.isWellFormed())) return undefined;
-      expressions.push(choice(...strings.map(quoted)));
+      expressions.push(choice(...strings.map(decoded ? literal : quoted)));
     }
     return expressions;
   }
@@ -705,10 +707,10 @@ export function importJsonSchema(schema) {
     }
     return undefined;
   }
-  function regularStringChain(layers, combination) {
+  function regularStringChain(layers, combination, decoded = false) {
     const conjunction = [];
     for (const [index, layer] of layers.entries()) {
-      const expressions = regularStringConstraints(layer, (index === 0 && combination) || '$ref');
+      const expressions = regularStringConstraints(layer, (index === 0 && combination) || '$ref', decoded);
       if (!expressions) return expressions;
       conjunction.push(...expressions);
     }
@@ -1267,11 +1269,8 @@ export function importJsonSchema(schema) {
     if (!guardLayers) return undefined;
     const guard = guardLayers.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
     if (!(guard & string)) return undefined;
-    const guardConstraints = regularStringChain(guardLayers);
-    if (guardConstraints === undefined) return undefined;
     const domains = [];
-    const branches = [];
-    const unconstrainedString = ref('string');
+    const stringLayers = [];
     let work = guardLayers.length + jsonTypes.size * (schemas.length + 1);
     for (const [index, schema] of schemas.entries()) {
       const layers = referenceLayers(schema);
@@ -1284,8 +1283,18 @@ export function importJsonSchema(schema) {
         Object.keys(layer).some(key => activeConjunctionKeyword(key, 0, undefined, otherTypes))
       )))) return undefined;
       domains.push(otherTypes);
-      if (!(domain & string) || !guardConstraints) continue;
-      const constraints = regularStringChain(layers);
+      if (domain & string) stringLayers.push({ index, layers });
+    }
+    // Unconstrained branches still use the full JSON string production.
+    const hasConstraint = layers => layers.some(layer => typeof layer.pattern === 'string' || typeof layer.format === 'string'
+      || Object.hasOwn(layer, 'const') || Array.isArray(layer.enum));
+    const decoded = hasConstraint(guardLayers) || stringLayers.every(({ layers }) => hasConstraint(layers));
+    const guardConstraints = regularStringChain(guardLayers, undefined, decoded);
+    if (guardConstraints === undefined) return undefined;
+    const branches = [];
+    const unconstrainedString = ref('string');
+    for (const { index, layers } of guardConstraints ? stringLayers : []) {
+      const constraints = regularStringChain(layers, undefined, decoded);
       if (constraints === undefined) return undefined;
       if (!constraints) continue;
       const conjunction = [...guardConstraints, ...constraints];
@@ -1295,7 +1304,7 @@ export function importJsonSchema(schema) {
     const variants = collectionTypeVariantGroups(domains, guard & ~string);
     if (!branches.length) return variants;
     const product = partitionJsonStringExpressions(branches.map(branch => branch.conjunction),
-      name => builder.rules.get(name)?.expression, `json_string_membership_${next++}`, collectionStringWork);
+      name => builder.rules.get(name)?.expression, `json_string_membership_${next++}`, collectionStringWork, decoded);
     if (!product) return undefined;
     budget.remaining -= product.reduce((cost, variant) => cost + 1 + variant.rules.length, 0);
     if (budget.remaining < 0) return undefined;
