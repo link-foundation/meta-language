@@ -129,10 +129,13 @@ function restoreRustCastParserPlacement(source) {
 
   const castParser = readFileSync(new URL('rust/src/translation/rust/expressions/cast.rs', root), 'utf8');
   assert.deepEqual(pinRequiredFieldNativeHostSource(castParser), {
-    bytes: 1888,
-    sha256: '99e26de92be80ad4ba3d8b7dcc0a6da5e9e000d0068f542a38d16ada2cd7212a',
+    bytes: 1899,
+    sha256: '566656339f7a2001c1f79fe63333f031bf75d817ea63a649313a575229b50c72',
   });
-  const implementation = castParser.split('impl RustParser {\n');
+  const predecessor = replayAsciiHostEdits(castParser, [
+    { before: '    pub(super) fn require_cast_following_token(', after: '    fn require_cast_following_token(' },
+  ]).source;
+  const implementation = predecessor.split('impl RustParser {\n');
   assert.equal(implementation.length, 2);
   assert.ok(implementation[1].endsWith('}\n'));
   const unary = '    pub(super) fn unary(&mut self, path: &[String], options: Options) -> Result<SExpr> {\n';
