@@ -1,5 +1,10 @@
 // Future controls, intentionally not executed during the complete draft phase.
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { inferRegularGrammar, readRegularGrammarInferenceLinks, acceptInferredGrammarSymbols } from '../src/grammar-inference.js';
@@ -13,6 +18,7 @@ import { inferStructuralGrammar, readStructuralGrammarInferenceLinks, refineStru
 import { parseGrammarLinks, renderGrammarLinks } from '../src/grammar-links.js';
 import { createGrammarParser as compileGrammar, renderSyntaxTree } from '../src/grammar-runtime.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { readSupplementalCorpus } from '../../experiments/grammar-inference/holdout-git.mjs';
 
 const fixtures = readProjectData(new URL('../../parity/fixtures/regular-grammar-inference.lino', import.meta.url));
 const [major, minor] = process.versions.node.split('.').map(Number);
@@ -216,4 +222,42 @@ test('active discovery learns a native grammar through ordered independent queri
   assert.deepEqual(sampled.hypothesis, learned.hypothesis);
   assert.equal(sampled.membershipQueries, learned.membershipQueries);
   assert.equal(sampled.equivalenceQueries, learned.equivalenceQueries);
+});
+
+
+test('a partial holdout checkout reads only matching blobs and retains every size exclusion', () => {
+  const scratch = mkdtempSync(join(tmpdir(), 'meta-language-holdout-'));
+  const origin = join(scratch, 'origin');
+  const checkout = join(scratch, 'holdout');
+  const git = (directory, ...arguments_) => execFileSync('git', ['-C', directory, ...arguments_], {
+    encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, GIT_NO_LAZY_FETCH: '1' },
+  }).trim();
+  try {
+    mkdirSync(join(origin, 'workspaces'), { recursive: true });
+    git(origin, 'init');
+    git(origin, 'config', 'uploadpack.allowFilter', 'true');
+    git(origin, 'config', 'uploadpack.allowReachableSHA1InWant', 'true');
+    for (const [name, content] of [['a.json', '[1, 2]'], ['b.json', '{}'], ['c.json', '123456789012'], ['other.txt', 'ignored']]) {
+      writeFileSync(join(origin, 'workspaces', name), content);
+    }
+    git(origin, 'add', '.');
+    git(origin, '-c', 'user.name=Holdout test', '-c', 'user.email=holdout@example.invalid', 'commit', '-m', 'Holdout inputs');
+    const revision = git(origin, 'rev-parse', 'HEAD');
+    const unrelated = git(origin, 'rev-parse', 'HEAD:workspaces/other.txt');
+    git(scratch, 'clone', '--filter=blob:none', '--no-checkout', pathToFileURL(origin).href, checkout);
+    assert.throws(() => git(checkout, 'cat-file', '-e', unrelated));
+    const rows = readSupplementalCorpus(scratch, {
+      directory: 'holdout', name: 'local input', revision,
+      paths: ['workspaces'], pathPattern: /\.json$/u, sampleLimit: 1,
+    }, 8);
+    assert.deepEqual(rows.map(({ path, size, limit, input }) => [path, size, limit, input?.toString()]), [
+      ['holdout/workspaces/c.json', 12, 'input bytes', undefined],
+      ['holdout/workspaces/a.json', 6, undefined, '[1, 2]'],
+      ['holdout/workspaces/b.json', 2, 'sample count', undefined],
+    ]);
+    assert.throws(() => git(checkout, 'cat-file', '-e', unrelated));
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
 });

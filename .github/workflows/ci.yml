@@ -417,15 +417,9 @@ jobs:
               experiment+=("$RUNNER_TEMP/$LEARNER_STRATEGY" grammar-inference-results/training-queries.jsonl)
             fi
           fi
-          if node --max-old-space-size=512 "${experiment[@]}" \
+          node --max-old-space-size=512 "${experiment[@]}" \
             > grammar-inference-results/holdout.json \
-            2> grammar-inference-results/holdout.log; then
-            exit 0
-          else
-            status=$?
-            tail -n 100 grammar-inference-results/holdout.log >&2
-            exit "$status"
-          fi
+            2> >(tee grammar-inference-results/holdout.log >&2)
 
       - name: Retain all scores, disagreements, and diagnostics
         if: ${{ !cancelled() && hashFiles('grammar-inference-results/*') != '' }}

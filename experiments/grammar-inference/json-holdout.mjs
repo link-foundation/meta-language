@@ -7,6 +7,7 @@ import { performance } from 'node:perf_hooks';
 import { createDynamicMetaLanguage } from '../../js/src/dynamic-meta-language.js';
 import { inferRegularGrammar } from '../../js/src/grammar-inference.js';
 import { renderGrammarLinks } from '../../js/src/grammar-links.js';
+import { git, readCorpusInput, readSupplementalCorpus } from './holdout-git.mjs';
 
 const corpusRevision = '1ef36fa01286573e846ac449e8683f8833c5b26a';
 const supplementalCorpora = [
@@ -48,12 +49,6 @@ except RecursionError as error:
     sys.exit(2)
 `;
 
-function git(checkout, ...arguments_) {
-  const result = spawnSync('git', ['-C', checkout, ...arguments_], { maxBuffer: 2 * 1024 * 1024 });
-  if (result.status !== 0) throw new Error(result.error?.message ?? result.stderr.toString());
-  return result.stdout;
-}
-
 function readHoldout(checkout) {
   const directory = git(checkout, 'ls-tree', '-rlz', corpusRevision, '--', 'test_parsing').toString('utf8');
   return directory.split('\0').filter(Boolean).map(record => {
@@ -62,31 +57,6 @@ function readHoldout(checkout) {
     const label = { y: 'accept', n: 'reject', i: 'implementation-defined' }[path.split('/')[1][0]];
     const row = { corpus: 'JSONTestSuite', path, oid, label, size: Number(size) };
     return row.size > inputLimit ? { ...row, limit: 'input bytes' } : readCorpusInput(checkout, row);
-  });
-}
-
-function readCorpusInput(checkout, row) {
-  const input = git(checkout, 'cat-file', 'blob', row.oid);
-  if (input.length !== row.size) throw new Error('corpus length mismatch ' + row.path);
-  return { ...row, sha256: digest(input), input };
-}
-
-function readSupplementalCorpus(root, source) {
-  const checkout = root + '/' + source.directory;
-  const tree = git(checkout, 'ls-tree', '-rlz', source.revision, '--', ...source.paths).toString('utf8');
-  const rows = tree.split('\0').filter(Boolean).flatMap(record => {
-    const [, oid, size, path] = /^100(?:644|755) blob ([0-9a-f]{40})\s+(\d+)\t([^\t]+)$/u.exec(record) ?? [];
-    if (!path || !source.pathPattern.test(path)) return [];
-    return [{ corpus: source.name, path: source.directory + '/' + path, oid, size: Number(size), label: 'unlabelled' }];
-  });
-  if (rows.length === 0) throw new Error('empty pinned corpus ' + source.name);
-  rows.sort((a, b) => b.size - a.size || (a.path < b.path ? -1 : 1));
-  let selected = 0;
-  return rows.map(row => {
-    if (row.size > inputLimit) return { ...row, limit: 'input bytes' };
-    if (selected === source.sampleLimit) return { ...row, limit: 'sample count' };
-    selected += 1;
-    return readCorpusInput(checkout, row);
   });
 }
 
@@ -203,7 +173,11 @@ if (process.versions.node !== '24.14.0') throw new Error('uncovered Node oracle 
 const python = spawnSync('python3', ['--version'], { encoding: 'utf8' });
 const pythonVersion = python.stdout?.trim();
 if (python.status !== 0 || !/^Python 3\.12\.\d+$/u.test(pythonVersion ?? '')) throw new Error('uncovered Python oracle ' + pythonVersion);
-const corpus = [...readHoldout(checkout), ...supplementalCorpora.flatMap(source => readSupplementalCorpus(corpusRoot, source))];
+console.error('Reading the pinned JSONTestSuite holdout');
+const corpus = [...readHoldout(checkout), ...supplementalCorpora.flatMap(source => {
+  console.error('Reading pinned holdout inputs from ' + source.name);
+  return readSupplementalCorpus(corpusRoot, source, inputLimit);
+})];
 if (!corpus.length) throw new Error('pinned holdout is empty');
 const training = new Set([...positives, ...negatives].map(digest));
 const eligible = record => record.input && !training.has(record.sha256);
@@ -216,8 +190,10 @@ function measureLocalLearner() {
   return { grammar, archive, trainMilliseconds, grammarRules: model.grammar.rules.size, deterministic: digest(infer().network.toLino()) === archive,
     parser: createDynamicMetaLanguage([model.source]).parser(model.source.id, parserLimits) };
 }
+console.error('Training the ' + strategy + ' learner');
 const { parser, outcomes, trainingQueries, ...learner } = external
   ? measureExternalLearner(strategy, externalCheckout, tracePath, corpus.filter(eligible)) : measureLocalLearner();
+console.error('Measuring ' + corpus.filter(eligible).length + ' eligible holdout inputs');
 let learnerQueries = 0, oracleQueries = 0, parseMilliseconds = 0;
 const rows = corpus.map(({ input, ...record }) => {
   if (!input) return record;
