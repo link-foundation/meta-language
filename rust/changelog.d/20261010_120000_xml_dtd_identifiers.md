@@ -1,1 +1,0 @@
-- Generate native XML and DTD grammars with shared scanner state and retain their independent parsers as development oracles. Preserve DOCX document semantics, exact Unicode identifier properties, and expression grouping through wrappers and optional extraction operands. Full upstream corpus, multi-source union, delivery and release acceptance remain open.

@@ -1,1 +1,0 @@
-Index exact words and all allowed WordNet synsets before applying the unchanged naming predicate. Preserve ordered diagnostics and every naming assertion while avoiding quadratic synonym scans and repeated test inventory reads.

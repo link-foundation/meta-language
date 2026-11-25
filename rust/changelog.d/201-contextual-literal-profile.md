@@ -1,1 +1,0 @@
-Added a pinned Ruby grammar candidate generated from the native source, with shared Links scanner operations for nested literals, interpolation, whitespace-sensitive tokens and queued heredoc bodies. Independent focused CST fixtures and the complete pinned upstream corpus run in both runtime CI suites before catalog promotion.
