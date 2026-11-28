@@ -25,6 +25,27 @@ export function bytesAt(directory,file,maximum=policy.maximumFileBytes) {
   return readFileSync(path);
 }
 
+/** Authenticate the existing npm installation inputs against the frozen crate. */
+export function verifySharedJavaScriptDependencies(repository, {readWorking = bytesAt} = {}) {
+  const manifest = 'js/package.json';
+  const lockfile = 'js/package-lock.json';
+  const currentManifest = readWorking(repository, manifest);
+  const {version} = JSON.parse(currentManifest);
+  const stableRelease = /^1\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/u;
+  assert.ok(typeof version === 'string' && stableRelease.exec(version)?.[0] === version,
+    `uncovered JavaScript package version ${JSON.stringify(version)} (stable >=1.0.0 <2.0.0)`);
+
+  for (const [file, current] of [[manifest, currentManifest], [lockfile, readWorking(repository, lockfile)]]) {
+    const frozen = git(repository, ['show', `${policy.baseCommit}:${file}`]);
+    const expected = JSON.parse(frozen);
+    assert.equal(`${JSON.stringify(expected, null, 2)}\n`, frozen, `exact frozen JSON formatting: ${file}`);
+    expected.version = version;
+    if (file === lockfile) expected.packages[''].version = version;
+    assert.ok(current.equals(Buffer.from(`${JSON.stringify(expected, null, 2)}\n`)),
+      `shared JavaScript dependencies differ from the frozen input beyond the root release version: ${file}`);
+  }
+}
+
 /** Compile the named frozen Git snapshot, retaining separate current-input
  * pins so publication metadata cannot silently replace a reviewed source.
  */
@@ -114,8 +135,7 @@ export async function createOverlayPlan({repository=fileURLToPath(new URL('../..
   // Future commits may publish experiment files. Core source/dependency drift
   // is authenticated by predecessor pins; the compiled full crate stays frozen.
   // Current source pins are retained separately and checked again after execution.
-  // Dependency locks stay identical for the shared installed JS build dependencies.
-  git(repository,['diff','--exit-code','--quiet',policy.baseCommit,'--','js/package.json','js/package-lock.json']);
+  verifySharedJavaScriptDependencies(repository);
   const executionCommit=git(repository,['rev-parse','HEAD']).trim();
   const {readProjectData}=await import(pathToFileURL(resolve(repository,'js/scripts/project-data.mjs')));
   const generated=buildIntegration(repository);
