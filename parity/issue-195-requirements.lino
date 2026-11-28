@@ -3049,7 +3049,7 @@
 (3049: 229 3048 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (3050: (meta: (t: semantic) (n: 1) (term: string%20value) (def: docs%2Fvision.md%23sources-of-truth%3A%20register%20of%20every%20requirement%20source%20with%20its%20revision%20and%20content%20hash) (lang: meta-language%20structured%20data)))
 (3051: 232 3050 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(3052: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 5a0d068d9f5d52f0e08fa9a98d1cbd2a9cce5801f91d8ff8b3f8c3543c29e236) (lang: meta-language%20structured%20data)))
+(3052: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 4bda886a7586f17d9cf88aa964f7ab237964a8757f5e1dffbd5cf51fa772fbcd) (lang: meta-language%20structured%20data)))
 (3053: 235 3052 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (3054: 3046 3047 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (3055: (meta: (t: semantic) (n: 1) (term: string%20value) (def: planned%3Arepository-directive%3Ai195-vision-requirement-traceability) (lang: meta-language%20structured%20data)))
