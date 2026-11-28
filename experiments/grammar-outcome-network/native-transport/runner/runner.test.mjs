@@ -6,8 +6,9 @@ import {copyFileSync,mkdtempSync,mkdirSync,readFileSync,realpathSync,writeFileSy
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
 import {requireNativeCI,runOverlay,runBounded} from './run.mjs';
-import {createOverlayPlan,frozenSourceBytes,sha256} from './plan.mjs';
+import {checkFrozenJavaScriptDependencies,createOverlayPlan,frozenSourceBytes,git,sha256} from './plan.mjs';
 import {publicationEdit,replayPublication} from './generate-publication.mjs';
 import {overlayPolicy} from './policy.mjs';
 
@@ -63,6 +64,55 @@ test('the compiled snapshot uses exact frozen blobs while separately retaining c
   assert.throws(()=>frozenSourceBytes('/unused',{...file,workingSha256:sha256(original)},{readWorking:()=>current,readBlob:()=>original}),/production input changed after planning/u);
   let loads=0;const retained=frozenSourceBytes('/unused',file,{readWorking:()=>original,readBlob:()=>{loads++;return original;}});
   assert.deepEqual(retained.bytes,original);assert.equal(loads,0);
+});
+
+test('removed release fragments preserve frozen bytes and planned absence', () => {
+  const original = Buffer.from('retired changelog fragment\n');
+  const gitObject = createHash('sha1').update(`blob ${original.length}\0`).update(original).digest('hex');
+  const file = { path: 'rust/changelog.d/historical.md', gitObject, sha256: sha256(original) };
+  const readers = {
+    readWorking: () => { throw Object.assign(new Error('missing changelog fragment'), { code: 'ENOENT' }); },
+    readBlob: () => original,
+  };
+  assert.throws(() => frozenSourceBytes('/unused', file, readers), { code: 'ENOENT' });
+  const removed = { ...file, releaseRemoved: true };
+  assert.deepEqual(frozenSourceBytes('/unused', removed, readers), {
+    bytes: original, workingSha256: null, workingBytes: null,
+  });
+  assert.throws(() => frozenSourceBytes('/unused', { ...removed, workingSha256: null }, {
+    ...readers, readWorking: () => original,
+  }), /production input changed after planning/u);
+});
+
+test('the frozen experiment accepts release metadata changes and rejects dependency drift', () => {
+  const repository = fileURLToPath(new URL('../../../../', import.meta.url));
+  const manifest = 'js/package.json';
+  const lockfile = 'js/package-lock.json';
+  const readSnapshot = (commit) => new Map([manifest, lockfile].map((file) => [
+    file, git(repository, ['show', `${commit}:${file}`]),
+  ]));
+  const baseline = readSnapshot(overlayPolicy.baseCommit);
+  const release = readSnapshot('8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18');
+  for (const file of [manifest, lockfile]) {
+    let expected = baseline.get(file).replace(/^  "version": "1\.0\.0",$/mu, '  "version": "1.1.0",');
+    if (file === lockfile) {
+      expected = expected.replace(/^(    "": \{\n      "name": "meta-language",\n)      "version": "1\.0\.0",$/mu,
+        '$1      "version": "1.1.0",');
+    }
+    assert.equal(release.get(file), expected);
+  }
+
+  const check = (files) => checkFrozenJavaScriptDependencies(repository, {
+    readWorking: (_repository, file) => Buffer.from(files.get(file)),
+  });
+  check(baseline);
+  check(release);
+  assert.throws(() => check(new Map(release).set(lockfile, baseline.get(lockfile))), /differs in js\/package-lock\.json/u);
+  const alteredLockfile = release.get(lockfile).replace('"links-notation": "0.22.0"', '"links-notation": "0.22.1"');
+  assert.notEqual(alteredLockfile, release.get(lockfile));
+  assert.throws(() => check(new Map(release).set(lockfile, alteredLockfile)), /differs in js\/package-lock\.json/u);
+  const unknownVersion = release.get(manifest).replace('"version": "1.1.0"', '"version": "1.1.1"');
+  assert.throws(() => check(new Map(release).set(manifest, unknownVersion)), /No frozen JavaScript dependency profile/u);
 });
 
 test('publication edits retain the complete original and refuse a changed original interval',()=>{

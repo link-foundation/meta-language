@@ -23,8 +23,13 @@ compiler/version command, native scratch allocation and injected native process.
 The scratch crate contains the exact frozen sources from
 `3780504667f4abe167a270263453e54be2b1cc43`, the small original Agda JavaScript
 build-helper closure and three explicit candidate/probe overlays. Current source
-hashes are recorded separately. Only the existing JavaScript dependencies are
-shared. Cargo runs offline and locked with one job in a fresh target directory.
+hashes are recorded separately. The shared JavaScript dependencies must match
+the complete manifest and lockfile for 1.0.0 at the frozen baseline or 1.1.0 at
+`8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18`. That release changed only the root
+package version fields in those files. The planner records the absence of
+changelog fragments removed by the release and still copies their exact frozen
+Git blobs into the isolated snapshot. Cargo runs offline and locked with one
+job in a fresh target directory.
 The existing checksum-verifying downloader acquires only the frozen registry's
 native oracle build assets into that scratch overlay under a separate ninety
 second bound. The artifact receipt records the exact registry, downloader and
