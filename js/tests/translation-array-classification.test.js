@@ -140,11 +140,11 @@ test('ordinary binding identifiers keep actual module local parameter and nested
       const before=emitRust(program).text,emitted=emitJavaScript(program,options).text;
       assert.equal(printed(emitted),row.expected);assert.equal(emitRust(program).text,before);assert.equal(before,rust,'target naming does not change the actual checked program');
       if(row.fixedNumberPrelude){
-        // The 1.0.0 and 1.1.0 implementations use Object.is in the fixed Number formatter.
+        // The covered implementations use Object.is in the fixed Number formatter.
         // Preserve this complete original program and all its oracles; the
         // naming profile does not admit that unrepresented prelude operation.
         const active = readProjectData(new URL('../package.json', import.meta.url)).version;
-        assert.ok(['1.0.0', '1.1.0'].includes(active), `uncovered package version ${active}; [1.0.0,1.0.1) || [1.1.0,1.1.1) required for this exact fixed-prelude refusal`);
+        assert.ok(['1.0.0', '1.1.0', '1.1.1'].includes(active), `uncovered package version ${active}; [1.0.0,1.0.1) || [1.1.0,1.1.2) required for this exact fixed-prelude refusal`);
         assert.match(emitted,/function ml_showNumber\(value\)/u);
         assert.throws(()=>parseJavaScript(emitted),error=>error.reason==='Object.is: the JavaScript standard library is outside the portable core'&&error.span.start===195&&error.span.end===216);
       }else reverseOracle(emitted,row.expected);

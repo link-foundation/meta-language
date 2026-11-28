@@ -55,13 +55,13 @@ fn late_structural_equality_selection_marks_actual_types_and_preserves_reference
     };
     use std::{fs, process::Command};
 
-    // Both covered implementation versions keep the exact predecessor input.
+    // The covered implementation versions keep the exact predecessor input.
     // The previous full test, missing-reference assertion and refusal remain in
     // the certified source archive; current behavior requires the actual new policy.
     let active = env!("CARGO_PKG_VERSION");
     assert!(
-        matches!(active, "1.0.0" | "1.1.0"),
-        "uncovered package version {active}; supported [1.0.0,1.0.1) || [1.1.0,1.1.1)"
+        matches!(active, "1.0.0" | "1.1.0" | "1.1.1"),
+        "uncovered package version {active}; supported [1.0.0,1.0.1) || [1.1.0,1.1.2)"
     );
     let profile = meta_language::read_structured_data_lino(include_str!(
         "../../src/data/reference-identity-rules.lino"

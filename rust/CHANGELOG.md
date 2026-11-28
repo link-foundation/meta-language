@@ -68,6 +68,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.1.1] - 2026-11-28
+
+### Fixed
+
+- Keep English and Russian abbreviations, personal initials, and decimal numbers inside natural-language sentence spans while preserving the original text and byte offsets.
+
 ## [1.1.0] - 2026-11-25
 
 The native grammar importer compiles character-class intersection, difference

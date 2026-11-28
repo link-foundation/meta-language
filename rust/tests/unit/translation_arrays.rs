@@ -507,8 +507,8 @@ fn assert_modern_array_identity_translation(source: &str, previous_message: &str
         ("npm", package["version"].as_str().unwrap()),
     ] {
         assert!(
-            matches!(active, "1.0.0" | "1.1.0"),
-            "uncovered {package} version {active}; [1.0.0,1.0.1) || [1.1.0,1.1.1) required"
+            matches!(active, "1.0.0" | "1.1.0" | "1.1.1"),
+            "uncovered {package} version {active}; [1.0.0,1.0.1) || [1.1.0,1.1.2) required"
         );
     }
     for (tool, rust) in [("node", false), ("rustc", true)] {
