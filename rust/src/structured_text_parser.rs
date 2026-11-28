@@ -127,7 +127,7 @@ fn insert_grammar(
         TextGrammar::Plain => parse_plain_text_cst(text),
         TextGrammar::Lino => parse_lino_cst(text),
         TextGrammar::Pdf => parse_pdf_cst(text),
-        TextGrammar::Natural => parse_natural_language_cst(text),
+        TextGrammar::Natural => parse_natural_language_cst(text, language),
     };
     insert_grammar_node(network, parent, &source, &tree)
 }
@@ -213,12 +213,14 @@ fn insert_grammar_node(
 
 /// Runs the generated native line grammar with shared lexical rules.
 pub fn parse_plain_text_cst(text: &str) -> GrammarNode {
-    parse_native_text_cst(text, "plain")
+    parse_native_text_cst(text, "plain", None)
 }
 
 /// Runs the generated native sentence grammar with shared lexical rules.
-pub fn parse_natural_language_cst(text: &str) -> GrammarNode {
-    parse_native_text_cst(text, "natural")
+pub fn parse_natural_language_cst(text: &str, language: &str) -> GrammarNode {
+    let start_rule = canonical_natural_language(language)
+        .and_then(|name| text_grammar_metadata()["naturalStarts"][name].as_str());
+    parse_native_text_cst(text, "natural", start_rule)
 }
 
 fn text_grammar_metadata() -> &'static Value {
@@ -259,10 +261,10 @@ fn projected_term(kind: &str) -> &'static str {
         .expect("generated text kind has a projection")
 }
 
-fn parse_native_text_cst(text: &str, mode: &str) -> GrammarNode {
+fn parse_native_text_cst(text: &str, mode: &str, start_rule: Option<&str>) -> GrammarNode {
     let metadata = text_grammar_metadata();
-    let start_rule = metadata["starts"][mode]
-        .as_str()
+    let start_rule = start_rule
+        .or_else(|| metadata["starts"][mode].as_str())
         .expect("generated text grammar has this mode");
     let term = projected_term(start_rule);
     let Some(SyntaxTree::Node { children, .. }) = parse_native_text(text, start_rule) else {

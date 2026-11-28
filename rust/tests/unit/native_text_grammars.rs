@@ -8,6 +8,8 @@ use serde_json::Value;
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native-text.lino");
 const FIXTURE: &str = include_str!("../../../parity/fixtures/native-text-grammars.lino");
+const SENTENCE_BOUNDARIES: &str =
+    include_str!("../../../parity/fixtures/natural-language-sentence-boundaries.lino");
 
 #[test]
 fn native_text_grammar_files_are_identical_in_both_packages() {
@@ -125,4 +127,53 @@ fn native_plain_text_retains_every_source_byte_and_control_errors() {
             case["hasError"].as_bool().unwrap()
         );
     }
+}
+
+#[test]
+fn natural_language_sentence_boundaries_respect_abbreviations_initials_and_numbers() {
+    let fixture: Value = super::project_data::read_project_data(SENTENCE_BOUNDARIES).unwrap();
+    for case in fixture["cases"].as_array().unwrap() {
+        let source = case["source"].as_str().unwrap();
+        let language = case["language"].as_str().unwrap();
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+        let sentences =
+            network.query_links(&LinkQuery::by_type(LinkType::Syntax).with_term("sentence"));
+        let represented: Vec<_> = sentences
+            .iter()
+            .map(|sentence| {
+                let range = sentence.metadata().span().unwrap().byte_range();
+                (
+                    range.start(),
+                    range.end(),
+                    &source[range.start()..range.end()],
+                )
+            })
+            .collect();
+        let mut offset = 0;
+        let expected: Vec<_> = case["regions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|region| {
+                let region = region.as_str().unwrap();
+                let start = offset;
+                offset += region.len();
+                (start, offset, region)
+            })
+            .collect();
+        assert_eq!(represented, expected, "{source}");
+        assert_eq!(offset, source.len(), "{source}");
+        assert_eq!(network.reconstruct_text(), source);
+    }
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-NATURAL-LANGUAGE-SENTENCE-BOUNDARIES",
+        suffix: "behavior",
+        fixture_id: "natural-language-sentence-boundaries",
+        fixture_file: "parity/fixtures/natural-language-sentence-boundaries.lino",
+        assertions: &[
+            "naturalLanguageSentenceBoundariesMatch",
+            "naturalLanguageSentenceSourceReconstructs",
+        ],
+        test_name: "natural_language_sentence_boundaries_respect_abbreviations_initials_and_numbers",
+    });
 }

@@ -55,6 +55,7 @@ const SOURCE_LABELS = Object.freeze({
   translationPriorityRequest: 'Captured immediate bidirectional Rust/JavaScript translation priority',
   multiProjectTranslationRequest: 'Captured reusable translation across multiple real projects',
   grammarInferenceIssue: 'Issue #224: automatic grammar discovery and attributed semantics',
+  naturalLanguageSentenceIssue: 'Issue #232: natural language sentence boundaries around abbreviations',
 });
 
 function allKeys(value, prefix = '') {

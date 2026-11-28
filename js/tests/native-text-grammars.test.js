@@ -11,6 +11,7 @@ import { parseNaturalLanguageCst, parsePlainTextCst } from '../src/text-grammar.
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixturePath = 'parity/fixtures/native-text-grammars.json';
+const sentenceFixturePath = 'parity/fixtures/natural-language-sentence-boundaries.lino';
 const fixture = readProjectData(new URL(`../../${fixturePath}`, import.meta.url));
 const grammarText = await readFile(resolveProjectDataPath(new URL('../src/data/native-text-grammar.lino', import.meta.url)), 'utf8');
 const metadata = readProjectData(new URL('../src/data/native-text-metadata.lino', import.meta.url));
@@ -29,7 +30,7 @@ test('native text adapters retain every independent built-in concrete tree expec
           `${tree.isError ? 'E' : ''}${tree.isMissing ? 'M' : ''}${tree.extra ? 'X' : ''}`]);
         tree.children.forEach((child) => visit(child, depth + 1));
       };
-      visit(parse(source), 0);
+      visit(parse(source, language.name), 0);
       assert.deepEqual(rows, expected.languages[language.name][part], `${language.name} ${part}`);
     }
   }
@@ -62,7 +63,7 @@ test('native natural language rules execute with lossless spans, sentence lexeme
     assert.equal(parsed.tree.kind, 'natural_language_document');
     const bytes = Buffer.from(source);
     assert.deepEqual(parsed.tree.children.map(({ start, end }) => bytes.subarray(start, end).toString()), regions);
-    const tree = parseNaturalLanguageCst(source);
+    const tree = parseNaturalLanguageCst(source, language);
     assert.deepEqual(tree.children.map(({ start, end }) => source.slice(start, end)), regions);
     assert.equal(tree.children.flatMap(({ children }) => children.map(({ start, end }) => source.slice(start, end))).join(''), source);
     assert.equal(Boolean(tree.hasError), hasError, language);
@@ -93,4 +94,36 @@ test('editing a native sentence production changes its executable boundaries', (
   assert.equal(after.ok, true);
   assert.equal(after.tree.children.length, 1);
   assert.equal(after.tree.children[0].end, Buffer.byteLength(source));
+});
+
+const sentenceBoundaryTest = 'natural language sentences keep abbreviations, initials and numbers within exact source spans';
+test(sentenceBoundaryTest, () => {
+  const { cases } = readProjectData(new URL(`../../${sentenceFixturePath}`, import.meta.url));
+  for (const { language, source, regions } of cases) {
+    const network = LinkNetwork.parse(source, language);
+    const bytes = Buffer.from(source);
+    let offset = 0;
+    const expected = regions.map((region) => {
+      const start = offset;
+      offset += Buffer.byteLength(region);
+      return [start, offset, region];
+    });
+    const represented = network.links().flatMap((link) => {
+      const { linkType, term, span } = link.metadata();
+      if (linkType !== LinkType.Syntax || term !== 'sentence') return [];
+      const { start, end } = span.byteRange;
+      return [[start, end, bytes.subarray(start, end).toString()]];
+    });
+    assert.deepEqual(represented, expected, source);
+    assert.equal(offset, bytes.length, source);
+    assert.equal(network.reconstructText(), source);
+  }
+  recordIssue195Observations({
+    requirementId: 'I195-GRAMMAR-NATURAL-LANGUAGE-SENTENCE-BOUNDARIES',
+    suffix: 'behavior',
+    fixtureId: 'natural-language-sentence-boundaries',
+    testName: sentenceBoundaryTest,
+    assertions: ['naturalLanguageSentenceBoundariesMatch', 'naturalLanguageSentenceSourceReconstructs'],
+    fixtureFile: sentenceFixturePath,
+  });
 });

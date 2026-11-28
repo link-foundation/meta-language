@@ -191,6 +191,23 @@ test('the normal naming source profile retains every actual current name and bot
   const remainingNames = historicalNames.slice(precedingCount);
   const releaseRevision = '8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18';
   const releaseNames = remainingNames.filter(({ sourceView }) => sourceView.revision === releaseRevision);
+  const releaseSupportFile = 'js/tests/support/modern-javascript-array-parity.js';
+  const releaseSupportInventory = 'B70 physical field source view names for ' + releaseSupportFile;
+  const releaseSupport = NAME_INVENTORIES.find((entry) => entry.inventory === releaseSupportInventory && entry.files.includes(releaseSupportFile));
+  assert.ok(releaseSupport, releaseSupportInventory);
+  const currentReleaseSource = readFileSync(new URL(`../../${releaseSupportFile}`, import.meta.url), 'utf8');
+  const originalReleaseSource = restoreAutomatedTranslationPauseSource(currentReleaseSource, releaseSupportFile, releaseRevision);
+  assert.notEqual(originalReleaseSource, currentReleaseSource, releaseSupportFile);
+  const originalReleaseNames = new Set(releaseSupport.extract(originalReleaseSource, releaseSupportFile));
+  for (const name of [
+    'validate retained modern array fixture with array classification reference identity and binding identifier model source',
+    'run retained modern array parity assertions with array classification reference identity and binding identifier model source',
+    'evaluate array classification reference identity and binding identifier model module forty six source assert modern array identity translation',
+  ]) {
+    assert.ok(originalReleaseNames.has(name), name);
+    assert.ok(currentNames.some((row) => row.inventory === releaseSupportInventory && row.file === releaseSupportFile
+      && row.name === name && row.record === releaseSupport.recordOf(name)), name);
+  }
   const pauseNames = remainingNames.filter(({ file, sourceView }) =>
     !nativeRepairNamingSources.includes(file) && !nativeLintCaptureSources.includes(file)
     && sourceView.revision !== releaseRevision);
@@ -202,7 +219,12 @@ test('the normal naming source profile retains every actual current name and bot
   assert.deepEqual([...new Set(repairedNames.map(({ file }) => file))].sort(), [...nativeRepairNamingSources].sort());
   assert.equal(lintCaptureNames.length, 17, 'every naming witness from the three lint captures remains present');
   assert.deepEqual([...new Set(lintCaptureNames.map(({ file }) => file))].sort(), [...nativeLintCaptureSources].sort());
-  assert.equal(releaseNames.length, 5, 'the release assertion update preserves both complete historical source files');
+  assert.deepEqual(releaseNames.map(({ file, name }) => [file, name]), [
+    ['js/scripts/generate-modern-javascript-array-parity-fixtures.mjs',
+      'build retained modern array parity fixture with array classification reference identity and binding identifier model source'],
+    ['js/scripts/generate-modern-javascript-array-parity-fixtures.mjs',
+      'evaluate array classification reference identity and binding identifier model module twenty nine source original identity source body'],
+  ], 'both generator names remain in the certified historical inventory');
   assert.deepEqual(remainingNames, [...pauseNames, ...repairedNames, ...lintCaptureNames, ...releaseNames], 'native repair, lint capture and release source views are appended');
   assert.deepEqual(repository.names, [...currentNames, ...historicalNames]);
   assert.deepEqual(repository.names.slice(0, currentNames.length), currentNames);

@@ -24,7 +24,13 @@ The scratch crate contains the exact frozen sources from
 `3780504667f4abe167a270263453e54be2b1cc43`, the small original Agda JavaScript
 build-helper closure and three explicit candidate/probe overlays. Current source
 hashes are recorded separately. Only the existing JavaScript dependencies are
-shared. Cargo runs offline and locked with one job in a fresh target directory.
+shared. For stable npm package versions `>=1.0.0 <2.0.0`, the planner checks every
+byte of the installation inputs after updating the three root release fields
+in the frozen inputs. The scratch crate copies both files from the frozen
+snapshot. Changelog fragments removed from both the current commit and the
+recorded `1.1.0` release are still copied from their exact frozen Git blobs.
+The inventory records their absence in the current checkout. Cargo runs offline
+and locked with one job in a fresh target directory.
 The existing checksum-verifying downloader acquires only the frozen registry's
 native oracle build assets into that scratch overlay under a separate ninety
 second bound. The artifact receipt records the exact registry, downloader and

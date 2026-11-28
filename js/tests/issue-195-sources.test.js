@@ -194,23 +194,27 @@ test('source discovery includes every original and follow-up discussion endpoint
     'issues/195', 'issues/195/comments?per_page=100',
     'issues/199', 'issues/199/comments?per_page=100',
     'issues/224', 'issues/224/comments?per_page=100',
-    'issues/248', 'issues/248/comments?per_page=100',
+    'issues/232', 'issues/232/comments?per_page=100',
     'issues/241', 'issues/241/comments?per_page=100',
+    'issues/248', 'issues/248/comments?per_page=100',
     'issues/196/comments?per_page=100', 'pulls/196/comments?per_page=100', 'pulls/196/reviews?per_page=100',
     'issues/201/comments?per_page=100', 'pulls/201/comments?per_page=100', 'pulls/201/reviews?per_page=100',
     'issues/226/comments?per_page=100', 'pulls/226/comments?per_page=100', 'pulls/226/reviews?per_page=100',
+    'issues/247/comments?per_page=100', 'pulls/247/comments?per_page=100', 'pulls/247/reviews?per_page=100',
     'issues/250/comments?per_page=100', 'pulls/250/comments?per_page=100', 'pulls/250/reviews?per_page=100',
   ].map((endpoint) => `repos/link-foundation/meta-language/${endpoint}`).sort());
   assert.equal(discussion.issue.number, 195);
-  assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224, 248, 241]);
+  assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224, 232, 241, 248]);
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/199/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/201/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/226/comments')));
-  assert.ok(discussion.comments.some(({ body }) => body.includes('issues/248/comments')));
+  assert.ok(discussion.comments.some(({ body }) => body.includes('issues/232/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/241/comments')));
+  assert.ok(discussion.comments.some(({ body }) => body.includes('issues/247/comments')));
+  assert.ok(discussion.comments.some(({ body }) => body.includes('issues/248/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/250/comments')));
   const reviews = discussion.comments.filter(({ body }) => body === 'A reviewed requirement');
-  assert.equal(reviews.length, 4);
+  assert.equal(reviews.length, 5);
   assert.ok(reviews.every(({ created_at, updated_at }) => created_at === updated_at && updated_at === '2026-10-12T00:00:00Z'));
   assert.ok(discussion.comments.every(({ body }) => body !== ''));
 });
