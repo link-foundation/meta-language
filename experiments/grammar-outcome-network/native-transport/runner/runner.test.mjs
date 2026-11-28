@@ -7,7 +7,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {requireNativeCI,runOverlay,runBounded} from './run.mjs';
-import {createOverlayPlan,frozenSourceBytes,sha256} from './plan.mjs';
+import {createOverlayPlan,frozenSourceBytes,git,sha256} from './plan.mjs';
 import {publicationEdit,replayPublication} from './generate-publication.mjs';
 import {overlayPolicy} from './policy.mjs';
 
@@ -63,6 +63,30 @@ test('the compiled snapshot uses exact frozen blobs while separately retaining c
   assert.throws(()=>frozenSourceBytes('/unused',{...file,workingSha256:sha256(original)},{readWorking:()=>current,readBlob:()=>original}),/production input changed after planning/u);
   let loads=0;const retained=frozenSourceBytes('/unused',file,{readWorking:()=>original,readBlob:()=>{loads++;return original;}});
   assert.deepEqual(retained.bytes,original);assert.equal(loads,0);
+
+  const retired={...file,workingSha256:null};
+  const missing=()=>{throw Object.assign(new Error('missing'),{code:'ENOENT'});};
+  assert.deepEqual(frozenSourceBytes('/unused',retired,{readWorking:missing,readBlob:()=>original}),
+    {bytes:original,workingSha256:null,workingBytes:null});
+  assert.throws(()=>frozenSourceBytes('/unused',retired,{readWorking:()=>original}),/fragment must remain absent/u);
+});
+
+test('the current package release keeps the frozen package files and the complete dependency lock',async()=>{
+  const plan=await createOverlayPlan();
+  for(const path of ['js/package.json','js/package-lock.json']) {
+    const frozen=git(plan.repository,['show',overlayPolicy.baseCommit+':'+path]);
+    const current=readFileSync(join(plan.repository,path),'utf8');
+    const record=plan.inventory.files.find(file=>file.path===path);
+    assert.equal(record.sha256,sha256(frozen),path);
+    assert.equal(record.workingSha256,sha256(current),path);
+    assert.equal(current.replace(/^ {2}"version": "1\.1\.0",$/mu,'  "version": "1.0.0",')
+      .replace(/(    "": \{\n      "name": "meta-language",\n      "version": )"1\.1\.0",/u,'$1"1.0.0",'),frozen,path);
+  }
+  const retired=plan.inventory.files.filter(file=>file.workingSha256===null);
+  const originalFragments=git(plan.repository,['diff','--no-renames','--diff-filter=D','--name-only',
+    overlayPolicy.baseCommit,'HEAD','--','rust/changelog.d']).trim().split('\n').filter(Boolean);
+  assert.deepEqual(retired.map(file=>file.path),originalFragments);
+  assert.ok(retired.every(file=>file.workingBytes===null&&file.bytes>0));
 });
 
 test('publication edits retain the complete original and refuse a changed original interval',()=>{

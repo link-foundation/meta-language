@@ -13,6 +13,8 @@ import {applyFrozenOutcomeProducerCorrection} from '../diagnostic-order/source-v
 import {diagnosticOrderDecorator} from '../diagnostic-order/decorator.mjs';
 import {deriveOutcomeTargetProbe} from './compiler-profile.mjs';
 
+const releaseCommit='8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18';
+
 export const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 export const within=(root,file)=>{const path=relative(root,file);return path!==''&&!path.startsWith('..'+sep)&&path!=='..'&&!path.startsWith(sep);};
 export function git(repository,args) {
@@ -30,15 +32,17 @@ export function bytesAt(directory,file,maximum=policy.maximumFileBytes) {
  */
 export function frozenSourceBytes(repository,file,{readWorking=bytesAt,readBlob}={}) {
   assert.match(file.gitObject,/^[0-9a-f]{40}$/u,'exact frozen Git object');
-  const current=readWorking(repository,file.path),workingSha256=sha256(current);
+  const retired=file.workingSha256===null;
+  if(retired)assert.throws(()=>readWorking(repository,file.path),{code:'ENOENT'},'released changelog fragment must remain absent: '+file.path);
+  const current=retired?null:readWorking(repository,file.path),workingSha256=current&&sha256(current);
   if(file.workingSha256)assert.equal(workingSha256,file.workingSha256,'production input changed after planning: '+file.path);
   const object=bytes=>createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
-  const bytes=object(current)===file.gitObject?current:(readBlob?readBlob(repository,file.gitObject):execFileSync('git',
+  const bytes=current&&object(current)===file.gitObject?current:(readBlob?readBlob(repository,file.gitObject):execFileSync('git',
     ['-C',repository,'cat-file','blob',file.gitObject],{shell:false,timeout:15000,maxBuffer:policy.maximumFileBytes}));
   assert.ok(bytes.length<=policy.maximumFileBytes,'bounded frozen source');
   assert.equal(object(bytes),file.gitObject,'frozen Git blob identity');
   if(file.sha256)assert.equal(sha256(bytes),file.sha256,'reviewed snapshot bytes');
-  return{bytes,workingSha256,workingBytes:current.length};
+  return{bytes,workingSha256,workingBytes:current?.length??null};
 }
 
 /** Reproduce ONLY the already CST-qualified source move, from receipt spans.
@@ -76,12 +80,18 @@ export function verifyParentInverse(original,proposed,receipt) {
 export function crateInventory(repository) {
   const format=git(repository,['rev-parse','--show-object-format']).trim();assert.equal(format,'sha1','explicit current Git object profile');
   const listing=git(repository,['ls-tree','-r','-z',policy.baseCommit,'--','rust',...policy.auxiliarySources]);
+  // Release receipts retain these frozen fragments even after their verified removal.
+  const retired=new Set(git(repository,['diff','--no-renames','--diff-filter=D','--name-only','-z',
+    releaseCommit+'^',releaseCommit,'--','rust/changelog.d']).split('\0'));
+  const workingChangelog=new Set(git(repository,['ls-tree','-r','--name-only','-z','HEAD','--','rust/changelog.d']).split('\0'));
   const entries=listing.split('\0').filter(Boolean);assert.ok(entries.length>0&&entries.length<=policy.maximumFiles);
   let total=0;
   const files=entries.map(entry=>{
     const match=/^(100644|100755) blob ([0-9a-f]{40})\t([^\0]+)$/u.exec(entry);assert.ok(match,'ordinary tracked source blob required');
     const [,mode,oid,path]=match;
-    const {bytes,workingSha256,workingBytes}=frozenSourceBytes(repository,{path,gitObject:oid});
+    const file={path,gitObject:oid};
+    if(retired.has(path)&&!workingChangelog.has(path))file.workingSha256=null;
+    const {bytes,workingSha256,workingBytes}=frozenSourceBytes(repository,file);
     assert.ok(path.startsWith('rust/')||policy.auxiliarySources.includes(path),'exact build-helper source closure');
     const blob=createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');assert.equal(blob,oid,'unchanged pinned crate: '+path);
     assert.ok(total<=policy.maximumCrateBytes-bytes.length,'bounded total crate copy');total+=bytes.length;
@@ -114,8 +124,12 @@ export async function createOverlayPlan({repository=fileURLToPath(new URL('../..
   // Future commits may publish experiment files. Core source/dependency drift
   // is authenticated by predecessor pins; the compiled full crate stays frozen.
   // Current source pins are retained separately and checked again after execution.
-  // Dependency locks stay identical for the shared installed JS build dependencies.
-  git(repository,['diff','--exit-code','--quiet',policy.baseCommit,'--','js/package.json','js/package-lock.json']);
+  // The v1.1.0 release changed only root version metadata in the package pair.
+  // Require an exact match to one complete profile before sharing the installation.
+  const packageFiles=['js/package.json','js/package-lock.json'];
+  assert.ok([policy.baseCommit,releaseCommit].some(commit=>
+    git(repository,['diff','--name-only','--no-ext-diff',commit,'--',...packageFiles])===''),
+    'shared JavaScript dependencies require the exact v1.0.0 or v1.1.0 package profile');
   const executionCommit=git(repository,['rev-parse','HEAD']).trim();
   const {readProjectData}=await import(pathToFileURL(resolve(repository,'js/scripts/project-data.mjs')));
   const generated=buildIntegration(repository);
