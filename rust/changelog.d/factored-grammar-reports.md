@@ -1,1 +1,0 @@
-Large grammar reports are persisted as bounded typed LiNo object segments with a checksum index. The report reader reconstructs every field and repeated object reference, and rejects altered, missing, foreign or unexpected fragments. Codec resource limits and the separate native global concept snapshot remain unchanged.

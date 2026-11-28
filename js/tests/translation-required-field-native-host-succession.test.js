@@ -8,8 +8,9 @@ import {restoreProgramStringHostRegistrationSource} from '../scripts/program-str
 import {deriveReferenceIdentityValidationSource,restoreReferenceIdentityHistoricalSource} from '../scripts/reference-identity-source-history.mjs';
 import {readCollectionSizeProjectionSchemaPacket,deriveCollectionSizeProjectionValidationSource,verifyCollectionSizeProjectionSchemaPacket} from '../scripts/collection-size-projection-schema.mjs';
 import {generateRequiredFieldNativeHostSuccession} from '../scripts/generate-required-field-native-host-succession.mjs';
-import {restoreCheckedExternalBindingSource,restoreCurrentNativeHostSource} from '../scripts/current-native-host-source-history.mjs';
+import {restoreCurrentNativeHostSource} from '../scripts/current-native-host-source-history.mjs';
 import {restoreScopedIterationNativeHostSource,SCOPED_ITERATION_NATIVE_SOURCE} from '../scripts/scoped-iteration-native-host-source-history.mjs';
+import {restoreAutomatedTranslationPauseSource} from '../scripts/automated-translation-pause-source-history.mjs';
 import {REQUIRED_FIELD_NATIVE_HOST_OUTPUT,REQUIRED_FIELD_NATIVE_HOST_SOURCES,pinRequiredFieldNativeHostSource,
   verifyRequiredFieldNativeHostSuccession,restoreRequiredFieldNativeHostSource} from '../scripts/required-field-native-host-succession.mjs';
 const root=new URL('../../',import.meta.url);
@@ -73,7 +74,7 @@ test('the exact current collection validator keeps its certified program-string 
   const actual=readFileSync(new URL(file,root),'utf8');
   const source=restoreReferenceIdentityHistoricalSource(actual,file,'collection size projection');
   assert.equal(source,deriveCollectionSizeProjectionValidationSource(owner.source));
-  assert.equal(restoreCheckedExternalBindingSource(actual,file),deriveReferenceIdentityValidationSource(source));
+  assert.equal(actual,deriveReferenceIdentityValidationSource(source));
   assert.equal(restoreProgramStringHostRegistrationSource(actual,file),owner.source);
   assert.deepEqual(pinRequiredFieldNativeHostSource(source),owner.current);assert.notEqual(source,owner.source);
   assert.equal(restoreProgramStringHostRegistrationSource(source,file),owner.source);
@@ -100,7 +101,7 @@ test('both mutable-array source hosts keep the actual required-field transport a
     const historical=restoreScopedIterationNativeHostSource(actual,row.file,'required field native host');
     assert.equal(historical,row.current.source);
     if(row.file===SCOPED_ITERATION_NATIVE_SOURCE.file){
-      assert.deepEqual(pinRequiredFieldNativeHostSource(actual),SCOPED_ITERATION_NATIVE_SOURCE.current);
+      assert.deepEqual(pinRequiredFieldNativeHostSource(restoreAutomatedTranslationPauseSource(actual,row.file)),SCOPED_ITERATION_NATIVE_SOURCE.current);
       assert.ok(actual.includes('&self.owned_array_iteration_sources,'));
       assert.notEqual(actual,historical);
     }else assert.equal(actual,historical);
@@ -117,13 +118,7 @@ test('reference equality source changes retain the entire old collection validat
   const value=readCollectionSizeProjectionSchemaPacket(),file='js/src/typed-program-links-validation.js';
   const owner=value.owners.find(row=>row.file===file);assert.ok(owner);
   const previous=deriveCollectionSizeProjectionValidationSource(owner.source),actual=readFileSync(new URL(file,root),'utf8');
-  const referenceSource=deriveReferenceIdentityValidationSource(previous);
-  const externalBindings='  for (const external of program.externals ?? []) declarations.set(external.name, external);';
-  assert.equal(referenceSource.split(externalBindings).length,2);
-  assert.equal(actual,referenceSource.replace(externalBindings,
-    '  for (const external of program.externals ?? []) {\n    if (!program.declarations.has(external.name)) declarations.set(external.name, external);\n  }'),
-  'actual source contains the two required reference-validation insertions and the reviewed external binding ownership rule');
-  assert.equal(restoreCheckedExternalBindingSource(actual,file),referenceSource);
+  assert.equal(actual,deriveReferenceIdentityValidationSource(previous),'actual source is precisely its certified predecessor plus the two required reference-validation insertions');
   assert.notEqual(actual,previous);assert.deepEqual(pinRequiredFieldNativeHostSource(previous),owner.current);
   for(const scope of['collection size projection','program string registration']){
     assert.equal(restoreReferenceIdentityHistoricalSource(actual,file,scope),previous);

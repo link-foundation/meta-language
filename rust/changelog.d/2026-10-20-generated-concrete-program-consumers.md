@@ -1,1 +1,0 @@
-Generate concrete program graph consumers from authenticated existing templates and shared Links edits. Five CI inputs cover original JavaScript, Rust and TypeScript programs and two semantic edits through both real package emitters.

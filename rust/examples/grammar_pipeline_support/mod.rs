@@ -137,29 +137,11 @@ fn compile_and_run_rust_driver(driver: &str) -> Result<(), String> {
     let temp_dir = unique_temp_path("generated-rust-parser");
     fs::create_dir_all(&temp_dir)
         .map_err(|error| format!("failed to create {}: {error}", temp_dir.display()))?;
-    let result = run_rust_driver_in(driver, &temp_dir);
-    fs::remove_dir_all(&temp_dir).ok();
-    result
-}
-
-fn run_rust_driver_in(driver: &str, temp_dir: &Path) -> Result<(), String> {
     let source_path = temp_dir.join("main.rs");
+    let binary_path = temp_dir.join(format!("generated-parser{}", std::env::consts::EXE_SUFFIX));
     fs::write(&source_path, driver)
         .map_err(|error| format!("failed to write {}: {error}", source_path.display()))?;
 
-    let cargo = env!("CARGO");
-    let version = Command::new(cargo)
-        .arg("--version")
-        .output()
-        .map_err(|error| format!("failed to query Cargo: {error}"))?;
-    ensure_success("cargo --version", &version)?;
-    let version = std::str::from_utf8(&version.stdout)
-        .map_err(|error| format!("Cargo version output is not UTF-8: {error}"))?;
-    if !uses_legacy_dependency_directory(version) {
-        return run_rust_driver_with_cargo(cargo, temp_dir);
-    }
-
-    let binary_path = temp_dir.join(format!("generated-parser{}", std::env::consts::EXE_SUFFIX));
     let deps_dir = target_deps_dir()?;
     let pest = find_dependency_artifact(&deps_dir, &["libpest-", "pest-"], &["rlib"])?;
     let pest_derive = find_dependency_artifact(
@@ -191,66 +173,6 @@ fn run_rust_driver_in(driver: &str, temp_dir: &Path) -> Result<(), String> {
         .output()
         .map_err(|error| format!("failed to run {}: {error}", binary_path.display()))?;
     ensure_success("generated parser", &run)
-}
-
-fn uses_legacy_dependency_directory(cargo_version: &str) -> bool {
-    let mut numbers = cargo_version
-        .strip_prefix("cargo ")
-        .unwrap_or_default()
-        .split('.');
-    numbers.next() == Some("1")
-        && numbers
-            .next()
-            .and_then(|minor| minor.parse::<u32>().ok())
-            .is_some_and(|minor| (90..100).contains(&minor))
-}
-
-fn locked_dependency_version(lock: &str, name: &str) -> Result<String, String> {
-    let heading = format!("name = \"{name}\"");
-    let mut versions = lock
-        .lines()
-        .zip(lock.lines().skip(1))
-        .filter(|(line, _)| *line == heading)
-        .filter_map(|(_, version)| {
-            version
-                .strip_prefix("version = \"")
-                .and_then(|value| value.strip_suffix('"'))
-        });
-    match (versions.next(), versions.next()) {
-        (Some(version), None) => Ok(version.to_owned()),
-        _ => Err(format!("expected one locked version of {name}")),
-    }
-}
-
-fn run_rust_driver_with_cargo(cargo: &str, temp_dir: &Path) -> Result<(), String> {
-    // Cargo 1.100 moved dependency files into private build directories. Let
-    // Cargo locate them while compiling and running the same generated driver.
-    const LOCK: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.lock"));
-    let pest = locked_dependency_version(LOCK, "pest")?;
-    let derive = locked_dependency_version(LOCK, "pest_derive")?;
-    let manifest = format!(
-        "[package]\nname = \"generated-parser\"\nversion = \"0.0.0\"\nedition = \"2021\"\n\n\
-         [[bin]]\nname = \"generated-parser\"\npath = \"main.rs\"\n\n\
-         [dependencies]\npest = \"={pest}\"\npest_derive = \"={derive}\"\n\n[workspace]\n"
-    );
-    let manifest_path = temp_dir.join("Cargo.toml");
-    fs::write(&manifest_path, manifest)
-        .map_err(|error| format!("failed to write {}: {error}", manifest_path.display()))?;
-    let lock_path = temp_dir.join("Cargo.lock");
-    // Seed the isolated package with the existing resolver choices. Cargo can
-    // remove the other workspace packages using the already available registry.
-    fs::write(&lock_path, LOCK)
-        .map_err(|error| format!("failed to write {}: {error}", lock_path.display()))?;
-    let output = Command::new(cargo)
-        .args(["run", "--offline", "--jobs", "1", "--manifest-path"])
-        .arg(&manifest_path)
-        .arg("--target-dir")
-        .arg(temp_dir.join("target"))
-        .env("CARGO_BUILD_BUILD_DIR", temp_dir.join("build"))
-        .current_dir(env!("CARGO_MANIFEST_DIR"))
-        .output()
-        .map_err(|error| format!("failed to run Cargo for the generated parser: {error}"))?;
-    ensure_success("cargo run generated parser", &output)
 }
 
 pub fn run_javascript_parser(
@@ -473,37 +395,7 @@ mod tests {
     use std::fs::{self, File};
     use std::time::{Duration, SystemTime};
 
-    use super::{
-        find_dependency_artifact, locked_dependency_version, unique_temp_path,
-        uses_legacy_dependency_directory,
-    };
-
-    #[test]
-    fn generated_parser_uses_cargo_for_new_dependency_layouts() {
-        for version in ["cargo 1.90.0", "cargo 1.99.0 (test)"] {
-            assert!(uses_legacy_dependency_directory(version));
-        }
-        for version in [
-            "cargo 1.89.0",
-            "cargo 1.100.0 (test)",
-            "cargo 1.100.0-nightly (test)",
-            "cargo 2.0.0",
-        ] {
-            assert!(!uses_legacy_dependency_directory(version));
-        }
-        let lock = "[[package]]\nname = \"pest\"\nversion = \"2.9.2\"\n\n\
-                    [[package]]\nname = \"pest_derive\"\nversion = \"2.9.3\"\n";
-        assert_eq!(locked_dependency_version(lock, "pest"), Ok("2.9.2".into()));
-        assert_eq!(
-            locked_dependency_version(lock, "pest_derive"),
-            Ok("2.9.3".into())
-        );
-        assert_eq!(
-            locked_dependency_version(&lock.replace('\n', "\r\n"), "pest"),
-            Ok("2.9.2".into())
-        );
-        assert!(locked_dependency_version(lock, "pest_meta").is_err());
-    }
+    use super::{find_dependency_artifact, unique_temp_path};
 
     #[test]
     fn dependency_lookup_prefers_the_most_recently_built_artifact() {

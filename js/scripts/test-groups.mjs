@@ -20,56 +20,16 @@ import {readProjectData,writeProjectData} from './project-data.mjs';
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const schedulingFile=new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino',import.meta.url);
 const schedulingRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
-const schedulingProfiles = {
-  grammar: { file: schedulingFile, revisions: new Map([[39615628279, schedulingRevision]]) },
-  translation: {
-    file: new URL('../../parity/fixtures/ci-45049378352-translation-workload-costs.lino', import.meta.url),
-    revisions: new Map([
-      [45042220137, '38b367159fbe5a20cbcc19a8d75741875113a4b5'],
-      [45049378352, 'f39cd80cf682b33d18a8f35a7a5af6ae39e69f98'],
-    ]),
-  },
-  'translation-eight': {
-    file: new URL('../../parity/fixtures/ci-45251703034-translation-workload-costs.lino', import.meta.url),
-    revisions: new Map([[45251703034, 'd1a0528619f9eaa960dd43c7576aaf22a127e5cd']]),
-  },
-  'self-translation-report': {
-    file: new URL('../../parity/fixtures/ci-45055131879-self-translation-workload-costs.lino', import.meta.url),
-    revisions: new Map([
-      [39615628279, schedulingRevision],
-      [45049378352, 'f39cd80cf682b33d18a8f35a7a5af6ae39e69f98'],
-      [45055131879, '81e9e733677877f2440018a09d65d3d7f5f1f113'],
-    ]),
-  },
-  'self-translation-report-12': {
-    file: new URL('../../parity/fixtures/ci-45065716925-self-translation-workload-costs.lino', import.meta.url),
-    revisions: new Map([
-      [45060692627, 'f1c7cb555e37b9ddf09c10f772b0adebf4f6e587'],
-      [45065716925, '6c872ba2c01a8b73109cc69bd4f478f5f28fcf50'],
-    ]),
-  },
-};
 const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
-
-function schedulingGroup(files, count) {
-  if (files.every(file => file.startsWith('js/src/'))) {
-    if (count === 12) return 'self-translation-report-12';
-    if (count === 8) return 'self-translation-report';
-  }
-  return 'grammar';
-}
 
 /** Largest observed workload first; source changes use a byte-size estimate.
  * Timing samples only choose owners. They never establish test completion. */
-export function partitionMeasuredWorkloads(files,count,{readSource,costs,group}={}){
+export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
  assert.ok(Number.isSafeInteger(count)&&count>0&&count<=files.length);
  assert.equal(new Set(files).size,files.length,'workload source identities are unique');
- const profile = schedulingProfiles[group ?? schedulingGroup(files, count)];
- assert.ok(profile);
- const measured=costs??readProjectData(profile.file);
+ const measured=costs??readProjectData(schedulingFile);
  assert.equal(measured.schemaVersion,1);assert.equal(measured.model,'observed CI workload scheduling costs 1');
- assert.ok(profile.revisions.has(measured.run));
- assert.equal(measured.revision,profile.revisions.get(measured.run));
+ assert.equal(measured.run,39615628279);assert.equal(measured.revision,schedulingRevision);
  assert.ok(Array.isArray(measured.entries)&&measured.entries.length<=2048);
  const known=new Map();
  for(const row of measured.entries){
@@ -81,27 +41,8 @@ export function partitionMeasuredWorkloads(files,count,{readSource,costs,group}=
  const rates=measured.entries.map(row=>row.milliseconds/row.bytes).sort((a,b)=>a-b);
  assert.ok(rates.length>0);const rate=rates[Math.floor(rates.length/2)];
  const read=readSource??(file=>readFileSync(path.join(packageRoot,'..',file)));
- const dependencies = new Map();
- for (const { file, path: dependency, bytes, sha256 } of measured.dependencies ?? []) {
-  assert.ok(known.has(file) && !dependencies.has(file));
-  assert.match(dependency, /^experiments\/[a-z0-9-]+\/[a-z0-9-]+\.test\.mjs$/u);
-  assert.ok(Number.isSafeInteger(bytes) && bytes > 0);
-  assert.match(sha256, /^[a-f0-9]{64}$/u);
-  dependencies.set(file, { path: dependency, bytes, sha256 });
- }
- function matchesDependency(file) {
-  const dependency = dependencies.get(file);
-  if (!dependency) return true;
-  try {
-   const source = read(dependency.path);
-   return source != null && Buffer.byteLength(source) === dependency.bytes && schedulingDigest(source) === dependency.sha256;
-  } catch (error) {
-   if (error.code !== 'ENOENT') throw error;
-   return false;
-  }
- }
  const workloads=files.map(file=>{const bytes=Buffer.from(read(file)),row=known.get(file);
-  const exact=row&&row.bytes===bytes.length&&row.sha256===schedulingDigest(bytes)&&matchesDependency(file);
+  const exact=row&&row.bytes===bytes.length&&row.sha256===schedulingDigest(bytes);
   return {file,milliseconds:exact?row.milliseconds:Math.max(1,Math.ceil(bytes.length*rate))};});
  workloads.sort((a,b)=>b.milliseconds-a.milliseconds||a.file.localeCompare(b.file));
  const loads=Array(count).fill(0),shards=Array.from({length:count},()=>[]);
@@ -210,12 +151,9 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
-  const translation = (count === 6 || count === 8) && files.includes('translation-scheduling-source-history.test.js');
-  const grammar = count === 6 && files.includes('issue-195-interchange-api-cli.test.js');
-  if (translation || grammar) {
-    const group = translation ? (count === 8 ? 'translation-eight' : 'translation') : 'grammar';
-    return partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), count, { group })[index - 1].map(file => file.slice(9));
-  }
+  // Only the measured general-grammar cohort changes owners. Native and
+  // historical modulo cohorts retain their independent exact partition rules.
+  if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
   // Keep the four established tooling assignments. The two pause tests fill
   // the next slots without moving the larger source and data replay checks.
   if (count === 4 && files.includes('issue-195-evidence-automated-translation-pause.test.js')) {

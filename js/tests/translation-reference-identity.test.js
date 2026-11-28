@@ -63,28 +63,6 @@ test('complete original sources retain independent identity and effect oracles t
   }
 });
 
-test('Rust collection construction reads a reference array payload before building the collection', () => {
-  const coveredKinds = new Set();
-  for (const {name, source} of policy.cases) {
-    const checked = checkProgram(parseJavaScript(source));
-    for (const kind of ['map', 'set']) {
-      const constructors = nodes(checked).filter(value => value.k === kind);
-      if (!constructors.length) continue;
-      coveredKinds.add(kind);
-      assert.equal(constructors.length, 2, name);
-      for (const value of constructors) {
-        const input = kind === 'map' ? value.entries : value.items;
-        assert.equal(input.type.kind, 'array', name);
-        assert.equal(input.type.reference, true, name);
-      }
-      const lines = emitRust(checked).text.split('\n').filter(line => line.includes(`crate::ml_array::${kind}(`));
-      assert.equal(lines.length, constructors.length, name);
-      for (const line of lines) assert.match(line, /\.borrow\(\)\.clone\(\); ml_reference_value\d+ \}/u, name);
-    }
-  }
-  assert.deepEqual(coveredKinds, new Set(['map', 'set']));
-});
-
 test('ordinary value arrays optional references ordering and cross-domain comparisons retain their refusals', () => {
   for (const row of policy.refusals) assert.throws(() => checkProgram(parseJavaScript(row.source, row.options)), row.name);
   const source = 'console.log(1===1);console.log(1!==2);console.log(1<2);console.log("a"==="a");';

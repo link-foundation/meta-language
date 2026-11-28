@@ -47,7 +47,7 @@ export function readProjectData(file, { format = 'auto', limits } = {}) {
   const encoding = selectedFormat(actual, format);
   if (encoding === 'lino') {
     const cacheable = limits === undefined && text.length >= 8 * 1024 * 1024
-      && Buffer.byteLength(text) <= 64 * 1024 * 1024;
+      && Buffer.byteLength(text) <= 48 * 1024 * 1024;
     if (!cacheable) return readStructuredDataLino(text, limits);
     if (largeDataSnapshot?.file === actual && largeDataSnapshot.text === text) {
       return structuredClone(largeDataSnapshot.value);

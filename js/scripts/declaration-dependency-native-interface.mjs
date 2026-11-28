@@ -62,32 +62,36 @@ export function deriveDeclarationDependencyNativeInterface(files,libraryInterfac
     ['acceptRecursiveDeclarationAuxiliaryCorrespondence','accept_auxiliary_correspondence',[['whole','numbers'],['member','numbers']],'bool'],
     ['acceptRecursiveDeclarationOwnedEmission','accept_owned_emission',[['roles','numbers'],['constructor_counts','numbers'],['blocks','numbers'],['mappings','numbers'],['forbidden_targets','numbers']],'bool'],
     ['acceptRecursiveDeclarationOwnedPublication','accept_owned_publication',[['members','number'],['declarations','number'],['signatures','number'],['completed','number'],['proofs','numbers']],'bool'],
-    ['readDeclarationDeferredBinding','read_deferred_binding',[['terms','texts'],['fields','texts'],['parents','numbers'],['starts','numbers'],['ends','numbers'],['texts','texts'],['errors','numbers'],['source_bytes','number']],'Vec<f64>',"facts: &super::deferred_scope::Facts<'_>"],
+    ['readDeclarationDeferredBinding','read_deferred_binding',[['terms','texts'],['fields','texts'],['parents','numbers'],['starts','numbers'],['ends','numbers'],['texts','texts'],['errors','numbers'],['source_bytes','number']],'Vec<f64>'],
     ['acceptDeclarationDeferredModuleScope','accept_deferred_module_scope',[['forms','texts']],'bool'],
   ];
   const definitions=[];
-  for(const[source,name,parameters,result,record]of specifications){
+  for(const[source,name,parameters,result]of specifications){
     const row=libraryInterface.find(row=>row.source===source),actual=readActualDecisionHeader(row,files);
     assert.equal(actual.parameters.length,parameters.length);assert.equal(actual.result,result,'unknown result ABI refuses');
-    const declarations=record?[record]:[],arguments_=[];let conversion='';
+    const declarations=[],arguments_=[];let conversion='';
     parameters.forEach(([parameter,kind],index)=>{
       const type=actual.parameters[index];
-      const member=record?'facts.'+parameter:parameter;
       if(kind==='numbers'){
-        if(!record)declarations.push(parameter+': &[f64]');
-        assert.ok(['&[f64]','Vec<f64>'].includes(type),'unknown actual Number array loan refuses');
-        arguments_.push(type==='Vec<f64>'?member+'.to_vec()':(record?'&':'')+member);
+        declarations.push(parameter+': &[f64]');assert.ok(['&[f64]','Vec<f64>'].includes(type),'unknown actual Number array loan refuses');
+        arguments_.push(parameter+(type==='Vec<f64>'?'.to_vec()':''));
       }else if(kind==='texts'){
-        if(!record)declarations.push(parameter+': &[&str]');
+        declarations.push(parameter+': &[&str]');
         assert.ok(['&[String]','Vec<String>','&[self::ml_string::Text]','Vec<self::ml_string::Text>'].includes(type),'unknown actual string array owner/loan refuses');
         conversion+=type.includes('ml_string::Text')
-          ?'    let '+parameter+' = '+member+'.iter().map(|value| rules::ml_string::Text::from_text(value)).collect::<Vec<_>>();\n'
-          :'    let '+parameter+' = '+member+'.iter().map(|value| (*value).to_owned()).collect::<Vec<_>>();\n';
+          ?'    let '+parameter+' = '+parameter+'.iter().map(|value| rules::ml_string::Text::from_text(value)).collect::<Vec<_>>();\n'
+          :'    let '+parameter+' = '+parameter+'.iter().map(|value| (*value).to_owned()).collect::<Vec<_>>();\n';
         arguments_.push(type.startsWith('&')?'&'+parameter:parameter);
       }else{
         const primitive=kind==='number'?'f64':'bool';assert.equal(type,primitive,'unknown primitive ABI refuses');declarations.push(parameter+': '+primitive);arguments_.push(parameter);
       }
     });
+    if(name==='read_deferred_binding'){
+      const start=declarations.indexOf('starts: &[f64]');
+      assert.ok(start>=0);
+      assert.equal(declarations[start+1],'ends: &[f64]');
+      declarations.splice(start,2,'[starts, ends]: [&[f64]; 2]');
+    }
     definitions.push('pub(super) fn '+name+'('+declarations.join(', ')+') -> '+result+' {\n'+conversion+'    rules::'+row.target+'('+arguments_.join(', ')+')\n}');
   }
   return'// Generated actual-ABI transport only; shared JS decisions own every dependency/admission result.\nuse crate::translation::declaration_dependency_rules as rules;\n\n'+definitions.join('\n\n')+'\n';

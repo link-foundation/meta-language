@@ -90,20 +90,6 @@ test('editing one linked operation changes source-free emitted behavior in both 
   assert.match(emitTypedProgramLinks(archive.network, archive.root, 'Rust').code, /a \* b/u);
 });
 
-test('explicit typed program limits apply to source import, decoding and emission', () => {
-  const source = 'function add(a,b) { return a+b; } console.log(add(2,3));';
-  const checked = checkProgram(parseJavaScript(source));
-  assert.throws(() => createTypedProgramLinks(source, 'JavaScript', { nodeLimit: 1 }), /reference resource limit/u);
-  assert.throws(() => encodeTypedProgramLinks(checked, { nodeLimit: 1 }), /reference resource limit/u);
-  assert.throws(() => encodeTypedProgramLinks(checked, { nodeLimit: Infinity }), /invalid node limit/u);
-  const { network, root } = roundTrip(createTypedProgramLinks(source, 'JavaScript', { nodeLimit: 1_000 }));
-  assert.throws(() => decodeTypedProgramLinks(network, root, { nodeLimit: 1 }), /structural resource limit/u);
-  assert.throws(() => decodeTypedProgramLinks(network, root, { depthLimit: NaN }), /invalid structural limits/u);
-  assert.throws(() => emitTypedProgramLinks(network, root, 'JavaScript', { depthLimit: 1 }), /structural resource limit/u);
-  assert.deepEqual(decodeTypedProgramLinks(network, root, { nodeLimit: 1_000 }), checked);
-  assert.deepEqual(run(emitTypedProgramLinks(network, root, 'JavaScript', { nodeLimit: 1_000 }).code), ['5']);
-});
-
 test('binding identity permits a declaration rename without capture or stale variable names', () => {
   const archive = roundTrip(createTypedProgramLinks('function add(a,b) { return a+b; } console.log(add(2,3));', 'JavaScript'));
   const binding = archive.network.fieldRelations().find(({ label }) => label === 'binding reference');

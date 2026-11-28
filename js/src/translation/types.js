@@ -105,7 +105,6 @@ function ordinaryTypeKey(type) {
 }
 
 export function sameType(left, right) {
-  if (left === null || right === null) return false;
   return acceptTypeIdentity(typeKey(left), typeKey(right));
 }
 

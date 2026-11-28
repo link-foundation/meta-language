@@ -1,1 +1,0 @@
-Preserve compound Boolean conditions when styling automatically translated Rust libraries. The portable style pipeline now inverts only a whole leading negation, retaining the original evaluation order and branch choices; the frozen producer and its original export remain unchanged.

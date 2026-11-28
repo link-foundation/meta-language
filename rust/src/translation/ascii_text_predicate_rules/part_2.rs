@@ -148,20 +148,19 @@ pub fn plan_rust_ascii_character_callback(
         || !(self::ml_math::is_integer(start)))
         || (start < 0f64))
         || (start >= (kinds.len() as f64))
-        || !(match (
+        || !((match (
             self::ml_array::optional_at(kinds, self::ml_array::number_index(start)),
             self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]),
         ) {
             (Some(ml_left), ml_right) => ml_left == ml_right,
             _ => false,
-        })
-        || !(match (
+        }) && (match (
             self::ml_array::optional_at(values, self::ml_array::number_index(start)),
             self::ml_string::Text::from_units(vec![124]),
         ) {
             (Some(ml_left), ml_right) => ml_left == ml_right,
             _ => false,
-        })
+        }))
     {
         Vec::<f64>::new()
     } else {
@@ -309,13 +308,8 @@ pub fn ml_plan_rust_ascii_character_callback_loop6(
                         }
                     }
                 }
-                {
-                    let index_3 = index + 1f64;
-                    {
-                        index = index_3;
-                        continue;
-                    }
-                }
+                index += 1f64;
+                continue;
             }
         } else {
             accepted

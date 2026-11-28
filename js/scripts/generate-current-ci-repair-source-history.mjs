@@ -45,11 +45,7 @@ const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').up
 /** The diff is computed on exact bytes, retaining UTF-8 boundary integrity. */
 export function generateCurrentCiRepairSourceHistory({check=false}={}) {
   const sources=sourceFiles.map(file=>{
-    const activeSource = readFileSync(new URL(file, root), 'utf8');
-    const source = file === '.github/workflows/rust.yml' || file === 'parity/fixtures/grammar-selection-diagnostic-order.lino'
-      ? restoreIntegrationSource(activeSource, file)
-      : activeSource;
-    const{blob,certificate}=captureGitArtifactCertificate(revision,file),current=Buffer.from(restoreGrammarContextMetadataHistory(restoreCurrentNativeHostSource(source,file),file));
+    const{blob,certificate}=captureGitArtifactCertificate(revision,file),current=Buffer.from(restoreGrammarContextMetadataHistory(restoreCurrentNativeHostSource(readFileSync(new URL(file,root),'utf8'),file),file));
     assert.deepEqual(Buffer.from(blob.toString('utf8')),blob);assert.deepEqual(Buffer.from(current.toString('utf8')),current);
     let start=0,oldEnd=blob.length,end=current.length;
     while(start<oldEnd&&start<end&&blob[start]===current[start])start++;
@@ -73,7 +69,6 @@ export function generateCurrentCiRepairSourceHistory({check=false}={}) {
 }
 
 import {restoreGrammarContextMetadataHistory} from './grammar-context-metadata-history.mjs';
-import {restoreIntegrationSource} from './current-ci-repair-source-history.mjs';
 if(process.argv[1]===fileURLToPath(import.meta.url)){
   assert.ok(process.argv.slice(2).every(value=>value==='--check'));
   const packet=generateCurrentCiRepairSourceHistory({check:process.argv.includes('--check')});

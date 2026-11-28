@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {readOwnCodebaseHistoricalNamingPolicy,verifyOwnCodebaseHistoricalNamingSources} from './own-codebase-baseline-naming-history.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
-import {pausePredecessor,pauseSourceFiles} from './automated-translation-pause-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const pin=bytes=>({bytes:Buffer.byteLength(bytes),sha256:createHash('sha256').update(bytes).digest('hex')});
 
@@ -41,159 +41,37 @@ export function generateOwnCodebaseHistoricalNamingSources({check=false}={}){
 }
 /** Append only independently derived historical names; current extraction stays separate. */
 export async function generateAdditionalOwnCodebaseHistoricalNamingSources({check=false}={}){
-  const revision='6ffff3b2dc530a5f24c128dadf877f3fa106932b';
-  const integration='ec9f4efb0e9ef936114e09823981352f6db13700';
-  const integrationFiles=[
-    'experiments/binary-metadata-buffer/native-observations.mjs',
-    'experiments/grammar-outcome-network/native-transport/inverse/generate-publication-runner.mjs',
-    'experiments/original-link-complete-table-projection/raw-consuming-emission.mjs',
-    'experiments/original-link-complete-table-projection/raw-consuming-emission.test.mjs',
-    'experiments/original-link-complete-table-projection/raw-emission-producer-applicability.mjs',
-    'experiments/original-link-complete-table-projection/raw-native-observations.mjs',
-    'js/scripts/current-ci-repair-source-history.mjs',
-    'js/scripts/current-native-host-source-history.mjs',
-    'js/scripts/generate-continuation-historical-inputs.mjs',
-    'js/scripts/generate-current-ci-repair-source-history.mjs',
-    'js/scripts/generate-modern-javascript-array-parity-fixtures.mjs',
-    'js/scripts/generate-own-codebase-baseline-naming-history.mjs',
-    'js/scripts/generate-own-codebase-test-registration-sources.mjs',
-    'js/scripts/generate-raw-oracle-contract-partitions.mjs',
-    'js/scripts/generate-tooling-frozen-source-history.mjs',
-    'js/scripts/own-codebase-baseline-naming-history.mjs',
-    'js/scripts/own-codebase-test-registration-history.mjs',
-    'js/scripts/raw-consuming-snapshot-source-profile.mjs',
-    'js/scripts/raw-oracle-contract-partition-history.mjs',
-    'js/scripts/reference-identity-source-history.mjs',
-    'js/scripts/required-field-native-host-succession.mjs',
-    'js/scripts/rust-test-shards.mjs',
-    'js/scripts/test-groups.mjs',
-    'js/scripts/tooling-frozen-source-history.mjs',
-    'js/src/translation/emit-javascript.js',
-    'js/src/translation/emit-rust.js',
-    'js/src/typed-program-links-validation.js',
-    'js/tests/issue-195-evidence-node-dependency.test.js',
-    'js/tests/issue-195-evidence-node-test-placement.test.js',
-    'js/tests/issue-195-evidence-tooling-frozen-sources.test.js',
-    'js/tests/issue-195-evidence-translation-partition-conservation.test.js',
-    'js/tests/project-data-fixture-links-storage.test.js',
-    'js/tests/self-translation.test.js',
-    'js/tests/support/translation-workflow-history.js',
-    'js/tests/test-groups.test.js',
-    'js/tests/translation-arrays.test.js',
-    'js/tests/translation-native-number-retention.test.js',
-    'js/tests/translation-reference-identity.test.js',
-    'js/tests/translation-rust-literal-matches.test.js',
-    'js/tests/translation-typescript-workflow.test.js',
-    'rust/src/self_translation/binding/owned_recursive_emission.rs',
-    'rust/src/translation/check/records.rs',
-    'rust/src/translation/emit_javascript/expressions.rs',
-    'rust/src/translation/emit_lean/arrays.rs',
-    'rust/src/translation/emit_rust/arrays.rs',
-    'rust/src/translation/emit_rust/expressions.rs',
-    'rust/src/translation/ir.rs',
-    'rust/src/translation/ir/nodes.rs',
-    'rust/src/translation/javascript/record_parameters.rs',
-    'rust/src/translation/rust/expressions.rs',
-    'rust/src/typed_program_links/checked.rs',
-    'rust/tests/unit/self_translation_recursive_declaration_groups.rs',
-    'rust/tests/unit/self_translation_scope.rs',
-    'rust/tests/unit/translation_arrays.rs',
-    'rust/tests/unit/translation_javascript_record_parameters.rs',
-    'rust/tests/unit/translation_reference_identity.rs',
-    'rust/tests/unit/translation_rust_literal_matches.rs',
-    'rust/tests/unit/translation_surface_reference_analysis.rs',
-  ];
-  // Retain the exact names from the published sources before the CI repairs.
-  const ciRepairPredecessor = 'e8bc968b4fb55f02f34854eaf58f375ac715c34c';
-  const ciRepairFiles = [
-    'experiments/rust-text-certificate-adapter/provider-succession.mjs',
-    'js/scripts/declaration-dependency-native-interface.mjs',
-    'js/scripts/dependency-inventory-append-history.mjs',
-    'js/scripts/generate-ascii-text-predicate-host-history.mjs',
-    'js/scripts/generate-ascii-text-predicate-hosts.mjs',
-    'js/scripts/generate-boolean-declaration-value-hosts.mjs',
-    'js/scripts/generate-dependency-inventory-order-history.mjs',
-    'js/scripts/generate-program-string-host-registration-history.mjs',
-    'js/scripts/generate-scoped-iteration-native-host-source-history.mjs',
-    'js/scripts/record-rule-library.mjs',
-    'js/scripts/scoped-iteration-native-host-source-history.mjs',
-    'js/src/index.d.ts',
-    'js/src/self-translation.js',
-    'js/src/translation/javascript-infer.js',
-    'js/tests/cache-fresh-merge-dependencies.test.js',
-    'js/tests/translation-array-relative-element.test.js',
-    'js/tests/translation-program-string-host-registration-history.test.js',
-    'js/tests/translation-required-field-native-host-succession.test.js',
-    'js/tests/translation-scoped-iteration-native-source-history.test.js',
-    'rust/src/formal_concept_definition.rs',
-    'rust/src/self_translation.rs',
-    'rust/src/self_translation/binding/deferred_scope.rs',
-    'rust/src/self_translation/binding/dependency_rules.rs',
-    'rust/src/self_translation/binding/recursive_groups.rs',
-    'rust/src/self_translation/scope.rs',
-    'rust/src/shared_numeric_function_model.rs',
-    'rust/src/translation/ascii_text_predicate_rules/part_2.rs',
-    'rust/src/translation/declaration_dependency_rules/part_2.rs',
-    'rust/src/translation/declaration_dependency_rules/part_3.rs',
-    'rust/src/translation/declaration_dependency_rules/part_4.rs',
-    'rust/src/translation/declaration_dependency_rules/part_5.rs',
-    'rust/src/translation/emit_rust/declarations.rs',
-    'rust/src/translation/external_emission_rules/part_1.rs',
-    'rust/src/translation/grammar_lexer_rules/part_2.rs',
-    'rust/src/translation/grammar_lexer_rules/part_3.rs',
-    'rust/src/translation/grammar_lexer_rules/part_4.rs',
-    'rust/src/translation/javascript/declarations.rs',
-    'rust/src/translation/javascript/infer/arrays.rs',
-    'rust/src/translation/javascript_record_parameter_rules/part_3.rs',
-    'rust/src/translation/reference_identity_rules/part_1.rs',
-    'rust/src/translation/rust_literal_match_rules/part_1.rs',
-    'rust/src/typed_program_links.rs',
-    'rust/tests/unit/translation_array_classification.rs',
-    'rust/tests/unit/translation_array_from.rs',
-    'rust/tests/unit/translation_array_relative_element.rs',
-    'rust/tests/unit/translation_ascii_text_predicates.rs',
-    'rust/tests/unit/translation_owned_array_append.rs',
-    'rust/tests/unit/typed_program_number_projection.rs',
-  ];
+  const revision='6ffff3b2dc530a5f24c128dadf877f3fa106932b',baseline='8bc0ef9725388c7927acf1854870bf46f5e365be';
   const file='parity/naming/array-identity-historical-inventories.lino';
-  const stored=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;
-  let sources;
-  if(check)sources=stored.sources;
+  let sources,stored;
+  if(check){stored=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;sources=stored.sources;}
   else{
-    sources=stored.sources.map(row=>({...row,current:pin(readFileSync(new URL(row.file,root)))}));
-    const namedPredecessors = [
-      ...integrationFiles.map(path => [integration, path]),
-      ...ciRepairFiles.map(path => [ciRepairPredecessor, path]),
-      ['3866f25f3dde30644152829fb5d3bf8d680ba2fd', 'js/tests/issue-195-evidence-translation-partition-conservation.test.js'],
-      ...pauseSourceFiles.filter(path => /^(?:js|rust)\//u.test(path)).map(path => [pausePredecessor, path]),
-    ];
-    for(const [revision,path] of namedPredecessors){
-      if(sources.some(row=>row.file===path&&row.predecessor.revision===revision))continue;
+    const originalFiles=['js/src/translation/javascript-infer.js','js/tests/translation-frontend-rules.test.js',
+      'rust/tests/unit/translation_surface_reference_analysis.rs','js/scripts/own-codebase-baseline-naming-history.mjs'];
+    const changed=execFileSync('git',['diff',baseline,'--name-only'],{cwd:root,encoding:'utf8'}).trim().split('\n')
+      .filter(path=>/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|experiments)\/.+\.(?:js|mjs|rs)$/u.test(path));
+    const selections=[...originalFiles.map(path=>({path,revision})),...changed.map(path=>({path,revision:baseline}))];
+    sources=selections.map(({path,revision})=>{
       globalThis.gc?.();
       const {blob,certificate}=captureGitArtifactCertificate(revision,path);
       assert.deepEqual(verifyGitArtifactCertificate(certificate,blob,{revision,path}),blob);
-      sources.push({file:path,predecessor:{revision,source:blob.toString('utf8'),...pin(blob),certificate},
-        current:pin(readFileSync(new URL(path,root)))});
-    }
+      return{file:path,predecessor:{revision,source:blob.toString('utf8'),...pin(blob),certificate},
+        current:pin(readFileSync(new URL(path,root)))};
+    });
   }
   // Finish Git object capture before retaining the complete naming inventory.
   // Its binding graph and Git's pack buffers need separate memory lifetimes.
   globalThis.gc?.();
   const {NAME_INVENTORIES}=await import('./issue-195-naming.mjs');
   const views=[];
-  const projected=new Map();
   for(const source of sources){
     globalThis.gc?.();
     const current=readFileSync(new URL(source.file,root),'utf8');
     assert.deepEqual(pin(current),source.current,'normal freshness checks retain every complete current source pin');
     for(const entry of NAME_INVENTORIES.filter(entry=>!entry.words&&entry.files.includes(source.file))){
       const actual=new Set(entry.extract(current,source.file));
-      const key=JSON.stringify([entry.inventory,source.file]);
-      const retained=projected.get(key)??new Set();
-      projected.set(key,retained);
-      const names=[...new Set(entry.extract(source.predecessor.source,source.file))].filter(name=>!actual.has(name)&&!retained.has(name))
+      const names=[...new Set(entry.extract(source.predecessor.source,source.file))].filter(name=>!actual.has(name))
         .map(name=>({name,record:entry.recordOf?entry.recordOf(name):name}));
-      for(const {name} of names)retained.add(name);
       if(names.length)views.push({inventory:entry.inventory,file:source.file,revision:source.predecessor.revision,names});
     }
   }

@@ -49,6 +49,13 @@ test('historical inventory selection refuses changed old facts missing declarati
   for(const mutate of mutations){const changed=structuredClone(original);mutate(changed);assert.throws(()=>verifyDependencyInventoryAppends(changed,declared));}
   const forged=structuredClone(history);forged.inventory.source+=' ';
   assert.throws(()=>verifyDependencyInventoryAppends(original,declared,forged));
+  const changedInventory=structuredClone(original),changedDeclarations=structuredClone(declared);
+  for(const items of [changedInventory.items,changedDeclarations]){
+    items.find(row=>row.id==='action dtolnay/rust-toolchain@1.99.0').declaredIn.push('.github/workflows/unreviewed.yml');
+  }
+  assert.deepEqual(checkInventory(changedInventory,changedDeclarations),[]);
+  assert.throws(()=>verifyDependencyInventoryAppends(changedInventory,changedDeclarations),
+    /the Rust workflow is the only added declaration for the pinned action/u);
   const reloaded=readStructuredDataLino(structuredDataToLino(history));
   assert.equal(structuredDataToLino(verifyDependencyInventoryAppends(original,declared,reloaded)),history.inventory.source);
 });

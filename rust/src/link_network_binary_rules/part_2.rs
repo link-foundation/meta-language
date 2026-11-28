@@ -40,23 +40,20 @@ pub fn ml_transcode_link_network_binary_loop9(
                         {
                             let output_4 = if binary {
                                 {
-                                    let output_2 = output.concat(
-                                        &super::render_link_network_binary_field(entries, binary),
-                                    );
-                                    output_2
+                                    output.concat(&super::render_link_network_binary_field(
+                                        entries, binary,
+                                    ))
                                 }
                             } else {
                                 {
                                     let index = 0f64;
                                     {
-                                        let output_3 =
-                                            super::ml_transcode_link_network_binary_loop10(
-                                                binary,
-                                                output.clone(),
-                                                entries,
-                                                index,
-                                            );
-                                        output_3
+                                        super::ml_transcode_link_network_binary_loop10(
+                                            binary,
+                                            output.clone(),
+                                            entries,
+                                            index,
+                                        )
                                     }
                                 }
                             };
@@ -419,15 +416,13 @@ pub fn ml_transcode_link_network_binary_loop22(
                                             {
                                                 let output_5 = if binary {
                                                     {
-                                                        let output_3 = output_2.concat(&super::render_link_network_binary_field(length, binary));
-                                                        output_3
+                                                        output_2.concat(&super::render_link_network_binary_field(length, binary))
                                                     }
                                                 } else {
                                                     {
                                                         let index = 0f64;
                                                         {
-                                                            let output_4 = super::ml_transcode_link_network_binary_loop27(binary, output_2, length, index);
-                                                            output_4
+                                                            super::ml_transcode_link_network_binary_loop27(binary, output_2, length, index)
                                                         }
                                                     }
                                                 };

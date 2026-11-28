@@ -1,1 +1,0 @@
-Self-translation reports infer numeric field and index updates without reading a missing right operand for `++` or `--`. Unsupported reference mutation retains its explicit checked diagnostic and lossless carried source; native execution of these mutations remains an obligation.

@@ -24,7 +24,7 @@ use crate::translation::source_const_functions::validate_const_functions;
 use crate::typed_program_links::{
     decode_typed_program_links, label_of, typed_program_links_schema,
 };
-use crate::{LinkId, LinkNetwork, LinkType};
+use crate::{Link, LinkId, LinkNetwork, LinkType};
 
 pub const SHARED_NUMERIC_FUNCTION_MODEL: &str = "closed binary floating point function";
 pub const SHARED_BOOLEAN_FUNCTION_MODEL: &str = "closed boolean function value";
@@ -264,7 +264,7 @@ fn read_shared_function_value_model(
         let name = network
             .link(directory)
             .into_iter()
-            .flat_map(crate::link_network::Link::references)
+            .flat_map(Link::references)
             .find_map(|id| {
                 let pair = network.link(*id)?.references();
                 if pair.get(1).copied() != Some(selected) {

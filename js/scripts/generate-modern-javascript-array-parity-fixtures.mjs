@@ -44,12 +44,6 @@ function originalIdentitySourceBody(source,path){
  const recipes=[{"path": "js/tests/translation-arrays.test.js", "before": "  assert.equal(refusal('const xs = [1, 2];\\nconsole.log(xs === xs);\\n'), 'comparison of arrays: === of two arrays compares which array each is, which a value translation does not keep; compare their elements at 31..40');", "after": "  assertModernArrayIdentityTranslation('const xs = [1, 2];\\nconsole.log(xs === xs);\\n', 'comparison of arrays: === of two arrays compares which array each is, which a value translation does not keep; compare their elements at 31..40');"}, {"path": "rust/tests/unit/translation_arrays.rs", "before": "        assert_eq!(refusal(source), message, \"{source}\");", "after": "        if source == \"const xs = [1, 2];\\nconsole.log(xs === xs);\\n\" {\n            assert_modern_array_identity_translation(source, message);\n        } else {\n            assert_eq!(refusal(source), message, \"{source}\");\n        }"}];
  const recipe=recipes.find(row=>row.path===path);
  if(recipe&&body.includes(recipe.after)){assert.equal(body.split(recipe.after).length,2);body=body.replace(recipe.after,()=>recipe.before);}
- // 797cb7e9a added a separate iterable wrapper for the original spread operand.
- if (path === 'rust/tests/unit/translation_arrays.rs') {
-  const corrected = '    assert_eq!(count(&raw, "forOfIterable", false), 2);';
-  assert.equal(body.split(corrected).length, 2);
-  body = body.replace(corrected, '    assert_eq!(count(&raw, "forOfIterable", false), 1);');
- }
  return body;
 }
 const oldIdentityFixturePin={"bytes": 43302, "sha256": "4ac886fa12c5c748f022911a041d96badcf053a16992d7f33e007d1c0ef38de4"};

@@ -10,11 +10,36 @@ import {runInNewContext} from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {readGlobalConceptIdentityCompilerStyles} from '../scripts/global-concept-identity-styles.mjs';
 import {readCompilerFeedbackCorrections} from '../scripts/compiler-style-feedback.mjs';
+import {applyReviewedNativeSourceStyle} from '../scripts/reviewed-native-source-styles.mjs';
 import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
 import {simplifyRustBranches} from '../scripts/reviewed-rust-branch-styles.mjs';
 
 const scripts=['generate-global-concept-rule-styles.mjs','generate-frontend-rule-styles.mjs'];
 const controls=readProjectData(new URL('../../parity/fixtures/compiler-style-closure-controls.lino',import.meta.url));
+
+test('native source review refuses to replay a correction over revised source',()=>{
+  const path='rust/src/translation/declaration_dependency_rules/part_2.rs';
+  const source=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  assert.throws(()=>applyReviewedNativeSourceStyle(path,source+'\n'),/reviewed source is stale/u);
+  assert.equal(applyReviewedNativeSourceStyle('rust/src/other.rs',source),source);
+});
+
+test('reviewed lexer command emission borrows the mode before preserving it for replay', () => {
+  const source = readFileSync(new URL('../../rust/src/translation/grammar_lexer_rules/part_4.rs', import.meta.url), 'utf8');
+  const loop = readSourceTextRustBlock(source, 'fn', 'ml_read_grammar_lexer_command_emission_loop30');
+  assert.match(loop, /let argument = default_mode\.as_ref\(\)\.unwrap_or\(&mode\);[\s\S]*?\.concat\(argument\)[\s\S]*?vec!\[operation, mode\]/u);
+});
+
+test('generated binary codecs return the reviewed output expressions directly', () => {
+  const returnedBindings = /\blet\s+(output_\d+|length_output)\s*=\s*[^;]+;\s*\1\s*\}/u;
+  for (const family of ['link_network_binary_rules', 'link_network_binary_record_rules']) {
+    for (const name of ['part_1.rs', 'part_2.rs', 'part_3.rs']) {
+      const path = `rust/src/${family}/${name}`;
+      const source = readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
+      assert.ok(!returnedBindings.test(source), path);
+    }
+  }
+});
 
 test('global concept compiler check retains both entire generated modules and original flags',()=>{
   const {baseline}=controls;

@@ -8,7 +8,6 @@ import {PROGRAM_STRING_REGISTRATION_REVISION,PROGRAM_STRING_HOST_REVISION,PROGRA
   PROGRAM_STRING_HOST_PRODUCER,PROGRAM_STRING_REGISTRATION_CHANGES,PROGRAM_STRING_REGISTRATIONS,
   PROGRAM_STRING_HOST_PRODUCER_CHANGES,programStringHostRegistrationPin,replayProgramStringRegistrationChanges,
   verifyProgramStringHostRegistrationHistory} from './program-string-host-registration-history.mjs';
-import {restoreRegisteredNativeTestSource} from './registered-native-test-source-history.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
 const root=new URL('../../',import.meta.url);
 const output='parity/self-translation/program-string-host-registration-history.lino';
@@ -34,8 +33,7 @@ export function generateProgramStringHostRegistrationHistory({check=false}={}){
   });
   const registrations=PROGRAM_STRING_REGISTRATIONS.map(specification=>{
     const captured=captureGitArtifactCertificate(PROGRAM_STRING_REGISTRATION_REVISION,specification.path);
-    const actual=readFileSync(new URL(specification.path,root),'utf8');
-    assert.deepEqual(captured.blob,Buffer.from(restoreRegisteredNativeTestSource(actual,specification.path)));
+    assert.deepEqual(captured.blob,readFileSync(new URL(specification.path,root)));
     return{...specification,...programStringHostRegistrationPin(captured.blob),certificate:captured.certificate};
   });
   const packet={schemaVersion:1,model:'program string host registration succession 1',revision:PROGRAM_STRING_REGISTRATION_REVISION,

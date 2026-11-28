@@ -17,7 +17,7 @@ import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIt
 import { renderArrayFromMapping } from './array-from-rules.js';
 import { renderArrayCallbackExpression, renderArrayCallbackReferenceExpression, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';
 import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation, readPrimitiveArrayJoinElementForm, readPrimitiveArrayJoinOperandForm, renderPrimitiveArrayJoinElement, renderPrimitiveArrayJoinExpression } from './primitive-method-rules.js';
-import { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation, selectSurfaceReferenceRead } from './surface-reference-analysis-rules.js';
+import { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
 import { renderRecordField, renderRecordValue } from './record-emission-rules.js';
 import { readUnionTargetRefusal } from './type-syntax-rules.js';
 import { readCallableCapturedBindings } from './callable-source.js';
@@ -29,7 +29,6 @@ import { readOwnedArrayFinalUses } from './owned-array-moves.js';
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import { typeError, unsupported } from './diagnostics.js';
 import { renderCollectionConstruction } from './collection-construction-rules.js';
-import { renderCollectionSize } from './collection-size-rules.js';
 import { sameType, typeKey } from './types.js';
 import {acceptReferenceIdentityComparison, readReferenceIdentityComparisonError, renderReferenceIdentityComparison} from './reference-identity-rules.js';
 import { Scope, renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
@@ -1097,12 +1096,6 @@ class RustEmitter {
     return e.k === 'var' ? e.name : `(${this.expr(e)})`;
   }
 
-  renderReferencePayload(reference) {
-    this.temporaries += 1;
-    const value = `ml_reference_value${this.temporaries}`;
-    return renderSurfaceReferenceOperation('Rust', 'referenceRead', this.receiver(reference), value);
-  }
-
   /** Read nested product fields in place; clone only an ownership-bearing result. */
   tuplePlace(e) {
     const object = e.object.k === 'tupleIndex' ? this.tuplePlace(e.object)
@@ -1233,8 +1226,11 @@ class RustEmitter {
       }
       case 'referenceAllocate':
         return renderSurfaceReferenceOperation('Rust', e.k, this.expr(e.value), '');
-      case 'referenceRead':
-        return this.renderReferencePayload(e.reference);
+      case 'referenceRead': {
+        this.temporaries += 1;
+        const value = `ml_reference_value${this.temporaries}`;
+        return renderSurfaceReferenceOperation('Rust', e.k, this.receiver(e.reference), value);
+      }
       case 'recordField':
         return renderRecordField('Rust', this.expr(e.object), '', String(e.index));
       case 'tuple':
@@ -1304,13 +1300,11 @@ class RustEmitter {
         this.usesArray = true;
         this.usesStandardArray = true;
         const key = e.k === 'set' ? e.type.element : e.type.key;
-        const items = e.k === 'set' ? e.items : e.entries;
-        // Constructors consume an owned payload from the input array.
-        const values = selectSurfaceReferenceRead(items.type.reference === true) ? this.renderReferencePayload(items) : this.expr(items);
+        const values = this.expr(e.k === 'set' ? e.items : e.entries);
         return renderCollectionConstruction('Rust', e.k, key.kind, values, '', '', '');
       }
       case 'collectionSize':
-        return renderCollectionSize('Rust', this.receiver(e.object));
+        return `(${this.receiver(e.object)}.len() as f64)`;
       case 'collectionRead': {
         const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
         const equal = keyType.kind === 'float' ? '(ml_key == &ml_search || (ml_key.is_nan() && ml_search.is_nan()))' : 'ml_key == &ml_search';

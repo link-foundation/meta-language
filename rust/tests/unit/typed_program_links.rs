@@ -11,57 +11,6 @@ use serde_json::Value;
 use std::process::Command;
 
 #[test]
-fn linked_local_declaration_keeps_precedence_over_an_external_binding() {
-    use meta_language::translation::{
-        check::check_program, javascript::parse_javascript, surface::External,
-    };
-
-    let source = "/** @param {number} input @returns {number} */function value(input){return input+1;}\n\
-        /** @returns {number} */function selected(){return value(7);}";
-    let mut surface = parse_javascript(source).unwrap();
-    surface.externals.push(External::Constant {
-        name: "value".to_owned(),
-        ty: Type::Bool,
-        literal: true,
-    });
-    let checked = check_program(&surface).unwrap();
-    let packet = encode_typed_program_links(&checked).unwrap();
-    let binary =
-        encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap();
-    for network in [
-        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
-        decode_link_network_binary(&binary, BinaryLinksOptions::default()).unwrap(),
-    ] {
-        assert_eq!(
-            decode_typed_program_links(&network, packet.root).unwrap(),
-            checked
-        );
-        let declarations = network.link(packet.root).unwrap().references()[0];
-        let externals = field(&network, declarations, "externals");
-        let external = network.link(externals).unwrap().references()[0];
-        let reference = network
-            .links()
-            .find(|link| {
-                matches!(link.references(), [_, label, _]
-                    if network.link(*label).and_then(|label| label.metadata().term())
-                        == Some("declaration reference"))
-            })
-            .unwrap();
-        assert_ne!(reference.references()[2], external);
-        let different_owner = edit_references(
-            &network,
-            reference.id(),
-            &[
-                reference.references()[0],
-                reference.references()[1],
-                external,
-            ],
-        );
-        assert!(decode_typed_program_links(&different_owner, packet.root).is_err());
-    }
-}
-
-#[test]
 fn assertion_propositions_preserve_owned_expression_and_quantified_binding_links() {
     let original = create_typed_program_links(
         "fn main(){let count=2f64;assert_eq!(count,2f64);assert!(!false);println!(\"ok\");}",

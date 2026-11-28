@@ -25,12 +25,8 @@ mod owned_local_state;
 mod runtime_shell;
 #[path = "codec_scopes.rs"]
 mod scopes;
-pub(super) fn encode(
-    program: &Program,
-    provenance: Option<&Value>,
-    node_limit: usize,
-) -> Result<TypedProgramLinks> {
-    encoding::encode(program, provenance, node_limit)
+pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<TypedProgramLinks> {
+    encoding::encode(program, provenance)
 }
 
 #[derive(Clone)]
@@ -534,13 +530,8 @@ pub(super) fn decode_with_binding_identities(
         body,
         mapping,
     )?;
-    let externals = decoder
-        .field(body, "externals")
-        .map(|records| decoder.array(records))
-        .transpose()?
-        .unwrap_or_default();
     let mut traversal = scopes::Traversal::new(limits.node_limit);
-    let ownership = decoder.ownership(&declarations, externals, &mut traversal.remaining)?;
+    let ownership = decoder.ownership(&declarations, &mut traversal.remaining)?;
     decoder.validate_references(&ownership)?;
     for entry in declarations.values() {
         let mut environment = BTreeMap::new();

@@ -67,6 +67,2759 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.1.0] - 2026-11-25
+
+The native grammar importer compiles character-class intersection, difference
+and symmetric difference into shared Links data. Both runtime executors cover
+nested and negated sets, Unicode ranges, operator precedence and repetition
+without using a regular expression engine to execute imported classes.
+Fixed-width and braced hexadecimal scalar escapes lower to native characters
+and ranges, including the braced escapes in the Swift identifier pattern.
+Imported emoji classes also include their ASCII keycap base characters.
+
+The Agda upstream corpus is compared with an independently compiled copy of
+the pinned grammar whose scanner retains its complete pending layout queue.
+The original released oracle and its existing divergence assertions remain
+available. Production parsing continues to execute the shared native grammar.
+
+Preserve Agda universe arguments as children of their universe atom in the
+generated native grammar, matching the pinned independent parser. Keep bare
+universes valid and cover both forms in the shared JavaScript and Rust fixtures.
+Preserve clause-lambda keywords and separators instead of consuming them as
+untyped bindings or identifiers, with an independent oracle regression case.
+Retain nested module ownership and universal quantifier scope, and resolve
+instance-ellipsis module arguments and empty Unicode lambda bindings.
+Update the CI debugging artifact uploader to the audited current action version.
+
+Ordinary JavaScript array reads retain an explicit undefined result in the checked program instead of requiring in-bounds inputs. Nullable values preserve strict null/undefined equality, truthiness, arithmetic conversion, output and computed numeric property access. The JavaScript translator emits these operations for Rust, Lean and Rocq; native runtime parity remains subject to CI verification. Shared scalar captures use reference cells in JavaScript and Rust output. Container mutation and sparse-slot target execution remain explicit translation gaps.
+
+Escape constructor tags with the existing JSON string encoders in both JavaScript target emitters. Backslashes, quotes and line breaks retain their data value during construction and pattern dispatch.
+
+Constructor fields use computed keys and retain their exact names, including reserved words and `__proto__`, as own data properties.
+
+JavaScript-origin tagged objects retain mutable property descriptors, with explicit constructor freezing stored in the linked checked representation. Native algebraic-data origins retain their documented frozen JavaScript encoding. Other targets refuse explicit JavaScript constructor freezing until they can represent its property descriptors.
+
+Added a pinned Ruby grammar candidate generated from the native source, with shared Links scanner operations for nested literals, interpolation, whitespace-sensitive tokens and queued heredoc bodies. Independent focused CST fixtures and the complete pinned upstream corpus run in both runtime CI suites before catalog promotion.
+
+Generated contextual literal scanners share equivalent body decisions and test
+opening spellings before parser-context queries, reducing scanner work within
+the existing parse budget. Lexical following conditions retain fallback
+policies, and profiles can describe escaped line continuations while retaining
+their exact source text. Both runtimes consume these generated Links operations.
+Profiles can group competing lexical tokens into one ordered decision using
+the shared parser-validity bits, preserving whitespace-sensitive operator and
+command-argument choices.
+Delimiter policies can declare an empty closing delimiter for a literal that
+ends at the input boundary, with guarded opening delimiters. This preserves
+Ruby's percent literals opened by whitespace without losing percent operators.
+
+Add reproducible native CSharp grammar and counted string/interpolation scanner
+data, with independent focused fixtures shared by JavaScript and Rust. The
+existing default parser remains in place until complete corpus validation.
+
+A generated Elm grammar candidate executes every pinned scanner token as
+shared Links data, including queued section closures, indentation, nested
+comments, multiline strings, shaders and Unicode negation. Focused independent
+oracle fixtures run in both runtimes before catalog promotion.
+
+Formal definition comparison now derives local binding identities from the validated program scope, including unused parameters and local bindings. Disconnected binding references cannot conceal public field names, and a shared record that also serves as a public type or property descriptor retains its observable name.
+
+Add linked formal concept definitions and closed equivalence certificates with
+shared primitive declarations, preserved graph identities and checked program
+interpretations. Both runtime tests compare the same serialized definition and
+certificate fixtures; unsupported operational constructs remain diagnostics.
+
+Added linked operational concept definitions and source-free correspondence certificates under declared shared primitive models. Global grammar sharing now requires these checked formal premises; matching catalog identifiers and prose alone retain separate qualified concepts. The proof preserves recursive references, binding identity, types and effects, while separating source spans and proven local binder spelling from operational meaning.
+
+Native grammar sources can now contribute to one global concept space. Shared
+identities require grounded meanings and a closed recursive correspondence;
+definitions, operational context, origins and proof witnesses survive Links
+Notation reload. Queries retain unknown meanings and ambiguous target origins.
+
+This batch also adds native linked text grammars, structured scanner families,
+source-preserving grammar unions, TypeScript type erasure and checked translation
+operations. The complete issue #199 delivery gate, remaining native grammar
+defaults and full-language translation still require implementation and CI
+verification.
+
+Add native JavaScript source adapters for fresh frozen products, closed caller
+proofs, fixed positional reads and nested destructuring. Reuse the generated
+source fact solver and existing inference engine, retaining finite refusals for
+recursive inferred types and unproved product origins or observations.
+
+Recorded token prefix exclusions retain the source token's kind and lexical
+precedence while inspecting parser-owned context. Ruby comments can preserve
+their ordinary behavior without swallowing an active, incomplete interpolation
+inside an input-ended percent literal. Both runtimes execute the generated
+grammar assertions.
+
+Preserve all authored native grammar aliases when checking canonical concepts,
+including candidates outside the shipped runtime catalog. Naming checks compare
+every authored rule and the shipped subset against their source inventories.
+Reference type records retain the selected lifetime and mutation model, and
+whitespace aliases use the deterministic order of the native import pipeline.
+
+Generate shared primitive conversion, numeric output and scalar-cell operation decisions from JavaScript for both runtime adapters. Rust source f64 display now yields the same explicit diagnostic in both runtimes until Rust's formatting is represented faithfully; nonprinting binary64 arithmetic remains available. Null numeric conversion and missing array property selection retain distinct rules.
+
+Add shared quoted-fragment and operator-context scanner profiles, applied to
+the pinned native Elixir grammar candidate. Focused fixtures retain independent
+oracle trees, quoted Unicode text, interpolation, line boundaries and recovery.
+The existing default parser remains until complete corpus validation.
+
+Add Rust source adapters for immutable scalar Copy tuple products, positional
+projections and nested destructuring. Preserve source evidence and binder spans
+without assigning widths to unsuffixed numerals; reject unproved product fields
+and invalid positional index spellings.
+
+### Changed
+
+- Track requirement-bearing comments on issue #199 and pull request #201,
+  including the latest delivery audit and reverse Unicode trimming semantics.
+- Register captured conversation instructions by their exact committed content
+  hashes and specify one global concept space with checked one-to-one reuse.
+- Add atomic verification rows for global concepts, natural-language native
+  representation and structured scanner families while preserving prior scope.
+
+Grammar reconciliation preserves every source production and alias as native
+alternatives, keeps distinct semantic concepts and actions apart, and retains
+alternative source roots. Every merge also contributes to one global concept
+space with explicit proof obligations. The bulk pipeline accepts additional
+pinned official grammars, emits native Links grammar artifacts and reports
+changes in shared correspondences against an earlier CI matrix.
+
+Merge APIs and the bulk pipeline forward explicit operational Links definitions
+as semantic proof premises. Without supported premises, all original concepts
+remain represented with distinct identities.
+
+The JavaScript translator now drafts structural records, nullable values,
+immutable closures, iterable collection construction and array callbacks.
+String methods in Rust output use an explicit UTF-16 code-unit representation,
+including isolated surrogates produced by slicing or splitting. Module
+translation selects that representation for every sibling item together.
+
+Rust trimming in JavaScript output uses Unicode White_Space, retaining the
+NEL/BOM distinction from ECMAScript trimming. Shared fixtures cover both
+predicates. Mutable collection aliases, complete out-of-range read semantics,
+the pure targets' UTF-16 string runtime and the Rust host compiler's portable
+expression parity remain acceptance work.
+
+Serialize complete theorem diagnostic and status strings with the existing JSON string encoders in both JavaScript target emitters. Primed source names such as `add_comm'` retain their exact names and produce executable bounded checks and failure messages.
+
+Add positional product construction and constant projections to the native checked IR. Preserve the explicit frozen product value model, reject unsupported element types and unsafe indices, and retain ordinary contextual array tuples.
+
+Keep the selected immutable product model separate from its frozen flag, so a contradictory flag edit is rejected without changing legacy tuple behavior.
+
+Refuse whole-tuple equality until an explicit comparison model preserves the difference between Rust value equality and JavaScript reference identity; positional scalar comparisons remain supported.
+
+Preserve anonymous terminal extras and directly imported private scanner extras
+as separators while retaining named aliases, scanner state and exact source
+spans. Keep Pascal root spans at the input start through the existing leading
+trivia projection policy.
+
+Retain private scanner identities during lexing and recovery while exposing
+anonymous tokens publicly, so Odin recovery ERROR spans keep their original
+terminal newlines.
+
+Add an explicit closed primitive borrowed Rust call interface model. It retains
+owned primitive leaf/caller source headers, materializes arguments once in
+order under hygienic scalar names, and restores the callee's exact immutable
+reference layers. Source-free scalar and header edits change emitted calls.
+Existing default and leaf-only models retain their separate behavior. Borrowed
+results, static callee borrows, call chains, effects, imports and broader ABI
+equivalence require independent proofs. Native compilation and observation
+coverage run in CI.
+
+Preserve Agda universe nodes at declaration boundaries by generating optional
+argument guards from the declared newline and dedent tokens. Retain historical
+fixtures and select current expectations by exact source and version profiles.
+
+### Fixed
+
+- Generate identical package-local Links fixtures for grammar attribute ordering,
+  so native source tests and the shared rules remain available inside the crate.
+
+Preserve grammar attribute insertion and overwrite positions, with numeric keys
+in JavaScript own-key order. Compact attribute rendering now uses UTF-16 key
+order for both runtime packages, including non-BMP names. The native attribute
+map uses the pinned IndexMap storage; key decisions come from the complete
+automatically translated JavaScript module. Native execution remains a CI check.
+
+Experimental readers recover stored concrete source bytes or text from reloaded program graphs, including the TypeScript lowered plane. Origin reads remain distinct from emission of edited semantics; native implementation and public integration are pending.
+
+Experimental program graphs retain complete JavaScript, Rust and TypeScript concrete syntax through Links reload and semantic edits. Existing Rust source-model provenance is preserved. Native verification and public package integration remain pending.
+
+Current JavaScript/Rust translation providers retain exact historical source and
+artifact checks after UTF-16 ordering and Number predicate improvements. The
+original string comparison fixture is refreshed automatically. Conformance CI
+uses four disjoint file partitions under the existing fifteen-minute deadline.
+
+Temporary grammar downloads now refuse tracked or unignored materialized
+destinations before acquisition or cache replay, including nested project roots
+and external caches. Existing source files, the Git index and ignore rules stay
+unchanged on refusal.
+
+Generate concrete program graph consumers from authenticated existing templates and shared Links edits. Five CI inputs cover original JavaScript, Rust and TypeScript programs and two semantic edits through both real package emitters.
+
+Translate primitive string `at` calls through a shared checked definition,
+preserving relative UTF-16 indexing and undefined results. Retain explicit
+callable return types during source-free semantic archive rechecking.
+
+Historical translation checks now restore their exact immutable source inputs
+through checked byte inverses after newer Number and UTF-16 behavior is added.
+Original assertions and refusal cases remain intact. The parity source check
+also recognizes the exact experimental Rust storage module registered in native
+unit tests while continuing to reject drivers and unregistered sources.
+
+Experimental TypeScript program graphs retain original and lowered concrete syntax with editable checked semantics through Links text and binary reload. CI controls exercise both Rust-package target emitters against shared graph inputs; complete TypeScript coverage and native verification remain required.
+
+Added an explicit `closed boolean function value` formal model for checked JavaScript and Rust functions, including short-circuit operations and closed recursion. Callable proofs retain source names and full origin data while comparing actual owned binding graphs under a Boolean argument contract. Existing source-interface and numeric models retain their boundaries.
+
+TypeScript fixture checks retain the complete original import corpus alongside the implemented named-import extension. Large structured-data reads reuse one exact-text snapshot with fresh caller-owned values, and CI gives raw generation/projection and complete CST replay separate required jobs under the existing deadlines.
+
+Erase supported TypeScript function receiver parameters through shared Links
+rules, preserving runtime arity, complete concrete source and reverse translation.
+Generate Rust admission decisions automatically. Portable projection retains the
+`this: void` contract and refuses unsupported receiver interpretations explicitly.
+
+### Fixed
+- Refresh the requirement ledger's source-register fixture digest so the scope
+  gate can validate the merged issue #195 baseline.
+- Stream runtime-parity digest and difference artifacts with backpressure,
+  avoiding a complete in-memory NDJSON string for large discrepancy reports.
+- Add capped-heap and peak-RSS regressions for lazy grammar loading, Markdown
+  inline parser reuse, Unicode source offsets and parity artifact writing;
+  retain the native TypeScript parse-budget exhaustion regression.
+
+### Added
+- Generate native scanner operations from reusable delimiter and string-content
+  descriptors, with shared JavaScript and Rust concrete-tree fixtures; use the
+  content family in the shipped native Rust string scanner.
+
+### Fixed
+- Preserve constant-binding metadata and the nullable parameter-default field
+  in the Rust translation stage representation.
+- Read Unicode string escapes and fill omitted trailing JavaScript parameter
+  defaults in the Rust translation pipeline.
+
+### Added
+- Generate executable native scanner data for raw tokens with repeated
+  delimiter counts, with shared Rust-style and Lua-style delimiter fixtures
+  that verify content preservation, malformed input and successive token state.
+
+### Fixed
+- Preserve JavaScript constant-binding and parameter-default metadata in Rust translation stage serialization.
+- Decode Unicode escapes and fill omitted JavaScript arguments from parameter defaults in Rust, using frontend decisions translated automatically from JavaScript.
+- Install the shared JavaScript report dependencies before Rust tests and fresh-merge checks.
+- Use portable module paths and verify the complete reports before recording self-translation reporting evidence.
+
+### Changed
+
+- Generate the native Lua grammar and long-bracket scanners from pinned
+  upstream sources and shared scanner-family data. Both packages ship the
+  generated grammar for the ordinary Lua parse; the Rust tree-sitter Lua
+  crate serves as a development oracle.
+- Preserve the nested node when importing an alias of an optional hidden
+  rule, and emit no aliased node when that optional rule is absent.
+
+### Fixed
+
+- Compare individual Rust function bodies in the self-translation report
+  using the concrete tree's UTF-8 byte ranges and exact name fields, including
+  Unicode and raw identifiers.
+
+Native TOML, Zig, Pascal and Visual Basic grammars now use shared generated Links Notation data in both runtimes. Their independent parser crates and WebAssembly assets are development oracles. Configurable delimiter-run and line-boundary scanner families preserve source text. Lua chained call precedence is reconciled through import metadata.
+
+### Fixed
+
+Preserve leading Pascal whitespace in root source spans and resolve Zig qualified type prefixes, compile-time fields and loop-range expression contexts through generated shared grammar data. Add focused JavaScript and Rust oracle comparisons for those cases and compact first-difference diagnostics for every upstream corpus failure.
+
+Generated C++ context preferences distinguish scoped calls and assignments from
+declarations, preserve nested dependent types and array allocation arguments,
+and resolve optional parameter, sizeof and attributed case ambiguities. SQL
+keyword boundaries reject identifier prefixes and keep IS NOT as one operator.
+Shared focused fixtures compare both executors with independent parser oracles.
+
+Cache cleanup records Linux process start times and boot identity using the
+mounted procfs PID, so sandbox PID namespaces and reused PIDs cannot transfer
+leases, locks or scratch ownership to another process. Process reports retain
+the caller's PID numbering for processes in the same namespace.
+
+### Fixed
+
+Parse optional Zig error-union types and Pascal conditional parameter types, variable types, type aliases and procedure bodies with shared generated grammar data. Preserve Pascal chained comparison trees through a field-selected precedence rule. Add fifteen focused oracle comparisons in both runtimes and tests for the reusable grammar transformations.
+
+### Added
+
+Ship generated native CSS, PowerShell and Erlang grammars in both packages. Pin upstream grammars, scanners, licenses and corpus inputs; compare focused and upstream inputs with independent development oracles. Add shared marked lookahead, contextual token and counted line delimiter scanner data, contextual keyword exclusions and reviewed lexical and grammar priorities.
+
+Generate native Dart, Nix and CMake grammars from their pinned sources, with
+shared scanner data for string fragments, nested comments and counted brackets.
+Preserve original source names, concrete token kinds, fields and source bytes;
+keep their independent parsers in development dependencies and oracle assets.
+Add focused accepted, invalid and recovery fixtures in both runtimes, scanner
+policy fixtures and CI coverage of each pinned upstream corpus. Preserve C++
+plain field reductions when logical comparisons compete with template methods.
+Write native default expectations in the generator's canonical language order.
+
+The self-translation report now accounts for every UTF-8 source byte, publishes
+byte counts by item status and layout, and refuses modules with omitted code or
+invalid item ranges instead of reporting empty translations as zero gaps.
+
+### Added
+
+Native Groovy parsing now uses the pinned grammar imported into shared Links
+Notation, with its Tree-sitter parser moved to development-only oracles.
+Focused parity fixtures cover literals, declarations, control flow, closures,
+collections, comments, input boundaries and lossless invalid-source recovery.
+Reviewed grammar transformations also reconcile CSS selector spans and
+arguments, PowerShell argument attachments, and Erlang attributes, sigils and
+macro replacement contexts. Preserve the legitimate empty symbol name of
+an upstream end sentinel instead of the Web Tree-sitter wrapper's fallback
+error name.
+
+### Added
+
+An exact text delimiter scanner family generates shared grammar data for
+remembered opening labels, matching closing labels, Unicode content and
+state reset between parses. JavaScript and Rust use the same generated
+fixtures and existing grammar actions and predicates.
+
+### Fixed
+
+Preserve source lexer token identities when context guards reuse word
+patterns. Input boundary preferences now handle trailing grammar extras
+without adding a CST leaf. Reviewed context decisions reconcile Groovy
+methods, functions, conditional bodies, labels, switches and newline
+terminators, and Erlang declarations with leading whitespace. Shared
+concept fixtures include the newly shared Groovy constructs.
+
+Native C++ raw strings and SQL dollar-quoted bodies now use shared remembered
+text scanner families, with pinned source grammars, licenses and corpus inputs.
+C++ and every catalog SQL dialect select the generated Links Notation grammar;
+their former parser assets and crates are development oracles. Focused tests
+compare concrete kinds, fields, spans and source bytes in both executors.
+
+Groovy context rules isolate class method headers, reserve top-level `def`
+functions after annotations and retain statement blocks in loop bodies.
+A conditional boundary preference preserves direct consequences while leaving
+multiline literals in their ordinary context. The shared source transformations
+also retain a named alias boundary around a choice and contextual SQL clause
+keywords around implicit aliases.
+
+### Added
+
+- Self-translation into Rust binds the other top-level items of a module: an item may call a function and read a constant declared before or after it, and the Rust names them as their own translations do (#202).
+- A relative named import, `import { a, b as c } from './m.mjs'`, translates as `use crate::m::{a, b as c};`. `selfTranslationSignatures` (`self_translation_signatures`) gives a module's exported signatures, and the `imports` option (`SelfTranslationOptions` with `self_translate_with` in Rust) binds them in the modules that import it (#203).
+- A module whose only statement declares a top-level constant translates into Rust as a constant in both runtimes: a literal number or boolean is a `const` of its type, a literal string a `&str`, and any other value a lazily computed `static`. Its signature lets the modules that import it read it. The Rust root had only the JavaScript half (`emit_rust_constants`), and the new `math-to-rust` case, which `imports-to-rust` reads its items from, shows both roots agree.
+
+### Changed
+
+- Default and namespace imports, Node.js built-in modules and packages are refused with their own diagnostics instead of the advice to import the assertion module.
+
+### Fixed
+- Preserve CMake command indentation outside split bracket openings without changing content whitespace scanning.
+- Verify 21 more reviewed native concept correspondences.
+- Exercise the Nix native parser and independent oracle using Nix 2.28.8 manual-derived expressions where the pinned upstream grammar has no test corpus.
+
+### Fixed
+- Keep JavaScript regular expression character classes, quoted bodies and escaped delimiters in one token, preserving the regular expression unsupported diagnostic.
+- Distinguish division from regular expression literals using shared frontend decisions translated into Rust.
+- Decode NUL and common control escapes in template text and reject legacy octal template escapes.
+- Refresh the JavaScript export parity manifest after merging the release branch.
+- Preserve Dart type identifiers and nullable suffix alias reductions in generated native grammars, and refresh the Nix corpus fixture.
+- Treat doubled punctuation at character-class edges as literal members rather than binary set operators, retaining PowerShell operator grammar generation.
+
+### Fixed
+- Retry contiguous JavaScript declarations in one checked binding scope when an isolated item fails type resolution, enabling sibling, forward and arrow-bound calls during self-translation.
+- Preserve byte-exact provenance for successful runs and retain individual carried decisions when their combined scope cannot translate.
+- Refresh the Dart default grammar digest and canonical concept ordering to match reproducible generation.
+
+- Translate sibling reads of immutable primitive literal constants, respecting local shadowing and temporal dead zones.
+- Generate constant eligibility, storage selection and declaration rendering rules from JavaScript for both runtimes.
+- Share executable constant-capture fixtures and compare exact emitted output and lossless restoration.
+
+- Retry declaration-only modules in a complete checked scope, including JSDoc data types shared across functions.
+- Preserve exact source restoration for generated declarations with standalone Rust attributes by counting target CST items.
+- Verify the complete frontend decision module has zero carried items, executes its generated Rust and restores its source exactly.
+
+### Fixed
+
+- Read bracketed optional JSDoc parameter names in both runtimes while preserving declared types and actual function defaults. Documentation defaults remain metadata. Shared fixtures check execution and exact source restoration.
+- Anchor generated Rust style replacements to their complete named function so adding another frontend decision cannot move a closing branch into the wrong function.
+
+### Added
+
+- Translate JavaScript `typeof` for typed bindings and primitive literals in both runtimes. Generated decisions retain Number/BigInt and object type names. Shared execution fixtures cover the primitive and array cases; operands with effects or exceptions retain diagnostics.
+
+### Fixed
+
+- Import quoted ANTLR braced Unicode escapes and literal ranges in both runtimes using the generated shared decoder. Supplementary scalars and NUL are retained; malformed, surrogate and out-of-range escapes fail explicitly. This removes the quoted Unicode import failure in the pinned Python lexer without modifying its upstream grammar.
+
+### Added
+
+- Translate homogeneous JavaScript array concatenation through checked array spreads in both runtimes, preserving order, nested arrays and zero-argument copies. Scalar arguments remain unsupported.
+
+### Fixed
+
+- Retain a childless native parser error root as a carried syntax item instead of omitting its source. Restore a digest-verified original prefix followed only by generated whitespace, including sources without a final newline; executable edits prevent restoration. Parser resource limits and acceptance gates are unchanged.
+
+### Fixed
+
+- Integrate main's sibling-item and relative-import binder with declaration-scope retries. Expose eligible exported function signatures from successful retries and preserve source-error restoration. Keep nonliteral constant captures unbound until eager initialization semantics are represented, using the generated shared eligibility rule.
+
+### Fixed
+
+- Refresh the translation-stage snapshot for the existing BigInt type-query program: it now parses, checks and emits in all four targets. Preserve all 1,812 source programs and their stage checks.
+
+### Added
+
+- Port whole-string startsWith, endsWith and includes predicates to the Rust translator through shared generated decisions, with Unicode, empty-search and negative-match checks. Refresh native-import concept data.
+
+### Added
+
+- Port Unicode case mappings and JavaScript whitespace trimming to the Rust translator through shared generated decisions. Verify expanded case mappings, U+FEFF trimming and retention of U+0085.
+
+### Fixed
+
+- Refresh canonical concept fixture digests while preserving all 350 requirements and 430 fixture identities.
+
+### Fixed
+
+- Translate type queries of captured primitive literal constants without treating their checked reference as a function call. Retain call-effect and unsafe-capture refusals.
+
+Add a descriptor driven indentation scanner family that generates executable
+Links Notation shared by both runtimes. Preserve nested blocks, tabs, reset
+characters, blank lines, comments, end of input and bounded indentation counts.
+Keep the nearest actual lexed continuation when virtual scanner tokens
+intervene, so a pending dedent closes a block before later ordinary tokens.
+
+Use the generated Links Notation grammar for ordinary Python parsing in both
+packages. Generate its layout and prefixed quote scanners from shared family
+descriptors, preserving prefix flags, triple quotes, escaped interpolation,
+raw and bytes escapes, nested formatted strings and indentation state.
+Retain complete exception alias subtrees and prefer complete indented suites.
+Add focused independent oracle fixtures and pin the upstream corpus for CI.
+Allow the cold Windows grammar CI job thirty minutes to finish its full suite.
+
+Preserve CRLF and mixed line endings, Unicode separators and leading or trailing
+layout when an unedited self-translation is restored. Verify both original
+source bytes and the complete emitted body before restoring the source envelope;
+edited output and corrupt provenance cannot restore a stale source.
+Generate the shared restoration decision into Rust and check both runtimes
+against six shared sources and changed-body and damaged-envelope cases.
+
+Translate dense immutable array copying with `slice()` and single-array
+`Array.from()`, and homogeneous `Array.of()` construction, through the shared
+checked array representation. Preserve order, nested and empty arrays and single
+evaluation of effectful inputs in both runtimes. Generate the method and
+argument decisions into Rust. Retain explicit diagnostics for indexed slices,
+non-array iterators, array-like objects and mapping callbacks.
+
+Keep the Python Tree-sitter parser as a development oracle dependency and remove
+its production grammar dispatcher entry. Ordinary Python parsing uses the
+shipped generated Links grammar. Check the package manifest boundary in
+JavaScript and verify the production grammar dispatcher has no Python oracle.
+
+Keep the pinned Python WebAssembly parser and license in JavaScript's test-only
+oracle directory. The npm package ships its generated native Python Links
+grammar instead. Preserve the oracle's source and WebAssembly digests, and
+regenerate grammar locks with the development-oracle classification.
+
+Exclude the pinned Lean and Rocq foreign parsers from production Rust compilation
+and crate archives, and their WebAssembly assets from the npm package. Retain
+both independent parsers in development scope, with their original source bytes,
+MSVC UTF-8 handling and closed decompression streams. Ordinary parsing continues
+to execute the shipped native Links grammars.
+
+Preserve ordinary expression lists and splatted pattern lists inside Python
+formatted-string interpolations through the generated native grammar shared by
+JavaScript and Rust. Refresh the Go recovery fixture after the token-over-extra
+boundary correction so raw strings retain comment-shaped content.
+
+Reuse one lazily encoded UTF-16 source when tokenizing regular-expression
+literals in both runtimes. Modules with many literals no longer copy each
+remaining source suffix, and Unicode token offsets remain absolute.
+
+Recognize JavaScript regular-expression literals after control-statement
+conditions, including nested parentheses and intervening comments. Qualified
+method calls keep division semantics. The shared classification rule is
+self-translated into Rust, and both lexer adapters use the same fixtures.
+
+Preserve separate statements after prefixed Python strings, restore enclosing
+formatted-string scanner state after nested strings, and prefer format tokens
+over longer comments when their lexical precedence is higher. Reconcile
+exception-group markers and collection splat suffixes through recorded import
+rules, retaining the original grammar alternatives. Add shared focused tree
+regressions for both runtime executors.
+
+Translate JavaScript string length as UTF-16 code units in Rust, Lean, and
+Rocq, preserving supplementary characters and single receiver evaluation.
+Generate the shared rendering decisions from JavaScript and add Unicode,
+empty-string, combining-character, and effectful-receiver regressions.
+
+Tokenize template substitutions with the normal lexical rules so braces in
+strings, comments, regex literals and nested templates preserve their boundaries.
+Reuse the source encoding across substitutions, retain absolute UTF-16 offsets,
+and test lexical recovery and emitted program behavior in both runtimes.
+
+Decode hexadecimal and Unicode escapes in JavaScript strings and templates
+through the generated shared scalar decoder. Preserve line continuations,
+normalize template line endings, cook ordinary escaped characters, and reject
+invalid legacy escapes. Shared fixtures check both runtime frontends, and a
+compiler-backed regression compares emitted Rust with JavaScript output.
+Derive compiler style fixes as decorator data, check the generated module with
+Clippy in CI, and avoid building a second source graph during signature discovery.
+
+Ordinary HCL and Terraform parsing now uses a generated native Links Notation
+grammar in both packages. Shared template scanner data handles quoted strings,
+interpolation, directives and remembered here-document labels; Tree-sitter HCL
+is retained only as a development oracle. Wrapped scanner tokens preserve
+skipped trivia outside their token spans, and scanner operations can read the
+consumed text independently of a marked token end. Focused oracle fixtures and
+shared scanner span fixtures cover these behaviors; CI checks the upstream
+corpus. The broader native catalog and multi source grammar work remain open.
+
+Native HCL root spans now include leading whitespace in both packages, while
+child spans still follow their actual tokens. Wrapped zero-width scanner tokens
+retain their grammar-owned padding, preserving CSS descendant selectors and
+Lean layout tokens. HCL collection comprehensions have an identity distinct
+from imperative loops, with every existing source alias retained. Reviewed
+concept definitions and distinctions now apply on every import regeneration.
+The broader native catalog and multi source grammar work remain open.
+
+- Generate native R parsing from pinned grammar sources and shared scanner data for contextual line endings and raw literals. Keep the independent parser in development dependencies and compare focused and upstream fixtures in both runtimes. Full delivery and release acceptance remain open.
+
+- Preserve operator precedence across silent operand wrappers and chained optional member names in the shared grammar executors. Keep R line endings contextual, classify guarded identifiers without losing keyword boundaries, and distinguish whole binary expressions from operator tokens. Full corpus, delivery and release acceptance remain open.
+
+- Generate native XML and DTD grammars with shared scanner state and retain their independent parsers as development oracles. Preserve DOCX document semantics, exact Unicode identifier properties, and expression grouping through wrappers and optional extraction operands. Full upstream corpus, multi-source union, delivery and release acceptance remain open.
+
+### Changed
+
+- Generate the native Odin grammar and contextual scanners from pinned sources;
+  retain the original parser and WebAssembly module as development oracles.
+- Preserve external-extra token spans after scanner whitespace skips and honor
+  silent operand reductions when grouping member calls in both runtimes.
+- Refresh CI-observed Lean recovery fixtures and shared concept mappings while
+  retaining all registered requirements, fixtures and source aliases.
+
+The remaining catalog imports, multi-source grammar union, acceptance and
+published downstream delivery are still open.
+
+### Changed
+
+- Generate native HTML tag context and raw-text scanners from pinned sources,
+  retaining the original parser as a development oracle.
+- Let scanner expression predicates read preceding state mutations, and expose
+  shared scalar uppercase conversion for case-insensitive scanner names.
+- Correct Odin root-span metadata and refresh CI-observed Lean recovery trees,
+  export-parity metadata and the explicit development-oracle inventory.
+
+Complete source unions, the remaining catalog imports and published delivery
+are still open.
+
+### Fixed
+
+- Preserve leading whitespace in embedded HTML script and style regions.
+- Settle mandatory table-cell and row closures before scanning the next tag.
+- Retain independent embedded-region expectations when generating native
+  default CST fixtures and refresh their requirement-manifest hashes.
+
+The remaining source unions, catalog imports and published delivery are open.
+
+### Changed
+
+- Generate the native Agda grammar and its complete indentation and pending
+  layout-token state from pinned sources and reviewed import decisions.
+- Preserve named lexical identities under reviewed prefix guards, distribute
+  aliases over choice alternatives, and retain the pinned lambda-arrow choice.
+- Isolate development oracle inputs when the pinned scanner's queue growth
+  reads entries whose location changes; the pinned parser and assertions stay
+  intact. Retain explicit focused layout divergences.
+
+The remaining source unions, catalog imports and published delivery are open.
+
+Added reusable native scanner descriptors for line-anchored here-document
+labels and queued bodies, nested quoted interpolation, offside block
+boundaries and Markdown fenced blocks. They compile into the shared Links
+Notation operation language and use the existing interpreters in both
+packages. Shared lexical fixtures cover concrete source preservation,
+delimiter rejection and context isolation; these fixtures do not declare
+complete native grammar support for the associated languages.
+
+Add native concrete-tree TypeScript annotation erasure to the JavaScript
+self-translator, with linked erasure rules and lossless source provenance.
+Compile-time declarations have zero target definitions; unsupported runtime
+TypeScript constructs retain their source and explicit translation obligations.
+Clean-consumer JavaScript tests execute all six numeric JavaScript, TypeScript
+and Rust projection directions and independently replay emitted Rust without
+restoration provenance. Full runtime and downstream coverage remains required.
+
+Added shared structural type identities and Rust signature emission for
+optional values, tuples, records, read-only maps and sets, and callable values.
+The portable identity, absence and signature decisions are translated
+automatically from JavaScript into the Rust runtime. Shared fixtures compare
+canonical type identities and complete emitted identity functions. This
+change does not declare support for constructing or operating on those values
+in frontends whose checked expression variants are still unsupported.
+
+Add a JavaScript prototype for checked programs represented as structured Links
+records, ordered lists, mappings, types, effects and source spans. Declaration
+and local binding references retain linked identity. Reloading and editing this
+representation can emit JavaScript and Rust without the original source or a
+restoration envelope. Shared schema decisions are generated for both runtimes;
+full runtime adapters and language coverage remain required.
+
+The JavaScript translation frontend now reads local arrow functions and
+function expressions, immutable captures, array bindings in declarations and
+for-of loops, string and Number switch cases, literal record constants,
+nullable and structural JSDoc types, nullish defaults, and optional fields.
+These forms enter the checked translation representation and target emitters;
+mutable captures retain a precise diagnostic.
+
+Both lexical runtimes distinguish statement block braces from expression
+braces when deciding whether a slash starts a regular expression. The shared
+frontend decisions also distinguish Rust Unicode whitespace trimming from
+JavaScript trimming, with Rust decisions generated from JavaScript and
+reviewed Links Notation style decorators.
+
+Optional JSDoc parameters retain an omitted `undefined` value, separately from
+an actual JavaScript default expression. Named functions can be higher order
+arguments and have the JavaScript `typeof` result `function`. Decimal Rust
+binary64 literals use shared generated lexical boundary decisions in both
+runtime packages; ranges, member names and integer suffixes keep their own
+tokens, and binary32 remains a separately reported translation gap.
+
+Native grammar extras now retain scanner and rule action state through the
+following syntax token in both interpreters. Trivia keeps state at each leaf
+boundary, so immediate tokens and explicitly requested extra tokens use the
+state of the prefix they retain. This prevents a completed here-document body
+from leaving its closing label queued and producing a second phantom body.
+Shared fixtures cover named nodes, token rules and external scanner extras,
+rejections, Unicode spans and applying a retaken extra's action once.
+
+Source-free typed program links now preserve the initializer type of lexical
+bindings when their enclosing expression returns a different type. Escaping
+closures retain shared mutable cells after links serialization, and invalid
+cell, lambda, and application type edits are rejected before target emission.
+
+JavaScript source projection now selects reference semantics for mutation and
+inferred structural identity comparisons, preserves receivers and selected
+fields or indices in write operations, and represents mutable closure captures
+with explicit shared cell allocation, reads and writes. Scalar equality keeps
+the existing value representation.
+
+For-of source projection distinguishes a live iterable from an explicit
+Array.from snapshot. Generated array loop bounds are retained as internal proof
+metadata; this does not establish that a sparse array slot contains a value.
+
+Typed program links now bound repeated semantic traversal of shared expression
+and type graphs. Edited function references, conditional branches, unary numeric
+policies, and text conversion results are validated before target emission.
+Machine integer widths and optional absence policies use the shared generated
+schema admission rules.
+
+The internal typed program bridge identifies lexical binder records from
+validated declaration and expression structure, including unused parameters.
+Ignored metadata and disconnected relations cannot counterfeit those identities
+for formal concept comparison. Pattern binder spelling remains conservative.
+
+JavaScript translation checks require an explicit native Rust opt-in, with
+`TRANSLATION_CHECK_RUST=0` retaining JavaScript-only execution. Acceptance
+observation stages still require native compilation and behavior checks.
+The source, translation, and JavaScript behavior assertions remain active
+when native compilation is disabled.
+
+Typed program links validate operation names and division rounding policies
+against shared generated rules before emission. Math, string, collection and
+positional field edits retain checked type constraints, and floating-point
+special values use canonical spellings. Arbitrary text remains valid string
+data; it cannot be used as an operation name or a positional field index.
+
+Typed program links retain constructor immutability as an inspectable boolean.
+Reloaded JavaScript graphs preserve frozen property descriptors, and changing
+the flag changes writability, configurability and extensibility. Nonboolean
+flags are rejected. Native constructor graph support remains an explicit
+adapter boundary until its constructor projection is implemented.
+
+Translation evidence checks recognize the safely serialized JavaScript
+constructor tags. Failed evidence test subprocesses now include both captured
+output streams in the reported error, preserving their assertion diagnostics.
+
+Focused Python string checks retain the original pinned Strings corpus tree
+and nearby prefix, escape and continuation boundaries under the existing
+resource budget. Repeated external scanner precedence probes share their
+memoized outcomes rather than exhaust that budget.
+
+Preserve aliased extra token and node names without changing their underlying
+scanner state, lexical identity, skipped prefixes or recovery boundaries.
+Refresh generated R and Odin grammars and check the pinned Ruby pattern and
+expression syntax fixtures against their source corpus and independent oracle
+in CI.
+
+### Changed
+
+- Added shared Links Notation programs for reference allocation, reads, writes,
+  identity, array mutation and Map/Set mutation. The JavaScript reference heap
+  executes their linked instructions and serializes aliases, cycles, sparse
+  arrays and property descriptors. Rust receives the same operation data;
+  generated Rust execution and cross-runtime comparator effects still require
+  implementation and CI evidence.
+
+Add native typed-program Links adapters for owned data type and constructor
+references and inspectable match binding records. Reload uses the existing
+pattern checker, preserves lexical scope and constructor ownership, and refuses
+unsupported fields instead of discarding them.
+
+Aliased extras retain their source lexer and scanner identity, then expose the
+declared alias in the concrete tree. Shared fixtures retain scanner state,
+skipped whitespace, Unicode byte spans and captured fields; anonymous trivia
+remains distinct from significant anonymous syntax during oracle projection.
+
+Reduce repeated native grammar parsing and concept-register scans when looking
+up shared concepts. Shipped immutable concept records use derived source-name
+indexes, and native grammar rule summaries are cached lazily. Returned collections
+remain independent, custom record mutations remain visible, and JavaScript
+invalidates its rule summaries when grammar text changes. Concept identities,
+ambiguities, distinctions and equivalence requirements are unchanged.
+
+Preserve constant subpatterns when a positional clause continues into a property
+clause or an enclosing list, and retain implicit type keywords before positional
+arguments. The recorded source contexts preserve existing type and disjunction
+interpretations as fallback.
+
+Recorded lambda parameter contexts preserve the pinned C# plain `ref` type tree
+while retaining `ref readonly`, `scoped ref` and attributed parameter modifier
+aliases. Separate exact CI, comment and attribute fixtures check those preferences
+alongside the previous five declaration regressions at the default parser limits.
+
+Preserve C# constant, nullable, positional and parenthesized pattern contexts
+through recorded source grammar preferences. Focused fixtures retain the exact
+five reported CI sources and neighboring type-test and pattern interpretations.
+
+Requested external scanner tokens keep their content ahead of competing
+internal extras, including comment-shaped interpolation text and explicit
+scanner padding. Zero-width layout tokens retain following extras. Composite
+extra productions now parse their internal separators as syntax, and native
+oracle projections retain the actual extra flag carried by syntax nodes.
+
+Global concept sharing now requires an explicit supported linked operational
+definition. Catalog names and prose descriptions identify candidates without
+establishing semantic equivalence. Both runtimes preserve the accepted formal
+archives in the global concept space and its Links representation, and recheck
+those embedded premises when reloading a shared correspondence.
+
+JavaScript type inference reaches a finite fixed point for mutually recursive
+functions that return equal record shapes. Shared type identities retain
+unresolved variable IDs, and inference preserves field, absence and argument
+constraints instead of repeatedly swapping equivalent return objects.
+
+Retain recorded former C# and Elixir concept identities and source spellings
+when native grammars are regenerated after reviewed naming changes. Shared
+concept records keep the legacy names, and imports reject attempts to revive
+a retired canonical identity.
+
+The JavaScript translation frontend preserves literal computed and shorthand
+`__proto__` data properties. Tagged object parsing retains prototype-definition
+expressions explicitly; portable checking reports a precise unsupported
+diagnostic until object prototype semantics are represented. Unmodeled runtime
+`Object.freeze` operands are refused instead of erasing the call. Self-translation
+continues to represent literal readonly module arrays as immutable Rust constants.
+
+Automatic error recovery retains its recorded partial trees within unchanged
+resource bounds. Fixed lexical caching remains active for quiet token matching
+outside repair rounds. Shifted zero-width scanner markers protect longer
+continuations when they add no repairs; a repaired continuation cannot cross a
+layout boundary into a later malformed command.
+
+Both runtimes preserve shared reference identities in array, record, map and set
+type keys, and represent mutable binding cells as a separate recursive type.
+Rust target signatures use the automatically translated shared type rules to
+render these identities with `Rc<RefCell<...>>`. Nullable data retains conditional
+total equality; nested floating fields omit `Eq`, and callable data fields report
+an explicit unsupported diagnostic. This does not add checked state operations
+to the Rust runtime frontend.
+
+Apply reviewed source grammar decisions for C# lambda reference types, guarded
+Elixir clauses and initial layout, and Ruby operator and call boundaries. Keep
+original aliases, independent oracle fixtures and default parser limits.
+Prioritize complete Ruby method declarations at statement boundaries and reject
+incomplete literal interpolation while preserving ordinary code comments.
+
+Refresh both packages' grammar and concept registries, retain every critical
+requirement, and validate the new operation names against the existing English
+vocabulary rules. Full acceptance still requires exact-commit CI observations.
+
+Prefer complete Ruby method declarations at a statement boundary, retaining the
+full expression fallback. The reported combined parameter source now fits the
+unchanged parser budget; shared fixtures preserve isolated, operator, singleton,
+expression-valued, member and rescue interpretations.
+
+Preserve Ruby heredoc method continuations by preferring the existing immediate
+parenthesized call arguments over a competing command argument interpretation.
+Shared fixtures retain four exact CI sources and spaced command and block controls.
+
+Preserve legacy homogeneous JavaScript positional arrays while requiring actual
+closed callers for selected immutable product returns. Keep evaluated readonly
+module initializers unsupported under the literal-only model.
+
+Restore anonymous external scanner extras through automatic grammar imports,
+preserve distinct oracle row collections for duplicate fixture occurrences, and
+audit temporary foreign JSON against its exact pin and Git isolation. Avoid
+per-byte allocation for canonical unreserved LiNo scalars. CI partitions native
+and conformance files without dropping tests or increasing their job budgets.
+
+Generated frontend style repairs retain authentic CI diagnostics and distinguish
+machine-applicable suggestions from reviewed ownership corrections. The exact
+decimal formatter is an experiment awaiting native parity and library integration.
+
+Preserve existing reference-bearing JavaScript contextual tuples and runtime
+absence inference while checking ownership only for the selected scalar Copy
+product domain. Ordinary private scanner extras keep no syntax kind; contextual
+source-pattern replacements retain their anonymous token identity through the
+automatic importer.
+
+Historical fixture validation retains all original source and occurrence checks
+while identifying six explicitly regenerated translation-stage snapshots. The
+complete current generator remains required in CI. A 92-pattern decimal draft
+adds an independent native Rust formatting check that compiles only in CI.
+The checked decimal algorithm also reloads through source-free typed LiNo and
+re-emits executable JavaScript and identical automatically generated Rust.
+
+CI report generation overlaps import resolution with one JavaScript measurement
+worker. Links message records preserve both comparisons and every source byte
+check without increasing report deadlines or removing modules.
+
+Improve self-translation report import and export discovery by reading lexical
+headers before full checked translation, with grammar fallback for unsupported
+lexical syntax. Preserve every source measurement, byte-coverage assertion,
+report shard and deadline.
+
+Keep generated decimal experiment code in a separate Rust module so its entry
+point does not collide with the native oracle harness. Authenticate temporary
+grammar inputs with tracked-index evidence before checking their ignore rules,
+and retain Git diagnostics when evidence cannot be obtained. Native decimal
+parity and full requirements verification remain pending CI.
+
+Translation CI retains compiler diagnostics, exact generated source snapshots
+and native decimal observations as an artifact even after a test failure.
+Snapshots record whether Rust or Clippy produced their diagnostics.
+
+A closed decimal-generator experiment preserves generated algorithm bytes while
+qualifying owned crate-root paths inside an isolated module. Targeted JavaScript
+checks cover opaque literals and refused external dependencies; native namespace
+compilation and execution remain CI checks.
+
+Reject unrepresented array operands and undeclared Rust floating-point display
+at the linked text-conversion boundary before formal-definition admission.
+Generate the shared admission rule from JavaScript for Rust, retaining existing
+record-definition behavior and all prior assertions. Complete source record
+formatting remains an implementation gap.
+
+Re-export generated public decimal types and continuations at their declared
+crate root in the CI oracle harness, preserving the generated algorithm and
+its separate private entry point. Exercise every original decimal pattern
+through JavaScript emitted after source-free LiNo reload; native numerical
+parity remains subject to CI.
+
+Adds an experimental record text rule program that distinguishes ordinary
+ECMAScript coercion from Node console inspection. Values and checked rules
+reload from Links Notation without source objects or source code; the same
+rules emit JavaScript and Rust automatically.
+
+The draft covers bounded ordinary ASCII record trees and single-line layouts.
+Production integration and broader record semantics remain required work, and
+native generated Rust equivalence is verified only in CI.
+
+Add the opt-in `closed declaration scalar loop 1` source interpretation for
+closed primitive loops whose parameters or immutable locals share the function
+name. Its owned absolute continuation scope survives checked Links reload and
+coherent module edits. The original profile and capture refusals remain explicit;
+existing emitter spelling stays hygienic. Native parity remains a CI obligation.
+
+Partition JavaScript package validation into five required parallel groups under
+the existing ten-minute job deadline. Preserve every original check, artifact,
+cleanup step and publication dependency, with frozen step-conservation tests.
+
+CI run 38431880453 reached the package job's ten-minute execution limit;
+GitHub's job annotation confirms the automatic timeout. The fixture check was
+interrupted nine seconds after starting, so its cancellation supplies no fixture
+failure diagnosis. All fifteen JavaScript test partitions and all shared report
+assertions passed. Six additional generated-rule and fixture checks remain
+mandatory alongside the preserved original checks.
+
+Skip repeated syntax-tree equality comparisons after a native grammar result is
+already marked ambiguous, matching the existing JavaScript executor. Result
+ordering, ambiguity flags, parser steps and resource limits are unchanged.
+
+Compare grammar result children through their stored counts and ordered lazy
+iterator, preserving output equality without materializing persistent child
+lists merely to compare them.
+
+Preserve bounded Rust 2024 const diagnostic attribute prefixes through checked
+translation and source-free text/binary reload. Shared Links policy and complete
+JavaScript decision-module translation produce the native rules. JavaScript
+emission records the diagnostic normalization; compiler and Clippy diagnostic
+equivalence remains outside the source model.
+
+Restore the optional `typeof` expression projection used by complete translator
+modules without changing prior schema receipts or checked query semantics.
+Refresh two stale stage expectations and the private-model provenance through
+their generators, retaining all inputs and copied test bodies. CI caches Rocq
+toolchains by installed identity while retaining the existing install and proof
+checks.
+
+Preserve constructor field projections through single-evaluation destructuring
+temporaries and direct aliases, including lexical shadows. Translate the shared
+decision automatically with the complete frontend module and retain source-free
+text and binary parity controls. Regenerate affected metadata while preserving
+historical fixtures and immutable formal-definition oracles.
+
+Added source-derived relative array element translation with negative indices,
+undefined results and nullable numeric positions. Both runtimes check the same
+complete lambda and retain source-free Links replay. Native CI cases cover
+primitive and nullable elements, defaults and ordered effects.
+Fixed native test function paths and generated Boolean parameter carriers while
+preserving the original decision bodies and all Clippy gates.
+
+Add execution-backed tooling controls for critical full-scope delivery. Check
+every inherited obligation's classification and verify that missing, stale or
+incomplete evidence and reduced scope fail at every checkpoint. Preserve the
+original conversation source, all existing gates and exact source inverses;
+record observations only after all original assertions pass.
+
+Regenerate owned outcome libraries with recorded source styles for effect-free
+floating literal Option defaults. Preserve complete algorithms, source inverses
+and signed zero while retaining effectful defaults and unproved source contexts.
+Use a typed empty-root assertion with the same inputs and stronger diagnostics.
+Keep every existing native lint and delivery gate.
+
+Automatically retain immutable Git artifact proofs as Links data, authenticating
+the original commit, complete tree path and exact blob against independent
+source anchors. The original loan receipt keeps every predecessor assertion
+while verification works without the historical Git database. Source integrity
+supplies no semantic equivalence or native execution claim.
+
+Verify the separately created grammar-inference issue through its complete
+authenticated source, pinned research, acceptance requirements and vision link.
+Keep all twelve inference implementation obligations separate from issue
+tracking and record observations only after every tracking assertion executes.
+
+Generate typed native storage constructors automatically from every field and
+variant of the nine captured source declarations, retaining all 120 qualified
+type occurrences and complete Links instructions. Preserve actual native Number
+representations and caller-provided static references; reject foreign, missing,
+reordered and extra children and duplicate map keys. Full model validation,
+original provenance and public CST reconstruction remain separate requirements.
+
+Added automatically translated exact native integer projection admission,
+preserving canonical source decimals and rejecting binary64 rounding, negative
+zero and uncovered widths. Shared controls retain every source and projected
+bit. Experimental supplied number contracts bind checked source occurrences,
+compiler features, variants and exact payloads; original native capture and
+complete DTO reconstruction remain required.
+
+Added a profile-bounded native number representation selector generated from
+JavaScript, with shared predicate controls and source-free Links round trips.
+Compiler artifact selection refuses unsupported precision features. Original
+native payload capture and complete owned reconstruction remain in progress.
+
+Fix source-derived native observation generation to select UTF-8 CST byte
+ranges, retaining exact Unicode contents and refusing invalid surrounding bytes
+or partial scalar boundaries. Preserve complete original sources with checked
+Git membership and exact inverse receipts.
+
+Repair optional root-type test expectations to match the actual metadata API,
+use one shared native static-reference rule module, and fix native lint
+formatting without changing original inputs, assertions, algorithms or lifetimes.
+
+Update the native workflow safety test to the existing stable pull request
+identities for the three verification workflows. Preserve every cancellation,
+permission and serialized release-write assertion, with complete source inverses
+and independent checks of the actual workflow headers.
+
+Retain every native coverage assertion while updating its expected key to all
+current physical coordinates. Preserve the 84.30% merged line coverage floor.
+
+Add an experimental exact correspondence between checked owned JSON number
+sites and expanded native wire ordinals, following complete declared source
+fields and paths. Equal values and host integer fields retain distinct roles.
+Validate passive raw observation records, exact integer predicate overlap and
+payloads, floating bits and selected compiler inputs; preserve complete text and
+binary Links round trips. Live capture provenance and native reconstruction
+remain separate requirements.
+
+Verified explicit optional type-root roles, selected model premises and complete
+text/binary graph reloads against shared fixtures. Self-loop vertices retain their
+chosen representation without an implicit universe membership or proof logic.
+
+Added a source-derived native Number observation prototype with the complete
+original visitor and unchanged counting, formatting and projection validation.
+Raw predicates, exact decimals, floating bits and distinct wire occurrences have
+independent CI controls. Compiler provenance, owned source identity binding and
+complete native DTO reconstruction remain required.
+
+Translate supported mutable dense-array literal bindings used by the JavaScript
+executor, preserving evaluation order and the existing standard-iterator model.
+Translate borrowed-string literal `matches!` alternatives, including three
+complete project keyword predicates, through shared generated decisions.
+Retain precise self-translation failures and rank/replay affected source groups
+through the existing report workers with exact source hashes and provenance.
+Use the existing string slice directly in TypeScript receiver assertions,
+avoiding the unstable string-slice conversion reported by CI.
+Select original Boolean declarations as formal callable values while preserving
+the complete typed graph and Rust const proof. Keep the historical corpus and
+add current JavaScript/Rust source, CST, archive and truth controls.
+Apply the inspected CI lint feedback through recorded source rules.
+Translate closed ASCII predicates on proven borrowed Rust strings through shared
+generated decisions, and preserve JavaScript string-spread Unicode iteration.
+Register every added test in CI and preserve raw receipt/source history across
+the current frontend changes.
+
+Draft source-derived owned outcome reconstruction with ordered Links projection,
+recursive embeddings and explicit unresolved native number and static-borrow
+requirements. Automatically translate its complete portable decision module and
+add shared native CI controls. Native DTO and default CST integration remain open.
+
+Keep verification cancellation queues separate for merged pull requests and main
+runs while retaining every matrix cell, deadline and acceptance gate.
+Reuse the checked naming vocabulary to avoid a redundant full catalog load.
+Collect CI-only pointer-width and exact linked dependency-feature observations
+with explicit version bounds and complete original probe source preservation.
+Paired ontology and taxonomy acceptance checks now cover independent memberships,
+all selectable roots, explicit root type models, and complete text and binary
+archive reloads. Native execution remains a CI check.
+Retain failed scheduled dependency audit findings and publish their actual outcome
+to repair pull requests while preserving required PR and delivery checks.
+Automatically translate the complete bounded occurrence-order worklist and add
+paired independent structure, deep-chain and actual owned-model controls.
+Respect checked owned array rewrites during implicit module reference selection,
+retaining explicit requests and exact bidirectional source restoration.
+
+Translate the complete owned outcome source-type edge validator from JavaScript
+to Rust, retaining every source owner, field, qualified variant and original
+projection. Shared controls cover fixed fields, options, vectors, ordered maps,
+recursive JSON, nonfinite inputs and deep iterative chains. Native execution
+runs in CI; original DTO construction and public default CST integration remain
+unfinished.
+
+Preserve aggregate CI failures and raw diagnostics when GitHub job metadata is
+unavailable, without interpreting an HTTP error response as failed job names.
+
+Retain bounded, credential-redacted command output in CI progress heartbeats so
+recent test diagnostics survive a job timeout even when artifact upload cannot run.
+Reuse the existing package-specific test optimization in the acceptance suite,
+keeping debug assertions, overflow checks, default features and all test targets.
+
+The issue 195 scope-baseline check now rejects removal or weakening of existing critical classifications, full-scope delivery blockers, checkpoint descriptions or order, and exact-evidence result policies. Additive requirements and stricter forbidden-outcome policies remain accepted. This does not certify that every conversation message has been captured or mapped to obligations.
+
+Legacy rows without classification flags may gain true flags, and false flags may strengthen to true. Existing flags cannot be removed, and true flags cannot be disabled.
+
+The source-free typed program adapter projects data declarations, constructor
+applications and single-level matches through the existing checker. Declared
+data names are resolved again and the complete checked program must agree with
+the linked records before emission. Explicit constructor immutability retains
+its shared projection policy; qualified modules and threaded programs still
+report their unsupported boundary.
+
+ANTLR lexer command-order and inherited-option checks now select their explicitly bounded 4.13.2 reference semantics; Peggy optimizer shape checks select the installed, pinned 5.1.0 release. Links execution records retain selected versions, inclusive bounds and actual source-policy digests; observation writing and acceptance reject missing or altered context without changing generic grammar parsing or conversion.
+
+Lower ANTLR parser token exclusions to lookahead followed by consumption of one whole elected token, including non-EOF consumption for `~EOF`, while retaining lexer character complements and applying lexer-mode commands once. Source-free emission for one default-mode lexer recovers commands and original ordered local bodies, with exact final-field/action replay and explicit recovery refusals for ambiguous owners or unsupported modes/sections; retyping aliases never replace actual lexer definitions. Shared JavaScript decisions generate native policy and survive text/binary replay; historical raw-document lossy paths, unresolved foreign obligations and case-insensitive parser-literal refusals remain unchanged, with native execution unverified and no full mode-emitter claim.
+
+### Added
+
+- Shared, automatically translated array classification and structural reference
+  identity rules, with source-free Links replay checks.
+- An opt-in JavaScript identifier model for reparsing generated owned bindings.
+
+### Fixed
+
+- Preserve optional frozen-product types and actual reference parameter types
+  during JavaScript inference.
+- Close recorded frontend generation styles after formatting exposes later rules.
+
+Preserve JavaScript `Array.from` string code points and mapper callback types,
+argument order and observations through the generated shared iterable and map
+rules, including source-free program rechecking. Array and string receivers reuse
+the existing value model; this does not add native Set or Map constructors.
+
+Version-dependent tooling assertions select explicit version ranges. Unicode
+identifier generation retains its Unicode 17.0 boundary; uncovered versions and
+overlapping expectations fail with the active version and applicable policy.
+
+Repair JavaScript CI fixture readers after automated JSON-to-Links migration,
+retain authenticated Tree-sitter runtime reads, and preserve canonical report
+and character-class comparisons. Register immutable product tests and generated
+rule checks in both runtime CI paths; full tooling provenance runs only in CI.
+
+The associative foundation audit now captures exact pinned guide and meta-theory documents with content hashes, Git blob identities and verified commit metadata. An offline checker rejects source or revision drift while retaining the distinction between source inspection and execution evidence.
+
+Both packages expose structured Links Notation encoding and decoding, including
+scoped record documents. Ordered fields and exact scalar values survive the
+shared representation. CI provisions checksum-pinned external grammars into
+ignored temporary storage, and verifies generated rules and storage boundaries.
+Native execution and complete translation coverage still require CI evidence.
+
+### Changed
+
+- Temporarily make automated translation checks opt-in and allow manual ports
+  with shared behavior tests.
+- Temporarily schedule native tests and clean package consumers on Linux. Keep
+  the macOS and Windows test definitions and three-platform evidence requirements.
+
+Add paired binary network archive APIs with exact link identities, ordered
+references, metadata, term-cache keys, selected concept syntax and allocation
+state. The versioned archive reads legacy Doublets companion snapshots and
+writes the new complete-state form without reparsing source text.
+
+The initial interoperable profile refuses unsafe Number identities and values,
+isolated-surrogate metadata and ambiguous syntax-cache keys. Full dynamic
+language reconstruction and broad reconstruction performance remain required
+work; native byte parity runs in CI.
+
+Replay three further CI-reported block-return corrections through an additional source-bound Links generation decorator, preserving the earlier immutable compiler reviews and all returned expressions.
+
+Keep metadata length patches local to each archive record and avoid searching
+earlier identities when the next identity is greater. Preserve exact bytes,
+unordered and duplicate validation, refusal offsets and resource limits. Generate
+the native framing replacement automatically from JavaScript while retaining
+the frozen producer, compiler corrections and all preceding generation checks.
+Bounded JavaScript controls pass; full-workload resource fit and native execution
+remain CI checks.
+
+Native binary record generation replays reviewed CI diagnostics as linked styles, removing reported redundant clones and renaming conflicting local bindings without changing the checked JavaScript algorithm or frozen producer. Redundant visibility qualifiers in the existing self-translation adapter are corrected. Native compilation and behavioral validation remain CI obligations.
+
+Cache cleanup writes inspectable LiNo reports and bounded, scoped histories
+before npm dependencies are installed. Existing histories migrate automatically;
+the explicit JSON CLI output and active-process coordination protocols retain
+their existing formats. The shared structured data writer and validator remain
+the package implementation used by the bootstrap path.
+
+Retain precise borrowed-call target diagnostics after a failed checked-graph
+recheck under the selected primitive Rust interface. Actual argument type
+mismatches precede a call-bodied target refusal, using shared generated rules;
+structural decoding and complete checked validation remain mandatory.
+
+Derive a temporary semantic-pair index during JavaScript concept-record seeding, preserving complete links, original query order and duplicate reuse. Release the index after success or failure; full shipped-record behavior and native parity remain CI checks.
+
+Preserve optional JSDoc metadata, inferred array element annotations, semantic return metadata, nested Map/Set types, argument/default order, actual function identities and complete linked lexer declarations; unsupported union targets retain typed diagnostics and historical receipts. Custom records avoid default-register parsing, and CI retains distinct test annotations, linker and grammar-tool failure diagnostics. A stale native `typeof` function-reference assertion now matches existing shared admission while retaining the original effectful-call and array-literal refusals. Native discovery serialization retains actual definition-container aliases while keeping equal independent containers distinct and preserving default encoding. Exact original negative fixtures remain intact, and frame extraction has separate arm and subsequent-diagnostic provenance; native verification and stack resolution remain pending. The generated Python statement guard reuses recorded immediate dedent exclusions while blocks consume their closing dedents; separate CST prefix indexing preserves predicates and callback order. JavaScript complete-tree, losslessness and original-size controls pass; native timing and Windows verification remain pending.
+
+Include the owned-text, pure Unit-call and source-span policies in published crates, register their native checks, and preserve independent source-model selection when integrating the translation profiles.
+
+CI checks every new generated translation family and its recorded source
+closure serially, reports all freshness failures, and retains the existing
+formatter, Clippy, documentation and historical generation gates.
+
+Refresh generated library styles from the current scoped-binding policy and
+reject stale styles during generation. Preserve JavaScript-first UTF-16 checks
+while emitting the positive surrogate branch, group the source-offset bound,
+and resolve generated frontend children explicitly through the integration shim.
+Retain the authentic rendered CI diagnostics separately from machine suggestions.
+
+Numeric metadata, const predicate and source text byte generators also compare
+their recorded library styles with the current translated source before use.
+
+Keep complete C CST archives and owner relationships during source-only replay
+with explicit caller budgets. Retain default codec limits and record bounded CI
+transport costs before validation, including when replay fails.
+
+Add experimental source-owned C `sizeof` queries with explicit namespace,
+declaration and ABI provenance, reversible Links source publication, and
+text/binary replay controls. Physical layout and executable scanner translation
+remain open obligations.
+
+Infer callback return types from checked bodies when only contextual parameter
+types are supplied, including callbacks returned through matches and other
+expression wrappers. Keep contextual parameter types and source metadata intact.
+
+Recheck source-free record values without introducing new field bindings.
+Canonical projections retain ordered fields and actual lexical owners, and
+reject malformed descriptors before deserialization can apply raw-source defaults.
+
+Repair native optional-array inference and generated Rust module relocation so
+emitted target-source strings retain their original paths. Preserve exact UTF-16
+fixture strings, frozen grammar asset checks and the complete original numeric
+controls while regenerating native storage and integer-library lint repairs.
+
+Tooling tests read migrated fixtures through the shared Links data adapter while
+retaining their logical identities and oracle hashes. Contributor instructions
+use targeted JavaScript checks and Rust formatting locally, with native builds
+and tests delegated to bounded CI jobs.
+
+Add the selected `closed empty primitive Rust option 1` source interpretation
+for actual zero-argument standard `Option<f64>` functions with an explicitly
+typed empty constructor and an empty main. An owned links facet retains result
+and constructor owners, type arguments, namespace premises and exact body sites.
+Eight owner cases and strict source, checked-graph and raw-graph refusals bound
+this draft. Actual emitted definitions replay with a canonical empty main;
+coherent declaration renames remain executable. General option values, full
+generated runtime wrappers and other source-model compositions require further
+proofs. Native compilation and execution run in CI.
+
+The explicitly selected closed primitive scalar-loop profile now imports whole
+Rust and JavaScript functions into editable typed Links, retains owned state and
+ordered previous-state write proofs, and emits iterative continuations. Source-free
+value and namespace edits remain checked. Native compilation and full requirements
+verification remain for CI; general mutable tuples and effectful loops remain open.
+
+Draft an independent whole-artifact Rust runtime-shell interpretation in
+JavaScript for actual emitted closed pure Unit programs. The linked graph retains
+the real standard argument scan, thread operations, source bindings, resource
+arguments and failure branches. Successful replay carries four explicit runtime
+assumptions and rechecks the complete graph after edits. The native adapter
+checks actual declaration, token and operation link identities before projecting
+them into owned positions and reattaches those identities on encoding. Native
+compilation and executable replay remain CI obligations. This draft does not
+establish equivalent failure behavior.
+
+Ship the shared runtime policy in the crate and keep internal helper visibility
+within the existing private parent modules without redundant crate qualifiers.
+
+Preserve Map and Set size operations during complete source-free program
+rechecking through Links text and binary archives. Shared projection data
+drives both runtime classifiers; undeclared size-expression fields refuse
+before decoding or emission.
+
+Recorded source boundaries can preserve a continuation across registered
+comment extras without consuming or moving those comments. Elixir calls retain
+comment-separated `do` blocks and exact source spans in the shared Links
+grammar. Negative raw assertions retain their semantics when lexical matching
+retries after named trivia.
+
+JavaScript declaration mappings now cover the complete consumed declaration in
+UTF-16 coordinates, including at end-of-file. Following comments and declarations
+stay outside that range. The shared interval decision is automatically translated
+to Rust; both Links archive formats retain the corrected owner provenance.
+
+Release the original complete Rust CST before reloading its full archives, then
+release each decoded graph before the next replay. Only encoded archives leave
+creation. These authenticated source archives select their actual link count
+through the binary codec's existing record-limit option; default limits and the
+byte cap stay unchanged. CI phase logs record counts and heap use. Three tiny
+JavaScript checks cover exact source replay, whole-record preservation, resource
+refusals and phase ordering; full memory fit remains a CI check.
+
+Preserve compound Boolean conditions when styling automatically translated Rust libraries. The portable style pipeline now inverts only a whole leading negation, retaining the original evaluation order and branch choices; the frozen producer and its original export remain unchanged.
+
+Concept reuse snapshots retain each canonical concept's shared language-list identity after migration to LiNo. The metadata normalizer verifies every original list before restoring those references, preserving all report values and their order.
+
+Ontology and taxonomy can expose the same linked global identities through independently selected root links, including explicit concepts without grammars. Definitions, recursive references, model alternatives and provenance remain actual graph nodes. Classification, subsumption, general relations and root type roles are recorded separately as declarations; these entry points do not prove arbitrary axioms or hierarchy entailment.
+
+Preserve stored concrete source bytes in the priority-language program graph
+experiment, with iterative reads, explicit limits, binary leaves and recursive
+concept metadata. Keep native graph and observation source hashes compatible
+with the active SHA-256 dependency.
+
+Keep unfamiliar padding records, sparse or decorated cache arrays and
+nonstandard descriptors in their original representations. Cache packing
+refuses unread accessors before evaluating them and preserves scanner-state
+zero signs without populating the shared leaf pool on refusal.
+
+Pin the 25 existing Node 24 CI selections to 24.22.0 with bundled npm 11.19.1,
+preventing mixed runner-cache patches from invalidating one logical evidence
+suite. Preserve every command, matrix, deadline and exact cross-partition
+toolchain gate, with actual failed records and whole preceding guard sources.
+Compare exact Node pins using every release coordinate. Refresh only the Node
+registry observation, preserving every unrelated audit record and the complete
+audit date; moving selectors and minimum-engine coverage keep their profiles.
+Register the local source-placement generator separately, preserving all earlier
+inventory entries and checking the complete current inventory independently.
+
+Add the independently selected closed primitive Rust const-predicate source
+model. It preserves actual const qualification and primitive source headers
+through editable typed links and Rust definition replay, with primitive input
+guards for JavaScript. General compile-time evaluation remains a separate
+source interpretation.
+
+Add the required trailing semicolon to the native private-array statement
+transport's Unit-returning child traversal, as reported by CI Clippy.
+
+Translate fresh private arrays constructed by discarded primitive-literal appends, including builder loops, followed by direct integer-and-bounds-guarded updates. The complete shared ownership planner generates native decisions automatically and retains original operation order through Links text and binary reload. Aliases, captures, observed append results and unsupported mutation remain explicit translation obligations.
+
+Shorten contributor instructions while preserving their obligations, allow
+evidence-backed corrections to wrong assertions, and require explicit ranges
+for version-sensitive expectations.
+
+C# native grammar generation now keeps base-type generics and constructor arguments attached to their base list, and selects complete switch patterns before label colons while retaining expression fallbacks. The recorded context preferences resolve class and switch ambiguities without removing source productions or changing parser budgets.
+
+Add the finite `field-ranges` profile for an exact label and include/exclude occurrence window over topmost physical CST captures. Retain complete immutable physical witnesses, separate source planes and existing budgets, including completed derivations whose child parse later refuses; archive checking replays correspondence without establishing grammar validity. Complete Markdown scanning, priority-grammar coverage, public type verification and native runtime verification remain outstanding.
+
+Current concept identity resolution now follows every former name in the shared concept records, including the reviewed Elixir and C# migrations, while preserving historical aliases and unknown identities.
+
+Checked-program rechecking reconstructs derived optional-number coercions in
+binary arithmetic from their actual operands. Standalone conversions and
+inconsistent wrapper fields, result types or operand types remain refused.
+
+Validate existing owned Rust type-namespace facts before both direct emitters,
+matching linked validation and rechecking. Forged headers and misplaced callback
+proofs now refuse before source metadata can be discarded.
+
+Add source-free linked integration of explicit grammar discovery outputs. Candidate productions, qualified provenance, recursive global identities and actual formal definition graphs survive reload. The existing verifier rechecks sharing; unsupported semantic interpretations remain distinct alternatives. Grammar inference and full catalog formal definition coverage remain required follow-up work.
+
+The recorded Elixir source transformations now distinguish bare call arguments
+from completed postfix operands, preserve capture and attribute precedence, and
+attach `do` blocks to the enclosing call. Registered scanner policies also
+reserve continuing operator line breaks before statement reduction. Syntactic
+boundary preferences retain clause-body spans when another arrow clause follows.
+
+Recorded Elixir guard contexts now require complete arrow-clause arguments and
+retain the source precedence of ungrouped operators and bare calls. Contextual
+field projections preserve the aliases around their selected source references.
+
+Add the exact empty undefined Number optional value to native source and checked
+IR adapters. Its optional type, element and absence tag remain distinct through
+shared Surface projection and Links reload, and all four target renderers use
+their existing empty-value spelling. Native compilation and execution remain CI obligations.
+
+Preserve historical certificate-overlay receipts while selecting complete reviewed
+provider revisions by exact source bytes. Collector experiment controls now compare
+the original sources with production fresh-local append behavior and retain
+separate refusals for unsafe uses.
+
+Large grammar reports are persisted as bounded typed LiNo object segments with a checksum index. The report reader reconstructs every field and repeated object reference, and rejects altered, missing, foreign or unexpected fragments. Codec resource limits and the separate native global concept snapshot remain unchanged.
+
+Grammar corpus, recovery and scaling checks now run in separate CI jobs so all
+checks can finish within the existing limits. Every JavaScript test file remains
+assigned to exactly one required group, including the new typed-program link
+reference and pattern-binding checks.
+
+Compiler style feedback retains each owning function's complete signature in
+recorded replacements. Online derivation and offline replay share atomic edit
+handling, exact source hashes and UTF-8 byte boundaries. A reviewed legacy
+body-only decorator collision was removed, retaining the authentic CI borrowing
+suggestion and diagnostics; regenerated Unicode decoding keeps the borrow of its
+owned vector.
+
+Repeated fixed lexical matching now shares a bounded cache in both runtimes.
+Ruby relational operators, unary minus and ranges, reserved keyword arguments,
+and splat arguments retain the original parser budgets and independent oracle
+syntax trees. References, external scanners and stateful operations are excluded.
+
+CI checks complete self-translation report artifacts in a separate JavaScript
+test group before Rust and delivery stages. It verifies the producing commit,
+current JavaScript and Rust source hashes, and the existing coverage and
+difference assertions without repeating module dependency translation in the
+ordinary JavaScript test group. Standalone JavaScript workflow runs produce
+and check their own report shards.
+
+Report counterpart lookup also recognizes actual Rust grammar host files under
+`grammar/feature_runtime` for JavaScript `grammar-runtime` modules.
+
+Fixture generators read and write structured snapshots as inspectable Links
+Notation. Conformance and generative snapshots retain their original provenance
+byte hashes through associative formatting records, including future generator
+updates. Structured type fixture generation retains the existing inference
+variable identity cases.
+
+Workload and independent grammar-tool readers consume the linked snapshots and
+hash their physical LiNo files for current execution evidence.
+
+Execute ignored formal-ai workload tests alongside every existing pinned filter, and require zero skipped workloads before recording installed-artifact acceptance evidence.
+
+Partition Formal AI's native CI workloads between two isolated execution runners
+and merge their exact authenticated union into the existing full report. Both
+runners retain the full JavaScript consumer, native probes, original filters and
+resource limits, fresh artifact checks, full diagnostics and task-owned build
+cache. Keep the full-report validators unchanged and reject missing, duplicate,
+mixed or tampered execution evidence before publication.
+
+Extract a flat owned function's supported recursive definition from a source-free typed program graph. A checked call wrapper selects the entry while retaining original declaration, binding, signature type and recursive-call identities. Unrelated declarations and main effects stay outside the selected definition; public names, source-language context and primitive policies remain meaningful. Imported, external and non-flat contexts, parameter guards/defaults and reserved entry-name collisions need separate proof and are refused.
+
+Formal equivalence checking now validates the declared label and relation identities before comparing rooted definitions. Unsupported namespaces, altered label self-references and malformed relation shapes retain an unknown result. Disconnected foreign relations do not affect a checked premise. JavaScript and Rust use the same generated admission decisions and shared recursive fixtures.
+
+Keep foundation checks strict while accepting exact generated naming metadata
+for operations owned solely by authoring scripts. Retain stable command concept
+identities and reject runtime owners, foundational concepts and snapshot drift.
+
+Added an opt-in, certified fresh Number-array collector model with five complete
+original sources and automatically translated Rust artifacts. Explicit premises
+bound value-append lowering; source bindings, actual declaration ownership and
+premise links remain checked after text and binary reload. Default production
+mutation refusals remain; native execution and integration are unverified.
+
+Generated frontend rules now use reviewed parameter loans, branch styles and
+Option defaults to fix strict Clippy build failures while preserving the
+original JavaScript decisions.
+
+Regenerate identity-library styles from exact retained CI feedback and the existing reviewed branch simplifier. Preserve raw applicability and general overlap deferral while removing the reported redundant clone and negative conditional. Native compilation remains CI-only.
+
+Add an isolated JavaScript-first experiment that retains complete generated
+Unit modules, their concrete tokens/trivia and actual binding identities through
+editable Links and whole-code cycles. Shared line-boundary rules preserve ASI;
+Rust runtime assumptions remain explicit. The experiment does not add a public
+source selector or native support. CI runs its bounded checks and generators.
+
+Generate shared classifier decisions with adjacent equal-result branches grouped
+without changing their source-table priority. Recorded Rust styles retain the
+existing named Boolean premises in private tuple signatures and replay idiomatic
+empty-string, constant-function and conditional forms. The typed classifier
+receipt stores one complete mechanical transformation to bound generation work.
+
+Check both automatically generated global-concept modules in the existing CI
+compiler-style gate, retaining the original proof module, compiler flags and raw
+feedback artifacts. Frontend and concept style commands now refuse local native
+compilation before creating scratch; explicit offline feedback replay remains
+available. Local guard checks invoke no Rust compiler.
+
+Add an archive-backed global concept parser factory that validates proofs and redirects, then compiles an exact archived source identity with archive-only recursive resolution and qualified concrete-tree provenance. Parser identity overrides refuse, and existing selection and resource limits remain in force. Bounded JavaScript checks include a shipped grammar with an explicit finite budget; native parity and complete grammar coverage still require CI evidence.
+
+Reuse each grammar matching-context comparison within its provenance invocation.
+Archived C, JavaScript, Rust and TypeScript CST samples fit the default parser
+budgets while retaining every production definition and mismatch diagnostic.
+
+Reserve historical concept identities before allocating new classes, reject
+duplicate historical identities and origins, and keep restored changed meanings
+distinct from surviving concepts. Shared JavaScript decisions generate native
+identity selection automatically. Tiny JavaScript restoration, serialization
+and rejection controls pass; native execution remains a CI check.
+
+Introduce a common concept space for imported grammars. Every source production
+and qualified origin is copied before deduplication, and a generated shared
+verifier checks closed recursive one-to-one correspondences before identities
+are reused. Unknown, ambiguous and distinct meanings remain separate. Links
+serialization retains productions, grammar context, aliases and proof witnesses;
+reloading checks the witnesses against the reconstructed grammars.
+
+Record a reversible private draft for reusing grammar context checks within one
+provenance invocation. Isolated JavaScript controls retain all archive tests and
+default priority-grammar budgets; production adoption and native verification
+remain required.
+
+Draft candidate context-reuse source profiles with exact native type/import and
+JavaScript diagnostic-call conservation, separate frozen identities, and checked
+Links text/binary replay. Production adoption and native execution remain pending.
+
+Preserve default settling when native grammar JSON encodes the optional
+declaration as null. Explicit empty settling declarations still refuse.
+
+Bulk grammar reports retain resource rejection limits and show source positions only when the parser supplies valid coordinates; parser budgets and acceptance behavior are unchanged.
+
+Bulk grammar reports now audit each catalog grammar component with separate
+source hashes and outcomes while retaining the primary merge identity. A new CI
+capture path authenticates pinned Markdown source provenance and records it as
+Links data. Native Markdown scanners and full composed parsing remain required
+work.
+
+Scanner priority inside a composite extra is retained by that extra's own parse frame. A following syntax token can consume the completed extra without inheriting priority from its internal scanner tokens.
+
+Share exact global grammar context shapes during concept proof construction to avoid copying entire lexer declarations for every production. Preserve completed bulk grammar artifacts before aggregate proof generation, keep source-format-free lexer loading and explicit reference semantics, and distribute grammar CI checks across three partitions.
+
+Store `GrammarParseError.rejection` as `Box<ParseRejection>` to keep returned
+grammar errors small as diagnostics grow. The outer parse result and error types,
+diagnostic contents and error messages remain unchanged; callers constructing the
+public error field directly must box its rejection value.
+
+JavaScript grammar precedence and ambiguity checks traverse shared child parts
+without flattening retained prefixes. Complete CST metadata, embedded witnesses,
+sibling ordering and parser budgets keep their existing semantics. Full-source
+translation and native parity remain CI checks.
+
+Refresh the two Rust test-source fingerprints after the grammar-mapping import
+corrections. The automated fixture generator preserves its grammar inputs,
+independent expected trees and observation sections. A complete inverse check
+restores the previous fixture bytes; both native test bodies remain unchanged.
+
+Native grammar precedence now checks the complete source contexts of both constructs before regrouping an operand. Comma-separated assignment values retain their low source precedence while remaining valid where a value list cannot replace the enclosing assignment.
+
+Native grammar precedence now requires the actual first child's source rule or
+reduction before using an operand suffix's precedence. Anonymous source prefixes
+retain their own precedence, preserving the pinned Rust CST fields and aliases
+for omitted range endpoints followed by dereference or negation syntax.
+
+Grammar data gains explicit any/all candidates over delimited byte regions.
+Concrete trees retain accepted alternatives, qualified origins and embedding
+boundaries. Unknown grammars, unproved origins, unsupported mappings and
+non-consuming cycles produce diagnostics within the shared parse budgets.
+Tree comparisons retain distinct embedded roots, alternative witnesses and
+source-local lexical metadata.
+
+The initial decision model supports identity mappings. Shared authored controls
+exercise repeated-language nesting; catalog-language coverage and escape
+decoding remain required work.
+
+CI publishes the textual grammar matrix summary as a separate small artifact alongside the complete grammar bundle, allowing feedback inspection without downloading the full archive.
+
+Operand precedence now recognizes the actual child through existing complete
+whole-rule alternatives. This preserves HCL property and binary operator CST
+fields while keeping anonymous prefixes under their own source precedence.
+
+The bulk grammar pipeline starts JavaScript, Markdown, Rust and TypeScript work first through a Links Notation priority policy. Every original catalog occurrence, report position, worker limit and grammar check remains required; scheduling priority does not claim complete grammar support.
+
+Support directly guarded writes to fresh private primitive arrays through shared
+automatically translated rules and source-free Links replays. Aliases, captures,
+loops, sparse writes and unproved bounds still require further support.
+
+JavaScript target emission retains explicit immutable product allocations as frozen nested tuples. Rust target emission preserves constant projections and single-element tuple syntax. Emitters validate retained product-model evidence, and tuple parameters keep conservative ownership when that evidence is absent. Existing ordinary tuple-array allocations retain their previous behavior.
+
+Add the explicit `included-ranges` syntactic selection profile with ordered, disjoint, scalar-aligned UTF-8 ranges, one common any/all candidate plan and a separate derived source plane, while preserving the full physical CST. Nested JSON source views, mapping correspondence after text/binary reload and existing shared parse budgets remain explicit; dynamic range discovery, complete Markdown scanning and native runtime verification remain outstanding.
+
+JavaScript evidence partitions that do not read downstream workload reports can start while those workloads run. The downstream partition still waits for its reports, and Rust still waits for every JavaScript partition to pass. Test scopes, artifact identities, toolchains, deadlines and aggregate evidence validation are retained.
+
+Keep source lexer bindings when independently replaying Peggy's optimized
+single-character alternatives. Check exact finite-set coverage before lowering
+the optimized class, preserving Unicode byte spans and rejection offsets while
+refusing unbound members and ambiguous source ownership.
+
+Extend the same shared literal pool when a target AST changes a parser literal,
+retaining original source clauses. Independent mutation witnesses require actual
+syntax rejection; operation failures retain their diagnostic causes separately
+from syntax and resource rejections.
+
+Index exact words and all allowed WordNet synsets before applying the unchanged naming predicate. Preserve ordered diagnostics and every naming assertion while avoiding quadratic synonym scans and repeated test inventory reads.
+
+The initial JavaScript translation tests now run in three disjoint file shards under the existing fifteen-minute deadline. Every shard retains its exact scope and feedback hashes, including valid empty feedback shards. A bounded merge rejects missing, stale or conflicting inputs and restores the original complete feedback artifact before the JavaScript package gate can pass. The acceptance workflow's translation scope and deadline are unchanged.
+
+Development grammar fixtures reuse one independent snapshot for the rows and recovery checks of each source. Isolated oracle workers load the authenticated UTF-8 runtime directly, avoiding unrelated concept-register startup work while preserving process isolation and all grammar assertions.
+
+Share array callback admission and Rust rendering through complete automatically
+translated JavaScript rules. Retain original source and target behavior, checked
+program archives, reference-profile refusals and callback evaluation order.
+Native execution and full requirement delivery remain subject to CI evidence.
+
+Keep declaration-range test assertions accessible through their actual generated
+source, and reorder unchanged reference-payload branches to satisfy Clippy.
+
+Bound temporary JavaScript Links Notation string construction in complete
+statement groups, preserving serialized text and host observation order.
+
+Repair malformed global grammar archive refusal before serialization. Preserve
+primitive array-join behavior through shared checking and rendering rules,
+including ECMAScript number text, nullable cells and UTF16 separators. Preserve
+the Agda focused oracle's original semantics while deriving its queue-growth
+safety patch automatically from authenticated sources. Expand Windows translation
+and fresh-merge physical partitions without changing test scope or deadlines.
+Add an explicit mechanically borrowed raw-source observation profile retaining
+all original definitions, fixtures, premises, expected results and process limits.
+Preserve reference record allocation around generated field-binding chains during
+strict checked archive reconstruction, with closed payload admission and unchanged
+exact graph comparisons.
+Refresh scalar-loop declaration intervals automatically while retaining every
+original input and semantic observation. Retain authenticated overlay provider
+history after projection and shared array-join changes, and verify original and
+expanded native shard schedules with the same admission and tamper checks.
+Native behavior and timing require CI verification.
+
+Generate pinned metadata and authenticated listed-file capture for six ANTLR lexer/parser base sources, retaining primary G4 byte hashes, file-qualified provenance and UTF-8 join ranges while keeping external files in ignored temporary storage. Transitive dependencies, superclass and base behavior, actions and predicates remain unresolved until separately lowered and checked.
+
+Preserve grammar source formats and their matching defaults through global
+concept archives. Keep proven equivalent grammar contexts shared.
+Revalidate supported historical discovery certificates while retaining their
+original bytes and reconstructing complete source-format provenance.
+
+Retry transient external test-input downloads within fixed attempt and backoff
+limits, preserving authentication checks and refusing partial publication.
+Prefer exact pinned archives before source recompression, with decoded source
+authentication before reconstructing an archive.
+
+Repository checks now execute the retained assertion-correction example against
+all original array and string inputs, supplementary UTF-16 characters and
+observable absent array elements, preserving genuine refusals and historical
+source evidence.
+
+CI rebalances three complete generated checks between its existing runners
+after a measured execution deadline, preserving every check, input, failure
+gate and timeout. Exact historical inverses and current ownership controls
+guard the scheduling change.
+
+Generate reviewed branch, string comparison and runtime qualification styles
+from JavaScript, retaining recorded Links replay and the checked algorithms.
+Repair native archive and array-inference adapter styles and test type errors.
+
+Preserve complete historical translation inputs after native packaging and
+borrowing repairs, with independently checked current artifacts. Fix cleanup
+process ancestry across Linux PID namespaces so running workloads remain
+protected when namespace identifiers collide.
+
+Reject malformed included-range grammar records before compilation or archive
+serialization can erase extra fields, coerce coordinates or replace definitions.
+Preserve valid source-free grammar archives and their complete concrete trees.
+
+Generate bounded Links publication of original native number control observations
+after the retained assertions. Validate complete physical execution logs, current
+source hashes and primitive payloads; native execution remains a CI requirement.
+
+Retain checked original native number observations automatically alongside the
+CI physical execution logs, preserving the original commands and seal gates.
+
+Tighten npm release publication checks to require the matching release tag,
+commit and npm/crate versions, distinguish missing versions from registry
+outages, and verify matching registry artifacts after publication. Keep the
+trusted-publisher settings and tagged recovery instructions explicit.
+
+Bulk grammar workers prepare only their selected native grammar projection,
+using the same actual-source reader as fixture generation. Existing oracle
+comparisons, catalog coverage and resource limits are retained.
+
+Native discovery compatibility controls compare accepted formal definitions
+while retaining the original unsupported definitions and archive-key checks.
+
+Bulk pipeline diagnostics report elapsed time for language workers, report preparation, global concept construction, structured-data serialization and semantic Links serialization while preserving emitted artifacts.
+
+CI conservation checks now authenticate the current verification queues before
+replaying their exact historical inverses. Original release safeguards,
+partition scopes, deadlines and mutation controls remain enforced. Native
+outcome publication checks preserve independently added compiler-profile fields.
+
+Add executable evidence for explicit release precision, declared language edition
+order, and missing or conflicting version ranges. Preserve the original fixtures
+and record observations only after every assertion passes.
+
+Add a JavaScript draft importer for Yacc/Bison productions and declarative
+Lex/Flex token rules using native Links grammar expressions and semantic
+operations. It verifies precedence, associativity, token values and lexical
+modes in focused round-trip tests and reports unlowered host code explicitly.
+Pin the official Ruby, Perl, Bash and OCaml source grammars and licenses for
+the bulk reconciliation pipeline. Rust importer translation and the official
+sources' remaining C and OCaml action semantics still require verification.
+
+Share JavaScript array absence decisions and target expressions with the native
+adapter. Preserve the actual bounds proof on compiler-generated for-of reads,
+retain absent ordinary reads, and use the prepared standard array runtime when
+an optional read needs it. Update superseded native expectations to the current
+JavaScript UTF-16 length and observable out-of-bounds contracts while retaining
+the original source inputs.
+
+JavaScript array bindings now retain ordered flat rest bindings and
+undefined-only primitive defaults through shared generated decisions. The
+initializer is read once, earlier defaults initialize before later bindings,
+and rest creates a fresh array suffix. Nullable or structured defaults and
+nested new patterns retain explicit unsupported diagnostics. Source-free Links
+archives use the existing checked array and optional operations.
+
+Preserve JavaScript Map and Set construction through shared generated decisions
+and editable semantic links, including contextual element types, primitive key
+admission, input effects, insertion order and SameValueZero key equality.
+
+Support ordered JavaScript constant declaration lists, including mixed array
+and object bindings, with one source evaluation and preserved temporal dead
+zones. Preserve continuations after partially returning nested branches.
+
+Translate discarded zero-argument pops on proved private arrays into immutable
+slice rebinding. Aliases, observed results and unproved writes retain explicit
+translation obligations. Native execution and runtime parity await CI.
+
+Generate binary framing from shared field buffers and exact length counters,
+retaining archive bytes, error ordering and limits while avoiding accumulated
+prefix copies. Complete native round trips and timing await CI.
+
+Reject JavaScript reads and assignments before a later declarator initializes,
+including builtin names such as `NaN`, `Infinity` and `undefined`. Preserve actual
+block and loop scopes, nearest shadows and left-to-right initializer effects.
+Unproved deferred reads and mutable module captures now refuse explicitly instead
+of becoming global constants. The shared decision is translated automatically to
+Rust; native execution and full requirements acceptance remain pending CI.
+
+Preserve active JavaScript statements after carriage return, line separator and
+paragraph separator endings of line comments. Shared generated ECMAScript rules
+also preserve return, break and continue boundaries and reject line breaks after
+throw, including those within comments. Existing non-JavaScript comment policies
+remain intact; native execution is verified in CI.
+
+Native JavaScript parsing retains admitted immutable module literals, including
+`const NaN = 3`, nulls and nested literal records, when sibling functions read
+them. Both frontends use the same generated literal-admission decision; spreads,
+effectful initializers and mutable module captures keep their existing refusals.
+
+Project native JavaScript parse trees after one trivia-normalization pass and
+cache derived node spans within the current projection. Bounded controls match
+the complete frozen projected values, and tiny Rust, JavaScript and JSON parses
+retain their full projected trees. Full-source resource fit and native behavior
+remain CI checks.
+
+Keep optional JavaScript equality operands independent during inference while preserving strict primitive comparisons and reference identity refusals.
+
+Add shared JavaScript optional inference and rendering rules to native translation, retaining concrete null and undefined tags, source return annotations, and lazy fallback output and aborts.
+
+JavaScript source translation preserves declared positional array contexts and lazily resolves referenced JSDoc aliases. Native parsing uses the shared JavaScript decisions for constructor diagnostics and string, Number and expression switch cases, preserving discriminant evaluation, case order, defaults and fallthrough. Dynamic switches also retain negative BigInt case literals.
+
+Object declarations retain ordinary record values and namespace ordering. Shared primitive method rules preserve UTF-16 string offsets, slice bounds and defaults. Array membership uses inferred receiver types and SameValueZero, including NaN, both zero signs and distinct nullable absences.
+
+JavaScript translation now combines adjacent returning tag guards into one exhaustive match, so later field reads use every preceding constructor exclusion while preserving lexical scope, ordered effects and constructor validation.
+
+Add an explicit `json-string` mapping to grammar-driven any/all selection. Mapped results retain the full physical host and decoded child CSTs, an ordered source-plane table and exact escape intervals through text/binary Links reload. A dedicated checker rederives mapping correspondence after generic decode; it does not replace parsing with the actual grammar. Identity-only results retain their existing shape and shared resource limits. Tree-only parsing refuses a mapped success so its source table cannot be silently lost. Non-scalar decoded text, unknown profiles and forged source references refuse explicitly.
+
+Keep JavaScript keyword ancestry separate from memo result trees and recursive
+seeds, matching the existing compact native call records. Frozen tiny Rust parse
+controls retain complete outputs and budget decisions. Add per-run source-archive
+diagnostics without changing parser limits; whole-source heap fit remains a CI
+check. Binary generator adaptations now use repository-relative paths, checked
+under relocated checkout addresses, and the new gate is protected by the complete
+workflow conservation checks.
+
+Avoid allocating a Set for every JavaScript keyword-call parent collection.
+Small collections retain ordered unique parent identities in arrays, promoting
+to a Set after eight parents. Frozen project-owned parser controls retain the
+entire call graph and all parse outcomes. Whole-source resource fit and native
+parity remain CI obligations; no Rust was compiled locally.
+
+The JavaScript package defers concept-record decoding and lookup indexes until
+first use. Its exported register remains a deeply immutable, cloneable array;
+generated metadata supplies its length and binds loading to the full shipped
+Links Notation digest.
+
+Fix native lexical election adapter compilation by serializing borrowed token
+metadata strings and passing owned token leaves to the existing tree builder.
+Lexer decisions, metadata fields and concrete tree contents remain unchanged.
+
+JavaScript link identity instances now require an own Number data property.
+Accessor-backed and inherited representations are rejected without executing
+their getters, preventing lookup, equality, insertion and archive writing from
+observing different identities. Ordinary writable data identities and original
+exact decimal or safe BigInt constructor inputs keep their behavior.
+
+Read the downloaded Formal AI and Relative Meta Logic workload reports through
+the shared associative file adapter. CI supplies Links Notation reports; parsing
+them as JSON prevented otherwise passing workload reports from recording their
+observations. The existing validation assertions remain intact, and both readers
+are checked against the authentic completed CI report artifacts.
+
+Persisted bulk grammar and independent Peggy/Lark reports now use structured
+Links Notation. Their source hashes, observations, failures and native concept
+models are retained; external target-tool JSON protocols remain unchanged.
+
+Typed program links represent match variables with owned, inspectable name and
+type records. Source-free renames preserve constructor-field and natural
+successor bindings across lexical shadowing. Pattern scopes reuse the existing
+checker and reject dangling references, foreign owners and inconsistent types.
+
+Runtime parity artifacts and staged verification reports persist as inspectable Links Notation. Appended observation records qualify every data identity and reference with a unique namespace; decoded values and the existing digest hash domains are retained. The probe keeps its JSON stdout protocol and adds explicit streamed NDJSON stdout while file output uses LiNo.
+
+Store consumer and downstream workload reports and retained observations as
+inspectable Links Notation. Keep npm, Cargo and child-tool interoperability
+protocols unchanged; remove successful temporary wire projections after their
+complete linked observations are written.
+
+Markdown source capture now authenticates the packaged Rust binding inventory
+and literal include candidates, recording missing and unresolved sources without
+invented hashes. These provenance receipts do not establish native Markdown CST
+support or resolved Rust module semantics.
+
+Add a shared Links-operation candidate for the pinned Markdown inline scanner
+and CI-only comparisons against its original source. Parser context and full
+block/inline composition still require validation before native promotion.
+
+The tooling audit now traces four adopted structural meta-theory definitions and
+three explicit premises to exact archived and draft source excerpts, actual
+JavaScript and Rust representation sources, and shared model data. Bounded
+JavaScript observations check ordered recursive links and existing point arities.
+Faithful point projections, upstream proof certification and project-wide formal
+application remain separate requirements.
+
+Retain the original array translation inputs in generated Links fixtures and
+execute UTF-16 string lengths, observable missing array elements and genuine
+translation refusals through both runtime evidence entry points. Native
+compilation and execution remain CI verification obligations.
+
+Repair native digest formatting and test type inference, preserve relocated
+private grammar tests and archive cases, and generate the attribute name guard
+from the joined JavaScript conditions while retaining historical source controls.
+
+Load the complete naming source-binding register through a generated,
+content-verified resource profile. Preserve all bindings and historical source
+checks while keeping general decoder limits unchanged.
+
+Repair the 18 all-target test compile errors and 55 Clippy diagnostic blocks
+reported by CI run 38459623719. Tests use current diagnostic fields and public
+imports, retain explicit fixture types, and reach the exact generated cache
+decisions through a test-only provider. The shared schema has its intended root
+export. Recorded generation styles and JavaScript selector factoring address
+the binary, RDF, product, completion and typed-program lint errors. Adapter
+visibility and continuation projection preserve their existing checks.
+
+Surface source metadata uses transparent boxes to reduce the enum's size;
+serialized field shapes and omission remain unchanged. Direct Rust callers
+constructing these optional surface fields use boxed metadata. Existing
+fixtures, refusal oracles, numeric boundaries and deadlines remain required.
+Native compilation, lint and execution verification run in CI.
+
+Partition the Rust evidence stage across eight authenticated native test
+inventories within the existing deadline. Every original test, assertion,
+observation and default-feature compiler check remains required; incomplete
+or conflicting physical evidence cannot supply the logical Rust suite.
+
+Repair the native errors reported by CI: generated header attributes now match
+complete function signatures, RDF arrays retain ownership across repeated loop
+iterations, and scoped validation names its two independent comparison
+obligations. Anchored type-namespace assertions now exercise public APIs from
+the external unit-test tree. Existing diagnostics and runtime oracles remain
+required; native compilation and execution run in CI.
+
+Add an isolated native parse-outcome transport experiment generated from actual
+source CSTs and Links policy, with bounded CI-only native verification against
+fresh JavaScript outcomes. Public default CST integration remains pending.
+
+Prepare and replay the complete generated Rust sources before allocating the
+complete-table and raw-graph oracle matrices. Canonical Links text replay uses
+the existing bounded streaming parser, retains every record and checks exact
+source reconstruction alongside the unchanged binary replay. Separate transport
+source receipts preserve historical producer bindings. Tiny JavaScript checks
+cover transport fidelity and planning order; full resource fit and native
+execution remain CI checks.
+
+Regenerate the text-certificate and raw-binding overlay source hashes from their
+actual JavaScript providers while preserving all ordered modules, decorator
+actions and replacement counts.
+
+Add a JavaScript experiment that retains exact native outcome type CSTs,
+recursive owners and string ownership through regenerated Links policy.
+Original native DTO reconstruction and public default CST integration remain open.
+
+Preserve the three existing lazy-output comparison tests in an isolated integration fixture generated from owned Rust CST declarations.
+
+Run platform native tests with the existing package-specific optimized test
+profile, keeping debug assertions and overflow checks enabled. Preserve every
+test target, logical filter, physical assignment and deadline. Retain complete
+preceding sources and actual unoptimized timeout diagnostics, with independent
+current-command and shell-argument controls. Native outcomes remain CI checks.
+
+Rust file consumers can resolve logical project-data paths to Links Notation,
+read the exact physical bytes for hashing, and deserialize through the shared
+structured-data codec. Conflicting JSON/LiNo storage is rejected; explicitly
+requested external JSON retains its original file boundary. Native unit
+fixture readers use the same path resolver.
+
+Repair the eleven native lint errors reported by the preceding CI run. Generated
+readers obtain their style corrections from recorded Links decorators. Named
+source boundaries retain the original end-to-start comparisons, and Boolean,
+codec and control-flow rewrites preserve evaluation and error order.
+
+Preserve original native library receipts through the target-literal correction,
+and borrow read-only primitive column locals in the generated raw consumer to
+reduce copying. Keep all original controls and the native execution deadline.
+
+Partition native CI test execution into deterministic physical shards while
+retaining the original logical suites, platforms, filters, and deadlines.
+Authenticate each shard's complete inventory and output, and verify that their
+union executes every original test exactly once before acceptance proceeds.
+
+Plain text and natural-language sentence/lexeme parsing now execute generated
+native Links Notation grammar rules shared by both packages. Unicode source
+spans, line endings, whitespace and prohibited-control diagnostics are retained.
+The catalog also carries pinned source, license, scanner and corpus provenance
+and embedded-language paths. Full natural-language morphosyntax remains open.
+
+JavaScript link networks expose concrete, abstract, lossless and semantic
+projection views using the same inclusion rules as Rust. Selected links retain
+their original identifiers, references, metadata and access to the complete
+source network. Omitting the JavaScript selection keeps concrete syntax.
+
+Preserve the original inferred element owner when an array passes through
+iterable normalization. Nullable Number and BigInt arrays retain their join
+behavior across element ordering and spreads. Shared iterable decisions and
+existing optional-element binding updates keep the JavaScript and Rust adapters
+aligned; complete original inputs and both Links codecs have regression controls.
+
+Preserve known nonnumeric and nullable JavaScript Number predicate operands without conversion, missing arguments and all ordered effects from extra arguments through shared Links rules and automatic native translation. Fix constant-emission crashes on print statements. Retain exact source layout through authenticated translation envelopes while preserving actual target edits and existing executable translation boundaries. Native execution remains a CI obligation.
+
+Execution observations and persisted runtime-probe entries use inspectable Links
+Notation records with separate UUID namespaces. Both runtime adapters validate
+record ownership, metadata and bounded structured values before decoding.
+
+Add opt-in `composition` data to the existing importer and grammar-rule decorator hooks. Closed any/all selections preserve the original physical expression, validate complete candidates under one `field-ranges` or `json-string` profile, and avoid adding an identical wrapper on repeated application. Recursive results retain physical and derived CSTs with their shared source-plane table; authoring and mapped-tree publication refuse unsupported executor or recovery decorator combinations. Native execution and parity remain subject to CI verification, and complete Markdown and other priority-grammar coverage remain outstanding.
+
+Optional fixed lexical matching caches now release their retained entries when
+required parser work needs the memory. Both runtimes keep the existing memory
+limit and mandatory memo accounting. This preserves the exact native Zig tree
+for the pinned diagnostic-comment input without increasing its budget.
+
+Recorded structural selectors can order a field's source alternatives while
+preserving every production and alias. Elixir reserved remote properties retain
+their identifier identity without ambiguity; symbolic, quoted, longer and
+suffixed properties keep their original alternatives in the shared grammar.
+
+### Added
+
+- Draft a complete seventeen-table source certificate projector from original
+  link identities and primitive payloads, with all sixty-six Rust definitions
+  generated automatically. Native capture and production integration remain
+  separate work.
+- Add a CI-only external consumer for the entire sixty-six-definition table
+  projector, with 45 complete result comparisons and bounded reversible bit
+  transport. Native observations require successful CI execution.
+- Preserve a bounded binary metadata buffering candidate, authenticated native
+  generation and a CI-only oracle for complete output and refusal comparisons.
+  Production codec behavior and performance claims remain unchanged.
+
+### Fixed
+
+- Limit local cleanup to meta-language-owned storage, preserve evidence and
+  dirty worktrees, and release completed clean task worktrees promptly. Use one
+  shared checkout and compile Rust exclusively in CI/CD.
+- Exercise the actual generated owned-text decisions and text renderer from
+  native tests against shared JavaScript fixtures. Repair the reported strict
+  compiler and Clippy test/example diagnostics while retaining existing test
+  inputs and assertions.
+
+Added an experimental exact unsigned-64-bit identity lookup kernel, automatically
+translated from JavaScript. Split words preserve adjacent large identities and
+ordered repeated queries; original graph anchors and ownership checks remain
+distinct. Public JavaScript LinkIds retain their safe-integer boundary. Native
+execution and complete source-certificate projection remain pending.
+
+Add an experimental original-link graph preflight with shared Links recipes for
+selected structural shape, binding targets and owner identities. The complete
+JavaScript kernel automatically emits 106 Rust definitions; the established raw
+decoder, table projector and final source certificate remain mandatory. Native
+execution and production integration still require CI evidence.
+
+Preserve the actual GitHub evidence for the reported historical CI cancellation
+as inspectable Links data. A bounded checker supports its explicit automatic
+job-timeout cause and leaves inconsistent evidence or actor attribution unknown.
+
+Added experimental original-link role registration with automatically translated
+numeric rules. Actual raw identities produce compact kinds and handles, with
+checked transport domains and preserved ownership checks. All thirteen existing
+text fixtures retain their decisions after text and binary reload. The other
+sixteen table values and native host integration remain separate work.
+
+Added a JavaScript-first ordered String value projection experiment with complete
+automatic Rust emission. Exact UTF-16 values produce checked symbols and complete
+name/unit tables, independently of original link identity. Bounded saved-format
+and source-free replay checks cover its selected model; graph traversal, native
+execution and production integration remain separate work.
+
+Added a JavaScript-first original-link projection experiment for eleven complete
+certificate tables. Shared instructions generate all table decisions and all
+twenty-nine Rust definitions. Bounded archive/edit/forgery checks retain the
+existing complete certificate. Six dynamic tables, the native host boundary and
+native execution remain separate work.
+
+CI native observations select checked optimization for the complete raw graph program and short compiler diagnostics for the recorded text-certificate library. Existing fixtures, byte limits and timeouts remain unchanged. Bounded compiler warnings and process failures retain source receipts and full available diagnostic bytes in files and the native CI log; native execution and performance remain CI checks.
+
+Native Rust namespace and pure Unit adapters now use their shared generated
+container decisions when checking actual raw parameter and ordered containers.
+Pure Unit source offsets likewise use the selected model's generated decision.
+The existing container, interval and negative-zero boundaries are retained.
+
+The selected `owned JavaScript scoped bindings 1` emission model gives checked
+local binding records canonical JavaScript aliases while preserving actual
+declaration ownership, effects and validated scalar-loop snapshot protocols.
+Five concrete complete modules cover repeated source-free replay, ordered
+printing, lexical shadowing and collisions. Broader runtime-module coverage and
+a complete IR type fixed point remain separate obligations.
+
+Lower discarded appends on a proven fresh local JavaScript array to immutable
+array values and lexical rebinding. Keep aliases, captures, unknown calls and
+loop-carried escapes outside that construction rule. Share final-use decisions
+over actual binding and continuation links so Rust can consume existing vector
+storage without copying it on every construction step.
+Public translation and source-free Links emission select this final-use policy.
+Low-level emission preserves historical copying for authenticated generator
+profiles; an explicit option and native entry point select consumption without
+changing checked programs or the existing native emission-options structure.
+
+Add two explicit source models for owned standard `String` local values:
+`closed owned text local state 1` captures a once-evaluated `(String, i32)`
+initialization, ordered moves, replacements and conditional joins;
+`canonical owned text local copies 1` retains actual standard String clones in
+emitted definition replay. Owned interface and occurrence facts survive editable
+Links reload and are rechecked before emission. Both models retain their
+selected input-domain checks and exclude allocation failures, pointer identity,
+release timing, custom destruction and ABI observations.
+
+The JavaScript public `rustOwnedLocalStateModel` option and native
+`create_typed_program_links_with_rust_owned_local_state_model` factory retain the
+selection separately from caller provenance. The optional Rust surface facet is
+boxed and the checked record stores its transparent value. Existing source
+profiles keep their original defaults. Actual generated runtime wrappers and the
+complete binary formatter still require separate source interpretations. Native
+compilation, execution and runtime parity remain CI verification obligations.
+
+Add isolated JavaScript overlays that require program-owned Rust text and raw
+binding certificates at actual codec, validation, recheck and emission entry
+points. Saved graph checks retain actual owner identities and source-free edits.
+Native projection, paired capture/replay and production selection remain gaps.
+
+Include function properties in owned source container checks, detecting misplaced
+proof markers without invoking accessors. This closes function-root and callback
+fallbacks in the guarded const and owned-text emitters and linked validation;
+ordinary unselected callback metadata keeps its existing behavior.
+Require a plain or null-prototype program root before model selection so
+inherited program fields cannot conceal invalid source qualifications. Ordinary
+unselected callback metadata and inference caches retain their existing behavior.
+Inspect inherited marker descriptors within bounded prototype chains, so nested
+function records cannot hide invalid source facts or trigger marker getters.
+Graphs that exceed inspection limits refuse before an unselected fallback.
+
+Use the shared translated source-operation decisions at native owned-text borrow,
+dereference and Box admission sites. Preserve the selected models' existing
+refusals and diagnostics while keeping native checks aligned with JavaScript.
+Apply native adapter style corrections for String state updates and source-span
+fallback evaluation so the unchanged checks can execute under strict linting.
+
+Add shared, automatically translated selection from caller-owned existing static string references with explicit resource and ambiguity refusals. Preserve actual source type and occurrence identities in revalidated Links plans. Add CI-only native lifetime/pointer checks and retain complete native DTO reconstruction, original pointer provenance and JSON number origins as separate obligations.
+
+Add an explicit owned tuple initialization call model for closed Rust String/i32
+helpers and complete callers with ordered String moves, i32 copies, replacements
+and joins. Linked call targets and source-free edits retain actual declaration
+ownership. The existing factory selects the model; other source profiles retain
+their boundaries. Native compilation and cross-runtime execution are checked in CI.
+
+Compact JavaScript prefix-lookahead, uniform lexical-result and homogeneous
+padding caches while preserving logical entries, complete parse outputs and
+existing parser budgets. Frozen bounded controls cover fallback data, exact
+fields, scanner states, offsets, recovery and cache counts. Complete generated
+source memory fit and native runtime parity remain CI obligations.
+
+Authenticate the historical Pascal fixture conversion's added leading-trivia
+metadata against its original Git value and a pinned later grammar inventory.
+Preserve the frozen conversion hashes, every original oracle field and the
+existing Links Notation fixture bytes; reject unrelated metadata or source edits.
+
+CI can recover from an unavailable Lean release index using the same official, checksum-pinned release from GitHub. The fallback verifies its exact version, preserves native verification gates and refuses local execution.
+
+Validate every provider section of the pinned associative technology guide,
+including transitive storage, conditional browser, protocol and development
+boundaries. The source audit preserves the separate requirement for executed
+project-wide adoption evidence.
+
+Add an explicit `primitive borrowed Rust function header 1` emission model for
+owned linked Rust source signatures on flat leaf functions. Direct `f64` and
+`bool` results and direct or immutable-reference primitive parameters retain
+their declared reference layers and ordered ASCII input lifetime binders.
+Scoped copies project referenced parameters into the existing checked value
+body, with source-free edits and reimport of the actual emitted definitions.
+Existing emission defaults remain unchanged. Calls, effects, allocations,
+borrowed results, custom owners, pointer observations, resource equivalence and
+general ABI equivalence require separate models and proofs.
+
+Add paired four-language source-free grammar archive controls using the existing
+C, JavaScript, Rust and TypeScript CST fixtures. Keep the mapped outcome ownership
+bridge as an explicit JavaScript-first experiment; public default CST projection
+and native transport integration remain open.
+
+Integrate immutable product source adapters and checked Links fixtures with
+generated rules, shared runtime metadata and bounded CI checks. Preserve
+historical conversion hashes while authenticating provider receipt updates and
+protecting original trees, source identities, order and shared references.
+Record the later coordinator-only workflow instruction as critical scope.
+Native compilation and complete inventory replay remain CI verification.
+
+Preserve explicit UTF-16 string representation flags when decoding, rechecking,
+re-encoding and emitting checked program graphs. Absent, false and true values
+remain distinct; present non-Boolean values are rejected.
+
+Repository tooling resolves logical fixture paths to inspectable structured LiNo,
+checks canonical storage freshness, and hashes actual stored bytes for execution
+evidence. JSON remains explicit at external package and protocol boundaries.
+The shipped JavaScript runtime and authoring tools share the same file adapter,
+including explicit JSON boundaries and canonical LiNo freshness checks.
+A working-tree audit rejects unregistered JSON and persisted JSON streams;
+retained boundary files have explicit consumer evidence and raw provenance.
+
+Repository tooling now replays structured-data conversion against immutable
+original Git inputs in CI, checks every external asset path with actual Git
+staging, and runs prepared native snapshots with upstream file and network
+access denied. Custom download caches inside a worktree require explicit ignore
+rules and cannot overwrite tracked cache inputs. The broader conversion and
+offline-delivery ledger cells still require their complete native and consumer
+witnesses.
+
+Task-scoped cleanup and wrapped checks support `--project-owned-only`, excluding
+foreign Cargo target directories before discovery and byte accounting. The
+policy disables container cleanup and low-disk escalation and records its scope
+in the retained Links Notation receipt. Existing explicit target support and
+all source, evidence and active-task checks remain.
+
+Clarify local cleanup scope: inherited Cargo target paths require verified
+meta-language ownership before cleanup or wrapped checks. Manual local cleanup
+disables low-disk escalation and container cleanup and retains its receipt.
+Rust compilation remains exclusive to CI/CD.
+
+Do not select reference semantics from a plain indexed assignment already
+removed by the checked private-ownership proof. Preserve every other reference
+trigger and the original complete token validation.
+
+### Fixed
+
+- Align JavaScript public declarations with graph imports that accept readonly
+  RDF tuples and discovered concept records carrying inspectable formal archives.
+- Distinguish decoded RDF terms with populated blank scopes and literal metadata,
+  retaining optional defaults on import terms.
+
+Add independently selected closed private and bare-public Rust Unit-call source
+models. Actual zero-argument helper headers, complete pure bodies, public keyword
+sites and ordered owned calls remain inspectable after source-free Links reload.
+Existing Unit values and call effects retain their checked declaration identities
+through edits, emission and actual emitted-definition replay.
+
+The default parser retains its original refusals. Imports, arguments, arbitrary
+public interfaces, attributes, effects and the generated standard-library runtime
+wrapper require separate proofs. Rust surface and checked records gain optional
+owned source facets; native struct-literal callers must initialize the new fields.
+
+Selected source spans compare their labeled start and end offsets independently
+of record field order. Offsets are canonical nonnegative safe integers; negative
+zero and unsafe bounds refuse before source facts authorize emission. Primitive
+floating-point negative zero retains its existing value semantics. Other raw
+numeric spellings retain the existing codec boundary.
+
+Add an opt-in standard Rust binary64 owner model for complete flat primitive
+functions. Qualified `std::primitive::f64` and `core::primitive::f64` owners and
+unique explicit aliases retain their actual paths, import order and constant
+sites as inspectable Links facts. Source-free reload checks those facts against
+the typed interface and body. Default source admission remains unchanged.
+
+Keep the historical raw graph artifact immutable while checking current automatic emission through a separately authenticated profile. Native CI retains the complete original fixture and archive coverage and records which profile actually ran; local source checks do not establish native execution.
+
+Bound complete-source replay concurrency by actual CPU and available memory,
+allowing three one-GiB CI workers where capacity permits. Preserve all source
+replays and the existing deadline. Reuse verified immutable data traversals while
+retaining getter/proxy effects, every original input and transport provenance.
+Full-workload timing and native execution remain CI verification obligations.
+
+Add structural record construction and field projection driven by shared source rules for ordered evaluation, overwritten fields, spreads and UTF16 field layout. The source-free adapters retain actual entry-value bindings across text and binary Links. Declared record and nullable type syntax share generated decisions; ordered Union alternatives remain distinct and preserve explicit Rust, Lean and Rocq target refusals.
+
+Record full CST output as the default for every supported language, explicit AST selection, deeply recursive mixed-language grammars in one global concept space, and initial complete JavaScript, Markdown, Rust and TypeScript grammar priorities. Preserve the requests verbatim and append critical requirements, with a pinned Router PR #761 practice review; these records do not claim runtime completion.
+
+Recursively attach CSTs for supported discovered regions with ordered child ownership, absolute UTF-8 spans, ancestor-cycle diagnostics and configurable depth/count/byte limits that charge admitted child parse attempts while excluding the root. Preserve legacy root-alias same-range parsing and reuse attached inner views; these adapter limits do not alter parser budgets, establish generic grammar selection or full coverage, or verify native execution.
+
+JavaScript self-translation checks complete recursive declaration groups before
+publishing peer signatures and preserves actual module binding ownership.
+Fresh local arrays can retain ownership through checked self-slices and scalar
+reader iteration; escaping live iterators retain their refusal behavior.
+JavaScript emission preserves actual external function and constant bindings,
+including supported aliases and collisions with generated local names.
+Shared decisions generate Rust automatically; native compilation and execution
+remain subject to CI verification.
+
+Large JavaScript native-grammar parses can reuse completed recursive calls while
+their exact bounded seed dependencies remain valid, avoiding repeated work under
+the existing memory, memo, step and nesting limits. Seed changes invalidate those
+entries without releasing mandatory memory charges. Prefix lookups also reuse
+one physical page location while preserving their complete logical contents.
+Conservative trivia prefix checks avoid entering impossible named extras only
+when anonymous padding and scanner expectations prove the check applicable.
+Complete generated-source resource fit and native parity remain CI obligations.
+
+Preserve callback method spans inside reference allocations. Emit reference-array
+`flatMap` results as fresh reference arrays, retaining callback order and nested
+reference identities.
+
+The JavaScript portable checker retains shared array result types through
+bindings, branches and lifted loops, preserving the identity of returned aliases.
+
+Translate synchronous named JavaScript functions with flat required object
+parameters and aliases through shared token and lexical decisions. Preserve
+logical arguments, ordered field reads, binding owners and source spans.
+Reject unsupported mutable/default patterns, shadowed built-in normalization
+and strict directives in non-simple parameter bodies. Rust decisions are
+generated automatically from the complete JavaScript source closure.
+
+Add the independently selected Rust type-namespace source model. Owned header
+spellings resolve against the actual type catalog before primitive projection,
+keeping datatype and value-function identities separate. Anchored paths,
+source-free spelling and value edits, and actual emitted-definition replay
+retain their checked owners. An attached standard Clone derivation on a
+field-free datatype remains an inspectable owned facet and permits its checked
+direct clone. Primitive namespace proofs compose with the existing strict
+header and scoped-emission models after revalidation. Unsupported constructors,
+methods, imports, generic/library positions, borrowed results and full runtime
+wrappers require separate proofs. Native compilation and execution run in CI.
+
+### Fixed
+
+- Count imported terms, ordered occurrences, archived merge sources, equality
+  witnesses and final graph roots against the existing 100,000-node output
+  budget. Imports and merges refuse oversized results before allocating beyond
+  that cap, so accepted graphs fit the default source-free decoder and witness
+  verifier. Existing triple, source-count, lexical and traversal caps remain.
+
+### Added
+
+- Import, edit, reload and merge bounded RDF 1.1 abstract graph terms as actual
+  semantic links, retaining source-scoped blank nodes, lexical literal identity,
+  ordered provenance and checked term-equality witnesses in both packages.
+  Automatically translated shared rules validate Unicode, supported absolute
+  identifiers and language tags. Complete RDF syntax import and OWL entailment
+  remain required work; bracketed IP address identifiers are explicitly refused.
+
+Retain owned read-only lexical arrays across repeated generated resource
+description language comparisons. The recorded generator styles now preserve
+copies needed by later iterations while keeping terminal result moves.
+
+Adds a bounded RDF 1.1 N-Triples profile that imports syntax into editable RDF links, retains separate lossless syntax provenance, and exports canonical syntax from semantic terms. Scoped blank identities survive conversion through explicit linked correspondences. Shared lexical, Unicode escape and grammar decisions are automatically translated from JavaScript to Rust. Bracketed identifiers are explicitly outside this profile; full RDF syntax coverage and OWL reasoning remain separate requirements.
+
+Add a source-only C lowering experiment for automatic Markdown scanner translation.
+It retains the complete source CST and declaration relationships through Links text
+and binary reloads. CI captures the original fence helper closure from the existing
+pinned archive. Execution, ABI, memory and syntax-derivation obligations remain
+explicit; this does not establish executable C translation or full Markdown support.
+
+Extract retained array fixture inputs through the shipped JavaScript concrete
+syntax parser, without a TypeScript compiler API dependency. Preserve the
+original JSON/Python mapped-selection fixture and its full source captures
+while validating exact, reversible Links decorator profiles for corrected
+native assertions and the capture adapters in both runtimes.
+
+Retire JavaScript parser call metadata and recursion seeds when a memoized rule
+finishes, preserving its exact result array and live keyword ancestry. Frozen
+bounded controls retain full parse decisions, step counts, memory charges and
+memo admission under the existing limits. Whole-source resource fit and native
+parity remain subject to CI; no Rust was compiled locally.
+
+CI source archive checks also report bounded storage progress from actual
+executor calls, preserving archive bytes and restoring both observed methods
+even when a diagnostic callback fails.
+
+Restore the exact immutable branch-style producer required by the binary
+oracle. Expose its unchanged reviewed helper through an authenticated adapter,
+preserving existing aliases and all thirteen original oracle source bindings.
+
+Extend source-scoped lexer declarations when round-trip mutation adds a parser
+literal. Preserve original explicit-token order, reuse existing literal aliases,
+and renumber later implicit tokens to match re-import of the edited source.
+Both adapters use the shared JavaScript extension plan; native checks run in CI.
+Lossless renamed-source comparison checks a bijection from original parser-owner
+aliases to their actual public references. Actual renamed Links retain those
+aliases; token, literal, action and every other clause remain exact.
+
+Recorded Ruby source decisions now distinguish the reserved `defined?` operator from receiver method calls and declarations, and bind low-priority `and`/`or` operators outside unparenthesized command arguments while preserving parenthesized arguments.
+
+Preserve the source boundary between a Ruby statement and a following regular
+expression. Recorded native grammar rules retain same-line division, escaped
+line continuation, comments, and carriage-return line endings. Shared bounded
+fixtures retain both reported multiple-assignment cases and the regex case
+with exact independent oracle trees and unchanged parser limits.
+
+Retain Ruby pattern `in` clause boundaries in the recorded native source grammar
+decisions. Focused shared fixtures preserve the six reported upstream pattern
+cases, identifier prefixes, receiver method spellings, and invalid pattern
+controls without changing parser resource limits.
+
+Ruby's pinned native grammar now preserves newline-separated strings,
+adjacent range and minus operators, block keyword boundaries, namespace
+constants, and explicitly invoked constant methods through recorded source
+transformations. Shared scanner policies preserve Unicode and operator symbols,
+escaped line continuations, and whitespace-sensitive splat decisions within
+the existing parser budgets. Both runtimes consume the generated Links data.
+
+Flatten JavaScript memo keys for short parser states while keeping long state
+strings shared. Frozen controls preserve exact keys, field reads, coercion order,
+errors, full parse outcomes and budgets. Bounded isolated storage measurements
+do not establish full-source resource fit; CI retains its original limits.
+
+Keep admitting current JavaScript parser work after the rule memo cap by
+retiring a completed creation prefix from earlier source pages. Preserve active
+recursion, every charged memory cell and all original limits. Add exact resource
+failure diagnostics and bounded frozen-parser controls. Full generated-source
+resource fit and native runtime parity remain CI obligations.
+
+The runtime probe accepts `--ndjson` to stream JSON entries to stdout for process
+communication. Filename arguments continue to store inspectable LiNo records.
+
+Restore the exact integer suffix spelling consumed by the complete-file
+JavaScript lexer fixture. A scoped Clippy expectation documents that deliberate
+lexical input while retaining the original precision, span and source-preservation
+assertions. Native validation remains in CI.
+
+Both runtime packages now load their structured concept, foundation, language,
+Unicode and text metadata from inspectable Links Notation. The automatic
+conversion preserves decoded values and collection order, and the data
+builders reproduce that representation. Text metadata has a separate filename
+from the executable text grammar. Language identification also loads identical
+packaged Links data in both runtimes instead of an embedded JavaScript object.
+
+Admit bounded read-only standard vector and immutable slice source policies, preserving source ownership distinctions and replaying actual emitted Rust definitions through the shared checked representation.
+
+Admit exactly `f64::NAN`, `f64::INFINITY`, and `f64::NEG_INFINITY` when their
+owner resolves to the unshadowed primitive type. The constants preserve binary64
+source evidence for existing numeric method chains and checked algorithm
+definition round trips. Custom, qualified, shadowed and `f32` owners retain
+their existing refusals; NaN payload and sign are outside this value model.
+
+- Admit zero-argument `abs`, `floor`, `ceil` and `trunc` methods on proved direct
+  primitive `f64` receivers through shared linked expression templates. Results
+  retain the actual source receiver proof for chaining and evaluate the receiver
+  once. Unary negation now preserves an already proved primitive `f64` origin,
+  including canonical emitted `-0f64` bindings. Explicit `.len() as f64`
+  expressions now retain the same primitive receiver proof in both runtimes. Unproved, indirected, custom,
+  shadowed and `f32` receivers, and separate rounding, sign and transcendental
+  models remain explicit source boundaries.
+
+Rust source admission now requires an actual root `extern crate alloc;`
+declaration before projecting allocation-crate Box values. Standard-library
+Box imports and renamed Box imports resolve their actual owner while retaining
+source ownership checks. The shared source fixtures cover declared and absent
+allocation crates, aliases, duplicate declarations and shadowed owners.
+
+Admit Rust 2024 byte literal expressions as fixed `u8` values with their original token spans, and reject unsigned negation, including contextually typed zero, before and after literal folding. Preserve signed minimum literals, floating negative zero, and explicit refusals for Unicode character expressions and character patterns; native compilation and execution remain pending CI verification.
+
+Reject a less-than token directly after a bare Rust cast target, matching the
+type-path grammar. Both runtimes use one generated decision and retain grouped
+casts, grouped target types and the existing other comparison operators.
+
+Keep the historical ungrouped array-length source byte-for-byte as an explicit
+negative. Its original positive case keeps all inputs and expected observations
+and is corrected by a recorded Links decorator before fixture generation.
+
+Recognize unsuffixed Rust character and byte character literals as complete lexical tokens, keeping their punctuation inside the original source token. Resolve repeated JavaScript constructor names from actual receiver ownership when available. Typed character expressions and patterns retain explicit refusals; native runtime parity remains for CI verification.
+
+Add the explicit `closed Boolean Rust const decision trees 1` source model for
+qualified Boolean conditionals, with checked owned proofs after Links text and
+binary reload. Shared JavaScript decisions generate the native rules; calls,
+effects and numeric comparisons remain outside this model.
+
+Refresh only the parse diagnostic for the unchanged
+`frontend-rust/frontend-rust-stringEscapes` source. Its invalid `\{` escape
+still produces a syntax error, now at the original escape span `84..86`
+before format-string validation. The [Rust Reference's cooked-string
+grammar](https://doc.rust-lang.org/reference/tokens.html#string-literals)
+excludes this escape. All program descriptors and other generated stage
+records remain unchanged; focused tests retain the original source hash,
+lexical refusal, valid neighboring escapes and refresh conservation guards.
+
+Rust cooked strings use shared checked escape decisions for seven-bit ASCII and Unicode scalar escapes with separators, retaining original source spans. Unsupported escapes and isolated source carriage returns refuse precisely. Rust token separation uses its eleven specified whitespace characters and a single initial byte order mark; exact integer suffix boundaries compose with that whitespace policy. Public Links reload and source-free edits have native CI execution checks; generated runtime-wrapper source import remains a separate boundary.
+
+Rust source translation admits anonymous immutable products over recursive scalar
+Copy fields, with tuple types, literals, positional projection and immutable
+destructuring. Nested projections retain exact source spans, and destructuring
+retains each binder while evaluating its initializer once through a hygienic
+temporary. JavaScript emission preserves frozen product construction. Pointer,
+owned string, nominal, mutable and refutable product cases retain explicit
+obligations. Shared source admission decisions are authored in JavaScript and
+translated into Rust with recorded Links Notation emitter decorators.
+
+Admits `is_nan`, `is_finite` and `is_infinite` on proven direct primitive f64 source receivers. A shared LiNo policy selects the existing checked math expressions, preserving single receiver evaluation, NaN, infinities and signed zero through source-free graph replay. Custom or shadowed owners, f32, wrong arity and unproved numeric receiver types remain precise refusals. Full generated Rust source reimport remains a separate obligation.
+
+- Add an explicit `immutable fresh scalar vector results 1` Rust source profile
+  for functions whose returning tails construct fresh owned vectors of direct
+  scalar Copy values. The typed-links creation APIs preserve the selected
+  profile and caller provenance through serialization and source-free emission.
+  Legacy admission and its vector-result refusal remain available; local vector
+  moves, by-value vector calls, borrowed results and named result forwarding
+  still require separate source proofs.
+
+Rust source translation admits unconstrained lifetime-only function headers and immutable input references in the existing value projection. Lifetime names stay within their declaring function; reference results with lifetime binders, bounds, type or constant parameters, and mutable references retain precise unsupported obligations.
+
+Add the explicit `closed guarded function returns 1` Rust source profile for
+terminal value returns and closed conditional guards. It lowers to the existing
+typed let/if core, preserves enclosing continuation scopes and source spans,
+and stores selected source models separately from caller provenance in links.
+The default early-return refusals remain unchanged. Escaping returns, partially
+returning branches, unreachable statements, mutable loops and destructor or
+lifetime effects still require their own source-admission proofs.
+
+This selected profile also reimports the emitter's exact
+`panic!("{}", literalString)` form. The second argument remains literal message
+data, including braces and escapes; dynamic Display formatting is still refused
+and the default profile's formatted-panic diagnostics stay unchanged.
+
+Rust decimal integer tokens now accept separators immediately before a complete
+supported integer suffix, preserving exact integer text, raw source and spans.
+One Links policy generates the JavaScript and native lexer decision. Existing
+unsuffixed trailing-separator refusals and JavaScript numeric rules are unchanged.
+Non-ASCII suffix boundaries, including identifier continuations and Unicode
+whitespace, retain their original refusal pending Unicode boundary support.
+
+Added an explicit JavaScript experiment for raw Rust function and parameter
+identifiers in complete primitive modules. It retains original source bytes,
+actual binding identities, checked invocation premises, saved Links edits and
+automatically translated pure selectors. An explicit invocation checker requires
+the actual declaration, its exact parameter array and Boolean or signed i32
+arguments. A CI-only source oracle compares seven original modules and three
+coherent edits using the same compiler/byte-receipt runner as the text oracle.
+Production selection and native runtime integration remain separate work.
+Another CI oracle compares all six unchanged automatically translated primitive
+selectors on 644 conditional calls, with exact Boolean and binary64 argument
+transport. These observations concern the selectors under their explicit
+premises; they do not establish source grammar or invocation ownership.
+
+The JavaScript Rust frontend reads raw string literals with zero through 255
+delimiter hashes, literal backslashes, shared CRLF normalization, isolated-CR
+and unpaired-surrogate refusal, and original UTF-16 source spans. Native pairing follows the frozen
+JavaScript batch; closed generated-program models keep their previous scope.
+
+Rust raw strings retain zero through 255 hash delimiters, literal backslashes and original UTF-16 spans, with CRLF normalization and precise malformed-delimiter and isolated-CR refusals. Native CI checks cover public CST text and binary reconstruction, editable typed Links, complete original and emitted Rust execution, and equivalent raw spellings of selected runtime flag and thread-success facts with actual operation ownership retained. Unpaired JavaScript surrogate inputs remain outside Rust's public `&str` input domain.
+
+Rust source translation now admits standard primitive `f64` inclusive range
+membership and immutable standard `str`/`String` emptiness queries. Range
+operands evaluate once in source order; NaN and signed zero retain primitive
+comparison behavior. The source owner and immutable pointer layers are checked
+before projection, including standard String aliases and `String::new()`.
+
+Selected borrowed Rust source-header emission now checks the actual parameter field inventory and refuses optional parameter metadata without a separate interface proof. Ordinary emission remains unchanged.
+
+Rust source admission now retains immutable reference and standard `Box` origin
+evidence until it has checked dereferences, constructor arguments, declared
+initializers and function results. Forward declarations, module imports and
+shadowed lexical bindings use the existing source parser's scopes. Scalar,
+unknown, mutable and shadowed Box origins produce source diagnostics instead of
+being silently erased into values.
+
+The current value model still does not implement complete Rust borrow, lifetime,
+trait, `Clone` or `Drop` checking. The shared regression sources exercise actual
+original Rust compilation in CI, including boxed recursion and derived cloning.
+Admission uses declaration collection, an unchecked parse checked by the existing
+semantic checker, and a source-ownership parse for core-accepted programs. This
+adds parser work while preserving existing syntax trees and diagnostic ordering.
+The guarantee covers the unchanged source pipelines; modifying a returned Surface
+creates a separate semantic input.
+
+Compose the existing Rust numeric boundary decision with the exact Rust source
+whitespace policy. Valid Unicode separators may follow supported suffixed
+integers while unknown suffix continuations and the original standalone numeric
+decision retain their existing behavior.
+
+Use Rust's exact Pattern_White_Space set when the JavaScript frontend tokenizes
+Rust source. Preserve U+0085, U+200E and U+200F as valid separators, and refuse
+non-Rust spaces such as NBSP and noninitial byte order marks. Token spans retain
+offsets in the original source, including an initial byte order mark. Other
+languages retain their existing whitespace interpretation.
+
+Add shared Rust cooked-string continuation and CRLF value normalization decisions
+to the JavaScript and native Rust frontends, retaining original source spans and
+bytes. Rust and JavaScript keep their distinct continuation whitespace rules.
+Automatically converted Links Notation fixtures cover semantic reload, executable
+JavaScript output and canonical target literal encodings; native parity runs in
+CI. Full emitted Rust runtime-wrapper reimport remains a separate frontend gap.
+
+Preserve valid Rust `String` equality and inequality against `&str` during
+translation and edited self-translation. Source origins retain the distinction
+between an owned string, a string slice and a reference to an owned string, so
+the comparison rule does not authorize unrelated pointer projections. Shared
+JavaScript admission rules generate the native decision through Links Notation
+decorators; existing self-translation fixture expectations remain unchanged.
+
+Add a complete-library packaging draft using recorded Links decorators and
+whole-item partitions for every automatically emitted text-certificate definition.
+Original artifacts remain unchanged; native and formatted-size validation is
+still pending. Unrepresented nested macros and scope-bearing rewrites refuse.
+
+Generate a portable finite Rust text certificate kernel from shared links
+policy. Complete grammar, actual owner relations and operation conditions pass
+through the full translator and typed Links text/binary replay. The automatically
+emitted complete Rust source is retained as links for CI compiler and execution
+checks. Public selection and native graph adapters remain separate work.
+
+Add a JavaScript-first experimental interpretation of complete standard Rust
+text functions. Actual source operation, signature and value owners survive
+Links text and binary reload, checked edits, complete Rust replay and guarded
+JavaScript execution. Borrowed moves, invalid conversions and escaping borrowed
+results require separate proofs. Production selection, native library support
+and complete generated runtime-wrapper composition remain separate work.
+
+The selected resolved Rust type namespace profile retains actual header spelling and standard field-free datatype Clone derivation facts through editable Links reload. Selected imports, unproved conversion and trait calls, malformed metadata, and container extensions refuse; the default source profile is unchanged.
+
+Admit an unused Rust `mut` declaration on an unshadowed directly owned scalar
+Copy parameter when its entire closed function body contains no assignment
+operators and still passes the portable body and source-origin checks. Written
+parameters, borrowed or nominal values and unproved body forms remain refused;
+this selected projection does not provide a general mutation or borrow model.
+
+Stop unfinished Rust visibility scans at end of input in JavaScript and retain
+the native frontend's exact syntax diagnostic and UTF-16 source span. Preserve
+the original vector fixture as a supported array case and keep unsupported
+generic types covered by both frontend test contracts.
+
+Reject JavaScript link identities that cannot be represented exactly by its
+existing Number API, including unsafe integers and fractional or coercing
+spellings. Text readers, writers and link-cli operations validate the original
+identity before conversion. Allocator exhaustion now throws without replacing
+an existing link. Exact whitespace-trimmed decimal strings and ordinary IDs
+retain their behavior; the existing binary safe-integer profile is unchanged.
+
+Scanner lookahead retains a longer parse that already shifted the same virtual
+boundary token. Later virtual tokens keep their existing continuation behavior,
+and competing lexer continuations that bypass the boundary remain preempted.
+Repeated Ruby root statements retain their exact concrete syntax trees within
+the existing parser budgets.
+
+External scanner priority and trivia probes reuse the same context and state
+cache as token scans. Long HCL heredoc identifiers and repeated scanner probes
+retain their original parse budgets and syntax trees.
+
+Selected owned JavaScript scoped-binding emission validates exact owned fields
+and value shapes before native decoding, then rechecks the entire program
+against its checked semantic projection. Unknown binding metadata, malformed
+known values and stale recursion facts refuse through links serialization and
+reload. Declaration-owned scalar loops preserve their actual continuation root
+and path in both runtimes. Closed empty-option source ownership composes only
+after its independent proof validates. Native compilation and parity run in CI.
+
+Self-translation reports now summarize retained item counts separately from
+unmeasured CST, whole-module and native phases. Existing measurements supply
+the counters without an extra corpus pass or source translation.
+
+Self-translation report measurements reuse function definitions from identical
+Rust parser inputs within each row. Both comparisons and all source coverage
+checks remain; the bounded cache is cleared after every row.
+
+Share the existing self-translation UTF-16 selector and complete emitted prelude
+as generated Links data. Native self-translation retains that selection for
+checked programs such as numeric array slicing. Selected items requiring actual
+Text lowering remain carried with an explicit obligation.
+
+Translate JavaScript `charAt` through a complete shared source definition and
+Links callable template, preserving UTF-16 units, numeric index normalization,
+empty results, operand order and source-free archive replay in both checkers.
+Generate exact canonical integer decimal admission before binary64 projection,
+with independent BigInt and native integer parsing checks. Full native outcome
+reconstruction and string ordering translation remain separate requirements.
+
+Use one JavaScript lazy-child accessor across parser results and nodes, preserving chains and complete parse outcomes while reducing retained closures. Full generated-source resource fit is checked in CI.
+
+Add an opt-in linked definition model for closed binary64 and Boolean functions. Its checked primitive/type/effect guards permit Rust and JavaScript definitions with a closed structural correspondence to share a global concept identity, while keeping source language as inspectable provenance. Recursive calls retain actual declaration references. Existing formal models continue to retain their source-language premises; other operations and types remain unsupported by this profile. The declared value interpretation excludes host resource exhaustion and does not observe NaN payloads.
+
+Require the owned Rust source signature facet with direct primitive parameter and result types before accepting this interpretation. The model compares finite decimal literals by their exact IEEE binary64 bits, preserving original text, signed zero and source signature graphs. It interprets admitted functions as abstract typed values; body pointer representation, allocations, deallocations and their resource failures are outside its observations.
+
+Bit-pattern normalization applies only to the temporary comparison graph, so decimal rounding ties can share meaning while literal text stays unchanged. Qualified source-header emission and reimport and cross-ABI equivalence remain outside this model.
+
+Automatically translate complete owned-outcome integer range admission from
+JavaScript to Rust. Check both logical pointer widths and signed 64-bit bounds
+against 1,688 observations from the authenticated original BigInt source,
+preserving immediate binary64 predecessors, exact bits and original refusals.
+Keep decimal and ownership checks independent; native verification runs in CI.
+
+Keep JavaScript joined child chains lazy when a silent rule has multiple meaningful children, and construct action scratch nodes only for rules with actions. Preserve original tagging, outcomes, budgets and complete source requirements; full workload fit remains a CI check.
+
+An opt-in Rust source function signature model records actual header type owners,
+reference and Box layers, and lifetime positions as owned linked data. Both
+runtime adapters validate those facts against checked function parameters and
+results during source-free reload. Existing default archives remain unchanged.
+This captures source qualifiers; qualifier-preserving target ABI emission remains
+outside this model. Effect threading refuses captured header replacement until
+its signature transformation is proved.
+Source-free body value edits retain the captured facet. The shared numeric
+function interpretation accepts only direct primitive `f64` and `bool` header
+owners without wrappers or lifetime bindings.
+
+Translate mutually recursive JavaScript functions with source-owned generated
+helpers, preserving complete emitted blocks and lossless source provenance.
+Recognize safe deferred module bindings from concrete syntax and restore checked
+Boolean conversions through shared Links projection data.
+Scoped parser-owned array iteration can end before a later private append;
+live iteration growth and escaped aliases remain refused. Deferred class and
+constant function bindings retain independently checked sibling signatures.
+Boolean conversion survives complete source-free semantic replay.
+
+Preserve original parser and native model expectations when validating current
+grammar-context source provenance. Register the current program-string overlay
+providers with exact historical inverses and complete source certificates.
+Run complete source archive replays in at most two bounded JavaScript CI workers,
+retaining all three CST/text/binary checks before building the observation matrix.
+
+Add source-local ANTLR lexer declarations for ordered maximal-munch election,
+mode commands, retained channel trivia and explicit unresolved action obligations.
+Preserve original token expectations when raw grammar concepts share a canonical
+name. Native adapters use the complete self-translated JavaScript policies and
+the existing parser limits; native compilation and parity checks run in CI.
+
+Correct the former case-insensitive fixture's assumption that an unavailable
+`superClass = Base` behaves like the standard parser. The exact original fixture,
+rule shapes and documentation remain checked, with its original option bytes
+retained and execution explicitly refused. A case-insensitive-only copy keeps
+both original case acceptance/rejection checks. ANTLR 4.13.2
+[defines this option as the generated parser superclass in combined grammars](https://github.com/antlr/antlr4/blob/4.13.2/doc/options.md#superclass);
+equal lexical bodies do not establish the missing superclass's behavior.
+
+Reject numeric-string widths and non-Boolean signedness in owned Rust source
+signature types before JavaScript type-key comparison, including nested tuple
+and array positions. The existing generated integral Number policy retains valid
+width aliases. This closes a mismatch with native typed signature decoding.
+
+Source-free typed-program Links archives retain the same safe integral source
+offset when it is spelled as an integer, decimal or exponent. Shared generated
+rules reject fractional, unsafe, negative and signed-zero source offsets.
+The native boundary normalizes only named span offsets before typed decoding;
+floating-point program values and source-proof field order remain intact.
+
+Add paired source-text primitives for reading UTF-16 units, exact UTF-8 length
+and bytes, and unchanged slices at validated UTF-8 byte boundaries. Their shared
+numeric algorithms are translated automatically from JavaScript and use the
+linked Unicode scalar model, bounded to 4,294,967,295 UTF-16 units.
+
+JavaScript rejects nonprimitive strings and unpaired surrogates. Rust accepts
+`&str` and reports model-bound errors through `Result`. Invalid numeric offsets
+produce `null` or `None`; slicing additionally refuses endpoints inside a
+scalar's UTF-8 encoding.
+This component does not admit the complete standard-library number formatter
+or add Rust slice-syntax translation.
+
+JavaScript typed-program Links now recheck source-free strict equality and
+inequality over optional primitive values, preserving exact Boolean negation
+flags and left-to-right operand evaluation.
+
+Lower `charCodeAt` through the complete shared portable code-unit function and existing checked operations, preserving represented numeric defaults, UTF-16 surrogate halves and operand order without changing the historical runtime. General index coercions, escaped lone-surrogate frontend syntax, standalone Absence annotations and full emitted-Rust reimport remain separate obligations; native parity requires CI evidence.
+
+Include the generated relative UTF-16 character template in the published Rust
+crate so string `at` translation remains available after a clean installation.
+
+Preserve JavaScript `typeof` object tags for known record, tuple, Map and Set bindings, requiring a nonempty present-value tag for optional queries while retaining operand effects and exceptions. A raw array uses the ordered tuple element context only when its actual JavaScript expected type is `Option<Tuple>`; this does not establish immutability or broaden union admission, and native execution remains pending CI.
+
+Structured data can be converted automatically to inspectable Links Notation with ordered object entries, arrays and typed scalar links. The bootstrap-safe reader validates graph roles, exact finite numeric values and resource limits without initializing language parsers.
+
+Project-owned fixture envelopes now use inspectable Links Notation in both
+runtime test suites and fixture generators. Logical fixture identities, source
+programs, ordered values, assertions and historical provenance hashes are
+preserved. Separate links describe the whitespace and scalar spellings required
+to reproduce provenance bytes; observation digests identify physical LiNo files.
+
+Generated structural type helpers borrow their string and child-type inputs
+and share the checked array runtime while retaining the same rendered results.
+
+`SArrayItem` retains omitted `spread` fields separately from explicit `false`.
+Construct array items with `SArrayItem::new(value, spread)` in place of two-field
+struct literals, and use `..` in destructuring patterns. The `value` and Boolean
+`spread` fields remain public; explicit null and non-Boolean flags remain invalid.
+
+`SNode::Let` preserves omitted `type` fields, explicit null annotations, and
+concrete types separately. Its `ty` field is now
+`Option<SurfaceBindingTypeAnnotation>`: use `None` for omission,
+`Some(SurfaceBindingTypeAnnotation::null())` for null, and `Some(ty.into())`
+for a concrete type. Convert an existing `Option<Type>` with `.map(Into::into)`;
+borrow a present annotation's type with `.as_ref()`.
+
+Preserve raw JavaScript grouping and reference-selection metadata in native
+surface trees. Shared JavaScript rules select recursive structural type flags
+and checked allocation/read records; read results retain their explicit false
+reference field through serialization. Existing unsupported reference operations
+and target state models retain their refusals.
+
+Replace tracked upstream grammar sources and compiled parser assets with
+checksum-verified temporary downloads. Acquisition receipts use structured
+Links Notation and preserve upstream provenance and immutable artifact pins;
+native LiNo grammar snapshots, licenses, notices and local patches remain.
+
+Grammar authoring tools and independent oracle readers now authenticate pinned
+upstream assets from the ignored download cache. Offline JavaScript packages
+read their authenticated staged build artifacts; no install or pack hook is
+introduced. Project data loaders accept the corresponding structured Links
+Notation metadata while preserving source identities and hashes.
+
+Regenerate the actual network implementation hashes and line locations in the
+meta-theory source audit after bulk seeding optimization. Preserve the pinned
+upstream revision, all quoted definitions, assumptions and refusal controls.
+
+Split JavaScript translation evidence across six jobs while retaining every test,
+native check, artifact requirement and existing deadline. Require the complete
+current file union before accepting the logical suite.
+
+Repair historical translation checks with certified source views for scoped iteration, native emitter registration and raw receipt descriptors. Preserve every original receipt byte, distinct packaging identity and unknown-input refusal.
+
+Preserve assertion expression owners and quantified bindings through shared
+Links operand plans and complete rechecking. Repair source spans, qualified
+module paths, optional absence and fixture-data adapters without removing the
+original test inputs. Selected owned-local String models now refuse `as_str`
+until a separate borrow interpretation is available; the default value model
+keeps its existing projection. The generated refusal corpus preserves its six
+original cases and adds seven complete method-source cases.
+The crate allowlist also includes the shared cast and representation data used
+by these source and emission adapters.
+
+Keep every Rust evidence test and deadline while forwarding bounded redacted
+live output and per-sample scaling progress. Native execution and timeout
+resolution remain subject to CI observations.
+
+Authenticate the immutable generated translation-stage snapshot containing the
+invalid cooked-string escape diagnostic. The migration receipt and derived
+tooling contract now record this existing parse-only correction while retaining
+all original source, descriptor, stage-selection and program-order guards.
+
+Include the shared Rust type-namespace policy in the explicit crate package
+allowlist so published artifacts contain the data embedded by native adapters.
+
+Selected Rust type namespace archives now pass the shared whole-program checker
+using paths anchored to their actual declarations. Owned flags, source spans,
+empty import contexts and explicitly undefined fields are checked before
+projection can normalize them. Genuine optional absence remains inspectable
+as the `undefined` absence policy.
+
+### Fixed
+
+- Preserve executable TypeScript parameter patterns containing comments or a
+  quoted comment terminator when projecting their annotations into JavaScript.
+  Supplemental documentation escapes the terminator while original parameter
+  source text remains unchanged.
+
+### Added
+
+- Expose matching TypeScript typing projection entry points in JavaScript and
+  Rust. Supported annotations remain as JSDoc in the returned JavaScript source;
+  unsupported runtime constructs preserve their source obligation.
+
+Expose the existing checked typed-program binding identity reader from both package roots, as required by the source-free graph integration tests. Its implementations and validation remain unchanged.
+
+Fixed type bit widths in typed-program Links accept equivalent finite decimal and exponent Number spellings, including owned text proof binding types. The native decoder normalizes only this declared metadata role before reading integer fields; floating values, signed zero and unsupported widths retain their existing decisions. Native compilation and cross-runtime archive checks run in CI.
+
+Owned occurrence paths resolve integral Number spellings by their numeric position and actual array bounds. Negative zero names position zero while retaining its stored scalar; string fields remain distinct from numeric positions. The shared decision comes from the existing generated tuple-index rule, without changing other scalar values.
+
+Direct native programs also accept equivalent Number widths inside dynamic owned proof types. Validation uses a bounded comparison view and preserves the caller's original proof values and property order; malformed types and reordered owner facts still refuse.
+
+Accept explicit false reference and openness flags in typed-program Links
+archives when the native type serializer omits those same neutral defaults.
+Keep native grammar-selection diagnostic fields in JavaScript construction order.
+
+Source-free translation fixtures now cover algebraic choices, recursive trees and zero/successor datatypes in JavaScript and Rust. Shared link edits exercise constructor, datatype, field and shadowed binder identities, and reject malformed scope, type, arity, coverage and metadata changes. CI executes the Rust originals and translated programs independently.
+
+Reject named field relations on typed-program ordered lists and mappings before
+they are materialized. Record fields and root provenance retain their existing
+behavior. Both runtime adapters use the generated shared container-field policy.
+
+Typed program Links retain independent datatype and constructor declaration
+references through source-free serialization and reload. Constructor and type
+renames follow owned references; lexical pattern binders retain their scoped
+identities. Reload checks declaration order, constructor ownership and argument
+types, duplicate field aliases, conflicting semantic roles, and traversal bounds.
+The canonical relation label is `data type declaration reference`; the former
+`datatype declaration reference` spelling remains an explicitly admitted alias.
+
+Typed-program graph and algebraic fixtures now use inspectable LiNo data.
+Their generators and JavaScript and Rust tests read the same decoded fixtures,
+preserving source-free graphs, link edits, target snapshots and observations.
+
+JavaScript and Rust portable-core programs can be encoded as source-free typed
+links, serialized, edited and emitted in either target. The graph shares its
+schema and generated classifiers with JavaScript. Declaration and lexical binding
+identities survive reload; scalar, scope and structural edits are validated before
+the existing checker and emitters run. Unsupported Rust IR forms retain explicit
+adapter diagnostics instead of falling back to a saved source envelope.
+Repeated paths through shared graphs have a traversal budget, and the shared
+schema admits only supported machine integer widths and optional absence policies
+before the Rust checker or emitter reads edited types.
+Shared projection instructions also recheck native string, array, index, length,
+math, cast, abort and local print expressions through the existing portable
+checker. The instructions replace the codec's separate expression match and are
+exercised by the same source-free archives in both packages.
+Edited operation names and division rounding policies pass generated admission
+rules before emission. Operator-like strings inside user literals remain data.
+Constructor immutability is an inspectable boolean graph field. Shared archives
+verify mutable JavaScript defaults, explicit freezing and algebraic origin
+defaults; the Rust graph adapter explicitly refuses constructor programs until
+their data projection is supported.
+
+Both runtime packages now read the typed-program schema from shared,
+inspectable LiNo data. Existing reference aliases and projection decisions
+are preserved, and the automated generator copies the same schema to Rust.
+
+Self translation erases compile time TypeScript forms using native concrete
+syntax spans and linked rules shared with JavaScript. Generated shared decisions
+retain line endings, optional parameter boundaries and export ownership.
+Translated artifacts restore original type syntax through checked provenance;
+edited executable bodies invalidate restoration. Enums, namespaces, parameter
+properties and other runtime constructs retain explicit translation obligations.
+
+Support explicit type-only specifiers in mixed TypeScript imports through shared
+Links erasure rules. Preserve runtime bindings, empty-import evaluation, original
+source provenance and line boundaries. The Rust decision is generated from
+JavaScript; corrected native execution remains a CI verification boundary.
+
+Self-translation reports infer numeric field and index updates without reading a missing right operand for `++` or `--`. Unsupported reference mutation retains its explicit checked diagnostic and lossless carried source; native execution of these mutations remains an obligation.
+
+Preserve JavaScript primitive string lexical comparisons through shared UTF-16 Links rules and automatic native translation. Retain complete source-free archive rechecks and original integer-ordering source round trips. Regenerate the source-type validator with distinct bound names after actual Clippy diagnostics, and give cold native platform test jobs thirty minutes while retaining every test and compiler safety flag. Native execution remains a CI verification obligation.
+
+Native JavaScript emission now preserves the existing source Unit representation inside selected products: JavaScript-origin Unit remains undefined and Rust-origin Unit remains null. Both adapters use the same automatically translated emission rule.
+
+Retry the observed Windows native linker lookup timeout at most three times,
+retaining the original command and ten-second per-attempt bound. Both workflow
+owners still validate the first resolved absolute linker path and fail on other
+errors or exhausted retries. Retain diagnostics and complete preceding sources;
+native Windows execution remains a CI check.
+
+Persist downstream workload command transcripts as raw bytes while commands run,
+including spawn errors, so interrupted commands retain their available output.
+Preserve complete returned output, resource guards and workload coverage.
+
 ## [1.0.0] - 2026-10-08
 
 The native grammar importer compiles character-class intersection, difference

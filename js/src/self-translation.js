@@ -28,7 +28,6 @@ import { projectTypeScriptTyping } from './typescript-portable-typing.js';
 import { parseRust } from './translation/rust.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
 import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
-import { acceptSelfTranslationRelativeArrayCall } from './self-translation-relative-array-rules.js';
 import {readDeferredDeclarationBinding} from './translation/deferred-declaration-scope.js';
 import { readDeclarationDependencyComponents, acceptRecursiveDeclarationGroup,
   acceptRecursiveDeclarationPublication, acceptDeclarationModuleScope,
@@ -150,16 +149,6 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   if (family(from) === family(to) && (from === to || (keptFamily && !text.startsWith(HEADER)))) {
     return { translation: freeze(from, to, reconstructed, items.map(({ term, start, end }) => ({ term, start, end, status: 'kept', reason: null }))), signatures: [] };
   }
-  if (!signaturesOnly && from === 'JavaScript' && to === 'Rust' && set.size === 0 && !referenceSemantics
-      && moduleDirectory.length === 0 && Object.keys(imports).length === 0) {
-    const native = translateRelativeArrayProgram(text, items, representation);
-    if (native !== null) {
-      const tail = `\n\n${native}`;
-      const header = `${HEADER}source=${from} target=${to} sha256=${sha256(text)} bytes=${bytes.length}${sourceEnvelope(text, tail)}`;
-      const recorded = items.map(({ term, start, end, comment }) => ({ term, start, end, status: comment ? 'comment' : 'translated', reason: null }));
-      return { translation: freeze(from, to, header + tail, recorded), signatures: [] };
-    }
-  }
   const blocks = [];
   const preludes = [];
   const recorded = [];
@@ -256,37 +245,10 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
     !['', '\n'].includes(results.at(-1)?.group.after ?? text),
     results.slice(0, -1).some(({group}) => group.after !== breaks(group.after)))) {
     const tail = `\n${lines.slice(1).join('\n')}\n${body}`;
-    lines[0] += sourceEnvelope(text, tail);
+    const original = JSON.stringify(text).replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
+    lines[0] += ` envelope-sha256=${sha256(tail)} original=${original}`;
   }
   return { translation: freeze(from, to, `${lines.join('\n')}\n${body}`, recorded), signatures };
-}
-
-function sourceEnvelope(source, tail) {
-  const original = JSON.stringify(source).replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
-  return ` envelope-sha256=${sha256(tail)} original=${original}`;
-}
-
-// Check closed executable scripts together so JSDoc types and top-level
-// effects reach the same emitter as the ordinary whole-program translation.
-function translateRelativeArrayProgram(source, items, utf16Strings) {
-  if (!items.some(item => item.term === 'expression_statement') || items.some(item =>
-    item.term === 'import_statement' || item.term === 'export_statement' || isMarker(item))) return null;
-  try {
-    const { tokens } = tokenize(source, 'JavaScript');
-    const hasRelativeCall = tokens.some((member, index) => {
-      const receiverOperator = tokens[index - 1], callOperator = tokens[index + 1];
-      return member.kind === 'identifier' && receiverOperator?.kind === 'punct' && callOperator?.kind === 'punct'
-        && acceptSelfTranslationRelativeArrayCall(receiverOperator.value, member.value, callOperator.value);
-    });
-    if (!hasRelativeCall) return null;
-    const program = checkProgram(parseJavaScript(source));
-    if (!program.main) return null;
-    if (utf16Strings) program.utf16Strings = true;
-    return emitRust(program, { arrayConsumption: true }).text;
-  } catch (error) {
-    if (!(error instanceof TranslationError)) throw error;
-    return null;
-  }
 }
 
 /**

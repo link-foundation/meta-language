@@ -91,8 +91,8 @@ fn validate_type_records(
             let domain = value.get("domain").filter(|domain| !domain.is_null());
             let refusal = crate::translation::reference_identity_rules::read_reference_identity_comparison_error(
                 value["op"].as_str().unwrap_or_default(), left["kind"].as_str().unwrap_or_default(), right["kind"].as_str().unwrap_or_default(),
-                left["reference"] == true, right["reference"] == true, left == right, domain.is_some(),
-                domain.is_some_and(|domain| domain["reference"] == true), domain == Some(left),
+                [left["reference"] == true, right["reference"] == true, left == right],
+                [domain.is_some(), domain.is_some_and(|domain| domain["reference"] == true), domain == Some(left)],
             );
             if !refusal.is_empty() {
                 return Err(error(refusal));
@@ -253,7 +253,11 @@ pub(super) fn validate(program: &Program) -> Result<()> {
     if program.schema_version != 1 {
         return Err(error("the linked value is not a checked typed program"));
     }
-    if !program.imports.is_empty() || program.output_threaded || program.aborts_threaded {
+    if !program.imports.is_empty()
+        || !program.externals.is_empty()
+        || program.output_threaded
+        || program.aborts_threaded
+    {
         return Err(error(
             "the Rust typed links adapter does not yet recheck imported or threaded programs",
         ));
@@ -358,7 +362,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         items,
         main,
         imports: Vec::new(),
-        externals: program.externals.clone(),
+        externals: Vec::new(),
         source_pure_unit_calls: program.source_pure_unit_calls.clone(),
         source_runtime_shell: program.source_runtime_shell.clone(),
     };

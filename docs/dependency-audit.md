@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 257 | 256 | 1 | 0 |
+| Generators | 255 | 254 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 91 | 0 | 0 | 91 |
+| Published artifact contents | 92 | 0 | 0 | 92 |
 
 ## JavaScript engines
 
@@ -801,8 +801,6 @@ they are.
 | `js/scripts/generate-javascript-identifier-models.mjs` | `js/scripts/generate-javascript-identifier-models.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-reference-identity-rules.mjs` | `js/scripts/generate-reference-identity-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-collection-size-rules.mjs` | `js/scripts/generate-collection-size-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-self-translation-relative-array-rules.mjs` | `js/scripts/generate-self-translation-relative-array-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-automated-translation-pause-source-history.mjs` | `js/scripts/generate-automated-translation-pause-source-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
@@ -963,6 +961,7 @@ they are.
 | `src/data/array-relative-element-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/string-relative-character-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-identifier-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/unit/self_translation_recursive_declaration_groups/ownership_metadata.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 

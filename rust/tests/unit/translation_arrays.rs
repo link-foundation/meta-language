@@ -2,7 +2,6 @@
 //! Rocq list, read through an optional bounds-checked helper that retains
 //! JavaScript's observable absence outside an array.
 
-use super::issue_195_translation_pairs::versioned_fixture_tool;
 use meta_language::translation::javascript::parse_javascript;
 use meta_language::{TranslationSupport, translate_program};
 
@@ -196,7 +195,7 @@ fn source_iteration_retains_its_actual_iterable_wrapper_and_generated_read_proof
     }
     let program = parse_javascript(ARRAYS).expect("the original array program parses");
     let raw = serde_json::to_value(program).expect("raw source tree serialization");
-    assert_eq!(count(&raw, "forOfIterable", false), 2);
+    assert_eq!(count(&raw, "forOfIterable", false), 1);
     assert_eq!(count(&raw, "index", true), 1);
 }
 
@@ -430,7 +429,7 @@ fn retained_modern_javascript_array_contract_executes_every_original_input() {
             rust_code.expect("every admitted original target set includes Rust"),
         )
         .unwrap();
-        let mut compiler = versioned_fixture_tool("rustc");
+        let mut compiler = Command::new("rustc");
         compiler.arg("--edition=2024");
         #[cfg(windows)]
         if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
@@ -513,7 +512,7 @@ fn assert_modern_array_identity_translation(source: &str, previous_message: &str
         "uncovered npm version; [1.0.0,1.0.1) required"
     );
     for (tool, rust) in [("node", false), ("rustc", true)] {
-        let actual = run(versioned_fixture_tool(tool).arg("--version"));
+        let actual = run(Command::new(tool).arg("--version"));
         assert!(actual.ok, "{}", actual.stderr);
         let version = if rust {
             actual.stdout.split_whitespace().nth(1).unwrap()
@@ -552,6 +551,10 @@ fn assert_modern_array_identity_translation(source: &str, previous_message: &str
     let original = run(Command::new("node").args(["--input-type=module", "-e", source]));
     assert!(original.ok, "{}", original.stderr);
     assert_eq!(original.stdout, "true\n");
+    #[allow(
+        clippy::literal_string_with_formatting_args,
+        reason = "The JavaScript source contains literal object syntax."
+    )]
     let value_script = r"
 import {parseJavaScript} from './js/src/translation/javascript.js';
 console.log(JSON.stringify(parseJavaScript(process.argv[1],{referenceSemantics:false})));

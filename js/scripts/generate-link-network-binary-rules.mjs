@@ -9,7 +9,8 @@ import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { DecoratorSet } from '../src/decorators.js';
 import { readProjectData, writeProjectData } from './project-data.mjs';
-import { applyReviewedBinaryFramingStyles, restoreBinaryNetworkFramingGeneratorSource } from './binary-network-compiler-clone-styles.mjs';
+import { applyReviewedNativeSourceStyle } from './reviewed-native-source-styles.mjs';
+import { restoreAutomatedTranslationPauseSource } from './automated-translation-pause-source-history.mjs';
 
 const candidateMode = process.argv.includes('--metadata-buffer-candidate');
 const originalStyles = new URL('../../parity/self-translation/link-network-binary-rules-decorators.lino', import.meta.url);
@@ -411,15 +412,14 @@ if (candidateMode) {
   candidateReceipt = {...result.receipt, baselineSourceSha256: digest(previousSource), baselineStylesSha256: digest(readFileSync(originalStyles)),
     candidateSourceSha256: digest(readFileSync(source)), checkedDeclarations: emitted.definitions.length,
     generationPolicy: candidatePolicy, generationPolicySha256: digest(readFileSync(candidatePolicyFile)), stringPreludeSha256: digest(stringPrelude),
-    generatorSha256: digest(restoreBinaryNetworkFramingGeneratorSource(readFileSync(new URL(import.meta.url), 'utf8'))),
+    generatorSha256: digest(restoreAutomatedTranslationPauseSource(readFileSync(new URL(import.meta.url), 'utf8'), 'js/scripts/generate-link-network-binary-rules.mjs')),
     candidateStyleBuilderSha256: digest(readFileSync(new URL('./binary-metadata-candidate-styles.mjs', import.meta.url))),
     candidateStylesSha256: digest(expected),
     historicalReplacementContexts: historical.decorators.filter(row => row.when.some(([field, value]) => field === 'scope' && value === 'formatted-item'))
       .reduce((count, row) => count + row.actions.filter(action => action.op === 'replace').length, 0)};
 }
 const decorators = DecoratorSet.fromLino(readFileSync(styles, 'utf8'));
-const initialStyles = styleBinaryItems(items, decorators);
-const styled = candidateMode ? initialStyles : applyReviewedBinaryFramingStyles(initialStyles, format);
+const styled = styleBinaryItems(items, decorators);
 const groups = [];
 let current = [], lines = 0;
 for (const item of styled) {
@@ -450,7 +450,9 @@ if (candidateMode) {
   } else writeProjectData(receiptFile, candidateReceipt);
 }
 mkdirSync(destination, { recursive: true });
-for (const [name, expected] of outputs) {
+const family = destination.pathname.split('/').at(-2);
+for (const [name, generated] of outputs) {
+  const expected = candidateMode ? generated : applyReviewedNativeSourceStyle('rust/src/' + family + '/' + name, generated);
   if (expected.split('\n').length > 900) throw new Error('a generated module exceeds the bounded file target');
   const file = new URL(name, destination);
   if (process.argv.includes('--check')) { if (readFileSync(file, 'utf8') !== expected) throw new Error('binary network rules are stale: ' + name); }

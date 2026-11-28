@@ -1,7 +1,7 @@
 //! Expression precedence, immutable reads, primary values and qualified paths.
 
 mod ascii_text_predicates;
-mod cast;
+mod casts;
 mod control;
 mod read_only_queries;
 
@@ -9,10 +9,10 @@ use super::array_rules::{accept_rust_source_array_element, accept_rust_source_ar
 use super::indirection_rules::accept_rust_source_box_owner;
 use super::{
     Alias, BOOL, BinaryOp, FLOAT, Flavor, Options, Result, RustParser, SArrayItem, SExpr, SNode,
-    SPattern, SPatternNode, SRow, STRING, SourceOrigin, Span, Token, TokenKind, TranslationError,
-    Type, UnaryOp, additive_op, binary, comparison_op, describe, format, is_if_or_match, joined,
-    method_call, multiplicative_op, operator, pattern_value, rust_fixed_type, rust_macro_message,
-    span, type_error, unsupported,
+    SPattern, SPatternNode, SRow, STRING, SourceOrigin, Span, Token, TokenKind, Type, UnaryOp,
+    additive_op, binary, comparison_op, describe, format, is_if_or_match, method_call,
+    multiplicative_op, operator, pattern_value, rust_fixed_type, rust_macro_message, span,
+    type_error, unsupported,
 };
 use crate::translation::rust_character_rules::read_rust_character_expression_type;
 use crate::translation::source_diagnostic_attributes::token_kind;

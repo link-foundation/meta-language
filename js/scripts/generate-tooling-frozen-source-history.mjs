@@ -5,7 +5,6 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
-import {restoreIntegrationSource} from './current-ci-repair-source-history.mjs';
 import {TOOLING_FROZEN_SOURCE_REVISION,TOOLING_FROZEN_HOSTS,CURRENT_CONVERSATION_SOURCE,CRITICAL_DELIVERY_SOURCE_HISTORY,
   toolingFrozenSourcePin,replayToolingFrozenHostChanges,readCriticalDeliveryFrozenSource,readCriticalDeliveryAppend,
   verifyToolingFrozenSourceHistory} from './tooling-frozen-source-history.mjs';
@@ -33,8 +32,7 @@ export function generateToolingFrozenSourceHistory({check=false,apply=false}={})
   const outputs=verifyToolingFrozenSourceHistory(packet);
   for(const row of outputs){
     const actual=readFileSync(new URL(row.path,root),'utf8');
-    if(check)assert.equal(restoreIntegrationSource(actual,row.path),row.current);
-    else assert.ok(actual===row.previous||actual===row.current,'unknown complete host source is never replaced');
+    if(check)assert.equal(actual,row.current);else assert.ok(actual===row.previous||actual===row.current,'unknown complete host source is never replaced');
   }
   if(check)checkProjectData(new URL(output,root),packet);else writeProjectData(new URL(output,root),packet);
   const helperPath=new URL(helper,root),current=readFileSync(helperPath,'utf8'),pattern=/const policySha256='(?:PENDING|[a-f0-9]{64})';/u;

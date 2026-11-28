@@ -10,7 +10,6 @@ import {readStringOrderRefusal} from './string-order-rules.js';
 
 import { typeError, unsupported } from './diagnostics.js';
 import { renderCollectionConstruction, renderCollectionConstructionType } from './collection-construction-rules.js';
-import { renderCollectionSize } from './collection-size-rules.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
@@ -516,7 +515,7 @@ class LeanEmitter {
         return renderCollectionConstruction('Lean', e.k, keyType.kind, values, this.type(e.type), '', '');
       }
       case 'collectionSize':
-        return renderCollectionSize('Lean', this.expr(e.object, depth));
+        return `(Float.ofNat ${this.expr(e.object, depth)}.size)`;
       case 'collectionRead': {
         const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
         const key = e.object.type.kind === 'map' ? 'ml_value.1' : 'ml_value';

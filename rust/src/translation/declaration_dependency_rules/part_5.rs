@@ -68,18 +68,9 @@ pub fn ml_read_declaration_deferred_binding_loop61(
                                     }
                                 }
                             } else if (part == "statement_block") && (field == "body") {
-                                {
-                                    let method_body_2 = method_body + 1f64;
-                                    {
-                                        let ml_index52_4 =
-                                            ml_index52.add(&self::ml::Big::from_i128(1));
-                                        {
-                                            (method_body, ml_index52) =
-                                                (method_body_2, ml_index52_4);
-                                            continue;
-                                        }
-                                    }
-                                }
+                                method_body += 1f64;
+                                ml_index52 = ml_index52.add(&self::ml::Big::from_i128(1));
+                                continue;
                             }
                             self::MlReadDeclarationDeferredBindingLoop61Result::MlReadDeclarationDeferredBindingLoop61Return(Vec::<f64>::new())
                         }

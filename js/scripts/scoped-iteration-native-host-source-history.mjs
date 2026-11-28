@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {serializeProjectData} from './project-data.mjs';
+import {restoreAutomatedTranslationPauseSource} from './automated-translation-pause-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 export const SCOPED_ITERATION_NATIVE_SOURCE=Object.freeze({
   file:'rust/src/translation/javascript/declarations.rs',
@@ -78,18 +79,6 @@ export function readScopedIterationNativeHostSourceHistory(){
   return structuredClone(cached);
 }
 
-/** Reconstruct the archived declaration host after the reviewed Body borrow. */
-export function restoreScopedIterationDeclarationSource(source){
-  if (pinScopedIterationNativeSource(source).sha256 !== 'c05b669c3c8ffa857fc3f8f3b8ccfd7674679fb7ee06b5ca891194c417e2a8af') return source;
-  const previous = source.replace('                &Body::RecordParameters(Box::new(records)),', '                Body::RecordParameters(Box::new(records)),')
-    .replaceAll('&tokens, &Body::', '&tokens, Body::')
-    .replace('        body: &Body,', '        body: Body,')
-    .replace('        let records = match body {', '        let records = match &body {')
-    .replace('            match body {', '            match &body {');
-  assert.deepEqual(pinScopedIterationNativeSource(previous), SCOPED_ITERATION_NATIVE_SOURCE.current);
-  return previous;
-}
-
 export function restoreScopedIterationNativeHostSource(source,file,reader){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');assert.equal(typeof reader,'string');
   if(file===SCOPED_ITERATION_NATIVE_LOOP_SOURCE.file&&reader==='mutable array binding host'){
@@ -99,7 +88,7 @@ export function restoreScopedIterationNativeHostSource(source,file,reader){
     return row.previous.source;
   }
   if(file!==SCOPED_ITERATION_NATIVE_SOURCE.file||reader!=='required field native host')return source;
-  source=restoreScopedIterationDeclarationSource(source);
+  source=restoreAutomatedTranslationPauseSource(source,file);
   const actual=pinScopedIterationNativeSource(source),expected=SCOPED_ITERATION_NATIVE_SOURCE.current;
   if(actual.bytes!==expected.bytes||actual.sha256!==expected.sha256)return source;
   const packet=readScopedIterationNativeHostSourceHistory();assert.equal(source,packet.current.source);

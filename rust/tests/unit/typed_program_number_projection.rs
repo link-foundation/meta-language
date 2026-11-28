@@ -1,5 +1,4 @@
 //! Actual JavaScript-authored optional arithmetic archives use the same checker.
-use super::issue_195_translation_pairs::versioned_fixture_tool;
 use meta_language::translation::ir::{Decl, Expr, LitValue, Node, Program};
 use meta_language::translation::types::Type;
 use meta_language::{
@@ -305,8 +304,7 @@ fn raw_wrapper_ownership_extensions_are_refused_after_source_free_reload() {
 // CI-only native consumer of the same normally authored Boolean-conversion inputs.
 fn truthy_projection_versions() {
     for (tool, rust) in [("rustc", true), ("node", false)] {
-        let result =
-            super::issue_195_translation_pairs::run(versioned_fixture_tool(tool).arg("--version"));
+        let result = super::issue_195_translation_pairs::run(Command::new(tool).arg("--version"));
         assert!(result.ok, "{}", result.stderr);
         let version = if rust {
             result.stdout.split_whitespace().nth(1).unwrap()
@@ -405,7 +403,7 @@ fn source_boolean_conversions_recheck_exactly_through_both_archives_and_execute_
             .0
             .join(format!("actual{}", std::env::consts::EXE_SUFFIX));
         std::fs::write(&file, rust_source.unwrap()).unwrap();
-        let mut command = versioned_fixture_tool("rustc");
+        let mut command = Command::new("rustc");
         command.args(["--edition", "2024"]);
         #[cfg(windows)]
         if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
@@ -578,7 +576,7 @@ fn original_lone_literal_refusal_and_complete_string_parameter_keep_all_original
         .0
         .join(format!("actual{}", std::env::consts::EXE_SUFFIX));
     std::fs::write(&file, complete_rust.unwrap()).unwrap();
-    let mut command = versioned_fixture_tool("rustc");
+    let mut command = Command::new("rustc");
     command.args(["--edition", "2024"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {

@@ -1,5 +1,5 @@
 //! CI-only original/translated execution, exact sources and both Links codecs.
-use super::issue_195_translation_pairs::{TemporaryDirectory, run, versioned_fixture_tool};
+use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 use meta_language::translation::check::check_program;
 use meta_language::translation::javascript::parse_javascript;
 use meta_language::translation::rust::parse_rust;
@@ -34,7 +34,7 @@ fn assert_versions() {
             policy["assertionVersions"]["Node"],
             ">=22.15.0 <23.0.0 || >=24.0.0 <25.0.0"
         );
-        let rust = run(versioned_fixture_tool("rustc").arg("--version"));
+        let rust = run(Command::new("rustc").arg("--version"));
         assert!(rust.ok, "{}", rust.stderr);
         let version = rust.stdout.split_whitespace().nth(1).unwrap();
         let mut parts = version.split('.');
@@ -88,7 +88,7 @@ fn observe(source: &str, expected: &str, native: bool) {
         let binary = directory
             .0
             .join(format!("program{}", std::env::consts::EXE_SUFFIX));
-        let mut command = versioned_fixture_tool("rustc");
+        let mut command = Command::new("rustc");
         command.args(["--edition", "2024"]);
         #[cfg(windows)]
         if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
@@ -104,20 +104,10 @@ fn observe(source: &str, expected: &str, native: bool) {
     assert_eq!(result.stdout, expected);
 }
 
-fn observe_rust_pattern_with_primitive_parameter(source: &str, expected: &str) {
-    // Rust 1.99 reports E0282 for the unannotated Pattern callback these
-    // translation fixtures recognize. Keep its exact spelling for translation
-    // and give the independent Rust driver the primitive, even in a shadowing scope.
-    let callback = ".starts_with(|c|";
-    assert_eq!(source.matches(callback).count(), 1);
-    let driver = source.replace(callback, ".starts_with(|c: ::core::primitive::char|");
-    observe(&driver, expected, true);
-}
-
 fn inputs() -> Vec<String> {
     let mut values = [
-        "", "_", "a", "Z", "a0_", "0a", "-a", "a-b", "a\n", "a\r\n", "π", "aπ", "é", "K", "İ",
-        "a\u{301}", "😀", "a😀", "\0", "\u{7f}",
+        "", "_", "a", "Z", "a0_", "0a", "-a", "a-b", "a\n", "a\r\n", "π", "aπ", "é", "\u{212A}",
+        "İ", "a\u{301}", "😀", "a😀", "\0", "\u{7f}",
     ]
     .map(str::to_owned)
     .to_vec();
@@ -148,8 +138,8 @@ fn expected(value: &str, terminal: bool) -> bool {
 
 #[test]
 fn actual_generated_ascii_methods_match_complete_independent_byte_ranges_and_unicode_boundaries() {
-    assert_versions();
     use generated_decisions::{accept_ascii_character_method, ml_string::Text};
+    assert_versions();
     let methods = [
         "is_ascii_alphabetic",
         "is_ascii_alphanumeric",
@@ -181,8 +171,8 @@ fn actual_generated_ascii_methods_match_complete_independent_byte_ranges_and_uni
         8490.0,
         55296.0,
         56320.0,
-        128512.0,
-        1114111.0,
+        128_512.0,
+        1_114_111.0,
     ] {
         for method in methods {
             assert!(!accept_ascii_character_method(
@@ -325,6 +315,10 @@ fn both_actual_whole_helpers_preserve_sources_cst_native_execution_and_bidirecti
 #[test]
 fn pure_queries_keep_one_receiver_evaluation_hygiene_vacuity_and_actual_unicode_behavior() {
     assert_versions();
+    #[allow(
+        clippy::literal_string_with_formatting_args,
+        reason = "The fixture passes literal Rust source to the frontend."
+    )]
     let mut source = "fn provider(value:&str)->&str{value}
 fn first(value:&str)->bool{provider(value).starts_with(|c|c.is_ascii_digit())}
 fn all(value:&str)->bool{provider(value).chars().all(|c|c.is_ascii_digit())}
@@ -341,7 +335,7 @@ fn main(){".to_owned();
         "println!(\"{}\",selected(\"00\",true));println!(\"{}\",selected(\"00\",false));}",
     );
     let expected = "false\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\nfalse\nfalse\nfalse\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\ntrue\nfalse\ntrue\nfalse\n";
-    observe_rust_pattern_with_primitive_parameter(&source, expected);
+    observe(&source, expected, true);
     let packet = create_typed_program_links(&source, "Rust").unwrap();
     for network in archives(&packet.network) {
         let javascript = emit_typed_program_links(&network, packet.root, "JavaScript")
@@ -425,7 +419,7 @@ fn actual_wrong_owners_aliases_annotations_effects_and_existing_const_boundaries
         let source = format!(
             "{prefix}fn selected(value:&str)->bool{{value.starts_with(|c|c.is_ascii_digit())}}fn main(){{println!(\"{{}}\",selected(\"0\"));println!(\"{{}}\",selected(\"π\"));}}"
         );
-        observe_rust_pattern_with_primitive_parameter(&source, "true\nfalse\n");
+        observe(&source, "true\nfalse\n", true);
         let packet = create_typed_program_links(&source, "Rust").unwrap();
         observe(
             &emit_typed_program_links(&packet.network, packet.root, "JavaScript")
@@ -479,12 +473,7 @@ fn actual_javascript_string_spreads_retain_code_points_and_lone_surrogates_with_
     ];
     let mut harness = "\nfn ml_ascii_point_observations(){".to_owned();
     for (units, expected) in cases {
-        let expected = expected
-            .iter()
-            .map(|point| format!("vec!{point:?}"))
-            .collect::<Vec<_>>()
-            .join(", ");
-        write!(harness, "let actual=points(crate::ml_string::Text::from_units(vec!{units:?})).into_iter().map(|point|point.0).collect::<Vec<_>>();let expected:Vec<Vec<u16>>=vec![{expected}];assert_eq!(actual,expected);").unwrap();
+        write!(harness, "let actual=points(crate::ml_string::Text::from_units(vec!{units:?})).into_iter().map(|point|point.0).collect::<Vec<_>>();let expected:Vec<Vec<u16>>=vec!{expected:?};assert_eq!(actual,expected);").unwrap();
     }
     harness.push_str("println!(\"true\");}\n");
     for network in archives(&packet.network) {

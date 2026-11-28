@@ -44,10 +44,10 @@ async function retentionControl() {
 test('automatic native retention preserves every original runner command selection result and seal byte',()=>{
   const history=generateNativeNumberPublicationRunner({check:true}),original=history.sources[0];
   verifyGitArtifactCertificate(original.certificate,Buffer.from(original.sourceText),{revision:original.commit,path:original.file});
-  const source=readFileSync(new URL(original.file,root),'utf8');
-  let current=restoreIntegrationSource(source,original.file);assert.deepEqual(pin(current),original.current);
+  let current=readFileSync(new URL(original.file,root),'utf8');assert.deepEqual(pin(current),original.current);
   for(const action of [...original.actions].reverse()){assert.equal(current.split(action.to).length,2);current=current.replace(action.to,action.from);}
   assert.equal(current,original.sourceText);assert.deepEqual(pin(current),{bytes:original.bytes,sha256:original.sha256});
+  const source=readFileSync(new URL(original.file,root),'utf8');
   assert.ok(source.includes('verifyHarnessExecution(receipt);\n  retainNativeNumberPublication(current.directory, name, receipt);\n  return receipt.exitCode;'));
   assert.ok(source.includes("readNativePublicationText(prefix + '.lino')"));
   const directory=mkdtempSync(path.join(tmpdir(),'meta-language-retention-cli-'));
@@ -96,5 +96,3 @@ test('missing changed malformed oversized and detached retained native inputs re
     }finally{rmSync(control.directory,{recursive:true,force:true});}
   }
 });
-
-import {restoreIntegrationSource} from '../scripts/current-ci-repair-source-history.mjs';

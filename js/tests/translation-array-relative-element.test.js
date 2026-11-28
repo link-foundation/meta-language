@@ -5,11 +5,9 @@ import {runInNewContext} from 'node:vm';
 import test from 'node:test';
 import {readArrayRelativeElement} from '../src/translation/array-relative-element-rules.js';
 import {generateArrayRelativeElementTemplate} from '../scripts/generate-array-relative-element-template.mjs';
-import {generateSelfTranslationRelativeArrayRules} from '../scripts/generate-self-translation-relative-array-rules.mjs';
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {checkProgram} from '../src/translation/check.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
-import {emitRust} from '../src/translation/emit-rust.js';
 import {selfTranslate} from '../src/self-translation.js';
 import {createTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {recheckLinkedTypedProgram} from '../src/typed-program-checked-projection.js';
@@ -83,24 +81,5 @@ test('independent complete array programs preserve nullable elements and ordered
       const lines=[];runInNewContext(source,{console:{log:(...values)=>lines.push(format(...values))}});
       assert.equal(lines.join('\n')+'\n',row.expectedStdout,row.id);
     }
-  }
-});
-
-test('complete relative array scripts retain every effect and restore their exact source',()=>{
-  generateSelfTranslationRelativeArrayRules({check:true});
-  const fixture=readProjectData(new URL('../../parity/fixtures/array-relative-element-observations.lino',import.meta.url));
-  assert.equal(fixture.programs.length,2);
-  for(const {id,source} of fixture.programs){
-    const translation=selfTranslate(source,'JavaScript','Rust');
-    assert.equal(translation.items.filter(item=>item.status==='carried').length,0,id);
-    const program=checkProgram(parseJavaScript(source));
-    assert.equal(translation.code.slice(translation.code.indexOf('\n\n')+2),emitRust(program,{arrayConsumption:true}).text,id);
-    assert.equal(selfTranslate(translation.code,'Rust','JavaScript').code,source,id);
-    assert.notEqual(selfTranslate(translation.code+'\n','Rust','JavaScript').code,source,id);
-  }
-  for(const source of ["console.log('.at(0)');", "console.log([1].at('1'));", 'export const first = [1].at(0); console.log(first);']){
-    const translation=selfTranslate(source,'JavaScript','Rust');
-    assert.ok(translation.items.some(item=>item.status==='carried'),source);
-    assert.equal(selfTranslate(translation.code,'Rust','JavaScript').code,source);
   }
 });

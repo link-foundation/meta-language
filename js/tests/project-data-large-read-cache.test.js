@@ -6,20 +6,14 @@ import test from 'node:test';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 
-test('repeated large Links reads retain exact independent values and fresh owners while checking all current bytes',context=>{
+test('repeated large Links reads retain exact independent values and fresh owners while checking all current bytes',()=>{
   const source=readFileSync(new URL('../../parity/naming/canonical-concepts.lino',import.meta.url),'utf8');
   const expected=readBootstrapStructuredDataLino(source);
   const directory=mkdtempSync(join(tmpdir(),'meta-language-large-data-control-'));
   const file=join(directory,'register.lino');
   try{
     writeFileSync(file,source);
-    const clone=context.mock.method(globalThis,'structuredClone');
-    const first=readProjectData(file);
-    assert.equal(clone.mock.callCount(),1,'the complete current register fits the private snapshot');
-    const second=readProjectData(file);
-    assert.equal(clone.mock.callCount(),2);
-    assert.equal(clone.mock.calls[0].arguments[0],clone.mock.calls[1].arguments[0],
-      'both reads reuse the same fully decoded snapshot');
+    const first=readProjectData(file),second=readProjectData(file);
     assert.deepEqual(first,expected);assert.deepEqual(second,expected);
     assert.notEqual(first,second);assert.notEqual(first.concepts,second.concepts);
     first.concepts[0].definition='caller mutation';

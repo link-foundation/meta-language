@@ -58,12 +58,12 @@ pub struct TypedProgramLinks {
     /// The schema root.
     pub root: LinkId,
 }
-/// Bounds on reference discovery and structural traversal.
+/// Bounds on structural traversal; semantic references do not recurse.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct TypedProgramLinksLimits {
-    /// Maximum nodes visited per bounded reference or structural pass.
+    /// Maximum structurally owned values.
     pub node_limit: usize,
-    /// Maximum structural depth while reloading a graph.
+    /// Maximum structural depth.
     pub depth_limit: usize,
 }
 impl Default for TypedProgramLinksLimits {
@@ -183,19 +183,8 @@ pub fn encode_typed_program_links_with_provenance(
     program: &Program,
     provenance: Option<&Value>,
 ) -> Result<TypedProgramLinks> {
-    encode_typed_program_links_with_limits(program, provenance, TypedProgramLinksLimits::default())
-}
-/// Encode checked IR with an explicit reference-discovery node budget.
-///
-/// # Errors
-/// As [`encode_typed_program_links`], including a resource diagnostic.
-pub fn encode_typed_program_links_with_limits(
-    program: &Program,
-    provenance: Option<&Value>,
-    limits: TypedProgramLinksLimits,
-) -> Result<TypedProgramLinks> {
     checked::validate(program)?;
-    codec::encode(program, provenance, limits.node_limit)
+    codec::encode(program, provenance)
 }
 /// Decode and recheck a graph with the default structural bounds.
 ///
@@ -233,17 +222,6 @@ pub fn read_typed_program_binding_identities(
 /// # Errors
 /// Propagates frontend/checker and supported-adapter diagnostics.
 pub fn create_typed_program_links(source: &str, language: &str) -> Result<TypedProgramLinks> {
-    create_typed_program_links_with_limits(source, language, TypedProgramLinksLimits::default())
-}
-/// Import JavaScript or Rust with an explicit reference-discovery node budget.
-///
-/// # Errors
-/// As [`create_typed_program_links`], including a resource diagnostic.
-pub fn create_typed_program_links_with_limits(
-    source: &str,
-    language: &str,
-    limits: TypedProgramLinksLimits,
-) -> Result<TypedProgramLinks> {
     let surface = match language.to_ascii_lowercase().as_str() {
         "javascript" | "js" | "mjs" => parse_javascript(source),
         "rust" | "rs" => parse_rust(source),
@@ -254,10 +232,8 @@ pub fn create_typed_program_links_with_limits(
         }
     }
     .map_err(|failure| error(failure.to_string()))?;
-    encode_typed_program_links_with_limits(
+    encode_typed_program_links(
         &check_program(&surface).map_err(|failure| error(failure.to_string()))?,
-        None,
-        limits,
     )
 }
 /// Import Rust with an explicit versioned array result model and provenance.
@@ -748,26 +724,6 @@ pub fn emit_typed_program_links_with_options(
     target: &str,
     options: &TypedProgramLinksEmissionOptions,
 ) -> Result<TypedProgramLinksEmission> {
-    emit_typed_program_links_with_limits(
-        network,
-        root,
-        target,
-        options,
-        TypedProgramLinksLimits::default(),
-    )
-}
-
-/// Emit with an explicit graph reload budget and target-interface options.
-///
-/// # Errors
-/// As [`emit_typed_program_links_with_options`], including a resource diagnostic.
-pub fn emit_typed_program_links_with_limits(
-    network: &LinkNetwork,
-    root: LinkId,
-    target: &str,
-    options: &TypedProgramLinksEmissionOptions,
-    limits: TypedProgramLinksLimits,
-) -> Result<TypedProgramLinksEmission> {
     let source_header_model = options.rust_source_header_emission_model.as_deref();
     let rust_target = matches!(target.to_ascii_lowercase().as_str(), "rust" | "rs");
     if rust_target
@@ -796,9 +752,9 @@ pub fn emit_typed_program_links_with_limits(
             crate::translation::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(model)
         })
     {
-        borrowed_call_diagnostics::decode(network, root, model, limits)
+        borrowed_call_diagnostics::decode(network, root, model)
     } else {
-        decode_typed_program_links_with_limits(network, root, limits).map_err(|failure| (failure, false))
+        decode_typed_program_links(network, root).map_err(|failure| (failure, false))
     };
     let program = decoded.map_err(|(failure, refined)| {
         if !refined

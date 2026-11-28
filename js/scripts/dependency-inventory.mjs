@@ -387,9 +387,8 @@ function collectWorkflows(root, items) {
     }
     for (const match of text.matchAll(/--default-toolchain leanprover\/lean4:(\S+)/gu)) addItem(items, leanItem(file, match[1]));
     collectFloatingTools(items, file, text);
-    const runners = [...text.matchAll(/\b((?:ubuntu|macos|windows)-(?:latest|\d[\d.]*))\b/gu)]
-      .map(([, runner]) => runner);
-    if (/^ *run: node js\/scripts\/rust-test-shards\.mjs --test-matrix *$/mu.test(text)) {
+    const runners = [...text.matchAll(/\b((?:ubuntu|macos|windows)-(?:latest|\d[\d.]*))\b/gu)].map(([, runner]) => runner);
+    if (/^ *run: node js\/scripts\/rust-test-shards\.mjs --workflow-matrix (?:test|consumer) *$/mu.test(text)) {
       runners.push(...readJson(root, 'parity/rust-test-physical-shards.lino').platforms);
     }
     for (const runner of runners) {

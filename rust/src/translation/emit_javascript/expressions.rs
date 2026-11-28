@@ -299,8 +299,7 @@ impl JavaScriptEmitter<'_> {
             | Node::Length { .. }
             | Node::OptionalIndex { .. }
             | Node::StringPoints { .. }
-            | Node::CollectionItems { .. }
-            | Node::CollectionSize { .. } => self.array_expr(e),
+            | Node::CollectionItems { .. } => self.array_expr(e),
             Node::Math { .. } => self.math(e),
         }
     }

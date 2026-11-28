@@ -596,23 +596,20 @@ pub fn ml_transcode_link_network_binary_loop12(
                         {
                             let output_4 = if binary {
                                 {
-                                    let output_2 = output.concat(
-                                        &super::render_link_network_binary_field(length, binary),
-                                    );
-                                    output_2
+                                    output.concat(&super::render_link_network_binary_field(
+                                        length, binary,
+                                    ))
                                 }
                             } else {
                                 {
                                     let index = 0f64;
                                     {
-                                        let output_3 =
-                                            super::ml_transcode_link_network_binary_loop15(
-                                                binary,
-                                                output.clone(),
-                                                length,
-                                                index,
-                                            );
-                                        output_3
+                                        super::ml_transcode_link_network_binary_loop15(
+                                            binary,
+                                            output.clone(),
+                                            length,
+                                            index,
+                                        )
                                     }
                                 }
                             };

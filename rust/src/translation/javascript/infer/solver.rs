@@ -1,10 +1,9 @@
 //! Existing whole-program constraint scheduling, mechanically relocated.
 
 use super::{
-    BOOL, Env, FunctionResult, Inference, ROOT, RecordTerm, Result, SEffect, SFn, SProgram,
-    Signature, Term, Type,
+    BOOL, Env, FunctionResult, Inference, ROOT, Result, SEffect, SFn, SProgram, Signature, Term,
+    Type,
 };
-use std::{cell::RefCell, rc::Rc};
 
 type InferredSignature = (Vec<Type>, Type, Option<Type>);
 
@@ -176,21 +175,6 @@ impl Inference {
                 let (object, place) = (length.object.clone(), length.place);
                 let array = Term::Array(Box::new(self.fresh(false)));
                 self.unify(&object, &array, place)?;
-                progress = true;
-            }
-            // An unresolved non-length field starts an open record at quiescence.
-            if !progress
-                && let Some(field) = self
-                    .fields
-                    .iter()
-                    .find(|constraint| matches!(self.resolve(&constraint.object), Term::Var(_)))
-            {
-                let (object, place) = (field.object.clone(), field.place);
-                let record = Term::Record(Rc::new(RefCell::new(RecordTerm {
-                    fields: vec![(field.field.clone(), field.result.clone())],
-                    open: true,
-                })));
-                self.unify(&object, &record, place)?;
                 progress = true;
             }
             if !progress && !self.coalesces.is_empty() {

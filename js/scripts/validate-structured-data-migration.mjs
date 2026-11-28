@@ -166,8 +166,7 @@ export function normalizeMigrationProviderReceipts(historical, current, receipts
   const normalized = structuredClone(current);
   const seen = new Set();
   for (const { language, provider } of receipts) {
-    if (typeof language !== 'string' || !language || typeof provider !== 'string'
-      || !(provider.startsWith('native-') || provider === 'natural-language' || provider === 'plain-text')) {
+    if (typeof language !== 'string' || !language || typeof provider !== 'string' || !provider.startsWith('native-')) {
       throw new Error('provider receipt refresh has an invalid identity');
     }
     const identity = `${language}\0${provider}`;

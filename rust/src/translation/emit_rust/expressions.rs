@@ -8,15 +8,6 @@ use super::{
 use crate::translation::aborts::{cast_message, overflow_message, zero_divisor_message};
 
 impl RustEmitter<'_> {
-    pub(super) fn render_reference_payload(&mut self, reference: &Expr) -> Result<String> {
-        self.temporaries += 1;
-        let temporary = format!("ml_reference_value{}", self.temporaries);
-        let value = self.receiver(reference)?;
-        Ok(crate::translation::surface_reference_analysis_rules::render_surface_reference_operation(
-            "Rust", "referenceRead", value, &temporary,
-        ))
-    }
-
     pub(super) fn expr(&mut self, expr: &Expr) -> Result<String> {
         if self.program.source_language == crate::translation::Language::JavaScript
             && matches!(&expr.node, Node::Ctor { frozen: true, .. })
@@ -34,7 +25,6 @@ impl RustEmitter<'_> {
             Node::RecordField { object, .. }
             | Node::TupleIndex { object, .. }
             | Node::Method { object, .. }
-            | Node::CollectionSize { object }
             | Node::CollectionItems { object, .. } => object.ty.is_reference(),
             _ => false,
         };
@@ -170,7 +160,14 @@ impl RustEmitter<'_> {
                     "Rust", "referenceAllocate", value, "",
                 ))
             }
-            Node::ReferenceRead { reference } => self.render_reference_payload(reference),
+            Node::ReferenceRead { reference } => {
+                self.temporaries += 1;
+                let temporary = format!("ml_reference_value{}", self.temporaries);
+                let value = self.receiver(reference)?;
+                Ok(crate::translation::surface_reference_analysis_rules::render_surface_reference_operation(
+                    "Rust", "referenceRead", value, &temporary,
+                ))
+            }
             Node::Print { text, body } => {
                 let text = self.expr(text)?;
                 let body = self.expr(body)?;
@@ -388,8 +385,7 @@ impl RustEmitter<'_> {
             | Node::Length { .. }
             | Node::OptionalIndex { .. }
             | Node::StringPoints { .. }
-            | Node::CollectionItems { .. }
-            | Node::CollectionSize { .. } => self.array_expr(expr),
+            | Node::CollectionItems { .. } => self.array_expr(expr),
             Node::Math { .. } => self.math(expr),
         }
     }
@@ -490,14 +486,16 @@ impl RustEmitter<'_> {
                 op.name(),
                 left.ty.kind(),
                 right.ty.kind(),
-                left.ty.is_reference(),
-                right.ty.is_reference(),
-                left.ty == right.ty,
-                (
+                [
+                    left.ty.is_reference(),
+                    right.ty.is_reference(),
+                    left.ty == right.ty,
+                ],
+                [
                     domain.is_some(),
                     domain.as_ref().is_some_and(Type::is_reference),
                     domain.as_ref() == Some(&left.ty),
-                ),
+                ],
             );
         if !reference_error.is_empty() {
             return Err(unsupported(

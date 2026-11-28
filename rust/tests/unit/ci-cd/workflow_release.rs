@@ -1,21 +1,22 @@
 use std::fs;
 
-fn repository_file(relative: &str) -> String {
+fn release_workflow() -> String {
+    // GitHub Actions workflows must live at `<repo>/.github/workflows`, which is
+    // shared across language implementations and stays at the repository root
+    // even though the Rust crate now lives under `rust/`. Walk up from the crate
+    // manifest directory to find the workflow regardless of layout. The Rust
+    // CI/CD pipeline (formerly `release.yml`) is now `rust.yml`.
     let mut dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     loop {
-        let candidate = dir.join(relative);
+        let candidate = dir.join(".github/workflows/rust.yml");
         if candidate.is_file() {
             return fs::read_to_string(candidate).unwrap().replace("\r\n", "\n");
         }
         assert!(
             dir.pop(),
-            "could not locate {relative} from the crate manifest"
+            "could not locate .github/workflows/rust.yml from the crate manifest"
         );
     }
-}
-
-fn release_workflow() -> String {
-    repository_file(".github/workflows/rust.yml")
 }
 
 fn job_block<'a>(workflow: &'a str, job_name: &str) -> &'a str {
@@ -173,7 +174,7 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         // with the same bounded thirty-minute deadline for every physical cell.
         let expected = if job_name == "test" {
             assert!(
-                job.contains("      matrix: ${{ fromJSON(needs.check.outputs.test_matrix) }}\n")
+                job.contains("      matrix: ${{ fromJSON(needs.check.outputs.test-matrix) }}\n")
             );
             "    timeout-minutes: 30\n".to_owned()
         } else {
@@ -204,7 +205,7 @@ fn cargo_cache_keys_are_scoped_by_job() {
         ),
         (
             "check",
-            "key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}",
+            "key: ${{ runner.os }}-cargo-check-1.99.0-${{ hashFiles('**/Cargo.lock') }}",
         ),
         (
             "coverage",
@@ -230,7 +231,7 @@ fn cargo_cache_keys_are_scoped_by_job() {
         "Windows test cache should use a test registry key"
     );
     assert!(
-        test.contains("key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}"),
+        test.contains("key: ${{ runner.os }}-cargo-test-1.99.0-${{ hashFiles('**/Cargo.lock') }}"),
         "Unix test cache should use a test target key"
     );
     assert!(
@@ -893,37 +894,39 @@ fn cargo_check_gates_every_compiling_job() {
 fn rust_test_suites_partition_the_tests_by_name() {
     let workflow = release_workflow();
     let test = job_block(&workflow, "test");
+    assert!(test.contains("      matrix: ${{ fromJSON(needs.check.outputs.test-matrix) }}\n"));
     let check = job_block(&workflow, "check");
-    assert!(check.contains("test_matrix: ${{ steps.test-platforms.outputs.matrix }}"));
-    assert!(check.contains("node js/scripts/rust-test-shards.mjs --test-matrix"));
-    assert!(test.contains("matrix: ${{ fromJSON(needs.check.outputs.test_matrix) }}"));
-    let policy = meta_language::read_structured_data_lino(&repository_file(
-        "parity/rust-test-physical-shards.lino",
+    assert!(check.contains("      test-matrix: ${{ steps.test-matrix.outputs.matrix }}\n"));
+    assert!(check.contains("run: node js/scripts/rust-test-shards.mjs --workflow-matrix test"));
+    let policy = meta_language::read_structured_data_lino(include_str!(
+        "../../../../parity/rust-test-physical-shards.lino"
     ))
     .unwrap();
+    let platforms = policy["platforms"].as_array().unwrap();
     assert_eq!(
-        policy["platforms"],
-        serde_json::json!(["ubuntu-latest", "macos-latest", "windows-latest"])
+        platforms
+            .iter()
+            .map(|platform| platform.as_str().unwrap())
+            .collect::<Vec<_>>(),
+        ["ubuntu-latest", "macos-latest", "windows-latest"]
     );
     let suites = policy["suites"].as_array().unwrap();
+    let suite_names = [
+        "grammar",
+        "inference",
+        "generative",
+        "translation",
+        "remaining",
+    ];
     assert_eq!(
         suites
             .iter()
-            .map(|row| row["name"].as_str().unwrap())
+            .map(|suite| suite["name"].as_str().unwrap())
             .collect::<Vec<_>>(),
-        [
-            "grammar",
-            "inference",
-            "generative",
-            "translation",
-            "remaining"
-        ]
+        suite_names
     );
-    let filters = |suite: &str| {
-        suites
-            .iter()
-            .find(|row| row["name"].as_str() == Some(suite))
-            .unwrap()["filters"]
+    let filters = |index: usize| {
+        suites[index]["filters"]
             .as_array()
             .unwrap()
             .iter()
@@ -934,8 +937,8 @@ fn rust_test_suites_partition_the_tests_by_name() {
     // Each suite skips the filters of the suites before it, and `remaining`
     // skips every filter, so each test runs in exactly one suite.
     let mut earlier: Vec<String> = Vec::new();
-    for suite in ["grammar", "inference", "generative", "translation"] {
-        let line = filters(suite);
+    for (index, suite) in suite_names[..4].iter().enumerate() {
+        let line = filters(index);
         let (own, skipped) = line
             .split_once("--skip")
             .map_or((line.as_str(), ""), |(own, rest)| (own, rest));
@@ -951,7 +954,7 @@ fn rust_test_suites_partition_the_tests_by_name() {
         );
         earlier.extend(own.split_whitespace().map(str::to_string));
     }
-    let remaining = filters("remaining");
+    let remaining = filters(4);
     let skipped: Vec<&str> = remaining
         .split("--skip")
         .map(str::trim)

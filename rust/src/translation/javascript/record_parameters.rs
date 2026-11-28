@@ -3,7 +3,7 @@ use std::sync::OnceLock;
 
 use super::{
     HashSet, JavaScriptParser, JsDoc, Result, SExpr, SNode, SParam, ScanEnd, Span, Stmt, Token,
-    TokenKind, unsupported,
+    TokenKind, span, unsupported,
 };
 use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::javascript_record_parameter_rules::{self as rules, ml_string::Text};
@@ -349,7 +349,7 @@ impl JavaScriptParser {
                     break name;
                 }
             };
-            let parameter_span = Span::new(open.start, close.end);
+            let parameter_span = span(&open, &close);
             syntax
                 .parameters
                 .push(parameter(name.clone(), parameter_span));
@@ -361,7 +361,7 @@ impl JavaScriptParser {
                     property: property.value.clone(),
                     name: local.value.clone(),
                     parameter_span,
-                    span: Span::new(property.start, local.end),
+                    span: span(&property, &local),
                     binding_span: local.span(),
                 });
                 syntax.source_names.push(local.value);

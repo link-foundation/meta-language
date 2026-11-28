@@ -327,13 +327,3 @@ import { restoreVerificationConcurrencyHistory } from './support/verification-co
 import { restoreNativeTestProfileHistory } from './support/native-test-profile-history.js';
 
 import {restoreWindowsLinkerLookupHistory} from './support/windows-linker-lookup-history.js';
-
-test('Cargo 1.100 test unit paths are partitioned only for the root package', () => {
-  assert.equal(isRootHarness('/project/rust/target/debug/build/meta-language/f9171e92e5cb74a3/out/unit-f9171e92e5cb74a3', '/project'), true);
-  assert.equal(isRootHarness('/project/rust/target/llvm-cov-target/debug/build/meta-language/a9a6b0c4159ea4bb/out/integration-a9a6b0c4159ea4bb', '/project'), true);
-  assert.equal(isRootHarness('D:\\project\\rust\\target\\debug\\build\\meta-language\\f9171e92e5cb74a3\\out\\unit-f9171e92e5cb74a3.exe', 'D:\\project'), true);
-  assert.equal(isRootHarness('/project/rust/target/debug/build/pest/f9171e92e5cb74a3/out/unit-f9171e92e5cb74a3', '/project'), false);
-  assert.equal(isRootHarness('/project/rust/target/debug/build/meta-language/f9171e92e5cb74a3/out/unit-a9a6b0c4159ea4bb', '/project'), false);
-  assert.equal(isRootHarness('/project/rust/target/debug/build/meta-language/f9171e92e5cb74a3/out/meta-language', '/project'), false);
-  assert.equal(isRootHarness('/tmp/consumer/target/debug/build/meta-language/f9171e92e5cb74a3/out/unit-f9171e92e5cb74a3', '/project'), false);
-});

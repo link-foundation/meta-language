@@ -41,6 +41,7 @@ test('rollout inspection uses the current base and the latest eligible pull requ
       name: 'Full Requirements Aggregate', conclusion: 'success',
       steps: [
         { name: 'Require the active checks while automated translation is paused', conclusion: 'success' },
+        { name: 'Verify Linux-only workflow scheduling', conclusion: 'success' },
         { name: 'Verify paused checkout for PR 1 at head1 against current', conclusion: 'success' },
       ],
     }] }];
@@ -61,11 +62,11 @@ test('rollout inspection uses the current base and the latest eligible pull requ
     assert.fail(`Unexpected GitHub request ${resource}`);
   };
   assert.deepEqual(await inspectAutomatedTranslationRollout('example/project', query), [
-    { pull: 1, url: 'pull/1', head: 'head1', base: 'current', run: 'run/9', attempt: 2, aggregate: 'success', pauseStep: 'success', checkoutStep: 'success' },
+    { pull: 1, url: 'pull/1', head: 'head1', base: 'current', run: 'run/9', attempt: 2, aggregate: 'success', pauseStep: 'success', platformStep: 'success', checkoutStep: 'success' },
     { pull: 2, url: 'pull/2', head: 'head2', base: 'current', problem: 'No CI pull_request run matches the current head and base.' },
     { pull: 3, url: 'pull/3', head: 'head3', base: 'current', run: 'run/15', attempt: 2, problem: 'Run is queued.' },
-    { pull: 4, url: 'pull/4', head: 'head4', base: 'release', run: 'run/17', attempt: 2, aggregate: 'success', pauseStep: 'success', checkoutStep: null },
-    { pull: 5, url: 'pull/5', head: 'head5', base: 'current', run: 'run/18', attempt: 2, aggregate: 'success', pauseStep: 'success', checkoutStep: 'success' },
-    { pull: 6, url: 'pull/6', head: 'head6', base: 'current', run: 'run/19', attempt: 2, aggregate: 'success', pauseStep: 'success', checkoutStep: null },
+    { pull: 4, url: 'pull/4', head: 'head4', base: 'release', run: 'run/17', attempt: 2, aggregate: 'success', pauseStep: 'success', platformStep: null, checkoutStep: null },
+    { pull: 5, url: 'pull/5', head: 'head5', base: 'current', run: 'run/18', attempt: 2, aggregate: 'success', pauseStep: 'success', platformStep: null, checkoutStep: 'success' },
+    { pull: 6, url: 'pull/6', head: 'head6', base: 'current', run: 'run/19', attempt: 2, aggregate: 'success', pauseStep: 'success', platformStep: null, checkoutStep: null },
   ]);
 });

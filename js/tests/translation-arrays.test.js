@@ -74,23 +74,3 @@ test('retained modern JavaScript array contract executes every original input', 
   const {runModernArrayParityAssertions}=await import('./support/modern-javascript-array-parity.js');
   runModernArrayParityAssertions({record:true,testName:'retained modern JavaScript array contract executes every original input'});
 });
-
-test('source iteration retains the loop and spread operands and the generated loop read proof', async () => {
-  const { parseJavaScript } = await import('../src/translation/javascript.js');
-  const iterables = [];
-  const provenReads = [];
-  function visit(value) {
-    if (value === null || typeof value !== 'object') return;
-    if (value.k === 'forOfIterable') iterables.push(value);
-    if (value.k === 'index' && value.provenInBounds === true) provenReads.push(value);
-    for (const child of Object.values(value)) visit(child);
-  }
-  visit(parseJavaScript(ARRAYS));
-  iterables.sort((left, right) => left.span.start - right.span.start);
-  const sourceText = ({ span }) => ARRAYS.slice(span.start, span.end);
-  assert.deepEqual(iterables.map(sourceText), ['values', '[2n]']);
-  assert.deepEqual(iterables.map(({ object }) => object.k), ['name', 'array']);
-  for (const { type } of iterables) assert.deepEqual(type, { kind: 'array', element: { kind: 'int' } });
-  assert.equal(provenReads.length, 1);
-  assert.ok(sourceText(provenReads[0]).startsWith('for (const v of values)'));
-});

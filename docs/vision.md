@@ -246,10 +246,6 @@ constructor arity and match coverage before emission. The data, constructor and
 match projections reuse the existing surface checker and compare the complete
 rechecked semantic program. Shared decision data supplies reference roles,
 operand traversal, projection instructions and role-specific absent fields.
-Callers submitting a larger checked program can choose a finite node budget
-for import or encoding and for decoding or emission. The default remains
-100,000 nodes, and decoding defaults to a structural depth of 256. An explicit
-budget still applies the same ownership, type and archive validation.
 Type records also distinguish serializer-owned neutral values from unknown
 fields. The actual native type declarations define five omitted false flags:
 array, record, map and set references, and record openness. A source-checked
@@ -332,9 +328,6 @@ plans append to the existing schema without changing its model, prior plans or
 historical source receipts. Complete JavaScript source and text and binary
 program replays drive automatic native generation; native behavior remains a CI
 verification obligation.
-Map and Set size reads keep their receiver and Number result in source-free
-programs. Both runtimes reconstruct the same checked collection operation and
-emit it through the shared target rules after a Links reload.
 Owned occurrence paths likewise compare the numeric value of an actual Number
 position, checking the actual array bounds through the shared tuple-index rule.
 Equivalent integral spellings retain their stored scalar, including negative
@@ -1566,13 +1559,13 @@ the same global space as programming languages, and reuse requires the same
 checked meaning correspondence. Tests distinguish native representation and
 source preservation from any richer linguistic capability they verify.
 
-Sentence boundaries also retain decimal points and initials followed by a
+Sentence boundaries retain decimal points and initials followed by a
 capitalized word inside the sentence. The shared native text specification
 records English and Russian abbreviation profiles. Both runtimes select the
 profile by the canonical language and execute the same generated Links
-productions. A continuation depends on the abbreviation's context, including
-the following letter, number or punctuation, and, for Russian year abbreviations,
-a preceding number. Closing marks can fall between the abbreviation and the
+productions. The following letter, number or punctuation determines whether an
+abbreviation continues the sentence. Russian year abbreviations also consider
+the preceding number. Closing marks can fall between the abbreviation and the
 continuation. Internal periods in forms such as `т. д.` stay inside the sentence
 even when the final period ends it. Exact byte spans include the original
 closing punctuation and trailing whitespace.
@@ -2472,12 +2465,9 @@ read-only iteration. Direct live iteration over a construction remains an alias
 and refuses the immutable value lowering. Ordered bound effects and every
 retained refusal remain independently checked. External JavaScript function and
 constant bindings keep the actual provider's target name; target allocation
-reserves that name, calls remain calls and constant reads remain reads. Both
-Links codecs preserve references to the external signature records. The
-ordinary source checker rechecks those signatures and gives local declarations
-precedence when a name is shared. The initial external-name profile admits
-strict ASCII binding identifiers. Other names require an explicit supported
-alias. These decisions are drafted in
+reserves that name, calls remain calls and constant reads remain reads. The
+initial external-name profile admits strict ASCII binding identifiers; other
+names require an explicit supported alias. These decisions are drafted in
 JavaScript, automatically translated to Rust and exercised through both Links
 codecs; Rust compilation and execution remain CI-only.
 
@@ -2905,6 +2895,26 @@ architecture.
 
 ## JavaScript first and self-translation
 
+[Issue #248](https://github.com/link-foundation/meta-language/issues/248) pauses
+required automated translation until the maintainer resumes it. During the
+pause, contributors may hand-port JavaScript-first batches between the supported
+languages. A manual port follows the same observable behavior contract and uses
+shared fixtures, native tests and the language feature inventory. Keep the
+automated translator, its checks, and its complete acceptance scope available.
+Skipped execution produces no translation evidence. Normal CI continues scoped
+JavaScript and Rust checks, grammar generation, candidate packaging and
+downstream validation. Opt-in enables the complete translation commands and
+their evidence evaluators.
+
+The [PR #250 platform instruction](https://github.com/link-foundation/meta-language/pull/250#issuecomment-7127536709)
+pauses all Windows and macOS CI execution. Native test and clean consumer jobs
+select Linux before allocating runners on pull requests, pushes, releases and
+manual runs. The shared platform and shard definitions, commands, fixtures and
+validators remain available. Full coverage and translation commands still run
+on translation opt-in. The strict platform evidence gates continue to require
+actual reports for all three platforms, so that opt-in alone cannot satisfy
+them during the platform pause.
+
 The review of [Router PR #761](https://github.com/link-assistant/router/pull/761)
 at revision `e2ceac6071d90514fb1a37b3fe5964433d61c402` records its source
 hashes and applicability decisions in
@@ -2991,17 +3001,6 @@ in the frozen native artifact; all recorded native definitions and replays remai
 exact. Current gates check current descriptors and historical views check their
 own complete predecessors. Native execution remains a CI requirement.
 
-A closed JavaScript script with a relative array call and top-level effects can
-be translated as a whole checked program. The self-translation adapters use a
-shared generated rule for the call syntax and the regular portable checker for
-the complete program. When the checker refuses the program, ordinary item
-translation reports the remaining obligations. Scoped imports, declarations
-with module bindings, explicit reference options, and signature-only requests
-keep their existing paths. The existing source envelope binds the original
-bytes to the entire emitted payload so an exact reverse translation can recover
-the script. The paired original scripts require zero carried items, exact
-source recovery, and native output matching their independent observations.
-
 Known array iterables preserve their original inferred element owner before
 normalization. A common Number or BigInt element owner joined with null and
 undefined retains its optional type regardless of order or an intervening spread. The
@@ -3052,11 +3051,12 @@ predecessor sources and independent body and source inverses accompany the
 correspondence. This changes the internal library ABI, keeps the checked source
 algorithm intact and disables no lint. Native validation remains CI work.
 
-The port is done by meta-language itself. A self-translation tool, a library
+The long-term porting workflow uses meta-language itself. A self-translation tool, a library
 API and a CLI command in both packages, reads JavaScript or TypeScript into
 meta-language links and writes Rust, and reads Rust and writes JavaScript or
-TypeScript. Code it cannot translate yet is a gap in the translator, not
-something to write by hand. Meta-language's own source is its main acceptance
+TypeScript. Code it cannot translate yet remains a gap in the translator,
+including when a manual port implements equivalent behavior during the pause.
+Meta-language's own source is its main acceptance
 corpus:
 
 - JavaScript → links → JavaScript and Rust → links → Rust are byte-identical;
@@ -3454,18 +3454,6 @@ before every JavaScript job passed, and the Rust jobs show as skipped when
 JavaScript fails. Inside the acceptance workflow, the Rust evidence stages,
 the Rust native translations and the Rust consumers likewise need the
 JavaScript stages.
-Ordinary CI schedules Linux while retaining the macOS and Windows test and
-clean-consumer profiles. The CI workflow's `all_platforms` dispatch input or
-the repository variable `META_LANGUAGE_ALL_PLATFORMS=true` restores all
-three platforms from the declared physical shard policy.
-
-Automated translation is temporarily paused in ordinary CI. Package checks,
-native grammar, independent consumer workloads and active Linux verification
-remain required. The `automated_translation` dispatch input or
-`META_LANGUAGE_AUTOMATED_TRANSLATION=true` restores the original translation
-commands and strict acceptance evaluation. Use both options for a run of the
-complete cross-platform acceptance scope. A paused run reports its active
-checks and preserves their failures. It supplies no evidence for paused cells.
 Verification concurrency uses stable pull request numbers for updates and
 individual run identifiers for other events, through every nested job group.
 Release write jobs retain their separate non-cancelling queue. The retained
@@ -3534,20 +3522,15 @@ count once in the original full report. Missing, duplicate, foreign, tampered or
 failed parts provide no complete evidence. The canonical job, report, artifact
 and downstream barriers retain their identities, with full diagnostics retained.
 
-Native tests belong under `rust/tests/`. A source file may declare a private
-test-only module for an assertion that needs actual private production values.
-The source placement check requires an explicit relative module path that
-resolves to an existing Rust file under `rust/tests/`. It rejects inline test
-bodies, public test modules, and targets outside that directory.
-
-Private output-comparison tests use an isolated fixture extracted automatically
-from the actual owned Rust concrete syntax declarations. Its source receipt
-binds every selected declaration and the complete original test bytes.
-Freshness checks compare the generated model and receipt with those inputs.
-Compile-time references keep the copied fields and operations checked without
-relaxing native lints or exposing private production interfaces. The extraction
-preserves the original algorithm and assertions. Native execution and semantic
-self-translation each require their own evidence.
+Native tests belong under `rust/tests/`. Private output-comparison tests use an
+isolated fixture extracted automatically from the actual owned Rust concrete
+syntax declarations. Its source receipt binds every selected declaration and
+the complete original test bytes; freshness checks compare the generated model
+and receipt with those inputs. Compile-time references keep the copied fields
+and operations checked without relaxing native lints or exposing private
+production interfaces. This source extraction preserves the original algorithm
+and assertions; it does not establish semantic self-translation or native test
+execution before CI runs.
 
 Expression-dispatch frame extraction records byte-exact original match arms
 and parent reconstruction in
@@ -3698,10 +3681,6 @@ missing or duplicate registrations and native admission in a JavaScript-only
 profile refuse. This follows CI 39489000471, which completed all three source
 archives and constructed its observation plan before the unchanged deadline.
 Successful timing and full native execution still require corrected-commit CI.
-The current and consuming raw emissions within one plan share one checked
-program. The consuming emission still verifies both complete typed archive
-replays and its recorded profile. Each complete Rust source is replayed through
-text and binary archives before the plan allocates its observation matrix.
 The complete tooling test group likewise has four required physical cells after
 its measured fifteen-minute cancellation. The existing modulo file partitioner
 assigns every current test file exactly once; all commands, assertions, flags,
@@ -3779,12 +3758,6 @@ artifact and adds no work to the nine existing native oracles. Removing
 only this cell, its three steps and the new job restores the previous workflows
 byte for byte; the global JavaScript-first caller and path selector are unchanged.
 
-Physical Rust tests, fresh-merge tests and coverage build the crate with stable
-Rust. Fixtures that declare `>=1.90.0 <1.100.0` query and compile their native
-sources with the same installed Rust 1.99.0 toolchain. Their version assertions
-still reject uncovered versions, including when the test runs with only the
-active compiler outside the configured workflow.
-
 The JavaScript package checks also compile the generated shared frontend rules
 as a standalone Rust module with the crate's Clippy lint groups and warnings
 denied. This checks the generated interface without building the crate's
@@ -3854,12 +3827,10 @@ refuse. Original sixty-minute evidence deadlines, compiler checks, commands,
 artifact paths, toolchain pins and all other workflow bytes remain unchanged.
 Historical guard views retain the certified original fifteen-scope workflow;
 independent current controls check the complete six-partition workflow inverse.
-That feedback capture and merge selected six partitions. The transport's
-original three-part API and the six-part workflow remain separately checked.
-The JavaScript workflow now assigns every translation test file to one of
-eight cells using source-bound timing samples. Its merge requires all eight
-feedback partitions at the exact commit. The separate acceptance workflow still
-requires six translation scopes and twenty total physical scopes.
+Capture and merge explicitly select six partitions; the transport's historical
+three-part API remains separately checked. Complete original workflow bytes stay
+authenticated for historical controls, and independent controls inspect the
+actual current six-way matrix, feedback cohort and native artifact uploads.
 
 A separate JavaScript test group checks these published reports after all
 report shards finish. It uses the producers' exact checkout and source hashes,
@@ -3925,14 +3896,15 @@ and integrate shared metadata once per complete batch. One coordinator pushes
 only after the preceding CI finishes and its errors have concrete repairs.
 Native compilation and expensive workloads remain exclusive to CI.
 
-CI 39615628279 supplied source-bound timings from eight report jobs and six
-general grammar jobs. The general grammar suite still uses six jobs. Both report
-workflows now assign the complete 342-module inventory to twelve required jobs
-using timings from CI 45060692627 and 45065716925. Unmeasured or changed sources use
-earlier matching measurements or a size estimate. The report verifier requires
-each module exactly once at the current commit. Report deadlines remain thirty
-minutes, and the commands, coverage assertions and historical partitions are
-retained. Requirement observations come from the resulting CI execution.
+Report modules retain eight required jobs; general grammar tests retain six.
+Their complete current source inventories are scheduled using source-bound
+elapsed-time samples captured automatically from the fourteen complete report
+and grammar job logs of CI 39615628279. Missing or changed sources receive a
+size estimate. All modules and test files still execute exactly once, and
+native and historical modulo partitions keep their existing ownership rules.
+Job counts, commands, coverage assertions and deadlines remain unchanged.
+These samples and scheduling estimates establish no requirement observation;
+only the next CI execution can confirm actual timing and results.
 
 Repeated historical naming reads reuse one authenticated immutable snapshot.
 Every packet read checks its complete serialized input before lookup;
@@ -4269,13 +4241,6 @@ composes before earlier historical scheduling views, preserving every older
 partition and source assertion. No new deadline success is inferred from the
 scheduling change.
 
-The eight translation test shards use advisory measurements from the eight
-completed jobs for the same pull request merge commit. The profile binds a
-side-effect import wrapper to both its own source and the complete imported
-test file. Changed or missing dependency bytes use the same size estimate as a
-changed test file. Each shard keeps the original deadline and reports every
-assigned whole test file.
-
 - CI runs a fast `cargo check` of all targets and features first; the jobs that
   compile and test need it, so a compile error fails once.
 - CI splits the Rust tests by test target and filter, and the JavaScript tests
@@ -4307,23 +4272,6 @@ assigned whole test file.
   renames through generation decorators, preserving the frozen producer and
   all checked declarations. The replay rejects stale or ambiguous contexts,
   overlapping edits, missing diagnostic corrections and identifier capture.
-  The Rust 1.100.0 review of binary framing and record rules binds each
-  redundant clone to its compiler location, complete function and module in the
-  hosted run. Each generation path applies its own reviewed replacements to
-  those formatted functions. The frozen metadata buffer candidate continues to
-  verify its complete recorded producer and original output.
-  The resource description, ASCII predicate, callable emission, declaration
-  dependency, grammar lexer and record parameter generators use the same
-  source-bound review. They replay the compiler's 31 additional redundant clone
-  diagnostics through decorators after formatting complete translated functions.
-  The Boolean value host generator replays its exact reviewed visibility and
-  method reference corrections after authenticating the original host archive.
-  The remaining portable library review binds nineteen diagnostics to complete
-  formatted declarations. It records binding renames, equivalent control flow,
-  literal patterns and a tuple for the three linked reference-domain conditions.
-  The ASCII host reader restores its original complete generated artifact from
-  the exact current artifact and six checked source intervals. Both historical
-  host checks and current native generation remain required.
   Rendered review never acquires invented machine applicability or substitutes
   for native compilation and execution in CI.
 - Full acceptance and native evidence stages execute in CI. Local validation

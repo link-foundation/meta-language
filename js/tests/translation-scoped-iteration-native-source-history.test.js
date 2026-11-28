@@ -9,10 +9,11 @@ import {readCurrentNativeHostSourceHistory,restoreCurrentNativeHostSource} from 
 import {generateBooleanParameterTuples} from '../scripts/generate-boolean-parameter-tuples.mjs';
 import {generateRequiredFieldNativeHostSuccession} from '../scripts/generate-required-field-native-host-succession.mjs';
 import {SCOPED_ITERATION_NATIVE_SOURCE,SCOPED_ITERATION_NATIVE_LOOP_SOURCE,pinScopedIterationNativeSource,readScopedIterationNativeHostSourceHistory,
-  verifyScopedIterationNativeHostSourceHistory,restoreScopedIterationNativeHostSource,restoreScopedIterationDeclarationSource} from '../scripts/scoped-iteration-native-host-source-history.mjs';
+  verifyScopedIterationNativeHostSourceHistory,restoreScopedIterationNativeHostSource} from '../scripts/scoped-iteration-native-host-source-history.mjs';
 import {readProjectData,serializeProjectData} from '../scripts/project-data.mjs';
 import {generateJavaScriptMutableArrayBindings} from '../scripts/generate-javascript-mutable-array-bindings.mjs';
 import {generateScopedIterationNativeHostSourceHistory} from '../scripts/generate-scoped-iteration-native-host-source-history.mjs';
+import {restoreAutomatedTranslationPauseSource} from '../scripts/automated-translation-pause-source-history.mjs';
 const root=new URL('../../',import.meta.url),read=file=>readFileSync(new URL(file,root));
 
 test('source epoch controls select a covered Node runtime and keep the complete current and old declaration hosts',()=>{
@@ -20,9 +21,8 @@ test('source epoch controls select a covered Node runtime and keep the complete 
   assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; >=22.15 <23 || >=24 <25 required');
   const packet=readScopedIterationNativeHostSourceHistory(),specification=SCOPED_ITERATION_NATIVE_SOURCE;
   const actual=read(specification.file).toString('utf8');
-  assert.match(actual,/body: &Body,/u);
-  assert.equal(packet.current.source,restoreScopedIterationDeclarationSource(actual));
-  assert.equal(restoreScopedIterationDeclarationSource(actual+'\n'),actual+'\n');
+  assert.equal(packet.current.source,restoreAutomatedTranslationPauseSource(actual,specification.file));
+  assert.equal(restoreScopedIterationNativeHostSource(actual,specification.file,'required field native host'),packet.previous.source);
   assert.equal(packet.current.bytes-packet.previous.bytes,57);
   assert.equal(restoreScopedIterationNativeHostSource(packet.current.source,specification.file,'required field native host'),packet.previous.source);
   const old=readRequiredFieldNativeHostSuccession().sources.find(row=>row.file===specification.file);assert.ok(old);
@@ -37,7 +37,8 @@ test('unregistered readers changed source bytes and forged coherent memberships 
     assert.equal(restoreScopedIterationNativeHostSource(packet.current.source,file,reader),packet.current.source);
   for(const path of ['unregistered.rs','Rust/src/translation/javascript/declarations.rs','rust/src/self_translation.rs'])
     assert.equal(restoreScopedIterationNativeHostSource(packet.current.source,path,'required field native host'),packet.current.source);
-  for(const source of [packet.current.source+'\n',packet.current.source.slice(1),packet.previous.source])
+  const actual=read(file).toString('utf8');
+  for(const source of [actual+'\n',actual.slice(1),packet.current.source+'\n',packet.current.source.slice(1),packet.previous.source])
     assert.equal(restoreScopedIterationNativeHostSource(source,file,'required field native host'),source);
   for(const mutate of [
     value=>{value.revision='0'.repeat(40);},value=>{value.previousRevision=value.revision;},

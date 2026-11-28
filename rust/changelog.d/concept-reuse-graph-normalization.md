@@ -1,1 +1,0 @@
-Concept reuse snapshots retain each canonical concept's shared language-list identity after migration to LiNo. The metadata normalizer verifies every original list before restoring those references, preserving all report values and their order.

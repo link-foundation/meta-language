@@ -4,7 +4,6 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {isDeepStrictEqual} from 'node:util';
 import {readProjectData} from './project-data.mjs';
 import {structuredDataToLino,readStructuredDataLino} from '../src/structured-data-links.js';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
@@ -32,13 +31,17 @@ export function restoreNodeDependencyInventoryTestSource(source) {
   return original;
 }
 
-/** Restore the earlier declared locations of the already audited Rust toolchain. */
-export function restoreDependencyInventoryDeclarationLocations(current, earlier) {
-  if (current?.id === 'action dtolnay/rust-toolchain@1.99.0' && current.id === earlier.id
-    && isDeepStrictEqual(current.declaredIn, [...earlier.declaredIn, '.github/workflows/rust.yml'])) {
-    return { ...current, declaredIn: earlier.declaredIn };
+// The pinned action gained one user after the certified inventories were taken.
+// Verify its exact new declaration before reconstructing a historical record.
+export function restoreDependencyDeclaration(entry, original) {
+  const workflow = '.github/workflows/rust.yml';
+  if (entry?.id !== 'action dtolnay/rust-toolchain@1.99.0' ||
+      original?.id !== entry.id || !entry.declaredIn.includes(workflow)) {
+    return entry;
   }
-  return current;
+  assert.deepEqual(entry.declaredIn, [...original.declaredIn, workflow],
+    'the Rust workflow is the only added declaration for the pinned action');
+  return {...entry, declaredIn: original.declaredIn};
 }
 
 /** Check every current declaration and every old byte before removing appends. */
@@ -56,11 +59,9 @@ export function verifyDependencyInventoryAppends(inventory,declarations,history)
   const before=readStructuredDataLino(history.inventory.source);
   assert.equal(before.items.length,745);
   assert.ok(inventory.items.length>=before.items.length);
-  const prefix={...inventory,items:inventory.items.slice(0,before.items.length)};
-  // The Rust workflow now also uses the registered Rust 1.99 toolchain.
-  // Restore its exact earlier declaration locations for the certified prefix.
-  const toolchainIndex=before.items.findIndex(entry=>entry.id==='action dtolnay/rust-toolchain@1.99.0');
-  prefix.items[toolchainIndex]=restoreDependencyInventoryDeclarationLocations(prefix.items[toolchainIndex],before.items[toolchainIndex]);
+  const historicalItems = inventory.items.slice(0,before.items.length)
+    .map((entry, index) => restoreDependencyDeclaration(entry, before.items[index]));
+  const prefix={...inventory,items:historicalItems};
   assert.equal(structuredDataToLino(prefix),history.inventory.source,'every complete original item, audit fact, order and alias stays exact');
   const ids=new Set(prefix.items.map(row=>row.id));
   for(const entry of inventory.items.slice(before.items.length)){

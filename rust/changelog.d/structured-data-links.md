@@ -1,1 +1,0 @@
-Structured data can be converted automatically to inspectable Links Notation with ordered object entries, arrays and typed scalar links. The bootstrap-safe reader validates graph roles, exact finite numeric values and resource limits without initializing language parsers.

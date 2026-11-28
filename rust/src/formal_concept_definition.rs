@@ -335,7 +335,8 @@ pub fn encode_formal_concept_definition(
     Ok(result)
 }
 
-/// Build the declaration-value graph for the crate's entry API.
+// Private graph constructor for the additive declaration-value entry API.
+// The public options type and original wrapper constructor remain unchanged.
 pub fn encode_formal_function_declaration_context(
     network: &LinkNetwork,
     typed_root: LinkId,

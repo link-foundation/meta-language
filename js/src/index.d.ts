@@ -895,14 +895,8 @@ export interface TypedProgramLinksEmission {
   readonly encodings: readonly TranslationEncoding[];
   readonly theorems: readonly TranslationObligation[];
 }
-export interface TypedProgramLinksLimits {
-  /** Maximum nodes visited by graph validation. Defaults to 100,000. */
-  readonly nodeLimit?: number;
-  /** Maximum depth while reloading a graph. Defaults to 256. */
-  readonly depthLimit?: number;
-}
 /** Selects supported emission models from validated owned program facts. */
-export interface TypedProgramLinksEmissionOptions extends TypedProgramLinksLimits {
+export interface TypedProgramLinksEmissionOptions {
   /** Preserves selected immutable-reference Rust headers and closed call interfaces. */
   readonly rustSourceHeaderEmissionModel?: 'primitive borrowed Rust function header 1' | 'closed primitive borrowed Rust call interface 1';
   /** Allocates JavaScript aliases from actual checked local binding owners. */
@@ -921,7 +915,7 @@ export function sliceSourceTextBytes(text: string, start: number, end: number): 
 export function createTypedProgramLinks(
   source: string,
   language: string,
-  options?: { provenance?: unknown; utf16Strings?: boolean; context?: object; nodeLimit?: number;
+  options?: { provenance?: unknown; utf16Strings?: boolean; context?: object;
     rustArrayResultModel?: 'immutable fresh scalar vector results 1';
     rustCompletionModel?: 'closed guarded function returns 1';
     /** Retains const qualification on closed primitive predicates; no compile-time evaluation requests. */
@@ -944,12 +938,12 @@ export function createTypedProgramLinks(
 ): TypedProgramLinks;
 export function encodeTypedProgramLinks(
   program: CheckedTypedProgram,
-  options?: { provenance?: unknown; nodeLimit?: number },
+  options?: { provenance?: unknown },
 ): TypedProgramLinks;
 export function decodeTypedProgramLinks(
   network: LinkNetwork,
   root: LinkIdValue,
-  options?: TypedProgramLinksLimits,
+  options?: { nodeLimit?: number; depthLimit?: number },
 ): CheckedTypedProgram;
 /** Emits from current links after scope and semantic validation, without source restoration. */
 export function emitTypedProgramLinks(

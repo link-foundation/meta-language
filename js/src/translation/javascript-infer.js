@@ -495,13 +495,10 @@ class Inference {
         this.unify(length.object, { kind: 'array', element: this.fresh() }, length.where);
         progress = true;
       }
-      // The preceding length fallback has handled any unresolved array receiver.
-      if (!progress) {
-        const field = this.fields.find(({ object }) => this.resolve(object).kind === 'var');
-        if (field) {
-          this.unify(field.object, { kind: 'record', fields: [{ name: field.field, type: field.result }], open: true }, field.where);
-          progress = true;
-        }
+      const field = this.fields.find(({ object, field: name }) => name !== 'length' && this.resolve(object).kind === 'var');
+      if (!progress && field) {
+        this.unify(field.object, { kind: 'record', fields: [{ name: field.field, type: field.result }], open: true }, field.where);
+        progress = true;
       }
       if (!progress && this.coalesces.length) {
         const coalesced = this.coalesces.shift();

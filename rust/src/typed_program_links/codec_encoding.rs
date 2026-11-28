@@ -572,11 +572,7 @@ impl Encoder {
     }
 }
 
-pub(super) fn encode(
-    program: &Program,
-    provenance: Option<&Value>,
-    node_limit: usize,
-) -> Result<TypedProgramLinks> {
+pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<TypedProgramLinks> {
     let mut value = serde_json::to_value(program).map_err(|failure| error(failure.to_string()))?;
     for (index, declaration) in program.declarations.iter().enumerate() {
         if let Decl::Fn(function) = declaration {
@@ -645,13 +641,8 @@ pub(super) fn encode(
             }
         }
     }
-    for (index, external) in program.externals.iter().enumerate() {
-        names
-            .entry(external.name().to_owned())
-            .or_insert_with(|| child_path("/externals", index));
-    }
     let mut targets = HashMap::new();
-    let mut reference_remaining = node_limit;
+    let mut reference_remaining = 100_000;
     semantic_targets(
         &value,
         "",
@@ -660,7 +651,7 @@ pub(super) fn encode(
         &mut targets,
         &mut reference_remaining,
     )?;
-    let mut remaining = node_limit;
+    let mut remaining = 100_000;
     for (index, declaration) in declarations.iter().enumerate() {
         if declaration["k"] != "fn" {
             continue;

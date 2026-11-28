@@ -2,8 +2,7 @@
 //! Reject Rust tests under `src/`.
 //!
 //! Tests for this repository belong under `tests/` so the library and binary
-//! source tree stay free of test bodies. A private module may point to a
-//! test file under `tests/` to exercise non-public implementation details.
+//! source tree stay free of private unit-test modules.
 //!
 //! Usage: rust-script scripts/check-no-src-tests.rs
 //!
@@ -64,37 +63,6 @@ fn test_marker(line: &str) -> Option<&'static str> {
     }
 }
 
-fn is_external_test_module(source: &Path, cwd: &Path, attribute: &str, module: &str) -> bool {
-    let Some(target) = attribute
-        .trim()
-        .strip_prefix("#[path = \"")
-        .and_then(|value| value.strip_suffix("\"]"))
-    else {
-        return false;
-    };
-    let Some(name) = module
-        .trim()
-        .strip_prefix("mod ")
-        .and_then(|value| value.strip_suffix(';'))
-    else {
-        return false;
-    };
-    if name.is_empty()
-        || !name
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
-        || Path::new(target).is_absolute()
-    {
-        return false;
-    }
-    let (Some(directory), Ok(root)) = (source.parent(), cwd.canonicalize()) else {
-        return false;
-    };
-    directory.join(target).canonicalize().is_ok_and(|file| {
-        file.starts_with(root.join("tests")) && is_rust_source(&file) && file.is_file()
-    })
-}
-
 fn check_file(path: &Path, cwd: &Path) -> Vec<SrcTestFinding> {
     let content = match fs::read_to_string(path) {
         Ok(content) => content,
@@ -104,27 +72,17 @@ fn check_file(path: &Path, cwd: &Path) -> Vec<SrcTestFinding> {
         }
     };
 
-    let lines = content.lines().collect::<Vec<_>>();
-    let mut findings = Vec::new();
-    let mut index = 0;
-    while let Some(line) = lines.get(index) {
-        let external = lines.get(index + 1..index + 3).is_some_and(|pair| {
-            line.trim() == "#[cfg(test)]" && is_external_test_module(path, cwd, pair[0], pair[1])
-        });
-        if external {
-            index += 3;
-            continue;
-        }
-        if let Some(marker) = test_marker(line) {
-            findings.push(SrcTestFinding {
+    content
+        .lines()
+        .enumerate()
+        .filter_map(|(index, line)| {
+            test_marker(line).map(|marker| SrcTestFinding {
                 file: relative_path(path, cwd),
                 line: index + 1,
                 marker,
-            });
-        }
-        index += 1;
-    }
-    findings
+            })
+        })
+        .collect()
 }
 
 fn check_src_directory(cwd: &Path) -> Vec<SrcTestFinding> {
@@ -164,7 +122,7 @@ fn print_findings(findings: &[SrcTestFinding]) {
     for finding in findings {
         println!("  {}:{} {}", finding.file, finding.line, finding.marker);
     }
-    println!("\nMove these test bodies to tests/. Private module declarations must point there.\n");
+    println!("\nMove these tests to tests/ and keep src/ free of test modules.\n");
 }
 
 #[cfg(not(test))]
@@ -260,31 +218,5 @@ mod tests {
         assert_eq!(test_marker("#[cfg(feature = \"contest\")]"), None);
         assert_eq!(test_marker("pub mod tests {"), Some("mod tests"));
         assert_eq!(test_marker("let test_value = 1;"), None);
-    }
-
-    #[test]
-    fn permits_only_private_modules_whose_files_are_under_tests() {
-        let repo = temp_dir("external-test-module");
-        fs::create_dir_all(repo.join("src/nested")).unwrap();
-        fs::create_dir_all(repo.join("tests")).unwrap();
-        fs::write(repo.join("tests/private.rs"), "#[test]\nfn checks() {}\n").unwrap();
-        fs::write(repo.join("src/nested/body.rs"), "fn source() {}\n").unwrap();
-        let source = repo.join("src/nested/module.rs");
-        for (target, module, expected_markers) in [
-            ("../../tests/private.rs", "mod tests;", 0),
-            ("body.rs", "mod checks;", 1),
-            ("../../tests/missing.rs", "mod checks;", 1),
-            ("../../tests/private.rs", "pub mod verify;", 1),
-            ("../../tests/private.rs", "mod verify {};", 1),
-        ] {
-            fs::write(
-                &source,
-                format!("#[cfg(test)]\n#[path = \"{target}\"]\n{module}\n"),
-            )
-            .unwrap();
-            let findings = check_src_directory(&repo);
-            assert_eq!(findings.len(), expected_markers, "{target} {module}");
-        }
-        fs::remove_dir_all(repo).unwrap();
     }
 }

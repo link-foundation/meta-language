@@ -104,10 +104,6 @@ impl LeanEmitter<'_> {
                     _ => format!("(ml_array_at {values} {text})"),
                 }
             }
-            Node::CollectionSize { object } => {
-                let value = self.expr(object, depth)?;
-                crate::translation::collection_size_rules::render_collection_size("Lean", &value)
-            }
             Node::Length { array } => {
                 if array.ty == Type::String {
                     return Ok(

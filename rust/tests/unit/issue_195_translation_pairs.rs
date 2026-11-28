@@ -86,7 +86,7 @@ fn expected_lines() -> Vec<String> {
     lines_of(&String::from_utf8_lossy(expected_bytes()))
 }
 
-pub(super) fn sha256(bytes: &[u8]) -> String {
+pub fn sha256(bytes: &[u8]) -> String {
     Sha256::digest(bytes)
         .iter()
         .fold(String::with_capacity(64), |mut hex, byte| {
@@ -146,18 +146,6 @@ pub fn run(command: &mut Command) -> Run {
             stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
         },
     )
-}
-
-pub fn versioned_fixture_tool(tool: &str) -> Command {
-    if tool == "rustc"
-        && let Some(toolchain) = std::env::var_os("META_LANGUAGE_VERSIONED_RUST_TOOLCHAIN")
-    {
-        let mut compiler = Command::new("rustup");
-        compiler.arg("run").arg(toolchain).arg(tool);
-        compiler
-    } else {
-        Command::new(tool)
-    }
 }
 
 fn lines_of(text: &str) -> Vec<String> {

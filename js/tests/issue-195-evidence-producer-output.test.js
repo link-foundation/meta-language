@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { format } from 'node:util';
 import { test } from 'node:test';
+import { automatedTranslationTest } from './support/automated-translation-test.js';
 import { runInNewContext } from 'node:vm';
 import { translateProgram } from '../src/program-translation.js';
 import { runTestCommand } from './support/child-test-output.js';
@@ -20,7 +21,7 @@ test('failed evidence child commands retain both output streams in the test erro
   assert.equal(runTestCommand(process.execPath, ['-e', 'console.log("observed output");'], { stdio: 'pipe' }), 'observed output\n');
 });
 
-test('Rust corpus constructor mappings name the serialized JavaScript tags and preserve output', () => {
+test('Rust corpus constructor mappings name the serialized JavaScript tags and preserve output', automatedTranslationTest, () => {
   const corpus = readProjectData(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url)).translationCorpus;
   const read = (file) => readFileSync(resolveProjectDataPath(new URL(`../../${corpus.directory}/${file}`, import.meta.url)), 'utf8');
   const source = read(corpus.sources.Rust.file);

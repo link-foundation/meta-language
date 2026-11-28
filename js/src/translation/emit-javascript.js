@@ -11,7 +11,6 @@ import {requireStringOrderUnits,renderStringOrderExpression} from './string-orde
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { renderCollectionConstruction } from './collection-construction-rules.js';
-import { renderCollectionSize } from './collection-size-rules.js';
 import { renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
@@ -525,7 +524,7 @@ class JavaScriptEmitter {
       case 'map':
         return renderCollectionConstruction('JavaScript', e.k, '', this.expr(e.k === 'set' ? e.items : e.entries), '', '', '');
       case 'collectionSize':
-        return renderCollectionSize('JavaScript', this.expr(e.object));
+        return `(${this.expr(e.object)}).size`;
       case 'collectionRead':
         return `(${this.expr(e.object)}).${e.op}(${this.expr(e.key)})`;
       case 'collectionItems':

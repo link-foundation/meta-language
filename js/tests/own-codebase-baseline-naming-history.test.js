@@ -37,16 +37,23 @@ test('historical naming retains complete certified definitions and every indepen
 });
 
 test('unknown whole current naming sources and driver bytes cannot borrow historical authority',()=>{
-  const history=readOwnCodebaseHistoricalNamingSources(),scratch=mkdtempSync(join(tmpdir(),'meta-language-own-naming-'));
-  const files=[...history.views.map(view=>view.file),history.driver.file,
-    ...readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews.views.map(row=>row.file)];
+  const history=readOwnCodebaseHistoricalNamingSources();
+  const requiredFiles=new Set([...history.views.map(view=>view.file),history.driver.file,
+    ...readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews.views.map(row=>row.file)]);
+  const expected=extractOwnCodebaseHistoricalNames(root,NAME_INVENTORIES,history);
+  const files=new Set([...requiredFiles,...expected.map(row=>row.file)]);
+  const scratch=mkdtempSync(join(tmpdir(),'meta-language-own-naming-'));
   try{
     for(const file of files){const destination=join(scratch,file);mkdirSync(dirname(destination),{recursive:true});writeFileSync(destination,readFileSync(join(root,file)));}
-    const expected=extractOwnCodebaseHistoricalNames(root,NAME_INVENTORIES,history);
     assert.deepEqual(extractOwnCodebaseHistoricalNames(scratch,NAME_INVENTORIES,history),expected);
     for(const file of files){
       const destination=join(scratch,file),source=readFileSync(destination);writeFileSync(destination,Buffer.concat([source,Buffer.from('\n')]));
-      assert.throws(()=>extractOwnCodebaseHistoricalNames(scratch,NAME_INVENTORIES,history));
+      if(requiredFiles.has(file)){
+        assert.throws(()=>extractOwnCodebaseHistoricalNames(scratch,NAME_INVENTORIES,history),file);
+      }else{
+        assert.deepEqual(extractOwnCodebaseHistoricalNames(scratch,NAME_INVENTORIES,history),
+          expected.filter(row=>row.file!==file),`unknown bytes cannot authenticate the historical rows for ${file}`);
+      }
       writeFileSync(destination,source);
     }
     const missing=NAME_INVENTORIES.filter(entry=>entry.inventory!==history.views[0].inventory);

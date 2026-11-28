@@ -1,1 +1,0 @@
-Native TOML, Zig, Pascal and Visual Basic grammars now use shared generated Links Notation data in both runtimes. Their independent parser crates and WebAssembly assets are development oracles. Configurable delimiter-run and line-boundary scanner families preserve source text. Lua chained call precedence is reconciled through import metadata.

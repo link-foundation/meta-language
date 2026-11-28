@@ -13,6 +13,8 @@ export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 export const ISSUE_195_SOURCES = Object.freeze({
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
+  automatedTranslationPause: 'https://github.com/link-foundation/meta-language/issues/248',
+  nativePlatformPause: 'https://github.com/link-foundation/meta-language/pull/250#issuecomment-7127536709',
   clarification:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
   acceptanceGate:
@@ -989,6 +991,8 @@ export async function buildIssue195Manifest(root) {
     ...buildVisionRequirements(fixtureCatalog, {
       requirement, verification, pinnedFixture, source: ISSUE_195_SOURCES.repositoryDirective,
       sourceByRequirement: {
+        ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ sourceKey }) => sourceKey)
+          .map(({ id, sourceKey }) => [id, ISSUE_195_SOURCES[sourceKey]])),
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ id }) => id.startsWith('I195-GLOBAL-CONCEPT-'))
           .map(({ id }) => [id, ISSUE_195_SOURCES.globalConceptSpace])),
         'I195-GRAMMAR-NATURAL-LANGUAGE-REPRESENTATION': ISSUE_195_SOURCES.latestDeliveryAudit,
@@ -1059,8 +1063,6 @@ export async function buildIssue195Manifest(root) {
           .map((id) => [id, ISSUE_195_SOURCES.recoveryAudit])),
         // The audit of c39470d0, re-posted to deliver it in bulk, makes every row that is still open work this PR delivers.
         ...Object.fromEntries(FINISH_THE_WORK_ROWS.map((id) => [id, ISSUE_195_SOURCES.bulkDeliveryRepost])),
-        ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ sourceKey }) => sourceKey)
-          .map(({ id, sourceKey }) => [id, ISSUE_195_SOURCES[sourceKey]])),
       },
     }),
   ];

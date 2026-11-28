@@ -5,7 +5,6 @@ import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
-import {restoreRegisteredNativeTestSource} from './registered-native-test-source-history.mjs';
 import {restoreScopedIterationNativeHostSource} from './scoped-iteration-native-host-source-history.mjs';
 import {replayAsciiHostEdits,verifyAsciiTextPredicateHosts} from './ascii-text-predicate-host-history.mjs';
 const root=new URL('../../',import.meta.url);
@@ -108,16 +107,10 @@ export function readRequiredFieldNativeHostSuccession(){
   return cached;
 }
 
-/** The named historical readers can request exact source inverses. Unknown
- * paths and bytes remain visible to their strict checks. */
+/** Only the three explicitly named old readers can request these five exact
+ * source inverses. Unknown paths/scopes/bytes remain visible to their strict gate. */
 export function restoreRequiredFieldNativeHostSource(source,file,reader){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');assert.equal(typeof reader,'string');
-  if (reader === 'ASCII character host' && file === 'rust/tests/unit/translation_ascii_text_predicates.rs') {
-    return restoreRegisteredNativeTestSource(source, file);
-  }
-  if (reader === 'ASCII character host' && file === 'rust/src/translation/rust/expressions.rs') {
-    return restoreRustCastParserPlacement(source);
-  }
   if(!Object.hasOwn(readers,reader)||!readers[reader].includes(file))return source;
   source=restoreScopedIterationNativeHostSource(source,file,'required field native host');
   source=restoreCurrentNativeHostSource(source,file);
@@ -127,36 +120,6 @@ export function restoreRequiredFieldNativeHostSource(source,file,reader){
   return row.previous.source;
 }
 
-function restoreRustCastParserPlacement(source) {
-  const current = pinRequiredFieldNativeHostSource(source);
-  if (current.sha256 !== 'e611a419aa9996b071557f94f9187db1177b4cb75f636917e8f17c8b4ab2fa53') return source;
-
-  const currentCastParser = readFileSync(new URL('rust/src/translation/rust/expressions/cast.rs', root), 'utf8');
-  const { source: castParser } = replayAsciiHostEdits(currentCastParser, [{
-    before: '    pub(super) fn require_cast_following_token(',
-    after: '    fn require_cast_following_token(',
-  }]);
-  assert.deepEqual(pinRequiredFieldNativeHostSource(castParser), {
-    bytes: 1888,
-    sha256: '99e26de92be80ad4ba3d8b7dcc0a6da5e9e000d0068f542a38d16ada2cd7212a',
-  });
-  const implementation = castParser.split('impl RustParser {\n');
-  assert.equal(implementation.length, 2);
-  assert.ok(implementation[1].endsWith('}\n'));
-  const unary = '    pub(super) fn unary(&mut self, path: &[String], options: Options) -> Result<SExpr> {\n';
-  const replay = replayAsciiHostEdits(source, [
-    { before: 'mod ascii_text_predicates;\nmod cast;\n', after: 'mod ascii_text_predicates;\n' },
-    { before: 'use super::indirection_rules::accept_rust_source_box_owner;\n',
-      after: 'use super::cast_syntax_rules::{accept_rust_cast_following_token, read_rust_cast_syntax_message};\n'
-        + 'use super::indirection_rules::accept_rust_source_box_owner;\n' },
-    { before: unary, after: `${implementation[1].slice(0, -2)}\n${unary}` },
-  ]);
-  assert.deepEqual(pinRequiredFieldNativeHostSource(replay.source), {
-    bytes: 40302,
-    sha256: '2e36c8e9df1b7ea356d4295c10dbb161a0a0b29e37733e4f412c87b8b95e151b',
-  });
-  return replay.source;
-}
 
 // Metadata transport only: source symbols retain complete lossless UTF-8 bytes,
 // while recorded intervals use the same UTF-16 coordinates as the old receipts.

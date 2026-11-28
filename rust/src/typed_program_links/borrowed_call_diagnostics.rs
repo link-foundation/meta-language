@@ -78,10 +78,10 @@ pub(super) fn decode(
     network: &LinkNetwork,
     root: LinkId,
     model: &str,
-    limits: TypedProgramLinksLimits,
 ) -> std::result::Result<Program, (TypedProgramLinksError, bool)> {
     // Structural decoding, ownership and malformed-field refusal run first.
-    let program = codec::decode(network, root, limits).map_err(|failure| (failure, false))?;
+    let program = codec::decode(network, root, TypedProgramLinksLimits::default())
+        .map_err(|failure| (failure, false))?;
     if let Err(failure) = checked::validate(&program) {
         return Err(refine_failure(&program, model)
             .map_or((failure, false), |diagnostic| (error(diagnostic), true)));

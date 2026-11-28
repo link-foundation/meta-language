@@ -17,11 +17,6 @@ on:
         type: boolean
         required: false
         default: false
-      all_platforms:
-        description: Run the retained macOS and Windows jobs alongside Linux
-        type: boolean
-        required: false
-        default: false
   push:
     branches:
       - main
@@ -103,7 +98,6 @@ jobs:
     uses: ./.github/workflows/rust.yml
     with:
       automated_translation: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
-      all_platforms: ${{ inputs.all_platforms || vars.META_LANGUAGE_ALL_PLATFORMS == 'true' }}
       native_test_inputs_changed: ${{ needs.changes.outputs.native_test_inputs_changed == 'true' }}
     secrets: inherit
     # The release and website jobs run on a push to main and ask for these.
@@ -120,14 +114,14 @@ jobs:
   # size. It runs beside the JavaScript and Rust workflows; acceptance verifies
   # every published module before recording the reporting assertion.
   self-translation-report:
-    name: Self-Translation Report (${{ matrix.shard }}/12)
+    name: Self-Translation Report (${{ matrix.shard }}/8)
     if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (github.event_name != 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -148,7 +142,7 @@ jobs:
         env:
           META_LANGUAGE_REPORT_PROGRESS: '1'
         run: |
-          node scripts/generate-self-translation-report.mjs --shard ${{ matrix.shard }}/12 --out-dir ../self-translation-report > /dev/null
+          node scripts/generate-self-translation-report.mjs --shard ${{ matrix.shard }}/8 --out-dir ../self-translation-report > /dev/null
           cat ../self-translation-report/self-translation-report.md >> "$GITHUB_STEP_SUMMARY"
         working-directory: js
 
@@ -325,6 +319,8 @@ jobs:
     if: ${{ !cancelled() && (needs.js.result == 'success' || (github.event_name == 'release' && needs.js.result == 'skipped')) && (needs.self-translation-report-validation.result == 'success' || ((!(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') || github.event_name == 'release') && needs.self-translation-report-validation.result == 'skipped')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      consumer-matrix: ${{ steps.consumer-matrix.outputs.matrix }}
     concurrency:
       group: issue-195-candidates-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
@@ -346,6 +342,10 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
         working-directory: js
+
+      - name: Select active clean consumer platforms
+        id: consumer-matrix
+        run: node js/scripts/rust-test-shards.mjs --workflow-matrix consumer
 
       # The package remains install-script-free and parses offline. Its current
       # compiled fallback grammars are staged from authenticated temporary
@@ -402,8 +402,7 @@ jobs:
       cancel-in-progress: true
     strategy:
       fail-fast: false
-      matrix:
-        os: ${{ fromJSON((inputs.all_platforms || vars.META_LANGUAGE_ALL_PLATFORMS == 'true') && '["ubuntu-latest","macos-latest","windows-latest"]' || '["ubuntu-latest"]') }}
+      matrix: ${{ fromJSON(needs.candidates.outputs.consumer-matrix) }}
     steps:
       - uses: actions/checkout@v7
 
@@ -1935,13 +1934,6 @@ jobs:
           --json-report issue-195-artifacts/post-merge-report.lino
           --markdown-report issue-195-artifacts/post-merge-report.md
 
-      - name: Report automated translation rollout on open pull requests
-        if: ${{ !cancelled() && !(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node js/scripts/check-automated-translation-rollout.mjs issue-195-artifacts/automated-translation-rollout.lino
-
       - name: Publish the post-merge report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -2001,14 +1993,10 @@ jobs:
           exit 1
 
       - uses: actions/checkout@v7
-        id: acceptance-checkout
-        if: ${{ !cancelled() && (needs.candidates.result == 'success' || needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') }}
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        id: acceptance-node
-        if: ${{ !cancelled() && steps.acceptance-checkout.outcome == 'success' }}
         uses: actions/setup-node@v7
         with:
           node-version: 24.22.0
@@ -2016,29 +2004,19 @@ jobs:
           cache-dependency-path: js/package-lock.json
 
       - name: Install JavaScript dependencies
-        id: acceptance-dependencies
-        if: ${{ !cancelled() && steps.acceptance-node.outcome == 'success' }}
         run: npm ci --ignore-scripts
         working-directory: js
 
       - name: Provision the authenticated grammar input for manifest validation
         run: node js/scripts/external-grammar-cache.mjs --asset parity/grammars/links-notation-0.22.0.pegjs --materialize
 
-      - name: Require all platforms for the full Rust evidence union
-        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && !(inputs.all_platforms || vars.META_LANGUAGE_ALL_PLATFORMS == 'true') }}
-        run: |
-          echo "::error::Enable all_platforms or META_LANGUAGE_ALL_PLATFORMS for the full Rust evidence union."
-          exit 1
-
       - name: Identify admitted Rust physical profiles
         id: rust-physical-admission
-        if: ${{ !cancelled() && steps.acceptance-dependencies.outcome == 'success' && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" --paginate --slurp > "$RUNNER_TEMP/rust-physical-jobs.json"; then
-            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=20" --paginate --slurp > "$RUNNER_TEMP/rust-physical-jobs.json"
-          fi
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" --paginate --slurp > "$RUNNER_TEMP/rust-physical-jobs.json"
           node js/scripts/rust-test-shards.mjs --admission "$RUNNER_TEMP/rust-physical-jobs.json"
 
       - name: Download complete Rust physical partitions
@@ -2107,6 +2085,14 @@ jobs:
           fi
           echo "Automated translation and the full Issue #195 acceptance evaluation are paused." >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
+
+      - name: Verify Linux-only workflow scheduling
+        if: ${{ !cancelled() && needs.candidates.result == 'success' && !(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" --paginate --slurp > "$RUNNER_TEMP/workflow-platforms.json"
+          node js/scripts/rust-test-shards.mjs --verify-workflow-platforms "$RUNNER_TEMP/workflow-platforms.json"
 
       - name: Verify paused checkout for PR ${{ github.event.pull_request.number }} at ${{ github.event.pull_request.head.sha }} against ${{ github.event.pull_request.base.sha }}
         if: ${{ success() && github.event_name == 'pull_request' && !(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
