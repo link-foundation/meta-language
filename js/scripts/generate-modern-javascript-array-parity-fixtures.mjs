@@ -118,7 +118,7 @@ export function buildModernArrayParityFixture({historicalSource}={}){
  const previousRow=fixture.cases[5];assert.equal(previousRow.id,'original-array-identity-refusal');assert.deepEqual(previousRow.targets,['Rust']);
  fixture.cases[5]={...previousRow,expected:{outcome:'admitted',stdout:'true\n'}};
  fixture.identityCorrection={model:'retained array identity expectation correction 1',implementation:identityImplementation,
-  versions:{npm:'[1.0.0,1.0.1)',crate:'[1.0.0,1.0.1)',Node:'>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0'},
+  versions:{npm:'[1.0.0,1.0.1) || [1.1.0,1.1.1)',crate:'[1.0.0,1.0.1) || [1.1.0,1.1.1)',Node:'>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0'},
   previous:{fixture:oldIdentityFixturePin,row:previousRow,admitted:6,refused:5},current:{admitted:7,refused:4},
   sourceEpochs:currentProfiles.map(([path])=>{const source=readFileSync(new URL(path,root));return{path,bytes:source.length,sha256:digest(source)};}),
   basis:'The identical original array owner compares true in JavaScript. The source-qualified shared reference policy preserves that identity in Rust; explicit referenceSemantics:false still retains the original value-mode refusal. Case IDs, order, target sets, historicalNative and original sourceProfiles remain unchanged.'};

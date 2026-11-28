@@ -7,6 +7,9 @@ use serde_json::Value;
 use crate::cst_sexpression::{normalize, render_network};
 use crate::native_recovery_records::read_native_recovery;
 
+#[path = "error_recovery_json.rs"]
+mod json_recovery;
+
 #[test]
 fn malformed_input_recovers_to_the_same_tree_as_the_native_tree_sitter_runtime() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))

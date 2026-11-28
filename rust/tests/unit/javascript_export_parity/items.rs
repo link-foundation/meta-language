@@ -279,6 +279,7 @@ use meta_language::source_meanings_in as _;
 use meta_language::split_grammar_source as _;
 use meta_language::structured_data_record_to_lino as _;
 use meta_language::structured_data_to_lino as _;
+use meta_language::transform::recover_json as _;
 use meta_language::translate_global_construct as _;
 use meta_language::translate_native_construct as _;
 use meta_language::translate_native_construct_tree as _;

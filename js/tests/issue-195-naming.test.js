@@ -189,8 +189,11 @@ test('the normal naming source profile retains every actual current name and bot
   const precedingCount = 2 + policy.additionalSourceViews.views.reduce((count, view) => count + view.names.length, 0);
   const precedingNames = historicalNames.slice(0, precedingCount);
   const remainingNames = historicalNames.slice(precedingCount);
-  const pauseNames = remainingNames.filter(({ file }) =>
-    !nativeRepairNamingSources.includes(file) && !nativeLintCaptureSources.includes(file));
+  const releaseRevision = '8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18';
+  const releaseNames = remainingNames.filter(({ sourceView }) => sourceView.revision === releaseRevision);
+  const pauseNames = remainingNames.filter(({ file, sourceView }) =>
+    !nativeRepairNamingSources.includes(file) && !nativeLintCaptureSources.includes(file)
+    && sourceView.revision !== releaseRevision);
   const repairedNames = remainingNames.filter(({ file }) => nativeRepairNamingSources.includes(file));
   const lintCaptureNames = remainingNames.filter(({ file }) => nativeLintCaptureSources.includes(file));
   assert.equal(precedingNames.length, precedingCount);
@@ -199,7 +202,8 @@ test('the normal naming source profile retains every actual current name and bot
   assert.deepEqual([...new Set(repairedNames.map(({ file }) => file))].sort(), [...nativeRepairNamingSources].sort());
   assert.equal(lintCaptureNames.length, 17, 'every naming witness from the three lint captures remains present');
   assert.deepEqual([...new Set(lintCaptureNames.map(({ file }) => file))].sort(), [...nativeLintCaptureSources].sort());
-  assert.deepEqual(remainingNames, [...pauseNames, ...repairedNames, ...lintCaptureNames], 'native repair and lint capture source views are appended');
+  assert.equal(releaseNames.length, 5, 'the release assertion update preserves both complete historical source files');
+  assert.deepEqual(remainingNames, [...pauseNames, ...repairedNames, ...lintCaptureNames, ...releaseNames], 'native repair, lint capture and release source views are appended');
   assert.deepEqual(repository.names, [...currentNames, ...historicalNames]);
   assert.deepEqual(repository.names.slice(0, currentNames.length), currentNames);
   for (const view of policy.views) {

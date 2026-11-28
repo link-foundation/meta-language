@@ -69,6 +69,25 @@ console.log(network.reconstructText());
 // const newName = call(newName);
 ```
 
+### Recover malformed JSON
+
+```js
+import { recoverJson } from 'meta-language';
+
+const result = recoverJson('{"status":"met"', {
+  allow: ['closeOpenContainers'],
+  schema: { required: ['status', 'evidence'] },
+});
+// result.text is '{"status":"met"}' and result.complete is false.
+// result.issues identifies the missing property at '/evidence'.
+```
+
+All six repairs are enabled by default. An empty `allow` array gives
+diagnostics without edits. Each edit gives a half-open span in the original
+UTF-8 bytes and includes the removed and inserted text. On unrecovered syntax,
+the report preserves the input, returns a null value and gives its location
+in `issues`.
+
 ## Command line
 
 The package installs a `meta-language` command whose `grammar` subcommand

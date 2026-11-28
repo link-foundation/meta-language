@@ -27,7 +27,10 @@ export const MODERN_ARRAY_REQUIREMENTS=Object.freeze([
 ]);
 export function assertModernArrayIdentityTranslation(source,previousMessage){
  const active=JSON.parse(readFileSync(new URL('js/package.json',root),'utf8')).version;
- const selected=selectVersionedAssertion({id:'retained original array owner identity',subject:'meta-language npm',comparison:{kind:'release',precision:3},expectations:[{id:'source-qualified reference implementation',minimum:'1.0.0',maximum:'1.0.1',includeMinimum:true,includeMaximum:false,expected:true,evidence:'reference policy source31c61031a2b2bc4c856f85687f8195bb60f51edc823344711962966df39aae1e; original independent Node owner identity'}]},active);
+ const selected=selectVersionedAssertion({id:'retained original array owner identity',subject:'meta-language npm',comparison:{kind:'release',precision:3},expectations:[
+  {id:'source-qualified reference implementation',minimum:'1.0.0',maximum:'1.0.1',includeMinimum:true,includeMaximum:false,expected:true,evidence:'reference policy source31c61031a2b2bc4c856f85687f8195bb60f51edc823344711962966df39aae1e; original independent Node owner identity'},
+  {id:'unchanged reference policy in v1.1.0',minimum:'1.1.0',maximum:'1.1.1',includeMinimum:true,includeMaximum:false,expected:true,evidence:'v1.1.0 retains reference policy source31c61031a2b2bc4c856f85687f8195bb60f51edc823344711962966df39aae1e; same original independent Node owner identity'},
+ ]},active);
  assert.equal(selected.expected,true);
  const[major,minor]=process.versions.node.split('.').map(Number);assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; >=22.15 <23 || >=24 <25 required');
  const policy=readProjectData(new URL('js/src/translation/data/reference-identity-rules.lino',root));

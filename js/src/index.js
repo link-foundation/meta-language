@@ -15,6 +15,7 @@ export * from './grammar-lowering.js';
 export * from './grammar-reverse.js';
 export * from './grammar-runtime.js';
 export * from './graphql-adapter.js';
+export { recoverJson } from './json-recovery.js';
 export * from './language-catalog.js';
 export * from './concept-records.js';
 export * from './concept-distinctions.js';

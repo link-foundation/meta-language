@@ -13,6 +13,7 @@ export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 export const ISSUE_195_SOURCES = Object.freeze({
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
+  jsonRecovery: 'https://github.com/link-foundation/meta-language/issues/241',
   automatedTranslationPause: 'https://github.com/link-foundation/meta-language/issues/248',
   nativePlatformPause: 'https://github.com/link-foundation/meta-language/pull/250#issuecomment-7127536709',
   clarification:
@@ -957,6 +958,47 @@ function buildGateRequirements(fixtureCatalog) {
   });
 }
 
+function buildJsonRecoveryRequirements(fixtureCatalog) {
+  const behaviors = {
+    close: 'Close truncated strings and containers at missing delimiters, retaining the available value and reporting incomplete output.',
+    comma: 'Remove only dangling commas witnessed by error nodes, including at the end of a truncated container.',
+    fence: 'Remove supported Markdown JSON fences using original source spans, including when the contained value is incomplete.',
+    extract: 'Recover the first JSON value from surrounding prose or subsequent values while preserving the selected source.',
+    garbage: 'Remove trailing garbage after a parsed JSON value using the reported error span.',
+    escape: 'Preserve malformed escape spellings and raw control characters as valid JSON string data.',
+    schema: 'Report absent required properties with JSON Pointers and mark the result incomplete without supplying values.',
+    repetition: 'Locate excessive repetitions in the original input and retain the selected bytes.',
+    policy: 'Apply only allowed edits to concrete recovery nodes, refuse unsupported syntax, and pass valid input through byte for byte.',
+  };
+  const fixturePath = 'parity/fixtures/json-recovery.lino';
+  const runtimes = ['javascript', 'rust'];
+  return Object.entries(behaviors).map(([group, expectedBehavior]) => {
+    const id = `I195-JSON-RECOVERY-${group.toUpperCase()}`;
+    const fixtureId = `json-recovery:${group}`;
+    fixtureCatalog[fixtureId] = pinnedFixture(fixturePath, `cases with group ${group}`);
+    return requirement({
+      id,
+      source: ISSUE_195_SOURCES.jsonRecovery,
+      area: 'structured-transformation',
+      scope: { language: 'JSON', version: 'RFC 8259', edition: 'December 2017',
+        construct: group, aliases: ['json'], extensions: ['.json'] },
+      expectedBehavior,
+      requiredRuntimes: runtimes,
+      implementationEntryPoints: {
+        javascript: ['js/src/json-recovery.js', 'js/src/data/json-recovery-decorators.lino', 'js/src/data/json-recovery-grammar.lino'],
+        rust: ['rust/src/transform/json_recovery.rs', 'rust/src/data/json-recovery-decorators.lino', 'rust/src/data/json-recovery-grammar.lino'],
+      },
+      verifications: runtimes.map(runtime => verification({
+        requirementId: id,
+        runtime,
+        suffix: 'behavior',
+        fixtureIds: [fixtureId],
+        assertions: ['jsonRecoveryReportMatches', 'jsonRecoveryEditsReplay'],
+      })),
+    });
+  });
+}
+
 export async function buildIssue195Manifest(root) {
   const inventoryPath = path.join(root, 'parity', 'language-grammar-inventory.json');
   const corpusPath = path.join(root, 'parity', 'fixtures', 'four-language-conformance.json');
@@ -976,6 +1018,7 @@ export async function buildIssue195Manifest(root) {
     ...buildFourLanguageCorpusRequirements(fixtureCatalog, inventory.extensionDispatch),
     ...buildSemanticRequirements(fixtureCatalog, inventory.extensionDispatch),
     ...buildTransformationRequirements(fixtureCatalog, inventory.extensionDispatch),
+    ...buildJsonRecoveryRequirements(fixtureCatalog),
     ...buildTranslationRequirements(fixtureCatalog, inventory.extensionDispatch),
     ...buildCrossCuttingRequirements(fixtureCatalog, inventory.extensionDispatch),
     ...buildValidationAndDeliveryRequirements(fixtureCatalog, inventory.extensionDispatch),

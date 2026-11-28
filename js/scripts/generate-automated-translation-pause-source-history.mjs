@@ -50,6 +50,10 @@ files.push({ file: 'js/tests/test-groups.test.js', revision: '231c6610fc93225fcc
 files.push({ file: 'js/scripts/scheduling-source-history.mjs', revision: '15745ffcd322c48bdd537ccb48a5f7c9deb96917' });
 files.push({ file: 'js/scripts/tooling-frozen-source-history.mjs', revision: '269c48e497280025271ade3765f808b2f372d1b6' });
 files.push({ file: 'parity/fixtures/grammar-selection-diagnostic-order.lino', revision });
+for (const file of ['js/scripts/generate-modern-javascript-array-parity-fixtures.mjs',
+  'js/tests/support/modern-javascript-array-parity.js']) {
+  files.push({ file, revision: '8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18' });
+}
 for (const file of ['.github/workflows/ci.yml', '.github/workflows/rust.yml',
   'js/scripts/rust-test-shards.mjs',
   'js/tests/issue-195-evidence-node-dependency.test.js', 'rust/tests/unit/ci-cd/workflow_release.rs']) {

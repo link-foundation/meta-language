@@ -331,6 +331,24 @@ assert!(txt.contains("The system is ready for launch"));
 assert!(!txt.contains('#'));
 ```
 
+### Recover malformed JSON
+
+```rust
+use meta_language::transform::{JsonRecoveryOptions, JsonRepairKind, recover_json};
+
+let options = JsonRecoveryOptions {
+    allow: vec![JsonRepairKind::CloseOpenContainers],
+    schema: Some(serde_json::json!({ "required": ["status", "evidence"] })),
+};
+let result = recover_json(r#"{"status":"met""#, &options);
+assert_eq!(result.text, r#"{"status":"met"}"#);
+assert!(!result.complete);
+```
+
+Missing required properties are reported by JSON Pointer. Edit ranges are
+half-open original UTF-8 byte offsets. `JsonRecoveryOptions::default()` enables
+all six operation kinds.
+
 ## CLI
 
 ```bash

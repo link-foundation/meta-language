@@ -23,6 +23,8 @@ include = [
     "src/data/grammar-lock.lino",
     "src/data/language-catalog.lino",
     "src/data/native-grammars/*.lino",
+    "src/data/json-recovery-decorators.lino",
+    "src/data/json-recovery-grammar.lino",
     "src/data/concept-records.lino",
     "src/data/foundation-models.lino",
     "src/data/native-text-metadata.lino",

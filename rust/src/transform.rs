@@ -8,6 +8,12 @@ use crate::query::{LinkQuery, QueryCaptures, QueryMatch, QueryPredicate, QueryPr
 use crate::source::{ByteRange, SourceSpan};
 use crate::substitution::{SubstitutionReport, SubstitutionRule, VariableSubstitutionRule};
 
+mod json_recovery;
+pub use json_recovery::{
+    JsonRecoveryEdit, JsonRecoveryIssue, JsonRecoveryOptions, JsonRecoveryResult, JsonRecoverySpan,
+    JsonRepairKind, recover_json,
+};
+
 /// Replacement rule used by the query-and-transform surface.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ReplacementRule {
