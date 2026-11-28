@@ -72,7 +72,7 @@ export const nativeLintCaptureSources = Object.freeze([
 export const nativePlatformPausePredecessor = '7853a7351adf37d1ccc8f73479abf3d1960623bc';
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = '1052564c9b9aa016d58702eda3a76470ad179d5d86bb778d3fb8248944a70f40';
+const archiveDigest = '6abe17d329ecea31c777d89d87255aed7cae3985f56524f93228f34514bc051f';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 

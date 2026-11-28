@@ -501,16 +501,16 @@ fn assert_modern_array_identity_translation(source: &str, previous_message: &str
     use std::{fs, path::Path, process::Command};
     let crate_version = env!("CARGO_PKG_VERSION");
     assert!(
-        matches!(crate_version, "1.0.0" | "1.1.0"),
-        "uncovered crate version {crate_version}; [1.0.0,1.0.1) or [1.1.0,1.1.1) required"
+        matches!(crate_version, "1.0.0" | "1.1.0" | "1.1.1"),
+        "uncovered crate version {crate_version}; [1.0.0,1.0.1) or [1.1.0,1.1.2) required"
     );
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let package: serde_json::Value =
         serde_json::from_slice(&fs::read(root.join("js/package.json")).unwrap()).unwrap();
     let npm_version = package["version"].as_str().unwrap();
     assert!(
-        matches!(npm_version, "1.0.0" | "1.1.0"),
-        "uncovered npm version {npm_version}; [1.0.0,1.0.1) or [1.1.0,1.1.1) required"
+        matches!(npm_version, "1.0.0" | "1.1.0" | "1.1.1"),
+        "uncovered npm version {npm_version}; [1.0.0,1.0.1) or [1.1.0,1.1.2) required"
     );
     for (tool, rust) in [("node", false), ("rustc", true)] {
         let actual = run(Command::new(tool).arg("--version"));
