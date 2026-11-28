@@ -2071,6 +2071,25 @@ export const VISION_REQUIREMENTS = Object.freeze([
     javascript: ['js/src/text-grammar.js', 'js/scripts/build-native-text-grammars.mjs', 'js/tests/native-text-grammars.test.js'],
     rust: ['rust/src/structured_text_parser.rs', 'rust/tests/unit/native_text_grammars.rs'],
   },
+  ...[
+    ['EXPORT', 'package entry point', 'Expose natural-language identification from both package roots.', ['packageEntryPointIdentifiesLanguage']],
+    ['RANKING', 'ranked language candidates', 'Report ranked candidates and allow a confidence threshold to select an unknown result.', ['candidatesRankedWithConfidence', 'thresholdSelectsUnknown']],
+    ['CYRILLIC', 'unsupported Cyrillic languages', 'Identify Russian text and abstain on unsupported Cyrillic evidence.', ['russianEvidenceRetained', 'unsupportedCyrillicRemainsUnknown']],
+    ['MIXED', 'mixed-script language spans', 'Report language evidence and UTF-8 byte offsets for each script run.', ['mixedScriptSpansHaveLanguagesAndByteOffsets']],
+    ['SHORT', 'short and neutral inputs', 'Apply the documented minimum evidence policy to short or neutral inputs.', ['shortAndNonTextInputsUseDocumentedPolicy']],
+  ].map(([suffix, construct, expectedBehavior, assertions]) => ({
+    id: `I195-LANGUAGE-IDENTIFICATION-${suffix}`,
+    sourceKey: 'naturalLanguageIdentification',
+    area: 'natural-language-identification',
+    specification: 'natural-language-identification',
+    fixtureId: `language-identification:${suffix.toLowerCase()}`,
+    fixture: 'parity/fixtures/language-identification.lino',
+    construct,
+    expectedBehavior,
+    assertions,
+    javascript: ['js/src/index.js', 'js/src/language-identification.js'],
+    rust: ['rust/src/lib.rs', 'rust/src/language_catalog.rs', 'rust/src/language_identification.rs'],
+  })),
 ]);
 
 const RUNTIMES = ['javascript', 'rust', 'tooling'];
@@ -2137,6 +2156,7 @@ export function visionEvidenceGroup(requirementId) {
 
 // Sections of docs/vision.md that specify each ledger area.
 export const AREA_SPECIFICATIONS = Object.freeze({
+  'natural-language-identification': 'natural-language-identification',
   'default-cst': 'concrete-and-abstract-syntax-trees',
   'embedded-language': 'language-catalog-and-default-parsing',
   'grammar-importer': 'grammar-import-conversion-and-reverse-conversion',

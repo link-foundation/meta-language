@@ -1570,6 +1570,35 @@ continuation. Internal periods in forms such as `т. д.` stay inside the senten
 even when the final period ends it. Exact byte spans include the original
 closing punctuation and trailing whitespace.
 
+### Natural-language identification
+
+The package entry points expose a standalone, script-aware language identifier.
+Both runtimes use the same generated Links data from `franc-min` 6.2.0. The
+identifiers return ranked catalog candidates and a verdict for the complete
+sample and for each script run. The verdict requires a score at or above the
+caller threshold, default `0.1`, and a lead of at least `0.02` when there is a
+second candidate. An unknown verdict is `null` in JavaScript and `None` in Rust.
+The ranking remains available when the verdict abstains. Confidence is a
+heuristic from zero to one. Trigram models score the fraction of the maximum
+distance recovered by matching distinct trigrams. The overall ranking weights
+each run's scores by its share of the sampled letters.
+
+Script runs group consecutive letters of the same script, retain intervening
+punctuation and digits, and include combining marks attached to their letters.
+Consecutive letters outside the shared script tables form unknown runs.
+The half-open UTF-8 byte spans point into the original text. Identification
+samples the first 2,048 Unicode scalar values and normalizes runs to NFC for
+trigram comparisons. A Cyrillic run containing a letter outside the catalog's
+Russian alphabet, or with a competing non-catalog Cyrillic model at least as
+strong as the Russian model, has an unknown verdict. This applies to the
+identifier, while parsing continues to use the language and detector configured
+for the parse annotations.
+
+Trigram runs with fewer than three letters yield unknown, including `Да`.
+Longer runs such as `Готов` can still have insufficient or ambiguous evidence.
+Han and Bengali runs can use script evidence alone, including a single letter.
+Inputs with no letters produce no candidates or spans.
+
 ## Grammar feature union
 
 Grammar attributes preserve ordinary JavaScript own-key order: canonical

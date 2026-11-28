@@ -1,18 +1,24 @@
 //! Trigram language identification shared with the JavaScript runtime.
 //!
-//! This is franc's algorithm over `data/language-trigrams.lino`, which
+//! Both runtimes use `data/language-trigrams.lino`, which
 //! `js/scripts/build-language-identification.mjs` generates from franc-min
-//! together with the JavaScript copy. Both runtimes count Unicode scalar
-//! values, so they reach the same verdict for the same text.
+//! together with the JavaScript copy.
 
 use std::collections::HashMap;
-use std::sync::OnceLock;
+use std::fmt;
+use std::sync::{LazyLock, OnceLock};
 
+use regex::Regex;
 use serde_json::Value;
+use unicode_normalization::UnicodeNormalization;
 
 const LANGUAGE_TRIGRAMS_LINKS: &str = include_str!("data/language-trigrams.lino");
 const MAX_LENGTH: usize = 2048;
 const MAX_DIFFERENCE: usize = 300;
+const DEFAULT_THRESHOLD: f64 = 0.1;
+const MINIMUM_CONFIDENCE_GAP: f64 = 0.02;
+static LETTER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\A\p{L}\z").expect("letter regex"));
+static MARK: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\A\p{M}\z").expect("mark regex"));
 
 /// Engine term recorded on identification annotations.
 pub const LANGUAGE_IDENTIFIER_TERM: &str = "identifier:trigram";
@@ -29,6 +35,7 @@ struct TrigramData {
     languages: HashMap<String, &'static str>,
     scripts: Vec<Script>,
     models: HashMap<String, Vec<LanguageModel>>,
+    cyrillic_catalog_alphabet: String,
 }
 
 fn trigram_data() -> &'static TrigramData {
@@ -102,13 +109,260 @@ fn parse_trigram_data() -> TrigramData {
         languages,
         scripts,
         models,
+        cyrillic_catalog_alphabet: value["cyrillicCatalogAlphabet"]
+            .as_str()
+            .expect("Cyrillic catalog alphabet")
+            .to_owned(),
     }
 }
 
-/// Returns the canonical name of the supported natural language the text is
-/// written in, or `None` when the text carries no usable evidence.
+/// A catalog language and its model fit between zero and one.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LanguageCandidate {
+    /// Canonical language name.
+    pub language: &'static str,
+    /// Heuristic model fit between zero and one.
+    pub confidence: f64,
+}
+
+/// Identification of a run of letters from one script, with their original byte offsets.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LanguageIdentificationSpan {
+    /// Inclusive UTF-8 byte offset.
+    pub start: usize,
+    /// Exclusive UTF-8 byte offset.
+    pub end: usize,
+    /// Highest-ranked language meeting the threshold and confidence gap, or `None`.
+    pub language: Option<&'static str>,
+    /// Candidates ordered by descending confidence.
+    pub candidates: Vec<LanguageCandidate>,
+}
+
+/// Ranked evidence and verdicts for a text sample and its script runs.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LanguageIdentification {
+    /// Highest-ranked language meeting the threshold and confidence gap, or `None`.
+    pub language: Option<&'static str>,
+    /// Candidates ordered by descending letter-weighted confidence.
+    pub candidates: Vec<LanguageCandidate>,
+    /// Identified runs in input order, including runs with no verdict.
+    pub spans: Vec<LanguageIdentificationSpan>,
+}
+
+/// A language identification threshold outside the inclusive range `0..=1`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct InvalidLanguageIdentificationThreshold;
+
+impl fmt::Display for InvalidLanguageIdentificationThreshold {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("Language identification threshold must be between 0 and 1")
+    }
+}
+
+impl std::error::Error for InvalidLanguageIdentificationThreshold {}
+
+/// Identifies natural languages using the default threshold of `0.1`.
+///
+/// The sample covers the first 2,048 Unicode scalar values. Model-based
+/// script runs with fewer than three letters have no candidates. Han and
+/// Bengali runs can produce a candidate based on script evidence alone.
 #[must_use]
-pub fn identify_language(text: &str) -> Option<&'static str> {
+pub fn identify_language(text: &str) -> LanguageIdentification {
+    language_identification(text, DEFAULT_THRESHOLD)
+}
+
+/// Identifies natural languages using an inclusive confidence threshold.
+///
+/// A verdict requires the threshold and a `0.02` lead when there is a second candidate.
+/// The ranked candidates remain visible when the verdict is `None`.
+///
+/// # Errors
+///
+/// Returns [`InvalidLanguageIdentificationThreshold`] for a value outside
+/// `0..=1` or `NaN`.
+pub fn identify_language_with_threshold(
+    text: &str,
+    threshold: f64,
+) -> Result<LanguageIdentification, InvalidLanguageIdentificationThreshold> {
+    if !(0.0..=1.0).contains(&threshold) {
+        return Err(InvalidLanguageIdentificationThreshold);
+    }
+    Ok(language_identification(text, threshold))
+}
+
+fn language_identification(text: &str, threshold: f64) -> LanguageIdentification {
+    let data = trigram_data();
+    let mut totals = Vec::<(&'static str, f64)>::new();
+    let mut letter_count = 0;
+    let spans: Vec<_> = script_runs(data, text)
+        .into_iter()
+        .map(|run| {
+            let candidates = rank_run(data, &text[run.start..run.end], &run);
+            letter_count += run.letter_count;
+            for candidate in &candidates {
+                let weighted = candidate.confidence * f64::from(run.letter_count);
+                if let Some((_, sum)) = totals
+                    .iter_mut()
+                    .find(|(name, _)| *name == candidate.language)
+                {
+                    *sum += weighted;
+                } else {
+                    totals.push((candidate.language, weighted));
+                }
+            }
+            LanguageIdentificationSpan {
+                start: run.start,
+                end: run.end,
+                language: select_language(&candidates, threshold),
+                candidates,
+            }
+        })
+        .collect();
+    if let [span] = spans.as_slice() {
+        return LanguageIdentification {
+            language: span.language,
+            candidates: span.candidates.clone(),
+            spans,
+        };
+    }
+    let mut candidates: Vec<_> = totals
+        .into_iter()
+        .map(|(language, total)| LanguageCandidate {
+            language,
+            confidence: total / f64::from(letter_count),
+        })
+        .collect();
+    candidates.sort_by(|left, right| right.confidence.total_cmp(&left.confidence));
+    LanguageIdentification {
+        language: select_language(&candidates, threshold),
+        candidates,
+        spans,
+    }
+}
+
+fn select_language(candidates: &[LanguageCandidate], threshold: f64) -> Option<&'static str> {
+    let [best, remaining @ ..] = candidates else {
+        return None;
+    };
+    if best.confidence < threshold {
+        return None;
+    }
+    if remaining
+        .first()
+        .is_some_and(|second| best.confidence - second.confidence < MINIMUM_CONFIDENCE_GAP)
+    {
+        return None;
+    }
+    Some(best.language)
+}
+
+struct ScriptRun<'a> {
+    script: Option<&'a str>,
+    start: usize,
+    end: usize,
+    letter_count: u32,
+}
+
+fn script_runs<'a>(data: &'a TrigramData, text: &str) -> Vec<ScriptRun<'a>> {
+    let mut runs = Vec::<ScriptRun<'a>>::new();
+    let mut attached = false;
+    for (start, character) in text.char_indices().take(MAX_LENGTH) {
+        let mut utf8 = [0; 4];
+        let encoded = character.encode_utf8(&mut utf8);
+        let end = start + encoded.len();
+        if LETTER.is_match(encoded) {
+            let script = data
+                .scripts
+                .iter()
+                .find(|script| in_ranges(u32::from(character), &script.ranges))
+                .map(|script| script.name.as_str());
+            if let Some(run) = runs.last_mut().filter(|run| run.script == script) {
+                run.end = end;
+                run.letter_count += 1;
+            } else {
+                runs.push(ScriptRun {
+                    script,
+                    start,
+                    end,
+                    letter_count: 1,
+                });
+            }
+            attached = true;
+        } else {
+            attached = attached && MARK.is_match(encoded);
+            if attached && let Some(run) = runs.last_mut() {
+                run.end = end;
+            }
+        }
+    }
+    runs
+}
+
+fn rank_run(data: &TrigramData, text: &str, run: &ScriptRun<'_>) -> Vec<LanguageCandidate> {
+    let Some(script) = run.script else {
+        return Vec::new();
+    };
+    let Some(models) = data.models.get(script) else {
+        return data
+            .languages
+            .get(script)
+            .map_or_else(Vec::new, |&language| {
+                vec![LanguageCandidate {
+                    language,
+                    confidence: 1.0,
+                }]
+            });
+    };
+    if run.letter_count < 3 || models.is_empty() {
+        return Vec::new();
+    }
+
+    let characters: Vec<_> = text.nfc().collect();
+    if script == "Cyrillic"
+        && characters.iter().any(|character| {
+            LETTER.is_match(character.encode_utf8(&mut [0; 4]))
+                && !data
+                    .cyrillic_catalog_alphabet
+                    .contains(character.to_lowercase().next().unwrap_or(*character))
+        })
+    {
+        return Vec::new();
+    }
+
+    let trigrams = trigram_counts(&characters);
+    let maximum = trigrams.len() * MAX_DIFFERENCE;
+    let mut ranked: Vec<_> = models
+        .iter()
+        .map(|(code, model)| {
+            (
+                data.languages.get(code).copied(),
+                trigram_distance(&trigrams, model),
+            )
+        })
+        .collect();
+    ranked.sort_by_key(|&(_, distance)| distance);
+    // Competing Cyrillic models can reject a Russian verdict, including ties.
+    if ranked
+        .iter()
+        .any(|&(language, distance)| language.is_none() && distance == ranked[0].1)
+    {
+        return Vec::new();
+    }
+    let score = |value| f64::from(u32::try_from(value).expect("bounded trigram score"));
+    ranked
+        .into_iter()
+        .filter_map(|(language, distance)| {
+            let language = language?;
+            (distance < maximum).then(|| LanguageCandidate {
+                language,
+                confidence: score(maximum - distance) / score(maximum),
+            })
+        })
+        .collect()
+}
+
+/// Returns the catalog verdict used by existing parse annotations.
+pub fn identify_catalog_language(text: &str) -> Option<&'static str> {
     let data = trigram_data();
     let characters: Vec<char> = text.chars().take(MAX_LENGTH).collect();
     if characters.is_empty() {
@@ -123,6 +377,7 @@ pub fn identify_language(text: &str) -> Option<&'static str> {
     let trigrams = trigram_counts(&characters);
     let (code, distance) = models
         .iter()
+        .filter(|(code, _)| data.languages.contains_key(code))
         .map(|(code, model)| (code, trigram_distance(&trigrams, model)))
         .fold(
             None,

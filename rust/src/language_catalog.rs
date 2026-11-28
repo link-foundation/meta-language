@@ -11,6 +11,11 @@ use std::sync::OnceLock;
 
 use serde_json::Value;
 
+pub use crate::language_identification::{
+    InvalidLanguageIdentificationThreshold, LanguageCandidate, LanguageIdentification,
+    LanguageIdentificationSpan, identify_language_with_threshold,
+};
+
 const LANGUAGE_CATALOG_LINKS: &str = include_str!("data/language-catalog.lino");
 
 /// A grammar that parses a registered language by default.

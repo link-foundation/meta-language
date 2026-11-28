@@ -69,6 +69,25 @@ console.log(network.reconstructText());
 // const newName = call(newName);
 ```
 
+## Identify a natural language
+
+```js
+import { identifyLanguage } from 'meta-language';
+
+const { language, candidates, spans } = identifyLanguage(
+  'Hawaii is a state. Привет как дела!',
+  { threshold: 0.1 },
+);
+```
+
+`language` is the verdict or `null` for unknown. `candidates` ranks language
+names with heuristic confidence scores from zero to one. `spans` reports the
+same fields for each script run, with half-open UTF-8 byte offsets `start` and
+`end`. The inclusive threshold defaults to `0.1` and must be in `[0, 1]`.
+Runs with fewer than three letters such as `Да` are unknown when they require
+trigram evidence. Han and Bengali can be recognized by script alone. The
+complete scoring and sampling policy is in the [vision](../docs/vision.md#natural-language-identification).
+
 ## Command line
 
 The package installs a `meta-language` command whose `grammar` subcommand

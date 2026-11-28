@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { LinkMetadata, LinkNetwork, LinkType } from '../src/index.js';
 import {
   LANGUAGE_IDENTIFIER_TERM,
-  identifyLanguage,
+  identifyCatalogLanguage,
 } from '../src/language-identification.js';
 import {
   NATURAL_LANGUAGE_GRAMMAR_FIXTURES,
@@ -39,7 +39,7 @@ test('trigram identifier matches the Rust runtime verdicts', () => {
     ['Ωμέγα', undefined],
     ['', undefined],
   ]) {
-    assert.equal(identifyLanguage(text), expected, JSON.stringify(text));
+    assert.equal(identifyCatalogLanguage(text), expected, JSON.stringify(text));
   }
 });
 

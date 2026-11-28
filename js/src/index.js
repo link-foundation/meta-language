@@ -16,6 +16,7 @@ export * from './grammar-reverse.js';
 export * from './grammar-runtime.js';
 export * from './graphql-adapter.js';
 export * from './language-catalog.js';
+export { identifyLanguage } from './language-identification.js';
 export * from './concept-records.js';
 export * from './concept-distinctions.js';
 export * from './global-concept-space.js';

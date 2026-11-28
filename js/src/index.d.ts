@@ -2446,3 +2446,33 @@ export class LanguageProfileViolation extends Error {
 }
 
 // --- query algebra (link rules) ---
+
+export interface LanguageCandidate {
+  readonly language: string;
+  /** Model fit between 0 and 1. */
+  readonly confidence: number;
+}
+
+export interface LanguageIdentificationSpan {
+  /** Inclusive UTF-8 byte offset in the original text. */
+  readonly start: number;
+  /** Exclusive UTF-8 byte offset in the original text. */
+  readonly end: number;
+  readonly language: string | null;
+  readonly candidates: readonly LanguageCandidate[];
+}
+
+export interface LanguageIdentification {
+  readonly language: string | null;
+  readonly candidates: readonly LanguageCandidate[];
+  readonly spans: readonly LanguageIdentificationSpan[];
+}
+
+/**
+ * Rank natural languages and identify each script run in the first 2,048 Unicode scalar values.
+ * The inclusive threshold defaults to 0.1. Trigram runs with fewer than three letters are unknown.
+ */
+export function identifyLanguage(
+  text: string,
+  options?: { readonly threshold?: number },
+): LanguageIdentification;

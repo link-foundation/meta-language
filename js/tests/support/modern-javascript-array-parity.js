@@ -33,9 +33,9 @@ export function assertModernArrayIdentityTranslation(source,previousMessage){
   comparison:{kind:'release',precision:3},
   expectations:[
    {id:'source-qualified reference implementation',minimum:'1.0.0',maximum:'1.0.1',includeMinimum:true,includeMaximum:false,expected:true,evidence:'reference policy source31c61031a2b2bc4c856f85687f8195bb60f51edc823344711962966df39aae1e; original independent Node owner identity'},
-   {id:'source-qualified reference implementation in 1.1.0',minimum:'1.1.0',maximum:'1.1.1',
+   {id:'source-qualified reference implementation in 1.1.0 and 1.1.1',minimum:'1.1.0',maximum:'1.1.2',
     includeMinimum:true,includeMaximum:false,expected:true,
-    evidence:'1.1.0 uses the same checked reference policy bytes and independent Node owner identity oracle below.'},
+    evidence:'1.1.0 and 1.1.1 use the same checked reference policy bytes and independent Node owner identity oracle below.'},
   ],
  },active);
  assert.equal(selected.expected,true);

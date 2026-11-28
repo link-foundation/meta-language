@@ -230,7 +230,9 @@ const fn detector_term(detector: LanguageIdentificationDetector) -> &'static str
 
 fn identify_language(text: &str, detector: LanguageIdentificationDetector) -> Option<&'static str> {
     match detector {
-        LanguageIdentificationDetector::Trigram => language_identification::identify_language(text),
+        LanguageIdentificationDetector::Trigram => {
+            language_identification::identify_catalog_language(text)
+        }
         LanguageIdentificationDetector::Lingua => identify_with_lingua(text),
         LanguageIdentificationDetector::Whatlang => identify_with_whatlang(text),
     }

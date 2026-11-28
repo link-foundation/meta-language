@@ -128,6 +128,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/247#issuecomment-7084151602',
   naturalLanguageSentenceCiFeedback:
     'https://github.com/link-foundation/meta-language/pull/247#issuecomment-7127823448',
+  naturalLanguageIdentification: 'https://github.com/link-foundation/meta-language/issues/237',
 });
 
 // The rows the audit of c39470d0 lists as open work.
