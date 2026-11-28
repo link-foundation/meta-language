@@ -176,9 +176,12 @@ test('Linux scheduling preserves every native platform definition and all strict
   assert.deepEqual(coverage, { observed: false, failures: [
     { platform: 'darwin-arm64', reason: 'no consumer report' }, { platform: 'win32-x64', reason: 'no consumer report' },
   ] });
-  recordIssue195DirectiveObservation('I195-CI-NATIVE-PLATFORM-PAUSE', [
+  const assertions = [
     'workflowsScheduleOnlyLinuxRunners', 'originalPlatformMatrixAndCommandsRetained', 'strictPlatformEvidenceStillRequired',
-  ], context.name);
+  ];
+  for (const requirementId of ['I195-CI-NATIVE-PLATFORM-PAUSE', 'I195-CI-NON-LINUX-PAUSE']) {
+    recordIssue195DirectiveObservation(requirementId, assertions, context.name);
+  }
 });
 
 function when(text, overrides = {}) {

@@ -19,8 +19,8 @@ export const ISSUE_195_SOURCE_REGISTER_PATH = 'parity/issue-195-sources.json';
 export const ISSUE_195_SOURCE_REGISTER_SCHEMA_VERSION = 1;
 
 const REPOSITORY = 'link-foundation/meta-language';
-export const TRACKED_ISSUES = Object.freeze([195, 199, 224, 248]);
-export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226, 250]);
+export const TRACKED_ISSUES = Object.freeze([195, 199, 224, 232, 248]);
+export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226, 247, 250]);
 const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Actual direct conversation captures. Appending these declarations never

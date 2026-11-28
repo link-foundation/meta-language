@@ -25,20 +25,48 @@ export function bytesAt(directory,file,maximum=policy.maximumFileBytes) {
   return readFileSync(path);
 }
 
+/** Authenticate the existing npm installation inputs against the frozen crate. */
+export function verifySharedJavaScriptDependencies(repository, {readWorking = bytesAt} = {}) {
+  const manifest = 'js/package.json';
+  const lockfile = 'js/package-lock.json';
+  const currentManifest = readWorking(repository, manifest);
+  const {version} = JSON.parse(currentManifest);
+  const stableRelease = /^1\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/u;
+  assert.ok(typeof version === 'string' && stableRelease.exec(version)?.[0] === version,
+    `uncovered JavaScript package version ${JSON.stringify(version)} (stable >=1.0.0 <2.0.0)`);
+
+  for (const [file, current] of [[manifest, currentManifest], [lockfile, readWorking(repository, lockfile)]]) {
+    const frozen = git(repository, ['show', `${policy.baseCommit}:${file}`]);
+    const expected = JSON.parse(frozen);
+    assert.equal(`${JSON.stringify(expected, null, 2)}\n`, frozen, `exact frozen JSON formatting: ${file}`);
+    expected.version = version;
+    if (file === lockfile) expected.packages[''].version = version;
+    assert.ok(current.equals(Buffer.from(`${JSON.stringify(expected, null, 2)}\n`)),
+      `shared JavaScript dependencies differ from the frozen input beyond the root release version: ${file}`);
+  }
+}
+
 /** Compile the named frozen Git snapshot, retaining separate current-input
  * pins so publication metadata cannot silently replace a reviewed source.
  */
-export function frozenSourceBytes(repository,file,{readWorking=bytesAt,readBlob}={}) {
+export function frozenSourceBytes(repository,file,{readWorking=bytesAt,readBlob,allowReleasedAbsence=false}={}) {
   assert.match(file.gitObject,/^[0-9a-f]{40}$/u,'exact frozen Git object');
-  const current=readWorking(repository,file.path),workingSha256=sha256(current);
-  if(file.workingSha256)assert.equal(workingSha256,file.workingSha256,'production input changed after planning: '+file.path);
+  let current=null;
+  try {
+    current=readWorking(repository,file.path);
+  } catch(error) {
+    const releasedFragment=/^rust\/changelog\.d\/[^/]+\.md$/u.test(file.path);
+    if(error.code!=='ENOENT'||!releasedFragment||!(allowReleasedAbsence||file.workingSha256===null))throw error;
+  }
+  const workingSha256=current===null?null:sha256(current);
+  if(file.workingSha256!==undefined)assert.equal(workingSha256,file.workingSha256,'production input changed after planning: '+file.path);
   const object=bytes=>createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
-  const bytes=object(current)===file.gitObject?current:(readBlob?readBlob(repository,file.gitObject):execFileSync('git',
+  const bytes=current!==null&&object(current)===file.gitObject?current:(readBlob?readBlob(repository,file.gitObject):execFileSync('git',
     ['-C',repository,'cat-file','blob',file.gitObject],{shell:false,timeout:15000,maxBuffer:policy.maximumFileBytes}));
   assert.ok(bytes.length<=policy.maximumFileBytes,'bounded frozen source');
   assert.equal(object(bytes),file.gitObject,'frozen Git blob identity');
   if(file.sha256)assert.equal(sha256(bytes),file.sha256,'reviewed snapshot bytes');
-  return{bytes,workingSha256,workingBytes:current.length};
+  return{bytes,workingSha256,workingBytes:current?.length??null};
 }
 
 /** Reproduce ONLY the already CST-qualified source move, from receipt spans.
@@ -70,6 +98,15 @@ export function verifyParentInverse(original,proposed,receipt) {
   assert.deepEqual(Buffer.from(restored),original,'whole original parent inverse');
 }
 
+function collectReleasedChangelogFragments(repository) {
+  const release = '8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18';
+  const removed = ['diff', '--no-renames', '--diff-filter=D', '--name-only', '-z'];
+  const changelog = ['--', 'rust/changelog.d/'];
+  const published = new Set(git(repository, [...removed, `${release}^`, release, ...changelog]).split('\0').filter(Boolean));
+  const absentFromHead = git(repository, [...removed, policy.baseCommit, 'HEAD', ...changelog]).split('\0');
+  return new Set(absentFromHead.filter(path => published.has(path)));
+}
+
 /** Authenticate every selected tracked crate file against the frozen Git tree.
  * No ignored target/cache/workload files, symlinks, or hardlinks are copied.
  */
@@ -77,11 +114,13 @@ export function crateInventory(repository) {
   const format=git(repository,['rev-parse','--show-object-format']).trim();assert.equal(format,'sha1','explicit current Git object profile');
   const listing=git(repository,['ls-tree','-r','-z',policy.baseCommit,'--','rust',...policy.auxiliarySources]);
   const entries=listing.split('\0').filter(Boolean);assert.ok(entries.length>0&&entries.length<=policy.maximumFiles);
+  const releasedFragments=collectReleasedChangelogFragments(repository);
   let total=0;
   const files=entries.map(entry=>{
     const match=/^(100644|100755) blob ([0-9a-f]{40})\t([^\0]+)$/u.exec(entry);assert.ok(match,'ordinary tracked source blob required');
     const [,mode,oid,path]=match;
-    const {bytes,workingSha256,workingBytes}=frozenSourceBytes(repository,{path,gitObject:oid});
+    const {bytes,workingSha256,workingBytes}=frozenSourceBytes(repository,{path,gitObject:oid},
+      {allowReleasedAbsence:releasedFragments.has(path)});
     assert.ok(path.startsWith('rust/')||policy.auxiliarySources.includes(path),'exact build-helper source closure');
     const blob=createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');assert.equal(blob,oid,'unchanged pinned crate: '+path);
     assert.ok(total<=policy.maximumCrateBytes-bytes.length,'bounded total crate copy');total+=bytes.length;
@@ -114,8 +153,7 @@ export async function createOverlayPlan({repository=fileURLToPath(new URL('../..
   // Future commits may publish experiment files. Core source/dependency drift
   // is authenticated by predecessor pins; the compiled full crate stays frozen.
   // Current source pins are retained separately and checked again after execution.
-  // Dependency locks stay identical for the shared installed JS build dependencies.
-  git(repository,['diff','--exit-code','--quiet',policy.baseCommit,'--','js/package.json','js/package-lock.json']);
+  verifySharedJavaScriptDependencies(repository);
   const executionCommit=git(repository,['rev-parse','HEAD']).trim();
   const {readProjectData}=await import(pathToFileURL(resolve(repository,'js/scripts/project-data.mjs')));
   const generated=buildIntegration(repository);

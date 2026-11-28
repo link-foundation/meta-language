@@ -166,7 +166,8 @@ export function normalizeMigrationProviderReceipts(historical, current, receipts
   const normalized = structuredClone(current);
   const seen = new Set();
   for (const { language, provider } of receipts) {
-    if (typeof language !== 'string' || !language || typeof provider !== 'string' || !provider.startsWith('native-')) {
+    if (typeof language !== 'string' || !language || typeof provider !== 'string'
+      || !provider.startsWith('native-') && provider !== 'plain-text' && provider !== 'natural-language') {
       throw new Error('provider receipt refresh has an invalid identity');
     }
     const identity = `${language}\0${provider}`;
@@ -289,6 +290,12 @@ export function validateStructuredDataMigration({
       || !isDeepStrictEqual(check.logicalPaths, ['parity/fixtures/grammar-importers.json'])
       || !isDeepStrictEqual(check.command, ['node', 'js/scripts/generate-antlr-reverse-fixture.mjs', '--check']))) {
       throw new Error('ANTLR lexical refresh must retain its bounded authenticated generator and exact fixture identity');
+    }
+    if (check.logicalPaths.includes('parity/fixtures/builtin-cst-expected.json')
+      && (!Array.isArray(check.providerReceiptRefresh) || check.providerReceiptRefresh.length === 0
+        || !isDeepStrictEqual(check.logicalPaths, ['parity/fixtures/builtin-cst-expected.json'])
+        || !isDeepStrictEqual(check.command, ['node', 'js/scripts/generate-builtin-cst-expectations.mjs', '--check']))) {
+      throw new Error('built-in CST refresh must verify the exact fixture, provider fingerprints and complete generator output');
     }
     for (const path of check.logicalPaths) {
       if (!names.has(path) || checksByPath.has(path)) throw new Error(`current freshness has an unknown or duplicate output identity: ${path}`);

@@ -53,6 +53,15 @@ test('fixture Links data preserves every original ordered decoded baseline', () 
         { cwd: fileURLToPath(root), encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }));
       assert.equal(hash(JSON.stringify(historical)), decodedSha256, `${logicalPath}: frozen original conversion`);
       for (const { language, provider } of refresh ?? []) {
+        if (logicalPath === 'parity/fixtures/builtin-cst-expected.json') {
+          const inventory = readProjectData(new URL('../../parity/language-grammar-inventory.lino', import.meta.url));
+          assert.equal(inventory.languages.find(entry => entry.name === language).builtinGrammar, provider);
+          const grammar = inventory.builtinGrammars[provider];
+          const receipt = protectedValue.languages[language].grammars[provider];
+          assert.equal(receipt.version, grammar.version);
+          assert.equal(receipt.parserSha256, hash(readFileSync(new URL(grammar.specification, root))));
+          continue;
+        }
         const catalog = readProjectData(new URL('../../js/src/data/language-catalog.lino', import.meta.url));
         const grammar = catalog.languages.find(entry => entry.name === language).grammars.find(entry => entry.id === provider);
         assert.equal(protectedValue.languages[language].grammars[provider].parserSha256, grammar.parserSha256);
