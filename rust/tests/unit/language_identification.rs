@@ -192,7 +192,7 @@ fn short_neutral_and_bounded_inputs_follow_documented_policy() {
         );
     }
     let long = "👋".repeat(2048) + &fixture.ranking.source;
-    assert!(identify_language(&long).spans.is_empty());
+    assert_eq!(identify_language(&long).spans, Vec::new());
     observe(
         "short",
         &["shortAndNonTextInputsUseDocumentedPolicy"],
