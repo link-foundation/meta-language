@@ -2409,7 +2409,7 @@
 (2409: 235 2408 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (2410: (meta: (t: semantic) (n: 1) (term: string%20value) (def: docs%2Fvision.md%23temporary-external-grammar-inputs%3A%20external%20grammar%20download%20folders%20explicitly%20ignored%20by%20Git) (lang: meta-language%20structured%20data)))
 (2411: 238 2410 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(2412: (meta: (t: semantic) (n: 1) (term: string%20value) (def: aa0778f7ee487d3303074dfc93221227a90489e6861f51caad0743b0117006fb) (lang: meta-language%20structured%20data)))
+(2412: (meta: (t: semantic) (n: 1) (term: string%20value) (def: d9fdbefd6e21aa32e65e1c429afc287b75139528432ccc90b5a26c252ffff2ce) (lang: meta-language%20structured%20data)))
 (2413: 241 2412 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (2414: 2406 2407 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (2415: (meta: (t: semantic) (n: 1) (term: string%20value) (def: structured-data-migration-baselines) (lang: meta-language%20structured%20data)))
