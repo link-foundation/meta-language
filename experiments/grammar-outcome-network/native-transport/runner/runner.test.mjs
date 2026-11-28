@@ -66,6 +66,27 @@ test('the compiled snapshot uses exact frozen blobs while separately retaining c
   assert.deepEqual(retained.bytes,original);assert.equal(loads,0);
 });
 
+test('published changelog fragments can be absent without allowing any other missing source',()=>{
+  const repository = fileURLToPath(new URL('../../../../', import.meta.url));
+  const path = 'rust/changelog.d/0.58.3-character-class-sets.md';
+  const source = `${overlayPolicy.baseCommit}:${path}`;
+  const original = Buffer.from(git(repository, ['show', source]));
+  const file = {path, gitObject: git(repository, ['rev-parse', source]).trim(), sha256: sha256(original)};
+  const missing = Object.assign(new Error('missing current file'), {code: 'ENOENT'});
+  const readWorking = () => {throw missing;};
+
+  const selected = frozenSourceBytes(repository, file, {readWorking, allowReleasedAbsence: true});
+  assert.deepEqual(selected, {bytes: original, workingSha256: null, workingBytes: null});
+  const planned = {...file, workingSha256: null};
+  assert.deepEqual(frozenSourceBytes(repository, planned, {readWorking}), selected);
+  assert.throws(() => frozenSourceBytes(repository, file, {readWorking}), missing);
+  assert.throws(() => frozenSourceBytes(repository, {...file, path: 'rust/src/lib.rs'},
+    {readWorking, allowReleasedAbsence: true}), missing);
+  assert.throws(() => frozenSourceBytes(repository, planned, {readWorking: () => original}), /production input changed/u);
+  assert.throws(() => frozenSourceBytes(repository, planned, {readWorking, readBlob: () => Buffer.from('corrupt')}),
+    /frozen Git blob identity/u);
+});
+
 test('shared JavaScript dependencies accept both released roots and refuse every other byte change',()=>{
   const repository = fileURLToPath(new URL('../../../../', import.meta.url));
   const manifest = 'js/package.json';

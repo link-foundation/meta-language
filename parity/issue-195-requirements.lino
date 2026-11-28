@@ -3522,7 +3522,7 @@
 (3522: 235 3521 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (3523: (meta: (t: semantic) (n: 1) (term: string%20value) (def: docs%2Fvision.md%23readable-english-names%3A%20self-explanatory%20English%20noun%20and%20verb%20phrases%20for%20canonical%20names) (lang: meta-language%20structured%20data)))
 (3524: 238 3523 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(3525: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 1f484b91d98c5c32cc03e040b46367daf978af40e1fc24095131e58132c8ae19) (lang: meta-language%20structured%20data)))
+(3525: (meta: (t: semantic) (n: 1) (term: string%20value) (def: c5b8c8c046179fc0427691cea031115f933a1a0ee4c7037ba087c079edcf1402) (lang: meta-language%20structured%20data)))
 (3526: 241 3525 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (3527: 3519 3520 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (3528: (meta: (t: semantic) (n: 1) (term: string%20value) (def: planned%3Arepository-directive%3Ai195-naming-concept-records) (lang: meta-language%20structured%20data)))
