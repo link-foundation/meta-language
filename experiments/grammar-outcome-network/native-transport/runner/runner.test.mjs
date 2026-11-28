@@ -8,7 +8,7 @@ import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {requireNativeCI,runOverlay,runBounded} from './run.mjs';
-import {checkFrozenJavaScriptDependencies,createOverlayPlan,frozenSourceBytes,git,sha256} from './plan.mjs';
+import {createOverlayPlan,frozenSourceBytes,git,sha256,verifySharedJavaScriptDependencies} from './plan.mjs';
 import {publicationEdit,replayPublication} from './generate-publication.mjs';
 import {overlayPolicy} from './policy.mjs';
 
@@ -66,53 +66,57 @@ test('the compiled snapshot uses exact frozen blobs while separately retaining c
   assert.deepEqual(retained.bytes,original);assert.equal(loads,0);
 });
 
-test('removed release fragments preserve frozen bytes and planned absence', () => {
-  const original = Buffer.from('retired changelog fragment\n');
-  const gitObject = createHash('sha1').update(`blob ${original.length}\0`).update(original).digest('hex');
-  const file = { path: 'rust/changelog.d/historical.md', gitObject, sha256: sha256(original) };
-  const readers = {
-    readWorking: () => { throw Object.assign(new Error('missing changelog fragment'), { code: 'ENOENT' }); },
-    readBlob: () => original,
-  };
-  assert.throws(() => frozenSourceBytes('/unused', file, readers), { code: 'ENOENT' });
-  const removed = { ...file, releaseRemoved: true };
-  assert.deepEqual(frozenSourceBytes('/unused', removed, readers), {
-    bytes: original, workingSha256: null, workingBytes: null,
-  });
-  assert.throws(() => frozenSourceBytes('/unused', { ...removed, workingSha256: null }, {
-    ...readers, readWorking: () => original,
-  }), /production input changed after planning/u);
+test('published changelog fragments can be absent without allowing any other missing source',()=>{
+  const repository = fileURLToPath(new URL('../../../../', import.meta.url));
+  const path = 'rust/changelog.d/0.58.3-character-class-sets.md';
+  const source = `${overlayPolicy.baseCommit}:${path}`;
+  const original = Buffer.from(git(repository, ['show', source]));
+  const file = {path, gitObject: git(repository, ['rev-parse', source]).trim(), sha256: sha256(original)};
+  const missing = Object.assign(new Error('missing current file'), {code: 'ENOENT'});
+  const readWorking = () => {throw missing;};
+
+  const selected = frozenSourceBytes(repository, file, {readWorking, allowReleasedAbsence: true});
+  assert.deepEqual(selected, {bytes: original, workingSha256: null, workingBytes: null});
+  const planned = {...file, workingSha256: null};
+  assert.deepEqual(frozenSourceBytes(repository, planned, {readWorking}), selected);
+  assert.throws(() => frozenSourceBytes(repository, file, {readWorking}), missing);
+  assert.throws(() => frozenSourceBytes(repository, {...file, path: 'rust/src/lib.rs'},
+    {readWorking, allowReleasedAbsence: true}), missing);
+  assert.throws(() => frozenSourceBytes(repository, planned, {readWorking: () => original}), /production input changed/u);
+  assert.throws(() => frozenSourceBytes(repository, planned, {readWorking, readBlob: () => Buffer.from('corrupt')}),
+    /frozen Git blob identity/u);
 });
 
-test('the frozen experiment accepts release metadata changes and rejects dependency drift', () => {
+test('shared JavaScript dependencies accept both released roots and refuse every other byte change',()=>{
   const repository = fileURLToPath(new URL('../../../../', import.meta.url));
   const manifest = 'js/package.json';
   const lockfile = 'js/package-lock.json';
-  const readSnapshot = (commit) => new Map([manifest, lockfile].map((file) => [
-    file, git(repository, ['show', `${commit}:${file}`]),
-  ]));
-  const baseline = readSnapshot(overlayPolicy.baseCommit);
-  const release = readSnapshot('8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18');
-  for (const file of [manifest, lockfile]) {
-    let expected = baseline.get(file).replace(/^  "version": "1\.0\.0",$/mu, '  "version": "1.1.0",');
-    if (file === lockfile) {
-      expected = expected.replace(/^(    "": \{\n      "name": "meta-language",\n)      "version": "1\.0\.0",$/mu,
-        '$1      "version": "1.1.0",');
-    }
-    assert.equal(release.get(file), expected);
-  }
+  const readRelease = commit => Object.fromEntries([manifest, lockfile].map(file =>
+    [file, Buffer.from(git(repository, ['show', `${commit}:${file}`]))]));
+  const verify = files => verifySharedJavaScriptDependencies(repository, {readWorking: (_directory, file) => files[file]});
+  const released = readRelease('8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18');
+  verify(readRelease(overlayPolicy.baseCommit));
+  verify(released);
+  verifySharedJavaScriptDependencies(repository);
 
-  const check = (files) => checkFrozenJavaScriptDependencies(repository, {
-    readWorking: (_repository, file) => Buffer.from(files.get(file)),
+  const edit = (file, mutate) => {
+    const document = JSON.parse(released[file]);
+    mutate(document);
+    return {...released, [file]: Buffer.from(`${JSON.stringify(document, null, 2)}\n`)};
+  };
+  const patchManifest = edit(manifest, document => {document.version = '1.1.1';});
+  const patchLockfile = edit(lockfile, document => {
+    document.version = '1.1.1';
+    document.packages[''].version = '1.1.1';
   });
-  check(baseline);
-  check(release);
-  assert.throws(() => check(new Map(release).set(lockfile, baseline.get(lockfile))), /differs in js\/package-lock\.json/u);
-  const alteredLockfile = release.get(lockfile).replace('"links-notation": "0.22.0"', '"links-notation": "0.22.1"');
-  assert.notEqual(alteredLockfile, release.get(lockfile));
-  assert.throws(() => check(new Map(release).set(lockfile, alteredLockfile)), /differs in js\/package-lock\.json/u);
-  const unknownVersion = release.get(manifest).replace('"version": "1.1.0"', '"version": "1.1.1"');
-  assert.throws(() => check(new Map(release).set(manifest, unknownVersion)), /No frozen JavaScript dependency profile/u);
+  verify({...patchManifest, [lockfile]: patchLockfile[lockfile]});
+  for (const version of ['2.0.0', '1.1.1-rc.0', '1.1.1\n']) {
+    assert.throws(() => verify(edit(manifest, document => {document.version = version;})), /uncovered JavaScript package version/u);
+  }
+  assert.throws(() => verify(edit(manifest, document => {document.dependencies['links-notation'] = '0.23.0';})), /frozen input/u);
+  assert.throws(() => verify(edit(lockfile, document => {document.packages['node_modules/links-notation'].version = '0.23.0';})), /frozen input/u);
+  assert.throws(() => verify(edit(lockfile, document => {document.packages[''].version = '1.0.0';})), /frozen input/u);
+  assert.throws(() => verify({...released, [lockfile]: Buffer.concat([released[lockfile], Buffer.from('\n')])}), /frozen input/u);
 });
 
 test('publication edits retain the complete original and refuse a changed original interval',()=>{

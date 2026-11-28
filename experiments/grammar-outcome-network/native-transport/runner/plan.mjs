@@ -13,8 +13,6 @@ import {applyFrozenOutcomeProducerCorrection} from '../diagnostic-order/source-v
 import {diagnosticOrderDecorator} from '../diagnostic-order/decorator.mjs';
 import {deriveOutcomeTargetProbe} from './compiler-profile.mjs';
 
-const RELEASE_1_1_0 = '8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18';
-
 export const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 export const within=(root,file)=>{const path=relative(root,file);return path!==''&&!path.startsWith('..'+sep)&&path!=='..'&&!path.startsWith(sep);};
 export function git(repository,args) {
@@ -27,38 +25,40 @@ export function bytesAt(directory,file,maximum=policy.maximumFileBytes) {
   return readFileSync(path);
 }
 
-/** Verify the complete manifests used for the shared JavaScript installation. */
-export function checkFrozenJavaScriptDependencies(repository, { readWorking = bytesAt } = {}) {
-  const manifestPath = 'js/package.json';
-  const manifest = readWorking(repository, manifestPath);
-  const { version } = JSON.parse(manifest.toString('utf8'));
-  const snapshots = new Map([
-    ['1.0.0', policy.baseCommit],
-    ['1.1.0', RELEASE_1_1_0],
-  ]);
-  const snapshot = snapshots.get(version);
-  assert.ok(snapshot, `No frozen JavaScript dependency profile for meta-language ${version}`);
+/** Authenticate the existing npm installation inputs against the frozen crate. */
+export function verifySharedJavaScriptDependencies(repository, {readWorking = bytesAt} = {}) {
+  const manifest = 'js/package.json';
+  const lockfile = 'js/package-lock.json';
+  const currentManifest = readWorking(repository, manifest);
+  const {version} = JSON.parse(currentManifest);
+  const stableRelease = /^1\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/u;
+  assert.ok(typeof version === 'string' && stableRelease.exec(version)?.[0] === version,
+    `uncovered JavaScript package version ${JSON.stringify(version)} (stable >=1.0.0 <2.0.0)`);
 
-  const lockfilePath = 'js/package-lock.json';
-  for (const [file, current] of [[manifestPath, manifest], [lockfilePath, readWorking(repository, lockfilePath)]]) {
-    const expected = Buffer.from(git(repository, ['show', `${snapshot}:${file}`]));
-    assert.ok(current.equals(expected), `Frozen JavaScript dependency profile ${version} differs in ${file}`);
+  for (const [file, current] of [[manifest, currentManifest], [lockfile, readWorking(repository, lockfile)]]) {
+    const frozen = git(repository, ['show', `${policy.baseCommit}:${file}`]);
+    const expected = JSON.parse(frozen);
+    assert.equal(`${JSON.stringify(expected, null, 2)}\n`, frozen, `exact frozen JSON formatting: ${file}`);
+    expected.version = version;
+    if (file === lockfile) expected.packages[''].version = version;
+    assert.ok(current.equals(Buffer.from(`${JSON.stringify(expected, null, 2)}\n`)),
+      `shared JavaScript dependencies differ from the frozen input beyond the root release version: ${file}`);
   }
-  return snapshot;
 }
 
 /** Compile the named frozen Git snapshot, retaining separate current-input
  * pins so publication metadata cannot silently replace a reviewed source.
  */
-export function frozenSourceBytes(repository,file,{readWorking=bytesAt,readBlob}={}) {
+export function frozenSourceBytes(repository,file,{readWorking=bytesAt,readBlob,allowReleasedAbsence=false}={}) {
   assert.match(file.gitObject,/^[0-9a-f]{40}$/u,'exact frozen Git object');
-  let current = null;
+  let current=null;
   try {
-    current = readWorking(repository, file.path);
-  } catch (error) {
-    if (error.code !== 'ENOENT' || file.releaseRemoved !== true) throw error;
+    current=readWorking(repository,file.path);
+  } catch(error) {
+    const releasedFragment=/^rust\/changelog\.d\/[^/]+\.md$/u.test(file.path);
+    if(error.code!=='ENOENT'||!releasedFragment||!(allowReleasedAbsence||file.workingSha256===null))throw error;
   }
-  const workingSha256 = current === null ? null : sha256(current);
+  const workingSha256=current===null?null:sha256(current);
   if(file.workingSha256!==undefined)assert.equal(workingSha256,file.workingSha256,'production input changed after planning: '+file.path);
   const object=bytes=>createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
   const bytes=current!==null&&object(current)===file.gitObject?current:(readBlob?readBlob(repository,file.gitObject):execFileSync('git',
@@ -98,28 +98,33 @@ export function verifyParentInverse(original,proposed,receipt) {
   assert.deepEqual(Buffer.from(restored),original,'whole original parent inverse');
 }
 
+function collectReleasedChangelogFragments(repository) {
+  const release = '8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18';
+  const removed = ['diff', '--no-renames', '--diff-filter=D', '--name-only', '-z'];
+  const changelog = ['--', 'rust/changelog.d/'];
+  const published = new Set(git(repository, [...removed, `${release}^`, release, ...changelog]).split('\0').filter(Boolean));
+  const absentFromHead = git(repository, [...removed, policy.baseCommit, 'HEAD', ...changelog]).split('\0');
+  return new Set(absentFromHead.filter(path => published.has(path)));
+}
+
 /** Authenticate every selected tracked crate file against the frozen Git tree.
  * No ignored target/cache/workload files, symlinks, or hardlinks are copied.
  */
-export function crateInventory(repository, releaseCommit = checkFrozenJavaScriptDependencies(repository)) {
+export function crateInventory(repository) {
   const format=git(repository,['rev-parse','--show-object-format']).trim();assert.equal(format,'sha1','explicit current Git object profile');
   const listing=git(repository,['ls-tree','-r','-z',policy.baseCommit,'--','rust',...policy.auxiliarySources]);
   const entries=listing.split('\0').filter(Boolean);assert.ok(entries.length>0&&entries.length<=policy.maximumFiles);
-  const removedFragments = new Set(releaseCommit === RELEASE_1_1_0
-    ? git(repository, ['diff', '--no-renames', '--name-only', '-z', '--diff-filter=D',
-      `${releaseCommit}^`, releaseCommit, '--', 'rust/changelog.d']).split('\0').filter(Boolean)
-    : []);
+  const releasedFragments=collectReleasedChangelogFragments(repository);
   let total=0;
   const files=entries.map(entry=>{
     const match=/^(100644|100755) blob ([0-9a-f]{40})\t([^\0]+)$/u.exec(entry);assert.ok(match,'ordinary tracked source blob required');
     const [,mode,oid,path]=match;
-    const releaseRemoved = removedFragments.has(path);
-    const {bytes,workingSha256,workingBytes}=frozenSourceBytes(repository,{path,gitObject:oid,releaseRemoved});
+    const {bytes,workingSha256,workingBytes}=frozenSourceBytes(repository,{path,gitObject:oid},
+      {allowReleasedAbsence:releasedFragments.has(path)});
     assert.ok(path.startsWith('rust/')||policy.auxiliarySources.includes(path),'exact build-helper source closure');
     const blob=createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');assert.equal(blob,oid,'unchanged pinned crate: '+path);
     assert.ok(total<=policy.maximumCrateBytes-bytes.length,'bounded total crate copy');total+=bytes.length;
-    return {path,mode,gitObject:oid,bytes:bytes.length,sha256:sha256(bytes),workingSha256,workingBytes,
-      ...(releaseRemoved ? { releaseRemoved } : {})};
+    return {path,mode,gitObject:oid,bytes:bytes.length,sha256:sha256(bytes),workingSha256,workingBytes};
   });
   assert.ok(files.some(file=>file.path==='rust/Cargo.toml')&&files.some(file=>file.path==='rust/Cargo.lock'));
   assert.ok(policy.auxiliarySources.every(path=>files.some(file=>file.path===path)),'every declared JS build-helper source remains tracked');
@@ -148,9 +153,7 @@ export async function createOverlayPlan({repository=fileURLToPath(new URL('../..
   // Future commits may publish experiment files. Core source/dependency drift
   // is authenticated by predecessor pins; the compiled full crate stays frozen.
   // Current source pins are retained separately and checked again after execution.
-  // The 1.1.0 release changed only the three root version fields in these files.
-  const releaseCommit = checkFrozenJavaScriptDependencies(repository);
-  git(repository,['diff','--exit-code','--quiet',releaseCommit,'--','js/package.json','js/package-lock.json']);
+  verifySharedJavaScriptDependencies(repository);
   const executionCommit=git(repository,['rev-parse','HEAD']).trim();
   const {readProjectData}=await import(pathToFileURL(resolve(repository,'js/scripts/project-data.mjs')));
   const generated=buildIntegration(repository);
@@ -168,7 +171,7 @@ export async function createOverlayPlan({repository=fileURLToPath(new URL('../..
   const manifest=bytesAt(repository,'rust/Cargo.toml').toString('utf8');
   assert.ok(!/^\s*autotests\s*=\s*false\s*$/mu.test(manifest),'actual probe auto-discovery required');
   const targetProbe=deriveOutcomeTargetProbe(bytesAt(probeDirectory,'native-outcome-probe.rs'));
-  return {repository,candidateDirectory,probeDirectory,executionCommit,inventory:crateInventory(repository,releaseCommit),receipt,parent,child,
+  return {repository,candidateDirectory,probeDirectory,executionCommit,inventory:crateInventory(repository),receipt,parent,child,
     probe:targetProbe.source,probeTargetObservation:targetProbe.receipt,policy,runnerPublication,publication,
     nativeOraclePolicy:runnerPublication.nativeOraclePolicy,producerCorrection};
 }

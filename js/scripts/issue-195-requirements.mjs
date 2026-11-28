@@ -123,6 +123,11 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/automation-first-own-codebase-baseline-2026-10-21.txt',
   latestSoloContinuationRequest:
     'parity/sources/solo-continuation-2026-10-21.txt',
+  naturalLanguageSentenceIssue: 'https://github.com/link-foundation/meta-language/issues/232',
+  naturalLanguageSentenceScopeFeedback:
+    'https://github.com/link-foundation/meta-language/pull/247#issuecomment-7084151602',
+  naturalLanguageSentenceCiFeedback:
+    'https://github.com/link-foundation/meta-language/pull/247#issuecomment-7127823448',
   naturalLanguageIdentification: 'https://github.com/link-foundation/meta-language/issues/237',
 });
 
