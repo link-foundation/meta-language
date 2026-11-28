@@ -239,7 +239,7 @@ fn missing_required_properties(value: &Value, schema: &Value, issues: &mut Vec<J
                 for (index, item) in items.iter().enumerate().rev() {
                     let child = prefixes
                         .and_then(|prefix| prefix.get(index))
-                        .unwrap_or(&rule["items"]);
+                        .unwrap_or_else(|| &rule["items"]);
                     if child.is_object() {
                         pending.push((item, child, format!("{pointer}/{index}")));
                     }
@@ -504,7 +504,7 @@ pub fn recover_json(text: &str, options: &JsonRecoveryOptions) -> JsonRecoveryRe
     if report.value.is_none() {
         let recovered = plan_recovery(text, &options.allow, &mut report.edits).and_then(|()| {
             let source = apply_edits(text, &report.edits);
-            let value = parse_value(&source).ok_or(JsonRecoverySpan::new(0, text.len()))?;
+            let value = parse_value(&source).ok_or_else(|| JsonRecoverySpan::new(0, text.len()))?;
             Ok((source, value))
         });
         match recovered {
