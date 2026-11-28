@@ -214,6 +214,8 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
     ['js/tests/issue-195-formal-ai-partitions.test.js', baseline, 'B63 actual source names'],
     ['js/tests/link-network-binary.test.js', baseline],
     ...[...nativeRepairNamingSources, ...nativeLintCaptureSources].map(file => [file, baseline, nativeInventories[file]]),
+    ['js/scripts/generate-modern-javascript-array-parity-fixtures.mjs', '8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18'],
+    ['js/tests/support/modern-javascript-array-parity.js', '8fd7c884ecf8467fd85b6fd8b7db465b0e9b0a18'],
   ]) {
     const inventory = sourceInventory + ' for ' + file;
     const entry = inventories.find(candidate => candidate.inventory === inventory && candidate.files.includes(file));

@@ -2446,3 +2446,43 @@ export class LanguageProfileViolation extends Error {
 }
 
 // --- query algebra (link rules) ---
+
+// --- JSON recovery ---
+
+export type JsonRepairKind = 'closeOpenContainers' | 'dropTrailingCommas' | 'stripCodeFence'
+  | 'extractFirstValue' | 'stripTrailingGarbage' | 'repairEscapes';
+
+/** Half-open UTF-8 byte offsets in the original input. */
+export interface JsonRecoverySpan {
+  start: number;
+  end: number;
+}
+
+export interface JsonRecoveryEdit {
+  kind: JsonRepairKind;
+  span: JsonRecoverySpan;
+  inserted: string;
+  removed: string;
+}
+
+export type JsonRecoveryIssue =
+  | { kind: 'unrecoveredSyntax' | 'degenerateRepetition'; span: JsonRecoverySpan }
+  | { kind: 'missingRequiredProperty'; pointer: string; property: string };
+
+export interface JsonRecoveryOptions {
+  /** All repairs are enabled when omitted. An empty list disables edits. */
+  allow?: readonly JsonRepairKind[];
+  /** Optional schema for reporting missing required properties. */
+  schema?: boolean | Readonly<Record<string, unknown>>;
+}
+
+export interface JsonRecoveryResult {
+  text: string;
+  value: StructuredDataValue;
+  edits: JsonRecoveryEdit[];
+  complete: boolean;
+  issues: JsonRecoveryIssue[];
+}
+
+/** Recover one JSON value and report edits against the original source. */
+export function recoverJson(text: string, options?: JsonRecoveryOptions): JsonRecoveryResult;

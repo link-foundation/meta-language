@@ -645,6 +645,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("reconstructGrammar", "reconstruct_grammar", "function"),
+    ("recoverJson", "transform::recover_json", "function"),
     ("rejectPredicateHost", "RejectPredicateHost", "type"),
     ("renameGrammarRule", "rename_grammar_rule", "function"),
     (

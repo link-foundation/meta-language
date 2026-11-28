@@ -72,7 +72,7 @@ export const nativeLintCaptureSources = Object.freeze([
 export const nativePlatformPausePredecessor = '7853a7351adf37d1ccc8f73479abf3d1960623bc';
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = '4d91f65b8f8a6d77c6f5e2797d3b9501cd4ad825b6550fb7a15a62dd67d614d7';
+const archiveDigest = '6abe17d329ecea31c777d89d87255aed7cae3985f56524f93228f34514bc051f';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
@@ -93,6 +93,8 @@ export function restoreAutomatedTranslationPauseSource(source, file, revision) {
     'js/tests/issue-195-evidence-translation-partition-conservation.test.js',
     'js/tests/issue-195-formal-ai-partitions.test.js', 'js/tests/issue-195-naming.test.js', 'js/tests/link-network-binary.test.js',
     'js/tests/own-codebase-baseline-naming-history.test.js',
+    'js/scripts/generate-modern-javascript-array-parity-fixtures.mjs',
+    'js/tests/support/modern-javascript-array-parity.js',
     'js/tests/test-groups.test.js', 'rust/src/formal_concept_definition.rs', 'rust/src/shared_numeric_function_model.rs',
     'parity/fixtures/grammar-selection-diagnostic-order.lino', 'rust/src/translation/javascript/declarations.rs',
     'rust/tests/unit/translation_surface_reference_analysis.rs'].includes(file)) {

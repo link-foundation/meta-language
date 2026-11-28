@@ -2524,6 +2524,28 @@ the following work end to end on the common representation:
 A separate string-to-string compiler does not establish integration with the
 editable shared representation.
 
+Malformed JSON recovery is an opt-in transformation over a native concrete
+syntax tree. Both runtimes load the same Links grammar and transformation
+decorators. The decorators select an operation by the recovery node and its
+syntactic region. The caller can allow closing truncated values, dropping
+dangling commas, stripping Markdown fences, extracting the first value, stripping
+trailing garbage or repairing escapes. Each edit records a half-open range of
+original UTF-8 bytes, the removed text and the replacement. Their order permits
+replay, including multiple insertions at a single offset. A strict JSON reader
+validates the entire edited result before the transformation returns any edits.
+The shared value profile uses Unicode scalar strings, finite binary64 numbers
+and up to 127 nested containers. The report preserves the source spelling of
+accepted values. For malformed input, the native recovery grammar bounds rule
+nesting at 192 calls in both runtimes.
+
+Closing a truncated value leaves it incomplete. With an optional JSON schema,
+the parsed value is traversed through `properties`, `items` and `prefixItems`.
+Missing `required` properties are reported by JSON Pointer and also leave the
+result incomplete. The traversal supplies no values. A separate diagnostic
+reports the longest source run of at least 256 bytes with a period of at most
+32 bytes, choosing the earliest of equally long runs and ignoring runs of
+only JSON whitespace. Repetition detection preserves the source bytes.
+
 ## Foundation neutrality
 
 Meta-language shares the reusable syntax, binding, typing, proof-representation
