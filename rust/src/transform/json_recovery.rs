@@ -41,15 +41,14 @@ pub struct JsonRecoveryOptions {
 
 impl Default for JsonRecoveryOptions {
     fn default() -> Self {
-        use JsonRepairKind::*;
         Self {
             allow: vec![
-                CloseOpenContainers,
-                DropTrailingCommas,
-                StripCodeFence,
-                ExtractFirstValue,
-                StripTrailingGarbage,
-                RepairEscapes,
+                JsonRepairKind::CloseOpenContainers,
+                JsonRepairKind::DropTrailingCommas,
+                JsonRepairKind::StripCodeFence,
+                JsonRepairKind::ExtractFirstValue,
+                JsonRepairKind::StripTrailingGarbage,
+                JsonRepairKind::RepairEscapes,
             ],
             schema: None,
         }
@@ -275,14 +274,13 @@ fn missing_required_properties(value: &Value, schema: &Value, issues: &mut Vec<J
 }
 
 fn kind_for_name(name: &str) -> Option<JsonRepairKind> {
-    use JsonRepairKind::*;
     Some(match name {
-        "closeOpenContainers" => CloseOpenContainers,
-        "dropTrailingCommas" => DropTrailingCommas,
-        "stripCodeFence" => StripCodeFence,
-        "extractFirstValue" => ExtractFirstValue,
-        "stripTrailingGarbage" => StripTrailingGarbage,
-        "repairEscapes" => RepairEscapes,
+        "closeOpenContainers" => JsonRepairKind::CloseOpenContainers,
+        "dropTrailingCommas" => JsonRepairKind::DropTrailingCommas,
+        "stripCodeFence" => JsonRepairKind::StripCodeFence,
+        "extractFirstValue" => JsonRepairKind::ExtractFirstValue,
+        "stripTrailingGarbage" => JsonRepairKind::StripTrailingGarbage,
+        "repairEscapes" => JsonRepairKind::RepairEscapes,
         _ => return None,
     })
 }
