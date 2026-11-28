@@ -103,7 +103,7 @@ description, an interactive WebAssembly demo, and the full
   repo-authored sentences and UD-derived tag vocabulary.
 - `identify_language` ranks natural languages by confidence and reports each
   script run with UTF-8 byte offsets. Read the optional verdict from the
-  report's `language` field, or call `identify_language_with_threshold` to
+  report's `language` field, or call `language_catalog::identify_language_with_threshold` to
   choose a threshold in `0.0..=1.0`. Trigram runs shorter than three letters
   such as `Да` return `None`. Han and Bengali can be recognized from script
   evidence alone. See the [identification policy](../docs/vision.md#natural-language-identification).

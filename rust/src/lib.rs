@@ -250,10 +250,6 @@ pub use language_catalog::{
     language_for_path, native_grammar, native_grammars, oracle_grammar_provenance,
 };
 pub use language_identification::identify_language;
-pub use language_identification::{
-    InvalidLanguageIdentificationThreshold, LanguageCandidate, LanguageIdentification,
-    LanguageIdentificationSpan, identify_language_with_threshold,
-};
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
 pub use language_support::{

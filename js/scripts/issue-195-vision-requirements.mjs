@@ -2064,7 +2064,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
     expectedBehavior,
     assertions,
     javascript: ['js/src/index.js', 'js/src/language-identification.js'],
-    rust: ['rust/src/lib.rs', 'rust/src/language_identification.rs'],
+    rust: ['rust/src/lib.rs', 'rust/src/language_catalog.rs', 'rust/src/language_identification.rs'],
   })),
 ]);
 

@@ -1,7 +1,6 @@
 use super::issue_195_observations::{Observation, record};
-use meta_language::{
-    LinkNetwork, LinkType, ParseConfiguration, identify_language, identify_language_with_threshold,
-};
+use meta_language::language_catalog::identify_language_with_threshold;
+use meta_language::{LinkNetwork, LinkType, ParseConfiguration, identify_language};
 use serde::Deserialize;
 use unicode_normalization::UnicodeNormalization;
 

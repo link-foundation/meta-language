@@ -6,7 +6,7 @@ bump: major
 
 - `identify_language` now returns a report with ranked confidence scores and
   UTF-8 spans for each script run. Read `.language` for the optional verdict or
-  use `identify_language_with_threshold` to set a threshold. Unsupported
+  use `language_catalog::identify_language_with_threshold` to set a threshold. Unsupported
   Cyrillic text can return an unknown verdict.
 
 ### Added
