@@ -362,7 +362,7 @@ fn rank_run(data: &TrigramData, text: &str, run: &ScriptRun<'_>) -> Vec<Language
 }
 
 /// Returns the catalog verdict used by existing parse annotations.
-pub(crate) fn identify_catalog_language(text: &str) -> Option<&'static str> {
+pub fn identify_catalog_language(text: &str) -> Option<&'static str> {
     let data = trigram_data();
     let characters: Vec<char> = text.chars().take(MAX_LENGTH).collect();
     if characters.is_empty() {
