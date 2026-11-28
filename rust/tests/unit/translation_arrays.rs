@@ -499,18 +499,18 @@ fn assert_modern_array_identity_translation(source: &str, previous_message: &str
         encode_link_network_binary, encode_typed_program_links,
     };
     use std::{fs, path::Path, process::Command};
-    assert_eq!(
-        env!("CARGO_PKG_VERSION"),
-        "1.0.0",
-        "uncovered crate version; [1.0.0,1.0.1) required"
-    );
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let package: serde_json::Value =
         serde_json::from_slice(&fs::read(root.join("js/package.json")).unwrap()).unwrap();
-    assert_eq!(
-        package["version"], "1.0.0",
-        "uncovered npm version; [1.0.0,1.0.1) required"
-    );
+    for (package, active) in [
+        ("crate", env!("CARGO_PKG_VERSION")),
+        ("npm", package["version"].as_str().unwrap()),
+    ] {
+        assert!(
+            matches!(active, "1.0.0" | "1.1.0"),
+            "uncovered {package} version {active}; [1.0.0,1.0.1) || [1.1.0,1.1.1) required"
+        );
+    }
     for (tool, rust) in [("node", false), ("rustc", true)] {
         let actual = run(Command::new(tool).arg("--version"));
         assert!(actual.ok, "{}", actual.stderr);

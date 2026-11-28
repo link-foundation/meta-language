@@ -123,6 +123,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/automation-first-own-codebase-baseline-2026-10-21.txt',
   latestSoloContinuationRequest:
     'parity/sources/solo-continuation-2026-10-21.txt',
+  naturalLanguageIdentification: 'https://github.com/link-foundation/meta-language/issues/237',
 });
 
 // The rows the audit of c39470d0 lists as open work.

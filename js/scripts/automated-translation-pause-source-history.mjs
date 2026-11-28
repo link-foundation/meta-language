@@ -74,6 +74,21 @@ export const nativePlatformPausePredecessor = '7853a7351adf37d1ccc8f73479abf3d19
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
 const archiveDigest = '4d91f65b8f8a6d77c6f5e2797d3b9501cd4ad825b6550fb7a15a62dd67d614d7';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
+// The 1.1.0 assertion update retains the same inputs and historical source views.
+const releaseAssertionSourcePredecessors = new Map([
+  ['parity/fixtures/grammar-selection-diagnostic-order.lino', [
+    '88f63f235958da792e4be01fd583c73fdcb372e2f22cd183958f4d3a2d25d38a',
+    '819bf2640c4858a11791623a929c097d17e1abb2afd9047375dc22eec9234cf2',
+  ]],
+  ['rust/tests/unit/translation_arrays.rs', [
+    'a26d9c1f298f37138b82a364b989bc2d502f0f968934f99001f640e95c5086f7',
+    '8590953cd77b208243ce30a88e7b4f77b4f048593b304083e84e4fa2b9a9cc57',
+  ]],
+  ['rust/tests/unit/translation_surface_reference_analysis.rs', [
+    '536f0c3165e5cc676f89c6f6d1a78a77565bdf8f79daf51a5ce4a2a7f229aef5',
+    '92eb362f33d3600ac49958d3ac577628c91d4c4cb910286a32f195bca0b8972f',
+  ]],
+]);
 let history;
 
 export function restoreAutomatedTranslationPauseSource(source, file, revision) {
@@ -106,7 +121,9 @@ export function restoreAutomatedTranslationPauseSource(source, file, revision) {
   // Some older workflow readers identify the owner by digest alone. A match
   // still has to authenticate the predecessor under its actual Git path.
   const current = digest(source);
-  const entry = history.sources.find((row) => row.current === current &&
+  const [successor, predecessor] = releaseAssertionSourcePredecessors.get(file) ?? [];
+  const archivedCurrent = current === successor ? predecessor : current;
+  const entry = history.sources.find((row) => row.current === archivedCurrent &&
     (revision === undefined || row.predecessor === revision) &&
     (row.file === file || (workflow && row.file.startsWith('.github/workflows/'))));
   if (!entry) return source;

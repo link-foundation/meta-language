@@ -414,10 +414,10 @@ fn ordinary_identifier_models_retain_both_collision_sources_oracles_and_source_f
             );
             assert_eq!(emit_rust(&restored).unwrap().text, original_rust);
             if fixed_number_prelude {
-                assert_eq!(
-                    env!("CARGO_PKG_VERSION"),
-                    "1.0.0",
-                    "uncovered package version; >=1.0.0 <1.0.1 required for this exact fixed Number prelude refusal"
+                let active = env!("CARGO_PKG_VERSION");
+                assert!(
+                    matches!(active, "1.0.0" | "1.1.0"),
+                    "uncovered package version {active}; [1.0.0,1.0.1) || [1.1.0,1.1.1) required for this exact fixed Number prelude refusal"
                 );
                 let failure = parse_javascript(&javascript).unwrap_err();
                 assert_eq!(

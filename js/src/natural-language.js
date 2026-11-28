@@ -7,7 +7,7 @@ import {
   SourceSpan,
 } from './primitives.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
-import { LANGUAGE_IDENTIFIER_TERM, identifyLanguage } from './language-identification.js';
+import { LANGUAGE_IDENTIFIER_TERM, identifyCatalogLanguage } from './language-identification.js';
 import { BIDI_RANGES } from './unicode-bidi-classes.js';
 
 const encoder = new TextEncoder();
@@ -159,7 +159,7 @@ export function annotateNaturalLanguage(network, document, text, language) {
 
   const lines = new ByteLineIndex(text);
   const documentSpan = lines.span(0, encoder.encode(text).length);
-  const detectedLanguage = identifyLanguage(text) ?? declaredLanguage;
+  const detectedLanguage = identifyCatalogLanguage(text) ?? declaredLanguage;
 
   const languageLink = network.insertLink(
     [],

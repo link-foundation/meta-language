@@ -198,6 +198,7 @@ use meta_language::grammar_importer as _;
 use meta_language::grammar_names as _;
 use meta_language::grammar_precedence_concepts as _;
 use meta_language::grammar_provenance as _;
+use meta_language::identify_language as _;
 use meta_language::import_abnf as _;
 use meta_language::import_antlr as _;
 use meta_language::import_bnf as _;

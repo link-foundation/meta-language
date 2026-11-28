@@ -101,6 +101,12 @@ description, an interactive WebAssembly demo, and the full
 - `NATURAL_LANGUAGE_GRAMMAR_FIXTURES` with pass/fail grammaticality fixtures
   for the ten natural-language targets, including provenance for the
   repo-authored sentences and UD-derived tag vocabulary.
+- `identify_language` ranks natural languages by confidence and reports each
+  script run with UTF-8 byte offsets. Read the optional verdict from the
+  report's `language` field, or call `identify_language_with_threshold` to
+  choose a threshold in `0.0..=1.0`. Trigram runs shorter than three letters
+  such as `Да` return `None`. Han and Bengali can be recognized from script
+  evidence alone. See the [identification policy](../docs/vision.md#natural-language-identification).
 - Coverage targets for full `txt`, Markdown, HTML, PDF, and DOCX support, mixed
   grammar embedding, ten programming-language parser targets, and ten
   natural-language parser targets.
